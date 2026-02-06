@@ -13,9 +13,15 @@ import {
   where,
   getDocs
 } from '@angular/fire/firestore';
-import { map, switchMap, from, of, Observable } from 'rxjs';
+import { 
+  Auth, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut 
+} from '@angular/fire/auth';
+import { map, Observable } from 'rxjs';
 
-// --- Interfaces (Kept identical for compatibility) ---
+// --- Interfaces ---
 export interface Product {
   id: string;
   code: string;
@@ -54,8 +60,10 @@ export interface CartItem {
 
 export interface User {
   id: string; 
-  phone: string;
+  phone?: string; 
+  email?: string;
   name: string;
+  photoURL?: string;
   totalSpend: number;
   isAdmin: boolean;
   address?: string;
@@ -113,6 +121,7 @@ export interface StoreSettings {
 })
 export class StoreService {
   private firestore = inject(Firestore);
+  private auth = inject(Auth);
 
   // --- Default Settings ---
   private defaultSettings: StoreSettings = {
@@ -137,11 +146,8 @@ export class StoreService {
   };
 
   // --- Signals from Firestore ---
-  
-  // 1. Settings (Real-time sync from Firestore path 'config/storeSettings')
   private settings$: Observable<StoreSettings> = docData(doc(this.firestore, 'config/storeSettings')).pipe(
     map((data: any) => {
-      // Deep merge with defaults to ensure all fields exist
       if (!data) return this.defaultSettings;
       return {
         ...this.defaultSettings,
@@ -158,42 +164,33 @@ export class StoreService {
   );
   settings = toSignal(this.settings$, { initialValue: this.defaultSettings });
 
-  // 2. Categories (Real-time sync from 'config/categories')
   private categories$: Observable<string[]> = docData(doc(this.firestore, 'config/categories')).pipe(
     map((data: any) => data ? (data.list as string[]) : ['熱銷精選', '服飾', '包包', '生活小物'])
   );
   categories = toSignal(this.categories$, { initialValue: ['熱銷精選', '服飾', '包包', '生活小物'] });
 
-  // 3. Products (Real-time sync from collection 'products')
   private products$: Observable<Product[]> = collectionData(collection(this.firestore, 'products'), { idField: 'id' }) as Observable<Product[]>;
   products = toSignal(this.products$, { initialValue: [] as Product[] });
 
-  // 4. Users (Real-time sync from collection 'users')
   private users$: Observable<User[]> = collectionData(collection(this.firestore, 'users'), { idField: 'id' }) as Observable<User[]>;
   users = toSignal(this.users$, { initialValue: [] as User[] });
 
-  // 5. Orders (Real-time sync from collection 'orders')
   private orders$: Observable<Order[]> = collectionData(collection(this.firestore, 'orders'), { idField: 'id' }) as Observable<Order[]>;
   orders = toSignal(this.orders$, { initialValue: [] as Order[] });
 
   // --- Local State ---
   currentUser = signal<User | null>(null);
-  
-  // Cart remains in LocalStorage
   cart = signal<CartItem[]>([]);
   cartTotal = computed(() => this.cart().reduce((sum, item) => sum + (item.price * item.quantity), 0));
   cartCount = computed(() => this.cart().reduce((count, item) => count + item.quantity, 0));
 
   constructor() {
-    // Initialize Cart from LocalStorage (Safe check for SSR/Build)
     if (typeof localStorage !== 'undefined') {
       const savedCart = localStorage.getItem('92mymy_cart');
       if (savedCart) this.cart.set(JSON.parse(savedCart));
 
-      // Check for persisted login session
       const savedUserId = localStorage.getItem('92mymy_uid');
       if (savedUserId) {
-         // Wait for users to be loaded then find the user
          getDocs(query(collection(this.firestore, 'users'), where('id', '==', savedUserId))).then(snap => {
            if (!snap.empty) {
              this.currentUser.set(snap.docs[0].data() as User);
@@ -202,7 +199,6 @@ export class StoreService {
       }
     }
 
-    // Persist Cart to LocalStorage whenever it changes
     effect(() => {
        const c = this.cart();
        if (typeof localStorage !== 'undefined') {
@@ -228,7 +224,6 @@ export class StoreService {
 
   // --- Product Actions ---
   async addProduct(p: Product) {
-    // We use setDoc with p.id to ensure the ID matches the doc ID
     await setDoc(doc(this.firestore, 'products', p.id), p);
   }
 
@@ -240,7 +235,6 @@ export class StoreService {
     await deleteDoc(doc(this.firestore, 'products', id));
   }
 
-  // --- ID Generation Logic (Reused but based on Signal state) ---
   generateProductCode(prefix: string): string {
     if (!prefix) prefix = 'Z';
     const now = new Date();
@@ -250,7 +244,6 @@ export class StoreService {
     const datePart = `${yy}${mm}${dd}`;
     
     const pattern = new RegExp(`^${prefix}${datePart}(\\d{3})$`);
-    
     let maxSeq = 0;
     this.products().forEach(p => {
        const match = p.code.match(pattern);
@@ -259,7 +252,6 @@ export class StoreService {
           if (seq > maxSeq) maxSeq = seq;
        }
     });
-
     const newSeq = String(maxSeq + 1).padStart(3, '0');
     return `${prefix}${datePart}${newSeq}`;
   }
@@ -268,7 +260,7 @@ export class StoreService {
     return this.generateProductCode('P');
   }
 
-  // --- Cart Actions (Local Only) ---
+  // --- Cart Actions ---
   addToCart(product: Product, option: string, quantity: number) {
     const user = this.currentUser();
     let finalPrice = product.priceGeneral;
@@ -314,10 +306,8 @@ export class StoreService {
 
     let final = Math.max(0, sub + shippingFee - discount - usedCredits);
     
-    // Generate Order ID
     const now = new Date();
     const datePrefix = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    // Use current orders length to estimate ID (Optimistic)
     const count = this.orders().filter(o => o.id.startsWith(datePrefix)).length;
     const orderId = `${datePrefix}${String(count + 1).padStart(4, '0')}`;
 
@@ -347,10 +337,8 @@ export class StoreService {
       createdAt: Date.now()
     };
 
-    // 1. Save Order to Firestore
     await setDoc(doc(this.firestore, 'orders', orderId), newOrder);
 
-    // 2. Update User (Spend & Credits)
     const updatedUser = { 
         ...user, 
         totalSpend: user.totalSpend + sub, 
@@ -358,7 +346,6 @@ export class StoreService {
     };
     await this.updateUser(updatedUser);
 
-    // 3. Update Stock (Transactional logic simplified here)
     checkoutItems.forEach(async (item) => {
        const p = this.products().find(prod => prod.id === item.productId);
        if (p) {
@@ -369,7 +356,6 @@ export class StoreService {
        }
     });
 
-    // 4. Clean Local Cart
     this.cart.update(current => current.filter(c => 
       !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)
     ));
@@ -390,12 +376,67 @@ export class StoreService {
     });
   }
 
-  // --- User/Auth Actions ---
+  // --- Auth Actions ---
+
+  async loginWithGoogle() {
+    try {
+      const provider = new GoogleAuthProvider();
+      const credential = await signInWithPopup(this.auth, provider);
+      const gUser = credential.user;
+
+      console.log('Google User:', gUser);
+
+      const existingUser = this.users().find(u => u.email === gUser.email);
+
+      if (existingUser) {
+        this.currentUser.set(existingUser);
+        localStorage.setItem('92mymy_uid', existingUser.id);
+        return existingUser;
+      } else {
+        const now = new Date();
+        const yy = String(now.getFullYear()).slice(-2);
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const datePart = `${yy}${mm}${dd}`;
+        const prefix = 'M';
+        
+        const pattern = new RegExp(`^${prefix}${datePart}(\\d{4})$`);
+        let maxSeq = 0;
+        this.users().forEach(u => {
+           const match = u.id.match(pattern);
+           if (match) {
+              const seq = parseInt(match[1], 10);
+              if (seq > maxSeq) maxSeq = seq;
+           }
+        });
+        const newSeq = String(maxSeq + 1).padStart(4, '0');
+        const id = `${prefix}${datePart}${newSeq}`;
+
+        const newUser: User = { 
+          id, 
+          email: gUser.email || '', 
+          name: gUser.displayName || '新會員', 
+          photoURL: gUser.photoURL || '',
+          totalSpend: 0, 
+          isAdmin: false, 
+          tier: 'general', 
+          credits: 0 
+        };
+        
+        await setDoc(doc(this.firestore, 'users', id), newUser);
+        this.currentUser.set(newUser);
+        localStorage.setItem('92mymy_uid', id);
+        
+        return newUser;
+      }
+    } catch (error) {
+      console.error('Google Login Error', error);
+      alert('登入失敗，請重試');
+      return null;
+    }
+  }
   
-  // Login: Simple query by phone number
   login(phone: string) {
-    // Note: Since 'users' is a signal synced with all users (admin view), we can find it locally.
-    // For a real large app, we should query Firestore. But for this specific logic requested:
     const u = this.users().find(user => user.phone === phone);
     if (u) {
        this.currentUser.set(u);
@@ -407,7 +448,6 @@ export class StoreService {
   }
 
   async register(phone: string, name: string) {
-    // ID Generation
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -430,15 +470,11 @@ export class StoreService {
 
     const newUser: User = { id, phone, name, totalSpend: 0, isAdmin: false, tier: 'general', credits: 0 };
     
-    // Save to Firestore
     await setDoc(doc(this.firestore, 'users', id), newUser);
-    
-    // Set Session
     this.currentUser.set(newUser);
     if (typeof localStorage !== 'undefined') {
        localStorage.setItem('92mymy_uid', id);
     }
-    
     return newUser;
   }
 
@@ -448,6 +484,7 @@ export class StoreService {
   }
 
   logout() { 
+     signOut(this.auth); 
      this.currentUser.set(null); 
      if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('92mymy_uid');
