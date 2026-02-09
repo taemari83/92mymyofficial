@@ -21,7 +21,7 @@ import {
   GoogleAuthProvider, 
   signOut 
 } from '@angular/fire/auth';
-import { map, switchMap, of, Observable, from } from 'rxjs';
+import { map, switchMap, of, Observable } from 'rxjs';
 
 // --- Interfaces ---
 export interface Product {
@@ -63,7 +63,7 @@ export interface CartItem {
 export interface User {
   id: string; 
   phone?: string; 
-  email?: string;
+  email?: string; 
   name: string;
   photoURL?: string;
   totalSpend: number;
@@ -149,7 +149,6 @@ export class StoreService {
 
   // --- Signals from Firestore ---
   
-  // Settings & Categories & Products (這些是公開資訊，維持全域讀取沒問題)
   private settings$: Observable<StoreSettings> = docData(doc(this.firestore, 'config/storeSettings')).pipe(
     map((data: any) => {
       if (!data) return this.defaultSettings;
@@ -179,35 +178,30 @@ export class StoreService {
   // --- Local State & Secure Data Fetching ---
   currentUser = signal<User | null>(null);
   
-  // 為了實現安全讀取，我們將 currentUser 轉為 Observable，當使用者變更時，重新決定要抓什麼資料
   private user$ = toObservable(this.currentUser);
 
-  // 🔥 [安全修正] Users: 只有當使用者是管理員 (isAdmin) 時，才去讀取所有會員資料
+  // Users: Admin 讀全部，一般人讀自己 (雖然通常一般人不需要讀 users collection，但為了保險)
   users = toSignal(
     this.user$.pipe(
       switchMap(u => {
         if (u?.isAdmin) {
-          // 是管理員 -> 讀取所有會員
           return collectionData(collection(this.firestore, 'users'), { idField: 'id' }) as Observable<User[]>;
         }
-        // 不是管理員 -> 回傳空陣列 (保護個資)
         return of([] as User[]);
       })
     ),
     { initialValue: [] as User[] }
   );
 
-  // 🔥 [安全修正] Orders: 管理員讀全部，一般會員只讀自己的
+  // Orders: Admin 讀全部，一般會員只讀自己的
   orders = toSignal(
     this.user$.pipe(
       switchMap(u => {
-        if (!u) return of([] as Order[]); // 未登入 -> 什麼都看不到
+        if (!u) return of([] as Order[]); 
         
         if (u.isAdmin) {
-          // 管理員 -> 讀取所有訂單
           return collectionData(collection(this.firestore, 'orders'), { idField: 'id' }) as Observable<Order[]>;
         } else {
-          // 一般會員 -> 只讀取 userId 等於自己的訂單
           const q = query(collection(this.firestore, 'orders'), where('userId', '==', u.id));
           return collectionData(q, { idField: 'id' }) as Observable<Order[]>;
         }
@@ -227,7 +221,6 @@ export class StoreService {
 
       const savedUserId = localStorage.getItem('92mymy_uid');
       if (savedUserId) {
-         // 這裡改用直接查詢單一文件，而不是依賴 users 陣列
          getDocs(query(collection(this.firestore, 'users'), where('id', '==', savedUserId))).then(snap => {
            if (!snap.empty) {
              this.currentUser.set(snap.docs[0].data() as User);
@@ -321,7 +314,8 @@ export class StoreService {
 
   clearCart() { this.cart.set([]); }
 
-  // --- Order Actions ---
+  // --- Order Actions (修改後：呼叫 Vercel API) ---
+  // 🔥 [安全升級] 前端不再直接寫入資料庫，而是把資料交給後端 API
   async createOrder(
     paymentInfo: any, 
     shippingInfo: any, 
@@ -332,84 +326,65 @@ export class StoreService {
     checkoutItems: CartItem[]
   ) {
     const user = this.currentUser();
-    if (!user) return null;
-
-    const sub = checkoutItems.reduce((s, i) => s + (i.price * i.quantity), 0);
-    
-    let discount = 0;
-    if (shippingMethod === 'myship' || shippingMethod === 'family') {
-      discount = 20;
+    if (!user) {
+      alert('請先登入會員');
+      return null;
     }
 
-    let final = Math.max(0, sub + shippingFee - discount - usedCredits);
-    
-    // 🔥 [安全修正] ID 生成改為查詢資料庫最後一筆，而不是依賴本地全訂單列表
-    const now = new Date();
-    const datePrefix = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    
-    // 查詢當天最後一筆訂單編號
-    const q = query(collection(this.firestore, 'orders'), where('id', '>=', datePrefix), where('id', '<', datePrefix + '9999'), orderBy('id', 'desc'), limit(1));
-    const snapshot = await getDocs(q);
-    
-    let seq = 1;
-    if (!snapshot.empty) {
-       const lastId = snapshot.docs[0].id;
-       const lastSeq = parseInt(lastId.slice(-4)); // 取最後4碼
-       if (!isNaN(lastSeq)) seq = lastSeq + 1;
-    }
-    
-    const orderId = `${datePrefix}${String(seq).padStart(4, '0')}`;
+    try {
+      console.log('正在呼叫後端建立訂單...');
 
-    const initialStatus: Order['status'] = paymentMethod === 'bank_transfer' 
-        ? (paymentInfo.last5 ? 'paid_verifying' : 'pending_payment') 
-        : (paymentMethod === 'cod' ? 'payment_confirmed' : 'pending_payment');
+      // 呼叫我們的 Vercel API
+      const response = await fetch('/api/createOrder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          items: checkoutItems,
+          shippingMethod,
+          shippingFee,
+          paymentMethod,
+          usedCredits,
+          paymentInfo,
+          shippingInfo
+        }),
+      });
 
-    const newOrder: Order = {
-      id: orderId,
-      userId: user.id,
-      items: [...checkoutItems],
-      subtotal: sub,
-      discount,
-      shippingFee,
-      usedCredits,
-      finalTotal: final,
-      paymentMethod,
-      paymentName: paymentInfo.name,
-      paymentTime: paymentInfo.time,
-      paymentLast5: paymentInfo.last5,
-      shippingMethod,
-      shippingName: shippingInfo.name,
-      shippingPhone: shippingInfo.phone,
-      shippingStore: shippingInfo.store,
-      shippingAddress: shippingInfo.address,
-      status: initialStatus,
-      createdAt: Date.now()
-    };
+      const result = await response.json();
 
-    await setDoc(doc(this.firestore, 'orders', orderId), newOrder);
+      if (!response.ok) {
+        throw new Error(result.error || '訂單建立失敗');
+      }
 
-    const updatedUser = { 
+      console.log('API 回傳成功:', result);
+
+      // 1. 扣除前端顯示的點數 (讓畫面即時更新，實際上後端資料庫已經扣了)
+      const updatedUser = { 
         ...user, 
-        totalSpend: user.totalSpend + sub, 
+        totalSpend: user.totalSpend + result.finalTotal, 
         credits: user.credits - usedCredits 
-    };
-    await this.updateUser(updatedUser);
+      };
+      this.currentUser.set(updatedUser);
 
-    checkoutItems.forEach(async (item) => {
-       const p = this.products().find(prod => prod.id === item.productId);
-       if (p) {
-          await updateDoc(doc(this.firestore, 'products', p.id), {
-             stock: p.stock - item.quantity,
-             soldCount: p.soldCount + item.quantity
-          });
-       }
-    });
+      // 2. 清除購物車中已結帳的商品
+      this.cart.update(current => current.filter(c => 
+        !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)
+      ));
 
-    this.cart.update(current => current.filter(c => 
-      !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)
-    ));
+      // 3. 回傳訂單物件讓前端跳轉
+      return { 
+          id: result.orderId, 
+          finalTotal: result.finalTotal,
+          status: 'pending_payment' 
+      } as Order;
 
-    return newOrder;
+    } catch (error: any) {
+      console.error('API Error:', error);
+      alert(`建立訂單失敗：${error.message}`);
+      return null;
+    }
   }
 
   async updateOrderStatus(id: string, status: Order['status'], extra: Partial<Order> = {}) {
@@ -433,9 +408,6 @@ export class StoreService {
       const credential = await signInWithPopup(this.auth, provider);
       const gUser = credential.user;
 
-      console.log('Google User:', gUser);
-
-      // 🔥 [安全修正] 改為直接查詢資料庫，而不是搜尋本地 users 陣列
       const q = query(collection(this.firestore, 'users'), where('email', '==', gUser.email), limit(1));
       const snapshot = await getDocs(q);
 
@@ -452,7 +424,6 @@ export class StoreService {
         const datePart = `${yy}${mm}${dd}`;
         const prefix = 'M';
         
-        // 🔥 [安全修正] ID 生成改為查詢資料庫
         const idQ = query(collection(this.firestore, 'users'), where('id', '>=', `${prefix}${datePart}`), where('id', '<', `${prefix}${datePart}9999`), orderBy('id', 'desc'), limit(1));
         const idSnap = await getDocs(idQ);
         
@@ -490,8 +461,7 @@ export class StoreService {
     }
   }
   
-  async login(phone: string) { // 🔥 [安全修正] 這裡改成 async
-    // 改為查詢資料庫
+  async login(phone: string) {
     const q = query(collection(this.firestore, 'users'), where('phone', '==', phone), limit(1));
     const snapshot = await getDocs(q);
     
@@ -514,7 +484,6 @@ export class StoreService {
     const datePart = `${yy}${mm}${dd}`;
     const prefix = 'M';
     
-    // 🔥 [安全修正] ID 生成改為查詢資料庫
     const idQ = query(collection(this.firestore, 'users'), where('id', '>=', `${prefix}${datePart}`), where('id', '<', `${prefix}${datePart}9999`), orderBy('id', 'desc'), limit(1));
     const idSnap = await getDocs(idQ);
     
