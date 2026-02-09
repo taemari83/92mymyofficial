@@ -84,7 +84,6 @@ import { StoreService } from '../services/store.service';
 export class MemberAreaComponent {
   storeService = inject(StoreService);
 
-  // 只保留 Google 登入
   async loginWithGoogle() {
     await this.storeService.loginWithGoogle();
   }
