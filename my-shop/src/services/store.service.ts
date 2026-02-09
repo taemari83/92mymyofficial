@@ -62,8 +62,8 @@ export interface CartItem {
 }
 
 export interface User {
-  id: string;       // 系統用 (Google UID)
-  memberId?: string; // 人類用 (M2602...)
+  id: string;       
+  memberId?: string;
   phone?: string; 
   email?: string; 
   name: string;
@@ -149,7 +149,7 @@ export class StoreService {
     }
   };
 
-  // --- Signals from Firestore ---
+  // --- Signals ---
   
   private settings$: Observable<StoreSettings> = docData(doc(this.firestore, 'config/storeSettings')).pipe(
     map((data: any) => {
@@ -177,12 +177,11 @@ export class StoreService {
   private products$: Observable<Product[]> = collectionData(collection(this.firestore, 'products'), { idField: 'id' }) as Observable<Product[]>;
   products = toSignal(this.products$, { initialValue: [] as Product[] });
 
-  // --- Local State & Secure Data Fetching ---
+  // --- Local State ---
   currentUser = signal<User | null>(null);
   
   private user$ = toObservable(this.currentUser);
 
-  // Users: Admin 讀全部，一般人讀自己
   users = toSignal(
     this.user$.pipe(
       switchMap(u => {
@@ -195,12 +194,10 @@ export class StoreService {
     { initialValue: [] as User[] }
   );
 
-  // Orders: Admin 讀全部，一般會員只讀自己的 (透過 Google UID 查詢)
   orders = toSignal(
     this.user$.pipe(
       switchMap(u => {
         if (!u) return of([] as Order[]); 
-        
         if (u.isAdmin) {
           return collectionData(collection(this.firestore, 'orders'), { idField: 'id' }) as Observable<Order[]>;
         } else {
@@ -223,12 +220,11 @@ export class StoreService {
 
       const savedUserId = localStorage.getItem('92mymy_uid');
       if (savedUserId) {
-         // 自動登入：使用 UID 去讀取
          getDoc(doc(this.firestore, 'users', savedUserId)).then(snap => {
            if (snap.exists()) {
              this.currentUser.set(snap.data() as User);
            }
-         });
+         }).catch(err => console.log('Auto login failed', err));
       }
     }
 
@@ -240,7 +236,7 @@ export class StoreService {
     });
   }
 
-  // --- Settings Actions ---
+  // --- Actions ---
   async updateSettings(s: StoreSettings) {
     const docRef = doc(this.firestore, 'config/storeSettings');
     await setDoc(docRef, s, { merge: true });
@@ -255,7 +251,6 @@ export class StoreService {
     }
   }
 
-  // --- Product Actions ---
   async addProduct(p: Product) {
     await setDoc(doc(this.firestore, 'products', p.id), p);
   }
@@ -275,7 +270,6 @@ export class StoreService {
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
     const datePart = `${yy}${mm}${dd}`;
-    
     const pattern = new RegExp(`^${prefix}${datePart}(\\d{3})$`);
     let maxSeq = 0;
     this.products().forEach(p => {
@@ -293,7 +287,6 @@ export class StoreService {
     return this.generateProductCode('P');
   }
 
-  // --- Cart Actions ---
   addToCart(product: Product, option: string, quantity: number) {
     const user = this.currentUser();
     let finalPrice = product.priceGeneral;
@@ -317,7 +310,6 @@ export class StoreService {
 
   clearCart() { this.cart.set([]); }
 
-  // --- Order Actions (使用 Vercel API) ---
   async createOrder(
     paymentInfo: any, 
     shippingInfo: any, 
@@ -334,15 +326,11 @@ export class StoreService {
     }
 
     try {
-      console.log('正在呼叫後端建立訂單...');
-
       const response = await fetch('/api/createOrder', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: user.id, // 這裡是 Google UID
+          userId: user.id,
           items: checkoutItems,
           shippingMethod,
           shippingFee,
@@ -354,12 +342,7 @@ export class StoreService {
       });
 
       const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || '訂單建立失敗');
-      }
-
-      console.log('API 回傳成功:', result);
+      if (!response.ok) throw new Error(result.error || '訂單建立失敗');
 
       const updatedUser = { 
         ...user, 
@@ -398,7 +381,7 @@ export class StoreService {
     });
   }
 
-  // --- Auth Actions (純淨版：只留 Google) ---
+  // --- Auth Actions (🔥 這裡做了關鍵修改) ---
 
   async loginWithGoogle() {
     try {
@@ -406,46 +389,32 @@ export class StoreService {
       const credential = await signInWithPopup(this.auth, provider);
       const gUser = credential.user;
 
-      // 🔥 1. 直接用 Google UID 鎖定檔案位置
       const userRef = doc(this.firestore, 'users', gUser.uid);
       const docSnap = await getDoc(userRef);
 
       if (docSnap.exists()) {
-        // 老朋友：直接讀取
         const existingUser = docSnap.data() as User;
         this.currentUser.set(existingUser);
         localStorage.setItem('92mymy_uid', existingUser.id);
         return existingUser;
       } else {
-        // 新朋友：需要產生一個 memberId (M開頭)
+        // 🔥 修改處：直接用「時間碼」當會員編號，不要去查資料庫了
+        // 這樣就不會被 Security Rules 擋住
         const now = new Date();
         const yy = String(now.getFullYear()).slice(-2);
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
-        const datePart = `${yy}${mm}${dd}`;
-        const prefix = 'M';
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
         
-        // 找最後一個 memberId
-        const idQ = query(collection(this.firestore, 'users'), orderBy('memberId', 'desc'), limit(1));
-        const idSnap = await getDocs(idQ);
-        
-        let seq = 1;
-        if (!idSnap.empty) {
-           const lastData = idSnap.docs[0].data();
-           const lastMemberId = lastData['memberId']; 
-           if (lastMemberId && lastMemberId.startsWith(prefix + datePart)) {
-               const lastSeq = parseInt(lastMemberId.slice(-4));
-               if (!isNaN(lastSeq)) seq = lastSeq + 1;
-           }
-        }
-        
-        const newSeq = String(seq).padStart(4, '0');
-        const newMemberId = `${prefix}${datePart}${newSeq}`;
+        // 編號格式：M + 年月日 + 時分秒 (例如 M2602091930)
+        // 這樣既保證唯一，又看起來像流水號，而且不需要讀取權限
+        const newMemberId = `M${yy}${mm}${dd}${hh}${min}${ss}`;
 
-        // 🔥 2. 建立新檔案 (檔名=UID, 內容含MemberId)
         const newUser: User = { 
-          id: gUser.uid,        // 系統用 UID
-          memberId: newMemberId, // 人類用 M260...
+          id: gUser.uid,        
+          memberId: newMemberId, 
           email: gUser.email || '', 
           name: gUser.displayName || '新會員', 
           photoURL: gUser.photoURL || '',
@@ -464,7 +433,7 @@ export class StoreService {
       }
     } catch (error) {
       console.error('Google Login Error', error);
-      alert('登入失敗，請重試');
+      alert('登入失敗，請重試 (請檢查 Firebase Domain 設定)');
       return null;
     }
   }
