@@ -1,5 +1,3 @@
-
-
 import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -13,7 +11,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
   template: `
     <div class="flex h-screen bg-[#FDFBF9] font-sans overflow-hidden">
       
-      <!-- Sidebar Navigation -->
       <aside class="w-20 md:w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 transition-all duration-300 z-20 shadow-lg md:shadow-none">
         <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start">
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
@@ -80,10 +77,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         </div>
       </aside>
 
-      <!-- Main Content Area -->
       <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#FDFBF9] p-4 md:p-8 w-full relative max-w-full">
         
-        <!-- Header Actions (Global) -->
         <div class="flex justify-between items-center mb-6">
            <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
            <div class="flex gap-2">
@@ -91,20 +86,16 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
            </div>
         </div>
 
-        <!-- 0. DASHBOARD -->
         @if (activeTab() === 'dashboard') {
           <div class="space-y-8 max-w-6xl overflow-x-hidden">
-            <!-- Key Stats Row -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               
-              <!-- Today's Revenue -->
               <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group">
                  <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
                  <div class="relative z-10">
                    <div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2">
                      <span>📅 今日營業額</span>
                    </div>
-                   <!-- Removed truncate, added break-words and adjusted mobile font size -->
                    <div class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().todayRevenue | number)">
                      NT$ {{ dashboardMetrics().todayRevenue | number }}
                    </div>
@@ -114,10 +105,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  </div>
               </div>
 
-              <!-- Monthly Sales -->
               <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center">
                  <div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">本月銷售總額</div>
-                 <!-- Removed truncate, added break-words -->
                  <div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">
                    NT$ {{ dashboardMetrics().monthSales | number }}
                  </div>
@@ -126,10 +115,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  </div>
               </div>
 
-              <!-- Monthly Profit -->
               <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center">
                  <div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2">本月預估利潤</div>
-                 <!-- Removed truncate, added break-words -->
                  <div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-[#2D5B46] break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthProfit | number)">
                    NT$ {{ dashboardMetrics().monthProfit | number:'1.0-0' }}
                  </div>
@@ -139,9 +126,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </div>
             </div>
 
-            <!-- Order Status Overview -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2">
-              <!-- To Confirm -->
               <div (click)="goToOrders('verifying')" class="bg-white p-6 rounded-[1.5rem] border border-yellow-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]">
                 <div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl mb-1 group-hover:bg-yellow-200">📝</div>
                 <div class="text-2xl md:text-3xl font-black text-yellow-600">{{ dashboardMetrics().toConfirm }}</div>
@@ -149,14 +134,12 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 <div class="text-[10px] text-yellow-500 whitespace-nowrap">已填單，待確認</div>
               </div>
 
-              <!-- To Ship -->
               <div (click)="goToOrders('paid')" class="bg-white p-6 rounded-[1.5rem] border border-green-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]">
                 <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mb-1 group-hover:bg-green-200">💰</div>
                 <div class="text-2xl md:text-3xl font-black text-green-600">{{ dashboardMetrics().toShip }}</div>
                 <div class="text-sm font-bold text-green-800 whitespace-nowrap">已付款/待出貨</div>
               </div>
 
-              <!-- Unpaid -->
               <div (click)="goToOrders('unpaid')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]">
                 <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div>
                 <div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div>
@@ -164,7 +147,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 <div class="text-[10px] text-gray-400 whitespace-nowrap">尚未填寫匯款資訊</div>
               </div>
 
-              <!-- Processing / Actionable -->
               <div (click)="goToOrders('refund')" class="bg-white p-6 rounded-[1.5rem] border border-red-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-red-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]">
                 <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl mb-1 group-hover:bg-red-200">⚡️</div>
                 <div class="text-2xl md:text-3xl font-black text-red-500">{{ dashboardMetrics().processing }}</div>
@@ -173,10 +155,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </div>
             </div>
 
-            <!-- Ranking & Quick Actions -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
-              <!-- Left: Top Products Ranking -->
               <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-50">
                  <div class="flex items-center justify-between mb-6">
                     <h3 class="font-bold text-xl text-gray-800 whitespace-nowrap">🔥 熱銷商品排行</h3>
@@ -186,7 +166,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  <div class="space-y-4">
                    @for (p of topProducts(); track p.id; let i = $index) {
                      <div class="flex items-center gap-4 p-3 hover:bg-brand-50/50 rounded-2xl transition-colors group">
-                        <!-- Rank -->
                         <div class="w-10 flex-shrink-0 flex items-center justify-center">
                            @if(i === 0) { <span class="text-3xl">🥇</span> }
                            @else if(i === 1) { <span class="text-3xl">🥈</span> }
@@ -194,13 +173,11 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                            @else { <span class="text-xl font-bold text-gray-300 font-mono italic">#{{ i + 1 }}</span> }
                         </div>
                         
-                        <!-- Image -->
                         <div class="w-14 h-14 rounded-xl bg-gray-100 overflow-hidden shadow-sm border border-gray-100 relative shrink-0">
                           <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover">
                           <div class="absolute bottom-0 right-0 bg-black/50 text-white text-[10px] px-1 font-mono">{{ p.code }}</div>
                         </div>
 
-                        <!-- Details -->
                         <div class="flex-1 min-w-0">
                           <h4 class="font-bold text-gray-800 truncate group-hover:text-brand-900">{{ p.name }}</h4>
                           <div class="flex gap-2 text-xs mt-0.5">
@@ -211,7 +188,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                           </div>
                         </div>
 
-                        <!-- Stats -->
                         <div class="text-right shrink-0">
                           <div class="font-bold text-brand-900 text-lg">{{ p.soldCount }} <span class="text-xs text-gray-400 font-normal">已售</span></div>
                           <div class="text-xs text-gray-400">總銷額 NT$ {{ p.priceGeneral * p.soldCount | number }}</div>
@@ -225,7 +201,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  </div>
               </div>
 
-              <!-- Right: Quick Actions -->
               <div class="space-y-6">
                 <h3 class="text-lg font-bold text-gray-700 px-2">快捷操作</h3>
                 <div class="grid grid-cols-2 gap-4">
@@ -255,11 +230,9 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
           </div>
         }
 
-        <!-- 1. ORDER MANAGEMENT -->
         @if (activeTab() === 'orders') {
           <div class="space-y-6">
             <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-x-auto">
-               <!-- Time Filter -->
                <div class="flex gap-1 mb-6 border-b border-gray-100 pb-4 overflow-x-auto">
                  @for(range of ['今日', '本週', '本月', '全部']; track range) {
                    <button 
@@ -275,7 +248,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  <span class="ml-auto text-xs text-gray-400 flex items-center whitespace-nowrap pl-4">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                </div>
                
-               <!-- ... Stats cards for orders ... -->
                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 divide-x divide-gray-100">
                   <div class="pl-3 md:pl-4 min-w-[100px] md:min-w-[120px]">
                     <div class="text-gray-500 text-xs font-bold mb-1">訂單數</div>
@@ -283,7 +255,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   </div>
                   <div class="pl-3 md:pl-8 min-w-[100px] md:min-w-[120px]">
                     <div class="text-gray-500 text-xs font-bold mb-1">待收款</div>
-                    <!-- Used text-lg base for mobile to prevent overflow in tight columns, and removed truncate -->
                     <div class="text-lg md:text-3xl font-bold text-brand-600 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardStats().pendingRevenue | number)">
                       NT$ {{ dashboardStats().pendingRevenue | number }}
                     </div>
@@ -299,7 +270,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                </div>
             </div>
             
-            <!-- Filters & Table -->
             <div class="flex flex-col xl:flex-row gap-4 justify-between items-center">
                <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto items-start sm:items-center">
                  <div class="relative w-full sm:w-auto sm:flex-1 xl:w-80">
@@ -326,7 +296,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                </div>
             </div>
 
-            <!-- Table -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full flex flex-col">
                <div class="overflow-x-auto w-full">
                  <table class="w-full text-sm text-left min-w-[1000px] whitespace-nowrap">
@@ -397,7 +366,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                    </tbody>
                  </table>
                </div>
-               <!-- Footer Paging -->
                @if(orderPageSize() !== 'all' && filteredOrders().length > 0) {
                   <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
                      <div class="text-xs text-gray-500">顯示 {{ (orderPage() - 1) * toNumber(orderPageSize()) + 1 }} - {{ getEndIndex(orderPage(), orderPageSize(), filteredOrders().length) }} 筆</div>
@@ -412,7 +380,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
           </div>
         }
 
-        <!-- 2-7. OTHER TABS (Keeping all logic, just updating accountingStats implementation below) -->
         @if (activeTab() === 'products') { 
           <div class="max-w-5xl space-y-6"> 
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4"> 
@@ -437,7 +404,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         
         @if (activeTab() === 'customers') { 
           <div class="space-y-6">
-             <!-- Header & Search -->
              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                    <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">客戶管理</h3>
@@ -454,7 +420,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 </div>
              </div>
 
-             <!-- Table -->
              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden">
                 <div class="overflow-x-auto">
                   <table class="w-full text-sm text-left whitespace-nowrap">
@@ -491,7 +456,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                      </tbody>
                   </table>
                 </div>
-                <!-- Pagination -->
                 @if(customerPageSize() !== 'all' && filteredUsers().length > toNumber(customerPageSize())) {
                    <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2">
                       <button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">上一頁</button>
@@ -505,7 +469,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (activeTab() === 'accounting') {
            <div class="max-w-5xl mx-auto space-y-6 pt-2">
-            <!-- Range Selector -->
             <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1">
                   @for(r of ['today', 'week', 'month', 'custom']; track r) {
@@ -541,9 +504,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                </div>
             </div>
 
-            <!-- Stats Cards Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               <!-- Revenue -->
                <div class="bg-brand-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden group">
                   <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div>
                   <div class="relative z-10">
@@ -551,7 +512,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     <div class="text-3xl font-black">NT$ {{ accountingStats().revenue | number }}</div>
                   </div>
                </div>
-               <!-- Profit -->
                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden">
                   <div class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">淨利潤</div>
                   <div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().profit | number:'1.0-0' }}</div>
@@ -559,12 +519,10 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                      淨利率 {{ accountingStats().margin | number:'1.1-1' }}%
                   </div>
                </div>
-               <!-- Cost -->
                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden">
                   <div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">總成本 (商品+物流)</div>
                   <div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().cost | number:'1.0-0' }}</div>
                </div>
-               <!-- Helper Text -->
                <div class="lg:col-span-3 bg-blue-50/50 p-4 rounded-[2rem] border border-blue-50 flex items-center text-blue-800/70 text-xs leading-relaxed">
                   💡 報表說明：<br>
                   • 上方「總營收/淨利」僅計算已成交訂單 (排除未付款、取消)。<br>
@@ -573,7 +531,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                </div>
             </div>
 
-            <!-- Payment Status Section -->
             <div class="mt-4">
               <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <span>💰 收款狀態分析</span>
@@ -581,42 +538,36 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </h4>
               
               <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                 <!-- Total Expected -->
                  <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
                     <div class="text-xs text-gray-500 font-bold mb-1 uppercase">應收總額</div>
                     <div class="text-lg font-black text-gray-800 whitespace-nowrap">\${{ accountingStats().payment.total | number }}</div>
                     <div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🧾</div>
                  </div>
 
-                 <!-- Received -->
                  <div class="bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm relative overflow-hidden">
                     <div class="text-xs text-green-600 font-bold mb-1 uppercase">已實收 (入帳)</div>
                     <div class="text-lg font-black text-green-700 whitespace-nowrap">\${{ accountingStats().payment.received | number }}</div>
                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">💰</div>
                  </div>
 
-                 <!-- Verifying -->
                  <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm relative overflow-hidden">
                     <div class="text-xs text-yellow-600 font-bold mb-1 uppercase">對帳中</div>
                     <div class="text-lg font-black text-yellow-700 whitespace-nowrap">\${{ accountingStats().payment.verifying | number }}</div>
                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">🔍</div>
                  </div>
 
-                 <!-- Unpaid -->
                  <div class="bg-red-50 p-4 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden">
                     <div class="text-xs text-red-600 font-bold mb-1 uppercase">未收款</div>
                     <div class="text-lg font-black text-red-700 whitespace-nowrap">\${{ accountingStats().payment.unpaid | number }}</div>
                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">⚠️</div>
                  </div>
 
-                 <!-- Refund Needed -->
                  <div class="bg-gray-100 p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden opacity-75">
                     <div class="text-xs text-gray-500 font-bold mb-1 uppercase">待退款</div>
                     <div class="text-lg font-black text-gray-600 whitespace-nowrap">\${{ accountingStats().payment.refund | number }}</div>
                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">↩️</div>
                  </div>
 
-                 <!-- Refunded (NEW) -->
                  <div class="bg-gray-800 text-white p-4 rounded-2xl border border-gray-700 shadow-sm relative overflow-hidden">
                     <div class="text-xs text-gray-400 font-bold mb-1 uppercase">已退款 (結案)</div>
                     <div class="text-lg font-black text-white whitespace-nowrap">\${{ accountingStats().payment.refundedTotal | number }}</div>
@@ -625,9 +576,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </div>
             </div>
 
-            <!-- Product Margin Analysis -->
             <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-               <!-- ... Table Content ... -->
                <div class="p-6 border-b border-gray-100 bg-gray-50/50">
                   <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📈 商品毛利分析排行</span></h4>
                </div>
@@ -705,7 +654,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               
               <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="space-y-10"> 
                 
-                <!-- 1. Payment Methods -->
                 <div class="space-y-4">
                    <h4 class="font-bold text-gray-600 flex items-center gap-2">
                       <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg text-lg">💳</span>
@@ -727,7 +675,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                    </div>
                 </div>
 
-                <!-- 2. Logistics Config -->
                 <div class="space-y-6" formGroupName="shipping">
                    <div class="flex justify-between items-end">
                       <h4 class="font-bold text-gray-600 flex items-center gap-2">
@@ -741,7 +688,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                    </div>
                    
                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" formGroupName="methods">
-                      <!-- Meetup -->
                       <div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="meetup">
                          <div class="flex justify-between items-center">
                             <label class="flex items-center gap-2 font-bold text-gray-700">
@@ -750,7 +696,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                             <input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費">
                          </div>
                       </div>
-                      <!-- Myship (7-11) -->
                       <div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="myship">
                          <div class="flex justify-between items-center">
                             <label class="flex items-center gap-2 font-bold text-gray-700">
@@ -759,7 +704,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                             <input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費">
                          </div>
                       </div>
-                      <!-- Family -->
                       <div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="family">
                          <div class="flex justify-between items-center">
                             <label class="flex items-center gap-2 font-bold text-gray-700">
@@ -768,7 +712,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                             <input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費">
                          </div>
                       </div>
-                      <!-- Delivery -->
                       <div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="delivery">
                          <div class="flex justify-between items-center">
                             <label class="flex items-center gap-2 font-bold text-gray-700">
@@ -780,7 +723,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                    </div>
                 </div>
 
-                <!-- 3. Membership Rewards -->
                 <div class="space-y-4">
                    <h4 class="font-bold text-gray-600 flex items-center gap-2">
                       <span class="bg-yellow-100 text-yellow-600 p-1.5 rounded-lg text-lg">🎁</span>
@@ -798,7 +740,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                    </div>
                 </div>
 
-                <!-- 4. Category Codes -->
                 <div class="space-y-4"> 
                   <h4 class="font-bold text-gray-600 flex items-center gap-2">
                      <span class="bg-purple-100 text-purple-600 p-1.5 rounded-lg text-lg">🏷️</span>
@@ -825,8 +766,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
           </div> 
         }
 
-        <!-- ... Modals (Product, Order Action) ... -->
-        @if (showProductModal()) { <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeProductModal()"> <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> <div class="p-6 border-b border-gray-100 flex justify-between items-center"> <h3 class="text-xl font-bold text-brand-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3> <button (click)="closeProductModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button> </div> <div class="p-6 overflow-y-auto flex-1"> <form [formGroup]="productForm" class="space-y-4"> <!-- Product Form Fields --> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label> <input formControlName="name" class="w-full p-2 border rounded-lg"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">分類</label> <div class="flex gap-2"> <div class="relative flex-1"> <input formControlName="category" (change)="onCategoryChange()" class="w-full p-2 border rounded-lg" list="catList" placeholder="選擇或輸入分類..."> <datalist id="catList"> @for(c of store.categories(); track c) { <option [value]="c"> } </datalist> </div> <div class="w-20"> <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-2 border rounded-lg text-center font-mono font-bold uppercase bg-gray-50" placeholder="代碼" maxlength="1" title="分類代碼 (例如 A)"> </div> </div> <p class="text-[10px] text-gray-400 mt-1">💡 右側為該分類的編號代碼 (A-Z)，將用於自動生成貨號。</p> </div> </div>  <!-- Cost Analysis Section --> <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4"> <h4 class="font-bold text-gray-700 text-sm border-b border-gray-200 pb-2">💰 成本結構與獲利分析</h4> <div class="grid grid-cols-2 md:grid-cols-4 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">當地幣原價 (Local)</label> <input type="number" formControlName="localPrice" class="w-full p-2 border rounded-lg bg-white"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">匯率 (Rate)</label> <input type="number" formControlName="exchangeRate" step="0.001" class="w-full p-2 border rounded-lg bg-white"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">重量 kg</label> <input type="number" formControlName="weight" step="0.1" class="w-full p-2 border rounded-lg bg-white"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">國際運費/kg</label> <input type="number" formControlName="shippingCostPerKg" class="w-full p-2 border rounded-lg bg-white"> </div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本 (包材/加工)</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> <!-- Calculated Display --> <div class="flex flex-col justify-end"> <div class="text-xs text-gray-500 mb-1">預估總成本 (NT$)</div> <div class="text-xl font-bold text-gray-800 bg-white px-3 py-1.5 rounded border border-gray-200"> {{ estimatedCost() | number:'1.0-0' }} </div> </div> </div> <!-- Profit Analysis --> <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> <div class="text-xs text-gray-500"> 定價: <span class="font-bold text-gray-800">\${{ formValues().priceGeneral }}</span> </div> <div class="text-right"> <div class="text-xs text-gray-400">預估毛利 / 毛利率</div> <div class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> \${{ estimatedProfit() | number:'1.0-0' }} <span class="text-xs ml-1 bg-gray-100 px-1 rounded text-gray-600"> {{ estimatedMargin() | number:'1.1-1' }}% </span> </div> </div> </div> </div> <!-- Price Section --> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">售價 (NT$)</label> <input type="number" formControlName="priceGeneral" class="w-full p-2 border rounded-lg"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-2 border rounded-lg"> </div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> <input type="number" formControlName="stock" class="w-full p-2 border rounded-lg"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (用逗號分隔)</label> <input formControlName="optionsStr" class="w-full p-2 border rounded-lg" placeholder="例如: 紅色, 藍色, 綠色"> </div> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動生成: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-2 border rounded-lg font-mono bg-gray-50 text-gray-500"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-2">商品圖片 (第一張為主圖)</label> <!-- Image List --> <div class="flex flex-wrap gap-2 mb-3"> @for(img of tempImages(); track $index) { <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50"> <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover"> <button (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/50 hover:bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button> @if($index === 0) { <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold">主圖</div> } </div> } </div> <!-- Inputs --> <div class="flex flex-col gap-2 p-4 bg-gray-50 rounded-xl border border-gray-200"> <div class="flex gap-2"> <input #urlInput type="text" placeholder="請貼上「圖片連結」 (以 .jpg .png 結尾)" class="flex-1 p-2 text-sm border rounded-lg"> <button (click)="addImageUrl(urlInput.value); urlInput.value=''" class="px-3 py-2 bg-gray-200 rounded-lg text-xs font-bold hover:bg-gray-300 whitespace-nowrap">加入網址</button> </div> <div class="flex items-center gap-2 flex-wrap mt-2"> <span class="text-xs font-bold text-gray-400">或</span> <label class="cursor-pointer px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 flex items-center gap-1 whitespace-nowrap"> <span>📂 選擇電腦檔案</span> <input type="file" multiple accept="image/*" class="hidden" (change)="handleFileSelect($event)"> </label> <span class="text-xs font-bold text-gray-400">或</span> <a href="https://www.flickr.com/photos/upload" target="_blank" class="px-3 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 whitespace-nowrap" title="前往 Flickr 上傳"> <span>☁️ Flickr 上傳</span> </a> <a href="https://imgur.com/upload" target="_blank" class="px-3 py-2 bg-green-50 text-green-600 border border-green-100 rounded-lg text-xs font-bold hover:bg-green-100 flex items-center gap-1 whitespace-nowrap" title="前往 Imgur 上傳 (備用)"> <span>🖼️ Imgur 上傳 (備用)</span> </a> </div> <div class="mt-2 p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-800 leading-relaxed"> <div class="font-bold text-sm mb-1">📸 Flickr 圖片連結取得教學 (破解右鍵鎖定)：</div> <ol class="list-decimal pl-4 space-y-1"> <li>在 Flickr 照片頁面，點擊右下角的 <b class="bg-white px-1 rounded border">⬇️ 下載符號</b>。</li> <li>在跳出的尺寸選單中 (例如: Large / Original)，<b class="text-red-500">按滑鼠右鍵</b>。</li> <li>選擇 <b class="text-red-500">「複製連結網址」</b> (Copy Link Address)。</li> <li>回到這裡貼上網址即可。</li> </ol> </div> </div> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註</label> <textarea formControlName="note" class="w-full p-2 border rounded-lg" rows="3"></textarea> </div> </form> </div> <div class="p-6 border-t border-gray-100 flex justify-end gap-3"> <button (click)="closeProductModal()" class="px-6 py-2 rounded-xl border border-gray-200 font-bold text-gray-500">取消</button> <button (click)="submitProduct()" class="px-6 py-2 rounded-xl bg-brand-900 text-white font-bold hover:bg-black">確認儲存</button> </div> </div> </div> }
+        @if (showProductModal()) { <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeProductModal()"> <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> <div class="p-6 border-b border-gray-100 flex justify-between items-center"> <h3 class="text-xl font-bold text-brand-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3> <button (click)="closeProductModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button> </div> <div class="p-6 overflow-y-auto flex-1"> <form [formGroup]="productForm" class="space-y-4"> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label> <input formControlName="name" class="w-full p-2 border rounded-lg"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">分類</label> <div class="flex gap-2"> <div class="relative flex-1"> <input formControlName="category" (change)="onCategoryChange()" class="w-full p-2 border rounded-lg" list="catList" placeholder="選擇或輸入分類..."> <datalist id="catList"> @for(c of store.categories(); track c) { <option [value]="c"> } </datalist> </div> <div class="w-20"> <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-2 border rounded-lg text-center font-mono font-bold uppercase bg-gray-50" placeholder="代碼" maxlength="1" title="分類代碼 (例如 A)"> </div> </div> <p class="text-[10px] text-gray-400 mt-1">💡 右側為該分類的編號代碼 (A-Z)，將用於自動生成貨號。</p> </div> </div>  <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4"> <h4 class="font-bold text-gray-700 text-sm border-b border-gray-200 pb-2">💰 成本結構與獲利分析</h4> <div class="grid grid-cols-2 md:grid-cols-4 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">當地幣原價 (Local)</label> <input type="number" formControlName="localPrice" class="w-full p-2 border rounded-lg bg-white"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">匯率 (Rate)</label> <input type="number" formControlName="exchangeRate" step="0.001" class="w-full p-2 border rounded-lg bg-white"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">重量 kg</label> <input type="number" formControlName="weight" step="0.1" class="w-full p-2 border rounded-lg bg-white"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">國際運費/kg</label> <input type="number" formControlName="shippingCostPerKg" class="w-full p-2 border rounded-lg bg-white"> </div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本 (包材/加工)</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> <div class="flex flex-col justify-end"> <div class="text-xs text-gray-500 mb-1">預估總成本 (NT$)</div> <div class="text-xl font-bold text-gray-800 bg-white px-3 py-1.5 rounded border border-gray-200"> {{ estimatedCost() | number:'1.0-0' }} </div> </div> </div> <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> <div class="text-xs text-gray-500"> 定價: <span class="font-bold text-gray-800">\${{ formValues().priceGeneral }}</span> </div> <div class="text-right"> <div class="text-xs text-gray-400">預估毛利 / 毛利率</div> <div class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> \${{ estimatedProfit() | number:'1.0-0' }} <span class="text-xs ml-1 bg-gray-100 px-1 rounded text-gray-600"> {{ estimatedMargin() | number:'1.1-1' }}% </span> </div> </div> </div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">售價 (NT$)</label> <input type="number" formControlName="priceGeneral" class="w-full p-2 border rounded-lg"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-2 border rounded-lg"> </div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> <input type="number" formControlName="stock" class="w-full p-2 border rounded-lg"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (用逗號分隔)</label> <input formControlName="optionsStr" class="w-full p-2 border rounded-lg" placeholder="例如: 紅色, 藍色, 綠色"> </div> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動生成: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-2 border rounded-lg font-mono bg-gray-50 text-gray-500"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-2">商品圖片 (第一張為主圖)</label> <div class="flex flex-wrap gap-2 mb-3"> @for(img of tempImages(); track $index) { <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50"> <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover"> <button (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/50 hover:bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button> @if($index === 0) { <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold">主圖</div> } </div> } </div> <div class="flex flex-col gap-2 p-4 bg-gray-50 rounded-xl border border-gray-200"> <div class="flex gap-2"> <input #urlInput type="text" placeholder="請貼上「圖片連結」 (以 .jpg .png 結尾)" class="flex-1 p-2 text-sm border rounded-lg"> <button (click)="addImageUrl(urlInput.value); urlInput.value=''" class="px-3 py-2 bg-gray-200 rounded-lg text-xs font-bold hover:bg-gray-300 whitespace-nowrap">加入網址</button> </div> <div class="flex items-center gap-2 flex-wrap mt-2"> <span class="text-xs font-bold text-gray-400">或</span> <label class="cursor-pointer px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 flex items-center gap-1 whitespace-nowrap"> <span>📂 選擇電腦檔案</span> <input type="file" multiple accept="image/*" class="hidden" (change)="handleFileSelect($event)"> </label> <span class="text-xs font-bold text-gray-400">或</span> <a href="https://www.flickr.com/photos/upload" target="_blank" class="px-3 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 whitespace-nowrap" title="前往 Flickr 上傳"> <span>☁️ Flickr 上傳</span> </a> <a href="https://imgur.com/upload" target="_blank" class="px-3 py-2 bg-green-50 text-green-600 border border-green-100 rounded-lg text-xs font-bold hover:bg-green-100 flex items-center gap-1 whitespace-nowrap" title="前往 Imgur 上傳 (備用)"> <span>🖼️ Imgur 上傳 (備用)</span> </a> </div> <div class="mt-2 p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-800 leading-relaxed"> <div class="font-bold text-sm mb-1">📸 Flickr 圖片連結取得教學 (破解右鍵鎖定)：</div> <ol class="list-decimal pl-4 space-y-1"> <li>在 Flickr 照片頁面，點擊右下角的 <b class="bg-white px-1 rounded border">⬇️ 下載符號</b>。</li> <li>在跳出的尺寸選單中 (例如: Large / Original)，<b class="text-red-500">按滑鼠右鍵</b>。</li> <li>選擇 <b class="text-red-500">「複製連結網址」</b> (Copy Link Address)。</li> <li>回到這裡貼上網址即可。</li> </ol> </div> </div> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註</label> <textarea formControlName="note" class="w-full p-2 border rounded-lg" rows="3"></textarea> </div> </form> </div> <div class="p-6 border-t border-gray-100 flex justify-end gap-3"> <button (click)="closeProductModal()" class="px-6 py-2 rounded-xl border border-gray-200 font-bold text-gray-500">取消</button> <button (click)="submitProduct()" class="px-6 py-2 rounded-xl bg-brand-900 text-white font-bold hover:bg-black">確認儲存</button> </div> </div> </div> }
 
         @if (showUserModal()) { <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeUserModal()"> <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> <div class="p-6 border-b border-gray-100 flex justify-between items-center"> <h3 class="text-xl font-bold text-brand-900">編輯會員資料</h3> <button (click)="closeUserModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button> </div> <div class="p-6 overflow-y-auto flex-1"> <form [formGroup]="userForm" class="space-y-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">會員 ID (無法修改)</label> <div class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono font-bold text-gray-600">{{ editingUser()?.id }}</div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">姓名</label> <input formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">電話</label> <input formControlName="phone" class="w-full p-3 border border-gray-200 rounded-xl"> </div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">生日</label> <input type="date" formControlName="birthday" class="w-full p-3 border border-gray-200 rounded-xl"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">會員等級</label> <select formControlName="tier" class="w-full p-3 border border-gray-200 rounded-xl bg-white"> <option value="general">一般會員</option> <option value="vip">VIP 會員</option> <option value="wholesale">批發會員</option> </select> </div> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">購物金餘額 ($)</label> <input type="number" formControlName="credits" class="w-full p-3 border border-gray-200 rounded-xl"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">管理員備註</label> <textarea formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl" rows="3"></textarea> </div> </form> </div> <div class="p-6 border-t border-gray-100 flex justify-end gap-3"> <button (click)="closeUserModal()" class="px-6 py-2 rounded-xl border border-gray-200 font-bold text-gray-500">取消</button> <button (click)="saveUser()" class="px-6 py-2 rounded-xl bg-brand-900 text-white font-bold hover:bg-black">確認儲存</button> </div> </div> </div> }
 
@@ -998,7 +938,7 @@ export class AdminPanelComponent {
      const q = this.customerSearch().toLowerCase();
      const bm = this.birthMonthFilter();
 
-     if (q) list = list.filter((u: User) => u.name.toLowerCase().includes(q) || u.phone.includes(q));
+     if (q) list = list.filter((u: User) => u.name.toLowerCase().includes(q) || (u.phone || '').includes(q)); // 這裡修正了
      if (bm !== 'all') {
         list = list.filter((u: User) => {
            if (!u.birthday) return false;
