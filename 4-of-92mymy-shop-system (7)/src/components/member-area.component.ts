@@ -69,13 +69,14 @@ import { StoreService, Order } from '../services/store.service';
             <h2 class="text-xl font-bold">{{ user.name }}</h2>
             <div class="flex items-center gap-2 text-sm text-gray-500">
                <span class="px-2 py-0.5 bg-gray-100 rounded text-xs">{{ user.tier === 'vip' ? 'VIP 會員' : '一般會員' }}</span>
-               <span>購物金: ${{ user.credits }}</span>
+               <span>購物金: \${{ user.credits }}</span>
             </div>
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3 mb-6">
-           <button class="bg-white p-4 rounded-xl shadow-sm text-center active:scale-95 transition-transform" (click)="startEditing()">
+           <button class="bg-white p-4 rounded-xl shadow-sm text-center active:scale-95 transition-transform"
+             (click)="startEditing()">
               <div class="text-2xl mb-1">📝</div>
               <div class="text-sm font-bold text-gray-600">修改資料</div>
            </button>
@@ -180,7 +181,7 @@ import { StoreService, Order } from '../services/store.service';
                        <button class="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-500 hover:bg-gray-50 transition-colors" (click)="copyOrderInfo(o.id)">
                           複製訂單資料
                        </button>
-                       <a href="https://line.me/ti/p/~&#64;289wxmsb" target="_blank" class="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-500 text-center hover:bg-gray-50 transition-colors">
+                       <a href="https://line.me/ti/p/~@289wxmsb" target="_blank" class="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-500 text-center hover:bg-gray-50 transition-colors">
                           聯絡客服
                        </a>
                     </div>
@@ -228,20 +229,26 @@ export class MemberAreaComponent {
   phoneInput = '';
   nameInput = '';
 
+  // 編輯個人資料
   isEditingProfile = signal(false);
   editName = '';
   editPhone = '';
   editBirthday = '';
 
+  // 回報匯款 Modal
   reportModalOrder = signal<Order | null>(null);
   reportName = '';
   reportTime = '';
   reportLast5 = '';
 
+  // --- Methods ---
+
+  // 1. Google 登入 (新功能)
   async handleGoogleLogin() {
     await this.storeService.loginWithGoogle();
   }
 
+  // 2. 手機登入 (舊功能)
   checkPhone() {
     if (!this.phoneInput) return;
     const user = this.storeService.login(this.phoneInput);
@@ -256,6 +263,7 @@ export class MemberAreaComponent {
     this.mode.set('check_phone');
   }
 
+  // 編輯個人資料邏輯
   startEditing() {
     const u = this.storeService.currentUser();
     if (u) {
@@ -279,6 +287,7 @@ export class MemberAreaComponent {
     }
   }
 
+  // 訂單邏輯
   myOrders = computed(() => {
      const uid = this.storeService.currentUser()?.id;
      return this.storeService.orders()
@@ -294,6 +303,7 @@ export class MemberAreaComponent {
      navigator.clipboard.writeText(id).then(() => alert('已複製訂單編號'));
   }
 
+  // 回報匯款邏輯
   openPaymentModal(order: Order) {
      this.reportModalOrder.set(order);
      this.reportName = order.paymentName || '';
@@ -317,6 +327,7 @@ export class MemberAreaComponent {
      }
   }
 
+  // UI Helpers
   getStatusLabel(status: string) {
      const map: any = {
        'pending_payment': '待付款',
