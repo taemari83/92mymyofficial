@@ -12,6 +12,7 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   orderBy,
   limit
 } from '@angular/fire/firestore';
@@ -61,7 +62,8 @@ export interface CartItem {
 }
 
 export interface User {
-  id: string; 
+  id: string;       // 系統用 (Google UID)
+  memberId?: string; // 人類用 (M2602...)
   phone?: string; 
   email?: string; 
   name: string;
@@ -180,7 +182,7 @@ export class StoreService {
   
   private user$ = toObservable(this.currentUser);
 
-  // Users: Admin 讀全部，一般人讀自己 (雖然通常一般人不需要讀 users collection，但為了保險)
+  // Users: Admin 讀全部，一般人讀自己
   users = toSignal(
     this.user$.pipe(
       switchMap(u => {
@@ -193,7 +195,7 @@ export class StoreService {
     { initialValue: [] as User[] }
   );
 
-  // Orders: Admin 讀全部，一般會員只讀自己的
+  // Orders: Admin 讀全部，一般會員只讀自己的 (透過 Google UID 查詢)
   orders = toSignal(
     this.user$.pipe(
       switchMap(u => {
@@ -221,9 +223,10 @@ export class StoreService {
 
       const savedUserId = localStorage.getItem('92mymy_uid');
       if (savedUserId) {
-         getDocs(query(collection(this.firestore, 'users'), where('id', '==', savedUserId))).then(snap => {
-           if (!snap.empty) {
-             this.currentUser.set(snap.docs[0].data() as User);
+         // 自動登入：使用 UID 去讀取
+         getDoc(doc(this.firestore, 'users', savedUserId)).then(snap => {
+           if (snap.exists()) {
+             this.currentUser.set(snap.data() as User);
            }
          });
       }
@@ -314,8 +317,7 @@ export class StoreService {
 
   clearCart() { this.cart.set([]); }
 
-  // --- Order Actions (修改後：呼叫 Vercel API) ---
-  // 🔥 [安全升級] 前端不再直接寫入資料庫，而是把資料交給後端 API
+  // --- Order Actions (使用 Vercel API) ---
   async createOrder(
     paymentInfo: any, 
     shippingInfo: any, 
@@ -334,14 +336,13 @@ export class StoreService {
     try {
       console.log('正在呼叫後端建立訂單...');
 
-      // 呼叫我們的 Vercel API
       const response = await fetch('/api/createOrder', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: user.id,
+          userId: user.id, // 這裡是 Google UID
           items: checkoutItems,
           shippingMethod,
           shippingFee,
@@ -360,7 +361,6 @@ export class StoreService {
 
       console.log('API 回傳成功:', result);
 
-      // 1. 扣除前端顯示的點數 (讓畫面即時更新，實際上後端資料庫已經扣了)
       const updatedUser = { 
         ...user, 
         totalSpend: user.totalSpend + result.finalTotal, 
@@ -368,12 +368,10 @@ export class StoreService {
       };
       this.currentUser.set(updatedUser);
 
-      // 2. 清除購物車中已結帳的商品
       this.cart.update(current => current.filter(c => 
         !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)
       ));
 
-      // 3. 回傳訂單物件讓前端跳轉
       return { 
           id: result.orderId, 
           finalTotal: result.finalTotal,
@@ -400,7 +398,7 @@ export class StoreService {
     });
   }
 
-  // --- Auth Actions ---
+  // --- Auth Actions (純淨版：只留 Google) ---
 
   async loginWithGoogle() {
     try {
@@ -408,15 +406,18 @@ export class StoreService {
       const credential = await signInWithPopup(this.auth, provider);
       const gUser = credential.user;
 
-      const q = query(collection(this.firestore, 'users'), where('email', '==', gUser.email), limit(1));
-      const snapshot = await getDocs(q);
+      // 🔥 1. 直接用 Google UID 鎖定檔案位置
+      const userRef = doc(this.firestore, 'users', gUser.uid);
+      const docSnap = await getDoc(userRef);
 
-      if (!snapshot.empty) {
-        const existingUser = snapshot.docs[0].data() as User;
+      if (docSnap.exists()) {
+        // 老朋友：直接讀取
+        const existingUser = docSnap.data() as User;
         this.currentUser.set(existingUser);
         localStorage.setItem('92mymy_uid', existingUser.id);
         return existingUser;
       } else {
+        // 新朋友：需要產生一個 memberId (M開頭)
         const now = new Date();
         const yy = String(now.getFullYear()).slice(-2);
         const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -424,33 +425,40 @@ export class StoreService {
         const datePart = `${yy}${mm}${dd}`;
         const prefix = 'M';
         
-        const idQ = query(collection(this.firestore, 'users'), where('id', '>=', `${prefix}${datePart}`), where('id', '<', `${prefix}${datePart}9999`), orderBy('id', 'desc'), limit(1));
+        // 找最後一個 memberId
+        const idQ = query(collection(this.firestore, 'users'), orderBy('memberId', 'desc'), limit(1));
         const idSnap = await getDocs(idQ);
         
         let seq = 1;
         if (!idSnap.empty) {
-           const lastId = idSnap.docs[0].id;
-           const lastSeq = parseInt(lastId.slice(-4));
-           if (!isNaN(lastSeq)) seq = lastSeq + 1;
+           const lastData = idSnap.docs[0].data();
+           const lastMemberId = lastData['memberId']; 
+           if (lastMemberId && lastMemberId.startsWith(prefix + datePart)) {
+               const lastSeq = parseInt(lastMemberId.slice(-4));
+               if (!isNaN(lastSeq)) seq = lastSeq + 1;
+           }
         }
         
         const newSeq = String(seq).padStart(4, '0');
-        const id = `${prefix}${datePart}${newSeq}`;
+        const newMemberId = `${prefix}${datePart}${newSeq}`;
 
+        // 🔥 2. 建立新檔案 (檔名=UID, 內容含MemberId)
         const newUser: User = { 
-          id, 
+          id: gUser.uid,        // 系統用 UID
+          memberId: newMemberId, // 人類用 M260...
           email: gUser.email || '', 
           name: gUser.displayName || '新會員', 
           photoURL: gUser.photoURL || '',
           totalSpend: 0, 
           isAdmin: false, 
           tier: 'general', 
-          credits: 0 
+          credits: 0
         };
         
-        await setDoc(doc(this.firestore, 'users', id), newUser);
+        await setDoc(userRef, newUser);
+        
         this.currentUser.set(newUser);
-        localStorage.setItem('92mymy_uid', id);
+        localStorage.setItem('92mymy_uid', gUser.uid);
         
         return newUser;
       }
@@ -459,52 +467,6 @@ export class StoreService {
       alert('登入失敗，請重試');
       return null;
     }
-  }
-  
-  async login(phone: string) {
-    const q = query(collection(this.firestore, 'users'), where('phone', '==', phone), limit(1));
-    const snapshot = await getDocs(q);
-    
-    if (!snapshot.empty) {
-       const u = snapshot.docs[0].data() as User;
-       this.currentUser.set(u);
-       if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('92mymy_uid', u.id);
-       }
-       return u;
-    }
-    return null;
-  }
-
-  async register(phone: string, name: string) {
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const datePart = `${yy}${mm}${dd}`;
-    const prefix = 'M';
-    
-    const idQ = query(collection(this.firestore, 'users'), where('id', '>=', `${prefix}${datePart}`), where('id', '<', `${prefix}${datePart}9999`), orderBy('id', 'desc'), limit(1));
-    const idSnap = await getDocs(idQ);
-    
-    let seq = 1;
-    if (!idSnap.empty) {
-       const lastId = idSnap.docs[0].id;
-       const lastSeq = parseInt(lastId.slice(-4));
-       if (!isNaN(lastSeq)) seq = lastSeq + 1;
-    }
-    
-    const newSeq = String(seq).padStart(4, '0');
-    const id = `${prefix}${datePart}${newSeq}`;
-
-    const newUser: User = { id, phone, name, totalSpend: 0, isAdmin: false, tier: 'general', credits: 0 };
-    
-    await setDoc(doc(this.firestore, 'users', id), newUser);
-    this.currentUser.set(newUser);
-    if (typeof localStorage !== 'undefined') {
-       localStorage.setItem('92mymy_uid', id);
-    }
-    return newUser;
   }
 
   async updateUser(u: User) {
