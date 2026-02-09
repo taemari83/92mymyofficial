@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { 
   Firestore, 
   collection, 
@@ -11,7 +11,9 @@ import {
   deleteDoc,
   query,
   where,
-  getDocs
+  getDocs,
+  orderBy,
+  limit
 } from '@angular/fire/firestore';
 import { 
   Auth, 
@@ -19,7 +21,7 @@ import {
   GoogleAuthProvider, 
   signOut 
 } from '@angular/fire/auth';
-import { map, Observable } from 'rxjs';
+import { map, switchMap, of, Observable, from } from 'rxjs';
 
 // --- Interfaces ---
 export interface Product {
@@ -146,6 +148,8 @@ export class StoreService {
   };
 
   // --- Signals from Firestore ---
+  
+  // Settings & Categories & Products (這些是公開資訊，維持全域讀取沒問題)
   private settings$: Observable<StoreSettings> = docData(doc(this.firestore, 'config/storeSettings')).pipe(
     map((data: any) => {
       if (!data) return this.defaultSettings;
@@ -172,14 +176,46 @@ export class StoreService {
   private products$: Observable<Product[]> = collectionData(collection(this.firestore, 'products'), { idField: 'id' }) as Observable<Product[]>;
   products = toSignal(this.products$, { initialValue: [] as Product[] });
 
-  private users$: Observable<User[]> = collectionData(collection(this.firestore, 'users'), { idField: 'id' }) as Observable<User[]>;
-  users = toSignal(this.users$, { initialValue: [] as User[] });
-
-  private orders$: Observable<Order[]> = collectionData(collection(this.firestore, 'orders'), { idField: 'id' }) as Observable<Order[]>;
-  orders = toSignal(this.orders$, { initialValue: [] as Order[] });
-
-  // --- Local State ---
+  // --- Local State & Secure Data Fetching ---
   currentUser = signal<User | null>(null);
+  
+  // 為了實現安全讀取，我們將 currentUser 轉為 Observable，當使用者變更時，重新決定要抓什麼資料
+  private user$ = toObservable(this.currentUser);
+
+  // 🔥 [安全修正] Users: 只有當使用者是管理員 (isAdmin) 時，才去讀取所有會員資料
+  users = toSignal(
+    this.user$.pipe(
+      switchMap(u => {
+        if (u?.isAdmin) {
+          // 是管理員 -> 讀取所有會員
+          return collectionData(collection(this.firestore, 'users'), { idField: 'id' }) as Observable<User[]>;
+        }
+        // 不是管理員 -> 回傳空陣列 (保護個資)
+        return of([] as User[]);
+      })
+    ),
+    { initialValue: [] as User[] }
+  );
+
+  // 🔥 [安全修正] Orders: 管理員讀全部，一般會員只讀自己的
+  orders = toSignal(
+    this.user$.pipe(
+      switchMap(u => {
+        if (!u) return of([] as Order[]); // 未登入 -> 什麼都看不到
+        
+        if (u.isAdmin) {
+          // 管理員 -> 讀取所有訂單
+          return collectionData(collection(this.firestore, 'orders'), { idField: 'id' }) as Observable<Order[]>;
+        } else {
+          // 一般會員 -> 只讀取 userId 等於自己的訂單
+          const q = query(collection(this.firestore, 'orders'), where('userId', '==', u.id));
+          return collectionData(q, { idField: 'id' }) as Observable<Order[]>;
+        }
+      })
+    ),
+    { initialValue: [] as Order[] }
+  );
+
   cart = signal<CartItem[]>([]);
   cartTotal = computed(() => this.cart().reduce((sum, item) => sum + (item.price * item.quantity), 0));
   cartCount = computed(() => this.cart().reduce((count, item) => count + item.quantity, 0));
@@ -191,6 +227,7 @@ export class StoreService {
 
       const savedUserId = localStorage.getItem('92mymy_uid');
       if (savedUserId) {
+         // 這裡改用直接查詢單一文件，而不是依賴 users 陣列
          getDocs(query(collection(this.firestore, 'users'), where('id', '==', savedUserId))).then(snap => {
            if (!snap.empty) {
              this.currentUser.set(snap.docs[0].data() as User);
@@ -306,10 +343,22 @@ export class StoreService {
 
     let final = Math.max(0, sub + shippingFee - discount - usedCredits);
     
+    // 🔥 [安全修正] ID 生成改為查詢資料庫最後一筆，而不是依賴本地全訂單列表
     const now = new Date();
     const datePrefix = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const count = this.orders().filter(o => o.id.startsWith(datePrefix)).length;
-    const orderId = `${datePrefix}${String(count + 1).padStart(4, '0')}`;
+    
+    // 查詢當天最後一筆訂單編號
+    const q = query(collection(this.firestore, 'orders'), where('id', '>=', datePrefix), where('id', '<', datePrefix + '9999'), orderBy('id', 'desc'), limit(1));
+    const snapshot = await getDocs(q);
+    
+    let seq = 1;
+    if (!snapshot.empty) {
+       const lastId = snapshot.docs[0].id;
+       const lastSeq = parseInt(lastId.slice(-4)); // 取最後4碼
+       if (!isNaN(lastSeq)) seq = lastSeq + 1;
+    }
+    
+    const orderId = `${datePrefix}${String(seq).padStart(4, '0')}`;
 
     const initialStatus: Order['status'] = paymentMethod === 'bank_transfer' 
         ? (paymentInfo.last5 ? 'paid_verifying' : 'pending_payment') 
@@ -386,9 +435,12 @@ export class StoreService {
 
       console.log('Google User:', gUser);
 
-      const existingUser = this.users().find(u => u.email === gUser.email);
+      // 🔥 [安全修正] 改為直接查詢資料庫，而不是搜尋本地 users 陣列
+      const q = query(collection(this.firestore, 'users'), where('email', '==', gUser.email), limit(1));
+      const snapshot = await getDocs(q);
 
-      if (existingUser) {
+      if (!snapshot.empty) {
+        const existingUser = snapshot.docs[0].data() as User;
         this.currentUser.set(existingUser);
         localStorage.setItem('92mymy_uid', existingUser.id);
         return existingUser;
@@ -400,16 +452,18 @@ export class StoreService {
         const datePart = `${yy}${mm}${dd}`;
         const prefix = 'M';
         
-        const pattern = new RegExp(`^${prefix}${datePart}(\\d{4})$`);
-        let maxSeq = 0;
-        this.users().forEach(u => {
-           const match = u.id.match(pattern);
-           if (match) {
-              const seq = parseInt(match[1], 10);
-              if (seq > maxSeq) maxSeq = seq;
-           }
-        });
-        const newSeq = String(maxSeq + 1).padStart(4, '0');
+        // 🔥 [安全修正] ID 生成改為查詢資料庫
+        const idQ = query(collection(this.firestore, 'users'), where('id', '>=', `${prefix}${datePart}`), where('id', '<', `${prefix}${datePart}9999`), orderBy('id', 'desc'), limit(1));
+        const idSnap = await getDocs(idQ);
+        
+        let seq = 1;
+        if (!idSnap.empty) {
+           const lastId = idSnap.docs[0].id;
+           const lastSeq = parseInt(lastId.slice(-4));
+           if (!isNaN(lastSeq)) seq = lastSeq + 1;
+        }
+        
+        const newSeq = String(seq).padStart(4, '0');
         const id = `${prefix}${datePart}${newSeq}`;
 
         const newUser: User = { 
@@ -436,15 +490,20 @@ export class StoreService {
     }
   }
   
-  login(phone: string) {
-    const u = this.users().find(user => user.phone === phone);
-    if (u) {
+  async login(phone: string) { // 🔥 [安全修正] 這裡改成 async
+    // 改為查詢資料庫
+    const q = query(collection(this.firestore, 'users'), where('phone', '==', phone), limit(1));
+    const snapshot = await getDocs(q);
+    
+    if (!snapshot.empty) {
+       const u = snapshot.docs[0].data() as User;
        this.currentUser.set(u);
        if (typeof localStorage !== 'undefined') {
           localStorage.setItem('92mymy_uid', u.id);
        }
+       return u;
     }
-    return u;
+    return null;
   }
 
   async register(phone: string, name: string) {
@@ -455,17 +514,18 @@ export class StoreService {
     const datePart = `${yy}${mm}${dd}`;
     const prefix = 'M';
     
-    const pattern = new RegExp(`^${prefix}${datePart}(\\d{4})$`);
-    let maxSeq = 0;
-    this.users().forEach(u => {
-       const match = u.id.match(pattern);
-       if (match) {
-          const seq = parseInt(match[1], 10);
-          if (seq > maxSeq) maxSeq = seq;
-       }
-    });
+    // 🔥 [安全修正] ID 生成改為查詢資料庫
+    const idQ = query(collection(this.firestore, 'users'), where('id', '>=', `${prefix}${datePart}`), where('id', '<', `${prefix}${datePart}9999`), orderBy('id', 'desc'), limit(1));
+    const idSnap = await getDocs(idQ);
     
-    const newSeq = String(maxSeq + 1).padStart(4, '0');
+    let seq = 1;
+    if (!idSnap.empty) {
+       const lastId = idSnap.docs[0].id;
+       const lastSeq = parseInt(lastId.slice(-4));
+       if (!isNaN(lastSeq)) seq = lastSeq + 1;
+    }
+    
+    const newSeq = String(seq).padStart(4, '0');
     const id = `${prefix}${datePart}${newSeq}`;
 
     const newUser: User = { id, phone, name, totalSpend: 0, isAdmin: false, tier: 'general', credits: 0 };
