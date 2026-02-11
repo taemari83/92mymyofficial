@@ -14,7 +14,6 @@ import { StoreService, CartItem } from '../services/store.service';
       <h2 class="text-2xl font-bold text-gray-800 border-b pb-4 px-2">購物車 & 結帳</h2>
 
       @if (step() === 1) {
-        <!-- STEP 1: CART LIST -->
         @if (storeService.cart().length === 0) {
            <div class="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100 mt-8">
               <div class="text-6xl mb-4">🛒</div>
@@ -22,7 +21,6 @@ import { StoreService, CartItem } from '../services/store.service';
               <a routerLink="/" class="px-6 py-2 bg-brand-900 text-white rounded-full font-bold hover:bg-black transition-colors inline-block">前往購物</a>
            </div>
         } @else {
-           <!-- Actions Bar -->
            <div class="flex items-center justify-between px-2">
               <div class="flex items-center gap-2 cursor-pointer select-none" (click)="toggleAll()">
                  <div class="w-5 h-5 rounded border border-brand-300 flex items-center justify-center transition-colors" [class.bg-brand-600]="isAllSelected()" [class.border-brand-600]="isAllSelected()">
@@ -35,28 +33,23 @@ import { StoreService, CartItem } from '../services/store.service';
               }
            </div>
 
-           <!-- Cart Items -->
            <div class="space-y-3">
               @for (item of storeService.cart(); track $index) {
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 transition-all" 
                      [class.ring-2]="isSelected($index)" [class.ring-brand-200]="isSelected($index)"
                      (click)="toggleItem($index)">
                    
-                   <!-- Checkbox -->
                    <div class="w-5 h-5 rounded border border-gray-300 flex items-center justify-center shrink-0" 
                         [class.bg-brand-600]="isSelected($index)" [class.border-brand-600]="isSelected($index)">
                       @if(isSelected($index)) { <span class="text-white text-xs">✓</span> }
                    </div>
 
-                   <!-- Image -->
                    <img [src]="item.productImage" class="w-20 h-20 rounded-xl bg-gray-100 object-cover border border-gray-100 shrink-0">
                    
-                   <!-- Info -->
                    <div class="flex-1 min-w-0">
                       <h4 class="font-bold text-gray-800 truncate">{{ item.productName }}</h4>
                       <p class="text-xs text-gray-500 mb-1">{{ item.option }}</p>
                       
-                      <!-- Logistics Badges -->
                       <div class="flex flex-wrap gap-1">
                          @if (getProduct(item.productId); as p) {
                             @if(p.allowShipping?.myship !== false) { <span class="px-1.5 py-0.5 bg-orange-50 text-orange-600 text-[10px] rounded border border-orange-100">7-11</span> }
@@ -67,7 +60,6 @@ import { StoreService, CartItem } from '../services/store.service';
                       </div>
                    </div>
 
-                   <!-- Controls -->
                    <div class="flex flex-col items-end gap-2" (click)="$event.stopPropagation()">
                       <div class="font-bold text-brand-900">NT$ {{ item.price * item.quantity }}</div>
                       <div class="flex items-center bg-gray-50 rounded-lg p-0.5">
@@ -84,11 +76,9 @@ import { StoreService, CartItem } from '../services/store.service';
               }
            </div>
 
-           <!-- Footer Area -->
            <div class="bg-white border-t border-gray-100 p-6 fixed bottom-0 left-0 right-0 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] md:absolute md:bottom-auto md:relative md:rounded-2xl md:border md:shadow-sm md:mt-4">
               <div class="max-w-4xl mx-auto flex flex-col gap-4">
                  
-                 <!-- Error Message -->
                  @if(selectedIndices().size > 0 && commonLogistics().shipping.length === 0) {
                     <div class="bg-red-50 text-red-600 p-3 rounded-xl text-sm font-bold flex items-center gap-2 animate-pulse">
                        <span>⚠️</span>
@@ -99,7 +89,6 @@ import { StoreService, CartItem } from '../services/store.service';
                     </div>
                  }
 
-                 <!-- Info Row -->
                  <div class="flex justify-between items-center">
                     <div class="text-sm text-gray-500">
                        已選 {{ selectedIndices().size }} 件商品
@@ -113,7 +102,6 @@ import { StoreService, CartItem } from '../services/store.service';
                     </div>
                  </div>
 
-                 <!-- Action Button -->
                  <button (click)="proceed()" 
                     [disabled]="selectedIndices().size === 0 || commonLogistics().shipping.length === 0"
                     class="w-full py-3.5 rounded-xl font-bold text-lg shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -130,14 +118,12 @@ import { StoreService, CartItem } from '../services/store.service';
       }
 
       @if (step() === 2) {
-         <!-- STEP 2: CHECKOUT FORM -->
          <form [formGroup]="form" (ngSubmit)="submit()" class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-8 animate-fade-in">
             <div class="flex items-center gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition-colors" (click)="step.set(1)">
                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">←</div>
                <h3 class="font-bold text-xl text-gray-800">確認結帳資訊</h3>
             </div>
 
-            <!-- Items Summary -->
             <div class="flex gap-2 overflow-x-auto pb-2">
                @for(item of checkoutList(); track $index) {
                   <img [src]="item.productImage" class="w-12 h-12 rounded-lg border border-gray-200 object-cover shrink-0">
@@ -147,7 +133,6 @@ import { StoreService, CartItem } from '../services/store.service';
                </div>
             </div>
 
-            <!-- 1. Logistics -->
             <div class="space-y-4">
                <div class="font-bold text-gray-800 border-l-4 border-brand-400 pl-3">配送方式</div>
                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -164,7 +149,6 @@ import { StoreService, CartItem } from '../services/store.service';
                </div>
             </div>
 
-            <!-- 2. Payment -->
             <div class="space-y-4">
                <div class="font-bold text-gray-800 border-l-4 border-brand-400 pl-3">付款方式</div>
                <div class="grid grid-cols-3 gap-3">
@@ -179,7 +163,6 @@ import { StoreService, CartItem } from '../services/store.service';
                   }
                </div>
                
-               <!-- Bank Info Display -->
                @if(form.get('paymentMethod')?.value === 'bank_transfer') {
                   <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 border border-blue-100 animate-fade-in">
                      <div class="font-bold mb-1">匯款資訊 (凱基商業銀行 809)</div>
@@ -191,16 +174,16 @@ import { StoreService, CartItem } from '../services/store.service';
                   </div>
                   <div class="space-y-3 animate-fade-in">
                      <div>
-                        <label class="text-xs font-bold text-gray-500">匯款戶名 <span class="text-[10px] text-gray-400 font-normal">(選填)</span></label>
+                        <label class="text-xs font-bold text-gray-500">匯款戶名</label>
                         <input formControlName="payName" class="w-full border rounded-lg p-2 mt-1" placeholder="王小美">
                      </div>
                      <div class="grid grid-cols-2 gap-3">
                         <div>
-                           <label class="text-xs font-bold text-gray-500">帳號後五碼 <span class="text-[10px] text-gray-400 font-normal">(選填)</span></label>
+                           <label class="text-xs font-bold text-gray-500">帳號後五碼</label>
                            <input formControlName="payLast5" class="w-full border rounded-lg p-2 mt-1" maxlength="5">
                         </div>
                         <div>
-                           <label class="text-xs font-bold text-gray-500">匯款日期 <span class="text-[10px] text-gray-400 font-normal">(選填)</span></label>
+                           <label class="text-xs font-bold text-gray-500">匯款日期</label>
                            <input type="date" formControlName="payDate" class="w-full border rounded-lg p-2 mt-1">
                         </div>
                      </div>
@@ -208,7 +191,6 @@ import { StoreService, CartItem } from '../services/store.service';
                }
             </div>
 
-            <!-- 3. Receiver Info -->
             <div class="space-y-4">
                <div class="font-bold text-gray-800 border-l-4 border-brand-400 pl-3">收件資料</div>
                <div class="grid grid-cols-2 gap-4">
@@ -222,7 +204,6 @@ import { StoreService, CartItem } from '../services/store.service';
                   </div>
                </div>
                
-               <!-- Address/Store Logic -->
                @if(['myship', 'family'].includes(selectedShippingMethod())) {
                   <div>
                      <label class="text-xs font-bold text-gray-500">門市名稱/代號</label>
@@ -237,7 +218,6 @@ import { StoreService, CartItem } from '../services/store.service';
                }
             </div>
 
-            <!-- Total Block -->
             <div class="bg-gray-50 p-4 rounded-xl space-y-2">
                <div class="flex justify-between text-sm">
                   <span class="text-gray-500">商品小計</span>
@@ -251,7 +231,6 @@ import { StoreService, CartItem } from '../services/store.service';
                  </div>
                }
 
-               <!-- Discount Row (Reactive) -->
                @if(currentDiscount() > 0) {
                  <div class="flex justify-between text-sm text-green-600 font-bold">
                     <span>開單預扣 ({{ selectedShippingMethod() === 'myship' ? '賣貨便' : '好賣家' }})</span>
@@ -259,7 +238,6 @@ import { StoreService, CartItem } from '../services/store.service';
                  </div>
                }
                
-               <!-- Credits -->
                @if(storeService.currentUser()?.credits) {
                   <div class="flex items-center justify-between pt-2 border-t border-gray-200">
                      <label class="flex items-center gap-2 cursor-pointer">
