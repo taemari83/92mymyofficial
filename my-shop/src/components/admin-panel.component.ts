@@ -81,7 +81,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   </div>
                </div>
                <div class="overflow-x-auto w-full">
-                 <table class="w-full text-sm text-left min-w-[1000px] whitespace-nowrap">
+                 <table class="w-full text-sm text-left whitespace-nowrap">
                    <thead class="bg-[#F9FAFB] text-gray-500 font-medium border-b border-gray-200">
                      <tr><th class="p-4 w-10"><input type="checkbox" class="rounded border-gray-300"></th><th class="p-4">商品 訂單資訊</th><th class="p-4">客戶</th><th class="p-4">付款方式</th><th class="p-4">金額</th><th class="p-4">匯款狀態</th><th class="p-4">物流</th><th class="p-4">時間</th><th class="p-4 text-right">操作</th></tr>
                    </thead>
@@ -144,7 +144,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
               <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full">
                  <div class="overflow-x-auto w-full">
-                   <table class="w-full text-sm text-left whitespace-nowrap min-w-[900px]">
+                   <table class="w-full text-sm text-left whitespace-nowrap">
                       <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
                          <tr>
                             <th class="p-4">會員編號 / Google UID</th>
@@ -258,7 +258,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 <button (click)="exportInventoryCSV()" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm">📥 匯出盤點單</button>
              </div>
              <div class="overflow-x-auto w-full">
-                <table class="w-full text-sm text-left min-w-[800px] whitespace-nowrap">
+                <table class="w-full text-sm text-left whitespace-nowrap">
                    <thead class="bg-gray-50 text-gray-500"><tr><th class="p-4">貨號</th><th class="p-4">商品名稱</th><th class="p-4">規格</th><th class="p-4 text-right">剩餘庫存</th><th class="p-4 text-right">已售出</th><th class="p-4">狀態</th></tr></thead>
                    <tbody class="divide-y divide-gray-100">
                       @for (p of store.products(); track p.id) {
@@ -465,7 +465,7 @@ export class AdminPanelComponent {
      const bm = this.birthMonthFilter();
      
      const start = this.memberStart(); 
-     const end = this.memberEnd();     
+     const end = this.memberEnd();      
 
      if (q) list = list.filter((u: User) => 
         u.name.toLowerCase().includes(q) || 
