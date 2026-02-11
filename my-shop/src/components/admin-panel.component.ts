@@ -180,7 +180,7 @@ import { StoreService, User, Product, Order } from '../services/store.service';
                 <table class="min-w-full divide-y divide-gray-200">
                    <thead class="bg-gray-50">
                       <tr>
-                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">會員編號 / 系統 ID</th>
+                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">會員編號 / Google UID</th>
                          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">會員資訊</th>
                          <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">等級</th>
                          <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">累積消費</th>
@@ -196,7 +196,7 @@ import { StoreService, User, Product, Order } from '../services/store.service';
                                   <span class="text-sm font-bold text-brand-900 font-mono tracking-wide">
                                      {{ user.memberNo || '舊會員 (需登入更新)' }}
                                   </span>
-                                  <div class="flex items-center gap-1 mt-1 group cursor-pointer" title="點擊全選複製 ID">
+                                  <div class="flex items-center gap-1 mt-1 group cursor-pointer" title="點擊全選複製 UID">
                                      <span class="text-[10px] text-gray-400 font-mono">UID:</span>
                                      <span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ user.id }}</span>
                                   </div>
@@ -236,6 +236,68 @@ import { StoreService, User, Product, Order } from '../services/store.service';
           </div>
         }
       </div>
+
+      @if (showProductModal()) {
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" (click)="closeProductModal()">
+           <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                 <h3 class="text-lg font-bold text-gray-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3>
+                 <button (click)="closeProductModal()" class="text-gray-400 hover:text-gray-900 text-2xl">×</button>
+              </div>
+              
+              <div class="p-6 overflow-y-auto space-y-4">
+                 <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">商品名稱</label>
+                    <input type="text" [(ngModel)]="tempProduct.name" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
+                 </div>
+
+                 <div class="grid grid-cols-2 gap-4">
+                    <div>
+                       <label class="block text-sm font-bold text-gray-700 mb-1">分類</label>
+                       <select [(ngModel)]="tempProduct.category" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900 bg-white">
+                          @for(cat of store.categories(); track cat) {
+                             <option [value]="cat">{{ cat }}</option>
+                          }
+                       </select>
+                    </div>
+                    <div>
+                       <label class="block text-sm font-bold text-gray-700 mb-1">價格 (NT$)</label>
+                       <input type="number" [(ngModel)]="tempProduct.priceGeneral" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
+                    </div>
+                 </div>
+
+                 <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">圖片連結 (URL)</label>
+                    <input type="text" [(ngModel)]="tempProduct.image" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900" placeholder="https://...">
+                    @if(tempProduct.image) {
+                       <img [src]="tempProduct.image" class="mt-2 w-20 h-20 object-cover rounded-lg border border-gray-200">
+                    }
+                 </div>
+
+                 <div class="grid grid-cols-2 gap-4">
+                    <div>
+                       <label class="block text-sm font-bold text-gray-700 mb-1">庫存數量</label>
+                       <input type="number" [(ngModel)]="tempProduct.stock" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
+                    </div>
+                    <div>
+                       <label class="block text-sm font-bold text-gray-700 mb-1">規格 (逗號分隔)</label>
+                       <input type="text" [ngModel]="tempProduct.options.join(',')" (ngModelChange)="updateOptions($event)" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900" placeholder="S, M, L">
+                    </div>
+                 </div>
+
+                 <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">商品描述</label>
+                    <textarea [(ngModel)]="tempProduct.note" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900"></textarea>
+                 </div>
+              </div>
+
+              <div class="p-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+                 <button (click)="closeProductModal()" class="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-100">取消</button>
+                 <button (click)="saveProduct()" class="flex-1 py-3 bg-brand-900 text-white font-bold rounded-xl hover:bg-black">儲存</button>
+              </div>
+           </div>
+        </div>
+      }
 
       @if (selectedOrder()) {
         <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" (click)="selectedOrder.set(null)">
@@ -332,68 +394,6 @@ import { StoreService, User, Product, Order } from '../services/store.service';
            </div>
         </div>
       }
-
-      @if (showProductModal()) {
-        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" (click)="closeProductModal()">
-           <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()">
-              <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                 <h3 class="text-lg font-bold text-gray-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3>
-                 <button (click)="closeProductModal()" class="text-gray-400 hover:text-gray-900 text-2xl">×</button>
-              </div>
-              
-              <div class="p-6 overflow-y-auto space-y-4">
-                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">商品名稱</label>
-                    <input type="text" [(ngModel)]="tempProduct.name" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
-                 </div>
-
-                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                       <label class="block text-sm font-bold text-gray-700 mb-1">分類</label>
-                       <select [(ngModel)]="tempProduct.category" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900 bg-white">
-                          @for(cat of store.categories(); track cat) {
-                             <option [value]="cat">{{ cat }}</option>
-                          }
-                       </select>
-                    </div>
-                    <div>
-                       <label class="block text-sm font-bold text-gray-700 mb-1">價格 (NT$)</label>
-                       <input type="number" [(ngModel)]="tempProduct.priceGeneral" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
-                    </div>
-                 </div>
-
-                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">圖片連結 (URL)</label>
-                    <input type="text" [(ngModel)]="tempProduct.image" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900" placeholder="https://...">
-                    @if(tempProduct.image) {
-                       <img [src]="tempProduct.image" class="mt-2 w-20 h-20 object-cover rounded-lg border border-gray-200">
-                    }
-                 </div>
-
-                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                       <label class="block text-sm font-bold text-gray-700 mb-1">庫存數量</label>
-                       <input type="number" [(ngModel)]="tempProduct.stock" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
-                    </div>
-                    <div>
-                       <label class="block text-sm font-bold text-gray-700 mb-1">規格 (逗號分隔)</label>
-                       <input type="text" [ngModel]="tempProduct.options.join(',')" (ngModelChange)="updateOptions($event)" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900" placeholder="S, M, L">
-                    </div>
-                 </div>
-
-                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">商品描述</label>
-                    <textarea [(ngModel)]="tempProduct.note" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900"></textarea>
-                 </div>
-              </div>
-
-              <div class="p-4 border-t border-gray-100 bg-gray-50 flex gap-3">
-                 <button (click)="closeProductModal()" class="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-100">取消</button>
-                 <button (click)="saveProduct()" class="flex-1 py-3 bg-brand-900 text-white font-bold rounded-xl hover:bg-black">儲存</button>
-              </div>
-           </div>
-        </div>
-      }
       
     </div>
   `,
@@ -416,8 +416,6 @@ export class AdminPanelComponent {
 
   // State
   selectedOrder = signal<Order | null>(null);
-  
-  // 🔥 Product Modal State (這些之前漏掉了，現在補回來)
   showProductModal = signal(false);
   editingProduct = signal<Product | null>(null);
   
@@ -477,7 +475,7 @@ export class AdminPanelComponent {
      }
   }
 
-  // 🔥 Product Actions (這些功能回來了！)
+  // Product Actions
   openProductModal() {
      this.editingProduct.set(null);
      this.tempProduct = this.getEmptyProduct();
@@ -503,7 +501,6 @@ export class AdminPanelComponent {
      if (this.editingProduct()) {
         await this.store.updateProduct(this.tempProduct);
      } else {
-        // Generate a new ID for new product
         this.tempProduct.id = 'prod_' + Date.now(); 
         await this.store.addProduct(this.tempProduct);
      }
