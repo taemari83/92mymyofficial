@@ -182,9 +182,9 @@ import { StoreService, CartItem } from '../services/store.service';
                <!-- Bank Info Display -->
                @if(form.get('paymentMethod')?.value === 'bank_transfer') {
                   <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 border border-blue-100 animate-fade-in">
-                     <div class="font-bold mb-1">匯款資訊 (中國信託 822)</div>
-                     <div class="font-mono text-lg">1234-5678-9012</div>
-                     <div class="font-bold mt-1">戶名：92mymy 就愛買買</div>
+                     <div class="font-bold mb-1">匯款資訊 (凱基商業銀行 809)</div>
+                     <div class="font-mono text-lg">606-904-0006-7288</div>
+                     <div class="font-bold mt-1">戶名：蘇*婷</div>
                      <div class="mt-2 text-xs opacity-70">
                         * 若您尚未匯款，下方欄位可留空，待匯款後至「會員中心 > 我的訂單」回報即可。
                      </div>

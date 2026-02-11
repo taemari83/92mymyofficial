@@ -11,12 +11,9 @@ import { StoreService, Product } from '../services/store.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="space-y-8 pb-20">
-      <!-- Search & Filter Bar -->
       <div class="sticky top-20 z-10 bg-cream-50/90 backdrop-blur-md pb-4 pt-2 space-y-3">
          
-         <!-- Top Row: Search & Sort -->
          <div class="flex flex-col sm:flex-row gap-3 px-2">
-           <!-- Search -->
            <div class="bg-white p-2 rounded-full shadow-sm border border-gray-100 flex items-center flex-1">
               <span class="pl-4 text-gray-400">🔍</span>
               <input 
@@ -27,7 +24,6 @@ import { StoreService, Product } from '../services/store.service';
               >
            </div>
 
-           <!-- Sort Dropdown -->
            <div class="relative min-w-[160px]">
              <select 
                [ngModel]="sortOption()" 
@@ -44,7 +40,6 @@ import { StoreService, Product } from '../services/store.service';
            </div>
          </div>
          
-         <!-- Category Pills -->
          <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-2">
             <button 
               (click)="selectedCategory.set('all')"
@@ -71,18 +66,15 @@ import { StoreService, Product } from '../services/store.service';
          </div>
       </div>
 
-      <!-- Product Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-2">
         @for (product of filteredProducts(); track product.id) {
           <div 
             (click)="openProductModal(product)"
             class="bg-white rounded-[2rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer"
           >
-            <!-- Image -->
             <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
               <img [src]="product.image" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
               
-              <!-- Tag -->
               <div class="absolute top-4 left-4 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-900 uppercase tracking-widest">
                 {{ product.category || 'NEW' }}
               </div>
@@ -94,7 +86,6 @@ import { StoreService, Product } from '../services/store.service';
               }
             </div>
 
-            <!-- Content -->
             <div class="p-5 flex-1 flex flex-col">
               <div class="flex-1">
                  <h3 class="font-bold text-brand-900 text-lg leading-tight mb-2">{{ product.name }}</h3>
@@ -110,7 +101,6 @@ import { StoreService, Product } from '../services/store.service';
                 </div>
                 
                 @if(product.stock > 0) {
-                  <!-- Add Button (Triggers Modal) -->
                   <button class="w-10 h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors">
                     +
                   </button>
@@ -126,23 +116,18 @@ import { StoreService, Product } from '../services/store.service';
         }
       </div>
 
-      <!-- Product Detail Modal (Responsive Split View) -->
       @if (selectedProduct()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 bg-brand-900/60 backdrop-blur-sm" (click)="closeModal()">
           <div 
             class="bg-[#FDFBF9] w-full max-w-5xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in h-full md:h-auto max-h-[100vh] md:max-h-[90vh] flex flex-col md:flex-row" 
             (click)="$event.stopPropagation()"
           >
-            <!-- Left: Image Section -->
             <div class="md:w-1/2 bg-gray-100 relative group flex flex-col h-[40vh] md:h-auto shrink-0">
-               <!-- Main Image -->
                <div class="flex-1 relative overflow-hidden">
                   <img [src]="activeImage()" class="w-full h-full object-cover">
-                  <!-- Close Button Mobile (Overlay) -->
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-black/20 backdrop-blur rounded-full text-white flex items-center justify-center font-bold hover:bg-black/40 transition-colors z-20">✕</button>
                </div>
                
-               <!-- Thumbnails (Desktop: Bottom overlay, Mobile: Hidden if space tight or small overlay) -->
                @if(productImages().length > 1) {
                   <div class="p-4 bg-white/10 backdrop-blur-md absolute bottom-0 left-0 right-0 flex gap-2 overflow-x-auto scrollbar-hide z-10">
                      @for(img of productImages(); track img) {
@@ -154,19 +139,14 @@ import { StoreService, Product } from '../services/store.service';
                }
             </div>
 
-            <!-- Right: Info & Controls Section -->
             <div class="md:w-1/2 flex flex-col bg-[#FDFBF9] h-[60vh] md:h-auto relative">
-               <!-- Close Button Desktop -->
                <button (click)="closeModal()" class="hidden md:flex absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full text-gray-500 items-center justify-center hover:bg-gray-200 transition-colors z-20">✕</button>
 
-               <!-- Scrollable Content -->
                <div class="flex-1 overflow-y-auto p-5 md:p-8 scrollbar-hide">
-                  <!-- Header Info -->
                   <div class="mb-6">
                     <div class="flex justify-between items-start mb-2 pr-10">
                       <div class="text-sm text-brand-400 font-bold uppercase tracking-widest bg-brand-50 px-2 py-1 rounded-lg">{{ selectedProduct()!.category }}</div>
                       
-                      <!-- Share/Link Button -->
                       <button (click)="copyLink()" class="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-900 transition-colors border border-gray-200 rounded-full px-3 py-1 bg-white">
                         <span>🔗</span> 複製連結
                       </button>
@@ -181,9 +161,7 @@ import { StoreService, Product } from '../services/store.service';
                     </div>
                   </div>
 
-                  <!-- Selection Zone (Moved UP for visibility) -->
                   <div class="bg-brand-50/60 rounded-[1.5rem] p-5 md:p-6 mb-6 border border-brand-100/50">
-                      <!-- Options -->
                       @if (selectedProduct()!.options.length > 0) {
                         <div class="mb-6">
                           <div class="flex items-center justify-between mb-3">
@@ -215,7 +193,6 @@ import { StoreService, Product } from '../services/store.service';
                         </div>
                       }
 
-                      <!-- Quantity -->
                       <div>
                          <label class="block text-sm font-bold text-gray-800 mb-2">購買數量</label>
                          <div class="flex items-center justify-between bg-white rounded-xl border border-gray-200 p-1.5 shadow-sm w-full">
@@ -230,18 +207,12 @@ import { StoreService, Product } from '../services/store.service';
                       </div>
                   </div>
 
-                  <!-- Description (Secondary) -->
                   <div class="text-gray-500 leading-relaxed text-sm bg-white p-4 rounded-xl border border-gray-100">
                     <h4 class="font-bold text-gray-800 mb-2 text-xs uppercase tracking-wide">商品介紹</h4>
                     <p class="whitespace-pre-wrap">{{ selectedProduct()!.note || '這是一個非常棒的商品，來自我們精選的 Winter Collection。' }}</p>
-                    <div class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400 font-bold flex items-center gap-1">
-                      <span>🌍 採購地:</span>
-                      <span class="text-gray-600">{{ selectedProduct()!.country || 'Korea' }}</span>
-                    </div>
                   </div>
                </div>
 
-               <!-- Footer Action (Sticky at bottom of right col) -->
                <div class="p-5 border-t border-gray-100 bg-white z-10 relative shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
                   <button 
                     (click)="addToCart()"
