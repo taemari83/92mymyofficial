@@ -28,6 +28,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">設定</div>
            <button (click)="activeTab.set('settings')" [class]="navClass('settings')"><span class="text-xl md:text-lg">⚙️</span> <span class="hidden md:inline">商店設定</span></button>
         </div>
+        
         <div class="p-2 md:p-4 border-t border-gray-100">
            <div class="flex items-center gap-3 p-2 md:p-3 rounded-xl bg-brand-50/50 justify-center md:justify-start">
               <div class="w-8 h-8 rounded-full bg-brand-900 text-white flex items-center justify-center text-xs shrink-0">M</div>
@@ -36,7 +37,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         </div>
       </aside>
 
-      <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#FDFBF9] p-4 md:p-8 w-full relative">
+      <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#FDFBF9] p-4 md:p-6 w-full relative">
         <div class="flex justify-between items-center mb-6">
            <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
            <div class="flex gap-2"><button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button></div>
@@ -440,7 +441,7 @@ export class AdminPanelComponent {
      return list.slice(start, start + size);
   });
 
-  // Customer Logic (🔥 這裡插入了新功能)
+  // Customer Logic
   customerViewMode = signal<'list' | 'ranking'>('list');
   customerPageSize = signal<number | 'all'>(50);
   customerPage = signal(1);
@@ -524,7 +525,6 @@ export class AdminPanelComponent {
   accountingCustomEnd = signal('');
   
   accountingStats = computed(() => {
-     // 1. Filter Orders by Time Range
      const orders = this.store.orders();
      const range = this.accountingRange();
      const now = new Date();
@@ -555,7 +555,6 @@ export class AdminPanelComponent {
         return true;
      });
 
-     // 2. Calculate Real Numbers
      let revenue = 0;
      let cost = 0;
      let discounts = 0;
@@ -567,7 +566,6 @@ export class AdminPanelComponent {
      let payRefundedTotal = 0;
 
      filteredOrders.forEach((o: Order) => {
-        // Payment Status Logic
         if (o.status === 'refunded') {
            payRefundedTotal += o.finalTotal;
         } else if (o.status === 'refund_needed') {
@@ -577,7 +575,6 @@ export class AdminPanelComponent {
         } else if (o.status === 'pending_payment' || o.status === 'unpaid_alert') {
            payUnpaid += o.finalTotal;
         } else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed') {
-           // Special handling for COD
            if (o.paymentMethod === 'cod' && o.status !== 'completed') {
               payUnpaid += o.finalTotal;
            } else {
@@ -585,7 +582,6 @@ export class AdminPanelComponent {
            }
         }
         
-        // Revenue & Cost Logic
         if (o.status !== 'pending_payment' && o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled') {
            revenue += o.finalTotal;
            
