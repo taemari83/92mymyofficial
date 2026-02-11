@@ -237,7 +237,7 @@ export class StoreService {
     });
   }
 
-  // 🔥 輔助功能：生成時間編號 (格式修正：M20260211...)
+  // 🔥 修正：生成 M + 純數字格式 (M20260211171114)
   private generateMemberNo(): string {
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
