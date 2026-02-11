@@ -63,7 +63,8 @@ export interface CartItem {
 
 export interface User {
   id: string;       
-  memberId?: string;
+  memberId?: string; // 這是舊的欄位，保留相容性
+  memberNo?: string; // 👈 新增這個欄位：存放 yyyy/mm/dd... 格式
   phone?: string; 
   email?: string; 
   name: string;
@@ -236,6 +237,15 @@ export class StoreService {
     });
   }
 
+  // --- Helper Methods ---
+  
+  // 🔥 新增：生成時間格式編號 (yyyy/mm/dd/hh/mm/ss)
+  private generateMemberNo(): string {
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${pad(now.getHours())}/${pad(now.getMinutes())}/${pad(now.getSeconds())}`;
+  }
+
   // --- Actions ---
   async updateSettings(s: StoreSettings) {
     const docRef = doc(this.firestore, 'config/storeSettings');
@@ -381,7 +391,7 @@ export class StoreService {
     });
   }
 
-  // --- Auth Actions (🔥 這裡做了關鍵修改) ---
+  // --- Auth Actions (🔥 修正後的登入邏輯) ---
 
   async loginWithGoogle() {
     try {
@@ -393,28 +403,30 @@ export class StoreService {
       const docSnap = await getDoc(userRef);
 
       if (docSnap.exists()) {
+        // --- 舊會員：檢查並補上新格式編號 ---
         const existingUser = docSnap.data() as User;
+        
+        if (!existingUser.memberNo) {
+           // 如果舊會員還沒有時間格式編號，補上一個
+           const newMemberNo = this.generateMemberNo();
+           await updateDoc(userRef, { memberNo: newMemberNo });
+           existingUser.memberNo = newMemberNo;
+        }
+
         this.currentUser.set(existingUser);
         localStorage.setItem('92mymy_uid', existingUser.id);
         return existingUser;
-      } else {
-        // 🔥 修改處：直接用「時間碼」當會員編號，不要去查資料庫了
-        // 這樣就不會被 Security Rules 擋住
-        const now = new Date();
-        const yy = String(now.getFullYear()).slice(-2);
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        const hh = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        const ss = String(now.getSeconds()).padStart(2, '0');
         
-        // 編號格式：M + 年月日 + 時分秒 (例如 M2602091930)
-        // 這樣既保證唯一，又看起來像流水號，而且不需要讀取權限
-        const newMemberId = `M${yy}${mm}${dd}${hh}${min}${ss}`;
+      } else {
+        // --- 新會員：直接生成新格式編號 ---
+        const newMemberNo = this.generateMemberNo();
 
+        // 這裡保留 memberId 為 Google UID 的一部分或其他用途，
+        // 主要使用 memberNo 來做時間排序顯示
         const newUser: User = { 
-          id: gUser.uid,        
-          memberId: newMemberId, 
+          id: gUser.uid,
+          memberId: `M${gUser.uid.slice(0, 6)}`, // 舊欄位，留著當備用
+          memberNo: newMemberNo, // 👈 這是您要的時間格式
           email: gUser.email || '', 
           name: gUser.displayName || '新會員', 
           photoURL: gUser.photoURL || '',
