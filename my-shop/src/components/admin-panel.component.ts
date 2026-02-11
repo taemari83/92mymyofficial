@@ -332,6 +332,69 @@ import { StoreService, User, Product, Order } from '../services/store.service';
            </div>
         </div>
       }
+
+      @if (showProductModal()) {
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" (click)="closeProductModal()">
+           <div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                 <h3 class="text-lg font-bold text-gray-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3>
+                 <button (click)="closeProductModal()" class="text-gray-400 hover:text-gray-900 text-2xl">×</button>
+              </div>
+              
+              <div class="p-6 overflow-y-auto space-y-4">
+                 <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">商品名稱</label>
+                    <input type="text" [(ngModel)]="tempProduct.name" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
+                 </div>
+
+                 <div class="grid grid-cols-2 gap-4">
+                    <div>
+                       <label class="block text-sm font-bold text-gray-700 mb-1">分類</label>
+                       <select [(ngModel)]="tempProduct.category" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900 bg-white">
+                          @for(cat of store.categories(); track cat) {
+                             <option [value]="cat">{{ cat }}</option>
+                          }
+                       </select>
+                    </div>
+                    <div>
+                       <label class="block text-sm font-bold text-gray-700 mb-1">價格 (NT$)</label>
+                       <input type="number" [(ngModel)]="tempProduct.priceGeneral" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
+                    </div>
+                 </div>
+
+                 <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">圖片連結 (URL)</label>
+                    <input type="text" [(ngModel)]="tempProduct.image" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900" placeholder="https://...">
+                    @if(tempProduct.image) {
+                       <img [src]="tempProduct.image" class="mt-2 w-20 h-20 object-cover rounded-lg border border-gray-200">
+                    }
+                 </div>
+
+                 <div class="grid grid-cols-2 gap-4">
+                    <div>
+                       <label class="block text-sm font-bold text-gray-700 mb-1">庫存數量</label>
+                       <input type="number" [(ngModel)]="tempProduct.stock" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900">
+                    </div>
+                    <div>
+                       <label class="block text-sm font-bold text-gray-700 mb-1">規格 (逗號分隔)</label>
+                       <input type="text" [ngModel]="tempProduct.options.join(',')" (ngModelChange)="updateOptions($event)" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900" placeholder="S, M, L">
+                    </div>
+                 </div>
+
+                 <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">商品描述</label>
+                    <textarea [(ngModel)]="tempProduct.note" rows="3" class="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-brand-900"></textarea>
+                 </div>
+              </div>
+
+              <div class="p-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+                 <button (click)="closeProductModal()" class="flex-1 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-100">取消</button>
+                 <button (click)="saveProduct()" class="flex-1 py-3 bg-brand-900 text-white font-bold rounded-xl hover:bg-black">儲存</button>
+              </div>
+           </div>
+        </div>
+      }
+      
     </div>
   `,
   styles: [`
@@ -348,10 +411,18 @@ export class AdminPanelComponent {
   
   // Customer Filters
   customerSearch = signal('');
-  memberStart = signal(''); // Start Date Filter
-  memberEnd = signal('');   // End Date Filter
+  memberStart = signal(''); 
+  memberEnd = signal('');   
 
+  // State
   selectedOrder = signal<Order | null>(null);
+  
+  // 🔥 Product Modal State (這些之前漏掉了，現在補回來)
+  showProductModal = signal(false);
+  editingProduct = signal<Product | null>(null);
+  
+  // Temp Product for Form
+  tempProduct: Product = this.getEmptyProduct();
 
   // --- Computed Data ---
   filteredOrders = computed(() => {
@@ -366,7 +437,7 @@ export class AdminPanelComponent {
     let list = this.store.users();
     const q = this.customerSearch().toLowerCase();
     
-    // 1. Text Search (Name, Phone, ID, MemberNo)
+    // 1. Text Search
     if (q) {
        list = list.filter(u => 
           u.name.toLowerCase().includes(q) || 
@@ -376,27 +447,22 @@ export class AdminPanelComponent {
        );
     }
 
-    // 2. Date Range Filter (Using memberNo string comparison)
-    // memberNo format: YYYY/MM/DD/HH/mm/ss
-    const start = this.memberStart(); // YYYY-MM-DD
-    const end = this.memberEnd();     // YYYY-MM-DD
+    // 2. Date Range Filter
+    const start = this.memberStart(); 
+    const end = this.memberEnd();     
     
     if (start || end) {
        list = list.filter(u => {
-          if (!u.memberNo) return false; // Old users without number cannot be date filtered by this method
-          
-          // Convert input "2026-02-10" to "2026/02/10"
-          const noDatePart = u.memberNo.substring(0, 10); // "YYYY/MM/DD"
+          if (!u.memberNo) return false; 
+          const noDatePart = u.memberNo.substring(0, 10); 
           const startDate = start ? start.replace(/-/g, '/') : null;
           const endDate = end ? end.replace(/-/g, '/') : null;
 
           if (startDate && noDatePart < startDate) return false;
           if (endDate && noDatePart > endDate) return false;
-          
           return true;
        });
     }
-
     return list;
   });
 
@@ -409,6 +475,73 @@ export class AdminPanelComponent {
         this.store.updateOrderStatus(o.id, status);
         this.selectedOrder.set(null);
      }
+  }
+
+  // 🔥 Product Actions (這些功能回來了！)
+  openProductModal() {
+     this.editingProduct.set(null);
+     this.tempProduct = this.getEmptyProduct();
+     this.showProductModal.set(true);
+  }
+
+  editProduct(p: Product) {
+     this.editingProduct.set(p);
+     this.tempProduct = JSON.parse(JSON.stringify(p)); // Deep copy
+     this.showProductModal.set(true);
+  }
+
+  closeProductModal() {
+     this.showProductModal.set(false);
+  }
+
+  async saveProduct() {
+     if (!this.tempProduct.name || this.tempProduct.priceGeneral <= 0) {
+        alert('請輸入正確的商品名稱與價格');
+        return;
+     }
+
+     if (this.editingProduct()) {
+        await this.store.updateProduct(this.tempProduct);
+     } else {
+        // Generate a new ID for new product
+        this.tempProduct.id = 'prod_' + Date.now(); 
+        await this.store.addProduct(this.tempProduct);
+     }
+     this.closeProductModal();
+  }
+
+  deleteProduct(id: string) { 
+     if(confirm('確定要刪除這個商品嗎？')) {
+        this.store.deleteProduct(id); 
+     }
+  }
+
+  updateOptions(val: string) {
+     this.tempProduct.options = val.split(',').map(s => s.trim()).filter(s => s);
+  }
+
+  getEmptyProduct(): Product {
+     return {
+        id: '',
+        code: '',
+        name: '',
+        image: '',
+        category: this.store.categories()[0] || '一般',
+        options: [],
+        country: '',
+        localPrice: 0,
+        exchangeRate: 1,
+        costMaterial: 0,
+        weight: 0,
+        shippingCostPerKg: 0,
+        priceGeneral: 0,
+        priceVip: 0,
+        priceWholesale: 0,
+        priceType: 'normal',
+        stock: 99,
+        note: '',
+        soldCount: 0
+     };
   }
 
   logout() { this.store.logout(); }
@@ -433,9 +566,4 @@ export class AdminPanelComponent {
      const map: any = { meetup: '面交', myship: '賣貨便', family: '好賣家', delivery: '宅配' };
      return map[m] || m;
   }
-
-  // Placeholders for product actions
-  openProductModal() { alert('新增商品功能 (此處僅為展示，請至 store.service 實作具體彈窗邏輯)'); }
-  editProduct(p: Product) { alert(`編輯商品: ${p.name}`); }
-  deleteProduct(id: string) { if(confirm('確定刪除?')) this.store.deleteProduct(id); }
 }
