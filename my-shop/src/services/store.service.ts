@@ -64,7 +64,7 @@ export interface CartItem {
 export interface User {
   id: string;        
   memberId?: string; // 舊欄位保留
-  memberNo?: string; // 🔥 新增：時間格式編號 (yyyy/mm/dd...)
+  memberNo?: string; // 🔥 新增：時間格式編號 (M20260211...)
   phone?: string; 
   email?: string; 
   name: string;
@@ -237,12 +237,12 @@ export class StoreService {
     });
   }
 
-  // 🔥 輔助功能：生成時間編號
+  // 🔥 輔助功能：生成時間編號 (格式修正：M20260211...)
   private generateMemberNo(): string {
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
-    // yyyy/MM/dd/HH/mm/ss
-    return `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())}/${pad(now.getHours())}/${pad(now.getMinutes())}/${pad(now.getSeconds())}`;
+    // M + yyyyMMddHHmmss
+    return `M${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   }
 
   // --- Actions ---
@@ -390,7 +390,7 @@ export class StoreService {
     });
   }
 
-  // --- Auth Actions (🔥 修正後的登入：舊會員補編號，新會員生成編號) ---
+  // --- Auth Actions (🔥 修正後的登入：支援自動修正舊編號) ---
 
   async loginWithGoogle() {
     try {
@@ -402,14 +402,23 @@ export class StoreService {
       const docSnap = await getDoc(userRef);
 
       if (docSnap.exists()) {
-        // --- 舊會員 ---
         const existingUser = docSnap.data() as User;
         
-        // 檢查：如果沒有 memberNo (時間編號)，就補一個
-        if (!existingUser.memberNo) {
-           const newMemberNo = this.generateMemberNo();
-           await updateDoc(userRef, { memberNo: newMemberNo });
-           existingUser.memberNo = newMemberNo;
+        // 🔥 檢查與修正：
+        // 1. 如果沒有 memberNo -> 生成新的
+        // 2. 如果有 memberNo 但包含斜線 '/' (舊格式) -> 自動轉成 M + 純數字
+        if (!existingUser.memberNo || existingUser.memberNo.includes('/')) {
+           let newNo = '';
+           if (existingUser.memberNo && existingUser.memberNo.includes('/')) {
+              // 舊格式修正: 2026/02/11... -> M20260211...
+              newNo = 'M' + existingUser.memberNo.replace(/\//g, '');
+           } else {
+              // 全新生成
+              newNo = this.generateMemberNo();
+           }
+           
+           await updateDoc(userRef, { memberNo: newNo });
+           existingUser.memberNo = newNo;
         }
 
         this.currentUser.set(existingUser);
@@ -426,7 +435,7 @@ export class StoreService {
         const ss = String(now.getSeconds()).padStart(2, '0');
         
         const oldFormatId = `M${yy}${mm}${dd}${hh}${min}${ss}`;
-        const readableMemberNo = this.generateMemberNo(); // 2026/02/11...
+        const readableMemberNo = this.generateMemberNo(); // M20260211...
 
         const newUser: User = { 
           id: gUser.uid,
