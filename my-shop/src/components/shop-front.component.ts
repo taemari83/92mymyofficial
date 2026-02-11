@@ -1,14 +1,14 @@
 import { Component, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, Params, RouterModule } from '@angular/router'; // 👈 新增 RouterModule
+import { ActivatedRoute, Router, Params } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { StoreService, Product } from '../services/store.service';
 
 @Component({
   selector: 'app-shop-front',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], // 👈 記得這裡也要加 RouterModule
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="space-y-8 pb-20">
       <div class="sticky top-20 z-10 bg-cream-50/90 backdrop-blur-md pb-4 pt-2 space-y-3">
@@ -117,14 +117,17 @@ import { StoreService, Product } from '../services/store.service';
       </div>
 
       @if (store.cartCount() > 0) {
-        <a routerLink="/checkout" class="fixed bottom-6 right-6 z-40 bg-brand-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform cursor-pointer animate-bounce-in">
-          <div class="relative">
+        <button 
+          (click)="goToCheckout()" 
+          class="fixed bottom-6 right-6 z-40 bg-brand-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform cursor-pointer animate-bounce-in border-none outline-none"
+        >
+          <div class="relative pointer-events-none">
             <span class="text-3xl">👜</span>
             <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white">
               {{ store.cartCount() }}
             </span>
           </div>
-        </a>
+        </button>
       }
       @if (selectedProduct()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 bg-brand-900/60 backdrop-blur-sm" (click)="closeModal()">
@@ -272,15 +275,18 @@ export class ShopFrontComponent {
   qty = signal(1);
   activeImage = signal(''); 
 
+  // URL Params Signal - Initial value ensures it's never treated as unknown
   queryParams = toSignal(this.route.queryParams, { initialValue: {} as Params });
 
   constructor() {
+    // Effect to sync URL with Modal
     effect(() => {
        const params = this.queryParams();
        const pId = params?.['p'];
        const allProducts = this.store.products();
 
        if (pId && allProducts.length > 0) {
+          // If URL has ID, try to find and open product
           if (this.selectedProduct()?.id !== pId) {
              const found = allProducts.find(x => x.id === pId);
              if (found) {
@@ -289,6 +295,7 @@ export class ShopFrontComponent {
              }
           }
        } else if (!pId && this.selectedProduct()) {
+          // If URL has no ID but modal is open, close it (Browser Back Button)
           this.selectedProduct.set(null);
        }
     }, { allowSignalWrites: true });
@@ -312,12 +319,24 @@ export class ShopFrontComponent {
     
     // 2. Sort
     switch (sort) {
-      case 'newest': list = list.reverse(); break;
-      case 'oldest': break;
-      case 'hot': list.sort((a, b) => b.soldCount - a.soldCount); break;
-      case 'price_asc': list.sort((a, b) => this.getPrice(a) - this.getPrice(b)); break;
-      case 'price_desc': list.sort((a, b) => this.getPrice(b) - this.getPrice(a)); break;
+      case 'newest':
+        // Assuming ID or intrinsic order is date based, or we reverse default
+        list = list.reverse(); 
+        break;
+      case 'oldest':
+        // Default order
+        break;
+      case 'hot':
+        list.sort((a, b) => b.soldCount - a.soldCount);
+        break;
+      case 'price_asc':
+        list.sort((a, b) => this.getPrice(a) - this.getPrice(b));
+        break;
+      case 'price_desc':
+        list.sort((a, b) => this.getPrice(b) - this.getPrice(a));
+        break;
     }
+
     return list;
   });
 
@@ -336,12 +355,14 @@ export class ShopFrontComponent {
   }
 
   openProductModal(p: Product) {
+    // Navigate updates the URL, and the effect above opens the modal
     this.router.navigate([], { queryParams: { p: p.id } });
     this.selectedOption.set('');
     this.qty.set(1);
   }
 
   closeModal() {
+    // Navigate updates the URL, and the effect above closes the modal
     this.router.navigate([], { queryParams: { p: null } });
   }
 
@@ -350,6 +371,11 @@ export class ShopFrontComponent {
      navigator.clipboard.writeText(url).then(() => {
         alert('連結已複製！可直接貼給客人。');
      });
+  }
+
+  // 👇 這個是為了讓按鈕有功能，其他都沒動 👇
+  goToCheckout() {
+    this.router.navigate(['/checkout']);
   }
 
   addToCart() {
@@ -362,6 +388,7 @@ export class ShopFrontComponent {
     this.store.addToCart(p, opt, this.qty());
     this.closeModal();
     
+    // Toast
     const div = document.createElement('div');
     div.className = 'fixed top-6 left-1/2 -translate-x-1/2 bg-brand-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] text-sm font-bold animate-fade-in flex items-center gap-2';
     div.innerHTML = '<span>👜</span> 已加入購物車';
