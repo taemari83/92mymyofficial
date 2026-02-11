@@ -9,9 +9,9 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
-    <div class="flex h-screen bg-[#FDFBF9] font-sans overflow-hidden">
+    <div class="flex w-full min-h-screen bg-[#FDFBF9] font-sans overflow-hidden">
       
-      <aside class="w-20 md:w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 transition-all duration-300 z-20 shadow-lg md:shadow-none">
+      <aside class="w-20 md:w-64 h-screen bg-white border-r border-gray-100 flex flex-col shrink-0 transition-all duration-300 z-20 shadow-lg md:shadow-none fixed left-0 top-0">
         <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start">
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
         </div>
@@ -37,36 +37,36 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         </div>
       </aside>
 
-      <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#FDFBF9] p-4 md:p-6 w-full relative">
-        <div class="flex justify-between items-center mb-6">
+      <main class="flex-1 ml-20 md:ml-64 w-full min-h-screen bg-[#FDFBF9] p-4 md:p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6 w-full">
            <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
            <div class="flex gap-2"><button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button></div>
         </div>
 
         @if (activeTab() === 'dashboard') {
-          <div class="space-y-8 w-full">
+          <div class="space-y-6 w-full">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-              <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group"><div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div><div class="relative z-10"><div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2"><span>📅 今日營業額</span></div><div class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().todayRevenue | number)">NT$ {{ dashboardMetrics().todayRevenue | number }}</div><div class="mt-4 text-sm text-white/50">截至目前為止</div></div></div>
-              <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center"><div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">本月銷售總額</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">NT$ {{ dashboardMetrics().monthSales | number }}</div><div class="mt-2 text-xs text-green-500 font-bold bg-green-50 px-2 py-1 rounded w-fit">持續成長中 📈</div></div>
-              <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center"><div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2">本月預估利潤</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-[#2D5B46] break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthProfit | number)">NT$ {{ dashboardMetrics().monthProfit | number:'1.0-0' }}</div><div class="mt-2 text-xs text-[#5A8C74]">已扣除商品成本</div></div>
+              <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group w-full"><div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div><div class="relative z-10"><div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2"><span>📅 今日營業額</span></div><div class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().todayRevenue | number)">NT$ {{ dashboardMetrics().todayRevenue | number }}</div><div class="mt-4 text-sm text-white/50">截至目前為止</div></div></div>
+              <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center w-full"><div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">本月銷售總額</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">NT$ {{ dashboardMetrics().monthSales | number }}</div><div class="mt-2 text-xs text-green-500 font-bold bg-green-50 px-2 py-1 rounded w-fit">持續成長中 📈</div></div>
+              <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center w-full"><div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2">本月預估利潤</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-[#2D5B46] break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthProfit | number)">NT$ {{ dashboardMetrics().monthProfit | number:'1.0-0' }}</div><div class="mt-2 text-xs text-[#5A8C74]">已扣除商品成本</div></div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2 w-full">
-              <div (click)="goToOrders('verifying')" class="bg-white p-6 rounded-[1.5rem] border border-yellow-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl mb-1 group-hover:bg-yellow-200">📝</div><div class="text-2xl md:text-3xl font-black text-yellow-600">{{ dashboardMetrics().toConfirm }}</div><div class="text-sm font-bold text-yellow-800 whitespace-nowrap">未對帳訂單</div></div>
-              <div (click)="goToOrders('paid')" class="bg-white p-6 rounded-[1.5rem] border border-green-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mb-1 group-hover:bg-green-200">💰</div><div class="text-2xl md:text-3xl font-black text-green-600">{{ dashboardMetrics().toShip }}</div><div class="text-sm font-bold text-green-800 whitespace-nowrap">已付款/待出貨</div></div>
-              <div (click)="goToOrders('unpaid')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div><div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div><div class="text-sm font-bold text-gray-600 whitespace-nowrap">未付款</div></div>
-              <div (click)="goToOrders('refund')" class="bg-white p-6 rounded-[1.5rem] border border-red-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-red-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl mb-1 group-hover:bg-red-200">⚡️</div><div class="text-2xl md:text-3xl font-black text-red-500">{{ dashboardMetrics().processing }}</div><div class="text-sm font-bold text-red-800 whitespace-nowrap">待處理 / 退款</div></div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+              <div (click)="goToOrders('verifying')" class="bg-white p-6 rounded-[1.5rem] border border-yellow-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:scale-105 transition-all cursor-pointer group w-full"><div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl mb-1 group-hover:bg-yellow-200">📝</div><div class="text-2xl md:text-3xl font-black text-yellow-600">{{ dashboardMetrics().toConfirm }}</div><div class="text-sm font-bold text-yellow-800 whitespace-nowrap">未對帳訂單</div></div>
+              <div (click)="goToOrders('paid')" class="bg-white p-6 rounded-[1.5rem] border border-green-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:scale-105 transition-all cursor-pointer group w-full"><div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mb-1 group-hover:bg-green-200">💰</div><div class="text-2xl md:text-3xl font-black text-green-600">{{ dashboardMetrics().toShip }}</div><div class="text-sm font-bold text-green-800 whitespace-nowrap">已付款/待出貨</div></div>
+              <div (click)="goToOrders('unpaid')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group w-full"><div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div><div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div><div class="text-sm font-bold text-gray-600 whitespace-nowrap">未付款</div></div>
+              <div (click)="goToOrders('refund')" class="bg-white p-6 rounded-[1.5rem] border border-red-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-red-50 hover:scale-105 transition-all cursor-pointer group w-full"><div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl mb-1 group-hover:bg-red-200">⚡️</div><div class="text-2xl md:text-3xl font-black text-red-500">{{ dashboardMetrics().processing }}</div><div class="text-sm font-bold text-red-800 whitespace-nowrap">待處理 / 退款</div></div>
             </div>
           </div>
         }
 
         @if (activeTab() === 'orders') {
           <div class="space-y-6 w-full">
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-x-auto w-full">
-               <div class="flex gap-1 mb-6 border-b border-gray-100 pb-4 overflow-x-auto">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 w-full">
+               <div class="flex gap-1 mb-6 border-b border-gray-100 pb-4 overflow-x-auto w-full">
                  @for(range of ['今日', '本週', '本月', '全部']; track range) { <button (click)="statsRange.set(range)" [class.text-brand-600]="statsRange() === range" [class.bg-brand-50]="statsRange() === range" [class.border-brand-200]="statsRange() === range" class="px-4 py-1.5 rounded-lg text-sm font-medium border border-transparent hover:bg-gray-50 text-gray-500 transition-colors whitespace-nowrap">{{ range }}</button> }
                  <span class="ml-auto text-xs text-gray-400 flex items-center whitespace-nowrap pl-4">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                </div>
-               <div class="flex flex-col xl:flex-row gap-4 justify-between items-center mb-4">
+               <div class="flex flex-col xl:flex-row gap-4 justify-between items-center mb-4 w-full">
                   <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto items-start sm:items-center flex-1">
                     <div class="relative w-full sm:w-auto sm:flex-1">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
@@ -441,7 +441,7 @@ export class AdminPanelComponent {
      return list.slice(start, start + size);
   });
 
-  // Customer Logic
+  // Customer Logic (🔥 這裡插入了新功能)
   customerViewMode = signal<'list' | 'ranking'>('list');
   customerPageSize = signal<number | 'all'>(50);
   customerPage = signal(1);
@@ -525,6 +525,7 @@ export class AdminPanelComponent {
   accountingCustomEnd = signal('');
   
   accountingStats = computed(() => {
+     // 1. Filter Orders by Time Range
      const orders = this.store.orders();
      const range = this.accountingRange();
      const now = new Date();
@@ -555,6 +556,7 @@ export class AdminPanelComponent {
         return true;
      });
 
+     // 2. Calculate Real Numbers
      let revenue = 0;
      let cost = 0;
      let discounts = 0;
@@ -566,6 +568,7 @@ export class AdminPanelComponent {
      let payRefundedTotal = 0;
 
      filteredOrders.forEach((o: Order) => {
+        // Payment Status Logic
         if (o.status === 'refunded') {
            payRefundedTotal += o.finalTotal;
         } else if (o.status === 'refund_needed') {
@@ -575,6 +578,7 @@ export class AdminPanelComponent {
         } else if (o.status === 'pending_payment' || o.status === 'unpaid_alert') {
            payUnpaid += o.finalTotal;
         } else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed') {
+           // Special handling for COD
            if (o.paymentMethod === 'cod' && o.status !== 'completed') {
               payUnpaid += o.finalTotal;
            } else {
@@ -582,6 +586,7 @@ export class AdminPanelComponent {
            }
         }
         
+        // Revenue & Cost Logic
         if (o.status !== 'pending_payment' && o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled') {
            revenue += o.finalTotal;
            
@@ -796,7 +801,7 @@ export class AdminPanelComponent {
      return 'text-gray-400';
   }
 
-  // --- 🔥 新增：格式化舊會員編號 (Format MemberNo) ---
+  // --- 🔥 強制修正：格式化會員編號 (Format MemberNo) ---
   formatMemberNo(no?: string): string {
     if (!no) return '舊會員 (待更新)';
     // 如果是舊格式 2026/02/11... (有斜線)
