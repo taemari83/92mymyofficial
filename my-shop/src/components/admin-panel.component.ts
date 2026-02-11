@@ -18,160 +18,57 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         <div class="flex-1 overflow-y-auto py-4 px-2 md:px-3 space-y-1">
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-2 text-center md:text-left">主要功能</div>
-          
-          <button (click)="activeTab.set('dashboard')" [class]="navClass('dashboard')">
-            <span class="text-xl md:text-lg">🏠</span> 
-            <span class="hidden md:inline">主控台</span>
-          </button>
-          
-          <button (click)="activeTab.set('orders')" [class]="navClass('orders')">
-            <span class="text-xl md:text-lg relative">
-              🛍️
-              @if(pendingCount() > 0) {
-                 <span class="absolute -top-1 -right-1 md:hidden bg-red-400 text-white text-[8px] w-3 h-3 flex items-center justify-center rounded-full">{{ pendingCount() }}</span>
-              }
-            </span> 
-            <span class="hidden md:inline">訂單管理</span>
-            @if(pendingCount() > 0) {
-              <span class="hidden md:inline ml-auto bg-red-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ pendingCount() }}</span>
-            }
-          </button>
-
-          <button (click)="activeTab.set('products')" [class]="navClass('products')">
-             <span class="text-xl md:text-lg">📦</span> 
-             <span class="hidden md:inline">商品管理</span>
-          </button>
-
-          <button (click)="activeTab.set('customers')" [class]="navClass('customers')">
-             <span class="text-xl md:text-lg">👥</span> 
-             <span class="hidden md:inline">客戶管理</span>
-          </button>
-
+          <button (click)="activeTab.set('dashboard')" [class]="navClass('dashboard')"><span class="text-xl md:text-lg">🏠</span> <span class="hidden md:inline">主控台</span></button>
+          <button (click)="activeTab.set('orders')" [class]="navClass('orders')"><span class="text-xl md:text-lg relative">🛍️@if(pendingCount() > 0) {<span class="absolute -top-1 -right-1 md:hidden bg-red-400 text-white text-[8px] w-3 h-3 flex items-center justify-center rounded-full">{{ pendingCount() }}</span>}</span> <span class="hidden md:inline">訂單管理</span>@if(pendingCount() > 0) {<span class="hidden md:inline ml-auto bg-red-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ pendingCount() }}</span>}</button>
+          <button (click)="activeTab.set('products')" [class]="navClass('products')"><span class="text-xl md:text-lg">📦</span> <span class="hidden md:inline">商品管理</span></button>
+          <button (click)="activeTab.set('customers')" [class]="navClass('customers')"><span class="text-xl md:text-lg">👥</span> <span class="hidden md:inline">客戶管理</span></button>
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">數據分析</div>
-          
-          <button (click)="activeTab.set('accounting')" [class]="navClass('accounting')">
-             <span class="text-xl md:text-lg">📊</span> 
-             <span class="hidden md:inline">銷售報表</span>
-          </button>
-          
-          <button (click)="activeTab.set('inventory')" [class]="navClass('inventory')">
-             <span class="text-xl md:text-lg">🏭</span> 
-             <span class="hidden md:inline">庫存管理</span>
-          </button>
-
+          <button (click)="activeTab.set('accounting')" [class]="navClass('accounting')"><span class="text-xl md:text-lg">📊</span> <span class="hidden md:inline">銷售報表</span></button>
+          <button (click)="activeTab.set('inventory')" [class]="navClass('inventory')"><span class="text-xl md:text-lg">🏭</span> <span class="hidden md:inline">庫存管理</span></button>
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">設定</div>
-           <button (click)="activeTab.set('settings')" [class]="navClass('settings')">
-             <span class="text-xl md:text-lg">⚙️</span> 
-             <span class="hidden md:inline">商店設定</span>
-          </button>
+           <button (click)="activeTab.set('settings')" [class]="navClass('settings')"><span class="text-xl md:text-lg">⚙️</span> <span class="hidden md:inline">商店設定</span></button>
         </div>
         
         <div class="p-2 md:p-4 border-t border-gray-100">
            <div class="flex items-center gap-3 p-2 md:p-3 rounded-xl bg-brand-50/50 justify-center md:justify-start">
               <div class="w-8 h-8 rounded-full bg-brand-900 text-white flex items-center justify-center text-xs shrink-0">M</div>
-              <div class="text-sm hidden md:block">
-                 <div class="font-bold text-brand-900">Admin</div>
-                 <div class="text-xs text-gray-400">Owner</div>
-              </div>
+              <div class="text-sm hidden md:block"><div class="font-bold text-brand-900">Admin</div><div class="text-xs text-gray-400">Owner</div></div>
            </div>
         </div>
       </aside>
 
-      <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#FDFBF9] p-4 md:p-8 w-full relative max-w-full">
-        
+      <main class="flex-1 overflow-y-auto overflow-x-hidden bg-[#FDFBF9] p-4 md:p-8 w-full relative">
         <div class="flex justify-between items-center mb-6">
            <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
-           <div class="flex gap-2">
-             <button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button>
-           </div>
+           <div class="flex gap-2"><button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button></div>
         </div>
 
         @if (activeTab() === 'dashboard') {
-          <div class="space-y-8 w-full overflow-x-hidden">
+          <div class="space-y-8 w-full">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group">
-                 <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                 <div class="relative z-10">
-                   <div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2">
-                     <span>📅 今日營業額</span>
-                   </div>
-                   <div class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().todayRevenue | number)">
-                     NT$ {{ dashboardMetrics().todayRevenue | number }}
-                   </div>
-                   <div class="mt-4 text-sm text-white/50">
-                     截至目前為止
-                   </div>
-                 </div>
-              </div>
-
-              <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center">
-                 <div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">本月銷售總額</div>
-                 <div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">
-                   NT$ {{ dashboardMetrics().monthSales | number }}
-                 </div>
-                 <div class="mt-2 text-xs text-green-500 font-bold bg-green-50 px-2 py-1 rounded w-fit">
-                   持續成長中 📈
-                 </div>
-              </div>
-
-              <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center">
-                 <div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2">本月預估利潤</div>
-                 <div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-[#2D5B46] break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthProfit | number)">
-                   NT$ {{ dashboardMetrics().monthProfit | number:'1.0-0' }}
-                 </div>
-                 <div class="mt-2 text-xs text-[#5A8C74]">
-                   已扣除商品成本
-                 </div>
-              </div>
+              <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group"><div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div><div class="relative z-10"><div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2"><span>📅 今日營業額</span></div><div class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().todayRevenue | number)">NT$ {{ dashboardMetrics().todayRevenue | number }}</div><div class="mt-4 text-sm text-white/50">截至目前為止</div></div></div>
+              <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center"><div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">本月銷售總額</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">NT$ {{ dashboardMetrics().monthSales | number }}</div><div class="mt-2 text-xs text-green-500 font-bold bg-green-50 px-2 py-1 rounded w-fit">持續成長中 📈</div></div>
+              <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center"><div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2">本月預估利潤</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-[#2D5B46] break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthProfit | number)">NT$ {{ dashboardMetrics().monthProfit | number:'1.0-0' }}</div><div class="mt-2 text-xs text-[#5A8C74]">已扣除商品成本</div></div>
             </div>
-
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2">
-              <div (click)="goToOrders('verifying')" class="bg-white p-6 rounded-[1.5rem] border border-yellow-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]">
-                <div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl mb-1 group-hover:bg-yellow-200">📝</div>
-                <div class="text-2xl md:text-3xl font-black text-yellow-600">{{ dashboardMetrics().toConfirm }}</div>
-                <div class="text-sm font-bold text-yellow-800 whitespace-nowrap">未對帳訂單</div>
-              </div>
-              <div (click)="goToOrders('paid')" class="bg-white p-6 rounded-[1.5rem] border border-green-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]">
-                <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mb-1 group-hover:bg-green-200">💰</div>
-                <div class="text-2xl md:text-3xl font-black text-green-600">{{ dashboardMetrics().toShip }}</div>
-                <div class="text-sm font-bold text-green-800 whitespace-nowrap">已付款/待出貨</div>
-              </div>
-              <div (click)="goToOrders('unpaid')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]">
-                <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div>
-                <div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div>
-                <div class="text-sm font-bold text-gray-600 whitespace-nowrap">未付款</div>
-              </div>
-              <div (click)="goToOrders('refund')" class="bg-white p-6 rounded-[1.5rem] border border-red-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-red-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]">
-                <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl mb-1 group-hover:bg-red-200">⚡️</div>
-                <div class="text-2xl md:text-3xl font-black text-red-500">{{ dashboardMetrics().processing }}</div>
-                <div class="text-sm font-bold text-red-800 whitespace-nowrap">待處理 / 退款</div>
-              </div>
+              <div (click)="goToOrders('verifying')" class="bg-white p-6 rounded-[1.5rem] border border-yellow-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl mb-1 group-hover:bg-yellow-200">📝</div><div class="text-2xl md:text-3xl font-black text-yellow-600">{{ dashboardMetrics().toConfirm }}</div><div class="text-sm font-bold text-yellow-800 whitespace-nowrap">未對帳訂單</div></div>
+              <div (click)="goToOrders('paid')" class="bg-white p-6 rounded-[1.5rem] border border-green-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mb-1 group-hover:bg-green-200">💰</div><div class="text-2xl md:text-3xl font-black text-green-600">{{ dashboardMetrics().toShip }}</div><div class="text-sm font-bold text-green-800 whitespace-nowrap">已付款/待出貨</div></div>
+              <div (click)="goToOrders('unpaid')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div><div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div><div class="text-sm font-bold text-gray-600 whitespace-nowrap">未付款</div></div>
+              <div (click)="goToOrders('refund')" class="bg-white p-6 rounded-[1.5rem] border border-red-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-red-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl mb-1 group-hover:bg-red-200">⚡️</div><div class="text-2xl md:text-3xl font-black text-red-500">{{ dashboardMetrics().processing }}</div><div class="text-sm font-bold text-red-800 whitespace-nowrap">待處理 / 退款</div></div>
             </div>
           </div>
         }
 
         @if (activeTab() === 'orders') {
           <div class="space-y-6 w-full">
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-x-auto">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-x-auto w-full">
                <div class="flex gap-1 mb-6 border-b border-gray-100 pb-4 overflow-x-auto">
-                 @for(range of ['今日', '本週', '本月', '全部']; track range) {
-                   <button 
-                    (click)="statsRange.set(range)"
-                    [class.text-brand-600]="statsRange() === range"
-                    [class.bg-brand-50]="statsRange() === range"
-                    [class.border-brand-200]="statsRange() === range"
-                    class="px-4 py-1.5 rounded-lg text-sm font-medium border border-transparent hover:bg-gray-50 text-gray-500 transition-colors whitespace-nowrap"
-                   >
-                    {{ range }}
-                   </button>
-                 }
+                 @for(range of ['今日', '本週', '本月', '全部']; track range) { <button (click)="statsRange.set(range)" [class.text-brand-600]="statsRange() === range" [class.bg-brand-50]="statsRange() === range" [class.border-brand-200]="statsRange() === range" class="px-4 py-1.5 rounded-lg text-sm font-medium border border-transparent hover:bg-gray-50 text-gray-500 transition-colors whitespace-nowrap">{{ range }}</button> }
                  <span class="ml-auto text-xs text-gray-400 flex items-center whitespace-nowrap pl-4">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                </div>
-               
                <div class="flex flex-col xl:flex-row gap-4 justify-between items-center mb-4">
-                  <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto items-start sm:items-center">
-                    <div class="relative w-full sm:w-auto sm:flex-1 xl:w-80">
+                  <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto items-start sm:items-center flex-1">
+                    <div class="relative w-full sm:w-auto sm:flex-1">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
                       <input type="text" [(ngModel)]="orderSearch" placeholder="搜尋訂單編號、客戶名稱..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200">
                     </div>
@@ -179,70 +76,27 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   <div class="flex gap-2 w-full md:w-auto overflow-x-auto items-center pb-2">
                     <button (click)="exportOrdersCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center gap-2 whitespace-nowrap"><span>📥</span> 匯出報表</button>
                     <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
-                      @for(tab of orderTabs; track tab.id) {
-                        <button (click)="orderStatusTab.set(tab.id)" [class.bg-brand-900]="orderStatusTab() === tab.id" [class.text-white]="orderStatusTab() === tab.id" [class.text-gray-600]="orderStatusTab() !== tab.id" class="px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">{{ tab.label }}</button>
-                      }
+                      @for(tab of orderTabs; track tab.id) { <button (click)="orderStatusTab.set(tab.id)" [class.bg-brand-900]="orderStatusTab() === tab.id" [class.text-white]="orderStatusTab() === tab.id" [class.text-gray-600]="orderStatusTab() !== tab.id" class="px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">{{ tab.label }}</button> }
                     </div>
                   </div>
                </div>
-
                <div class="overflow-x-auto w-full">
                  <table class="w-full text-sm text-left min-w-[1000px] whitespace-nowrap">
                    <thead class="bg-[#F9FAFB] text-gray-500 font-medium border-b border-gray-200">
-                     <tr>
-                       <th class="p-4 w-10"><input type="checkbox" class="rounded border-gray-300"></th>
-                       <th class="p-4">商品 訂單資訊</th>
-                       <th class="p-4">客戶</th>
-                       <th class="p-4">付款方式</th>
-                       <th class="p-4">金額</th>
-                       <th class="p-4">匯款狀態</th>
-                       <th class="p-4">物流</th>
-                       <th class="p-4">時間</th>
-                       <th class="p-4 text-right">操作</th>
-                     </tr>
+                     <tr><th class="p-4 w-10"><input type="checkbox" class="rounded border-gray-300"></th><th class="p-4">商品 訂單資訊</th><th class="p-4">客戶</th><th class="p-4">付款方式</th><th class="p-4">金額</th><th class="p-4">匯款狀態</th><th class="p-4">物流</th><th class="p-4">時間</th><th class="p-4 text-right">操作</th></tr>
                    </thead>
                    <tbody class="divide-y divide-gray-100">
                      @for(order of paginatedOrders(); track order.id) {
                        <tr class="hover:bg-brand-50/30 transition-colors group">
                          <td class="p-4"><input type="checkbox" class="rounded border-gray-300"></td>
-                         <td class="p-4">
-                           <div class="flex gap-3 items-start">
-                             <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
-                                @if(order.items.length > 0) { <img [src]="getThumb(order)" (error)="handleImageError($event)" class="w-full h-full object-cover"> }
-                             </div>
-                             <div>
-                               <div class="flex items-center gap-2 mb-1">
-                                 <span class="font-bold text-gray-800 font-mono">#{{ order.id }}</span>
-                                 @if(order.paymentName) { <span class="w-2 h-2 rounded-full bg-blue-500"></span> }
-                               </div>
-                               <div class="text-xs text-gray-500 truncate max-w-[150px]">{{ order.items[0].productName }} ...</div>
-                             </div>
-                           </div>
-                         </td>
+                         <td class="p-4"><div class="flex gap-3 items-start"><div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">@if(order.items.length > 0) { <img [src]="getThumb(order)" (error)="handleImageError($event)" class="w-full h-full object-cover"> }</div><div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-gray-800 font-mono">#{{ order.id }}</span>@if(order.paymentName) { <span class="w-2 h-2 rounded-full bg-blue-500"></span> }</div><div class="text-xs text-gray-500 truncate max-w-[150px]">{{ order.items[0].productName }} ...</div></div></div></td>
                          <td class="p-4"><div class="flex items-center gap-2"><span class="font-medium text-gray-800">{{ getUserName(order.userId) }}</span></div></td>
-                         <td class="p-4">
-                            @if(order.paymentMethod === 'bank_transfer') { <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">🏦 轉帳</span> }
-                            @else if(order.paymentMethod === 'cod') { <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">🚚 貨到付款</span> }
-                            @else { <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">💵 現金</span> }
-                         </td>
+                         <td class="p-4">@if(order.paymentMethod === 'bank_transfer') { <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">🏦 轉帳</span> }@else if(order.paymentMethod === 'cod') { <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">🚚 貨到付款</span> }@else { <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">💵 現金</span> }</td>
                          <td class="p-4 font-bold text-brand-600">NT$ {{ order.finalTotal | number }}</td>
-                         <td class="p-4">
-                            <div class="flex flex-col gap-1">
-                              <span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>
-                              @if(order.status === 'paid_verifying') { <div class="text-[10px] text-gray-500 font-mono">後五碼: <span class="font-bold text-brand-900">{{ order.paymentLast5 }}</span></div> }
-                            </div>
-                         </td>
+                         <td class="p-4"><div class="flex flex-col gap-1"><span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>@if(order.status === 'paid_verifying') { <div class="text-[10px] text-gray-500 font-mono">後五碼: <span class="font-bold text-brand-900">{{ order.paymentLast5 }}</span></div> }</div></td>
                          <td class="p-4"><span [class]="getShippingStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold">{{ getShippingStatusLabel(order.status) }}</span></td>
                          <td class="p-4 text-gray-400 text-xs">{{ timeAgo(order.createdAt) }}</td>
-                         <td class="p-4 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                              @if (order.status === 'paid_verifying') { <button (click)="quickConfirm($event, order)" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold whitespace-nowrap">✅ 確認</button> } 
-                              @else if (order.status === 'payment_confirmed') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap">📦 出貨</button> }
-                              @else if (order.status === 'shipped' && order.paymentMethod === 'cod') { <button (click)="quickComplete($event, order)" class="px-3 py-1.5 bg-green-800 text-white rounded-lg text-xs font-bold whitespace-nowrap">💰 確認收款</button> }
-                              @else if (order.status === 'refund_needed') { <button (click)="quickRefundDone($event, order)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap">💸 已退款</button> }
-                              <button (click)="openAction($event, order)" class="p-2 hover:bg-gray-100 rounded-lg text-gray-400">•••</button>
-                            </div>
-                         </td>
+                         <td class="p-4 text-right"><div class="flex items-center justify-end gap-2">@if (order.status === 'paid_verifying') { <button (click)="quickConfirm($event, order)" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold whitespace-nowrap">✅ 確認</button> } @else if (order.status === 'payment_confirmed') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap">📦 出貨</button> }@else if (order.status === 'shipped' && order.paymentMethod === 'cod') { <button (click)="quickComplete($event, order)" class="px-3 py-1.5 bg-green-800 text-white rounded-lg text-xs font-bold whitespace-nowrap">💰 確認收款</button> }@else if (order.status === 'refund_needed') { <button (click)="quickRefundDone($event, order)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap">💸 已退款</button> }<button (click)="openAction($event, order)" class="p-2 hover:bg-gray-100 rounded-lg text-gray-400">•••</button></div></td>
                        </tr>
                      }
                    </tbody>
@@ -254,29 +108,16 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (activeTab() === 'products') { 
           <div class="space-y-6 w-full"> 
-            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4"> 
-              <div> 
-                <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">上架連線商品</h3> 
-                <p class="text-sm text-gray-400 mt-1">管理商品、庫存與定價</p> 
-              </div> 
-              <div class="flex gap-3 w-full md:w-auto"> 
-                <button (click)="exportProductsCSV()" class="px-4 py-3 bg-white border border-gray-200 text-gray-600 rounded-full font-bold hover:bg-gray-50 shadow-sm flex items-center gap-2 whitespace-nowrap">
-                  <span>📥</span> 匯出商品表
-                </button>
-                <label class="flex-1 md:flex-none justify-center flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-brand-900 rounded-full font-bold shadow-sm hover:bg-brand-50 cursor-pointer transition-colors hover:shadow-md whitespace-nowrap"> 
-                  <span class="text-lg">📂</span> 
-                  <span class="text-sm">批量新增</span> 
-                  <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
-                </label> 
-                <button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button> 
-              </div> 
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 w-full"> 
+              <div><h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">上架連線商品</h3><p class="text-sm text-gray-400 mt-1">管理商品、庫存與定價</p></div> 
+              <div class="flex gap-3 w-full md:w-auto"><button (click)="exportProductsCSV()" class="px-4 py-3 bg-white border border-gray-200 text-gray-600 rounded-full font-bold hover:bg-gray-50 shadow-sm flex items-center gap-2 whitespace-nowrap"><span>📥</span> 匯出商品表</button><label class="flex-1 md:flex-none justify-center flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-brand-900 rounded-full font-bold shadow-sm hover:bg-brand-50 cursor-pointer transition-colors hover:shadow-md whitespace-nowrap"><span class="text-lg">📂</span><span class="text-sm">批量新增</span><input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"></label><button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button></div> 
             </div> 
-            <div class="grid grid-cols-1 gap-4"> @for (p of store.products(); track p.id) { <div class="bg-white rounded-[1.5rem] p-4 flex items-center gap-5 hover:shadow-md transition-all border border-transparent hover:border-brand-100 group"> <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative"> <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover"> <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-0.5"> {{ p.code }} </div> </div> <div class="flex-1 min-w-0"> <div class="flex justify-between items-start"> <div> <div class="flex items-center gap-2 mb-1 flex-wrap"> <span class="text-xs text-brand-400 font-bold tracking-wider uppercase whitespace-nowrap">{{ p.category }}</span> @if(p.priceType === 'event') { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">活動價</span> } @if(p.priceType === 'clearance') { <span class="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">清倉價</span> } </div> <h4 class="text-lg font-bold text-brand-900 truncate">{{ p.name }}</h4> </div> <div class="text-right shrink-0 ml-2"> <div class="font-bold text-lg text-brand-900 whitespace-nowrap">NT$ {{ p.priceGeneral }}</div> <div class="text-[10px] text-gray-400 whitespace-nowrap">庫存 {{ p.stock }}</div> </div> </div> <div class="flex justify-between items-end mt-2"> <div class="text-xs text-gray-400 truncate"> {{ p.options.join(', ') }} </div> <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"> <button (click)="editProduct(p)" class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200 whitespace-nowrap">Edit</button> <button (click)="store.deleteProduct(p.id)" class="px-3 py-1 rounded-full bg-red-50 text-xs font-bold text-red-400 hover:bg-red-100 whitespace-nowrap">Del</button> </div> </div> </div> </div> } </div> </div> 
+            <div class="grid grid-cols-1 gap-4 w-full"> @for (p of store.products(); track p.id) { <div class="bg-white rounded-[1.5rem] p-4 flex items-center gap-5 hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full"> <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative"> <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover"> <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-0.5"> {{ p.code }} </div> </div> <div class="flex-1 min-w-0"> <div class="flex justify-between items-start"> <div> <div class="flex items-center gap-2 mb-1 flex-wrap"> <span class="text-xs text-brand-400 font-bold tracking-wider uppercase whitespace-nowrap">{{ p.category }}</span> @if(p.priceType === 'event') { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">活動價</span> } @if(p.priceType === 'clearance') { <span class="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">清倉價</span> } </div> <h4 class="text-lg font-bold text-brand-900 truncate">{{ p.name }}</h4> </div> <div class="text-right shrink-0 ml-2"> <div class="font-bold text-lg text-brand-900 whitespace-nowrap">NT$ {{ p.priceGeneral }}</div> <div class="text-[10px] text-gray-400 whitespace-nowrap">庫存 {{ p.stock }}</div> </div> </div> <div class="flex justify-between items-end mt-2"> <div class="text-xs text-gray-400 truncate"> {{ p.options.join(', ') }} </div> <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"> <button (click)="editProduct(p)" class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200 whitespace-nowrap">Edit</button> <button (click)="store.deleteProduct(p.id)" class="px-3 py-1 rounded-full bg-red-50 text-xs font-bold text-red-400 hover:bg-red-100 whitespace-nowrap">Del</button> </div> </div> </div> </div> } </div> </div> 
         }
         
         @if (activeTab() === 'customers') { 
           <div class="space-y-6 w-full">
-              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-wrap lg:flex-nowrap justify-between items-center gap-4">
+              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-wrap lg:flex-nowrap justify-between items-center gap-4 w-full">
                  <div class="min-w-[150px]">
                     <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">客戶管理</h3>
                     <p class="text-sm text-gray-400 mt-1">查看會員資料與消費紀錄</p>
@@ -285,9 +126,9 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
                     <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
                        <span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span>
-                       <input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 lg:w-32">
+                       <input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32">
                        <span class="text-gray-300">-</span>
-                       <input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 lg:w-32">
+                       <input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32">
                     </div>
 
                     <button (click)="exportCustomersCSV()" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm">
@@ -301,9 +142,9 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  </div>
               </div>
 
-              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden">
-                 <div class="overflow-x-auto">
-                   <table class="w-full text-sm text-left whitespace-nowrap">
+              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full">
+                 <div class="overflow-x-auto w-full">
+                   <table class="w-full text-sm text-left whitespace-nowrap min-w-[900px]">
                       <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
                          <tr>
                             <th class="p-4">會員編號 / Google UID</th>
@@ -360,7 +201,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (activeTab() === 'accounting') {
            <div class="space-y-6 pt-2 w-full">
-            <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 w-full">
                <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1">
                   @for(r of ['today', 'week', 'month', 'custom']; track r) { <button (click)="accountingRange.set(r)" class="px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap" [class.bg-brand-900]="accountingRange() === r" [class.text-white]="accountingRange() === r" [class.bg-gray-100]="accountingRange() !== r" [class.text-gray-500]="accountingRange() !== r"> @switch(r) { @case('today') { 今日 } @case('week') { 本週 } @case('month') { 本月 } @case('custom') { 自訂 } } </button> }
                </div>
@@ -369,15 +210,15 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   <button (click)="exportToCSV()" class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold hover:bg-green-100 whitespace-nowrap flex items-center gap-1"><span>📊</span> 匯出報表</button>
                </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
                <div class="bg-brand-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div><div class="relative z-10"><div class="text-brand-200 text-xs font-bold uppercase tracking-widest mb-1">總營收 (已扣除折扣)</div><div class="text-3xl font-black">NT$ {{ accountingStats().revenue | number }}</div></div></div>
                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">淨利潤</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().profit | number:'1.0-0' }}</div><div class="mt-2 inline-block px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">淨利率 {{ accountingStats().margin | number:'1.1-1' }}%</div></div>
                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">總成本 (商品+物流)</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().cost | number:'1.0-0' }}</div></div>
                <div class="lg:col-span-3 bg-blue-50/50 p-4 rounded-[2rem] border border-blue-50 flex items-center text-blue-800/70 text-xs leading-relaxed">💡 報表說明：<br>• 上方「總營收/淨利」僅計算已成交訂單 (排除未付款、取消)。<br>• 下方「收款狀態分析」為全狀態統計，方便追蹤現金流。<br>• 貨到付款 (COD) 訂單，在訂單狀態為「已完成」前，皆視為「未收款 (應收帳款)」。</div>
             </div>
-            <div class="mt-4">
+            <div class="mt-4 w-full">
               <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><span>💰 收款狀態分析</span><span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-normal">Cash Flow</span></h4>
-              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
                  <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">應收總額</div><div class="text-lg font-black text-gray-800 whitespace-nowrap">\${{ accountingStats().payment.total | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🧾</div></div>
                  <div class="bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm relative overflow-hidden"><div class="text-xs text-green-600 font-bold mb-1 uppercase">已實收 (入帳)</div><div class="text-lg font-black text-green-700 whitespace-nowrap">\${{ accountingStats().payment.received | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">💰</div></div>
                  <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm relative overflow-hidden"><div class="text-xs text-yellow-600 font-bold mb-1 uppercase">對帳中</div><div class="text-lg font-black text-yellow-700 whitespace-nowrap">\${{ accountingStats().payment.verifying | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">🔍</div></div>
@@ -386,9 +227,9 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  <div class="bg-gray-800 text-white p-4 rounded-2xl border border-gray-700 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-400 font-bold mb-1 uppercase">已退款 (結案)</div><div class="text-lg font-black text-white whitespace-nowrap">\${{ accountingStats().payment.refundedTotal | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-20 text-4xl">💸</div></div>
               </div>
             </div>
-            <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+            <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
                <div class="p-6 border-b border-gray-100 bg-gray-50/50"><h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📈 商品毛利分析排行</span></h4></div>
-               <div class="overflow-x-auto">
+               <div class="overflow-x-auto w-full">
                   <table class="w-full text-sm text-left whitespace-nowrap">
                      <thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase border-b border-gray-200"><tr> <th class="p-4 w-16 text-center">排名</th> <th class="p-4">商品名稱</th> <th class="p-4 text-right">銷售數量</th> <th class="p-4 text-right">總營收</th> <th class="p-4 text-right">總成本</th> <th class="p-4 text-right">總利潤</th> <th class="p-4 text-right">毛利率 %</th> </tr></thead>
                      <tbody class="divide-y divide-gray-100">
@@ -431,7 +272,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (activeTab() === 'settings') { 
           <div class="w-full py-6"> 
-            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-12"> 
+            <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-12 w-full"> 
               <div class="flex justify-between items-center border-b border-gray-100 pb-6"><h3 class="text-2xl font-bold text-gray-800">⚙️ 商店參數設定</h3></div>
               <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="space-y-10"> 
                 <div class="space-y-4">
@@ -545,7 +386,6 @@ export class AdminPanelComponent {
     const range = this.statsRange();
     const now = new Date();
     
-    // Filter by date range first
     const list = allOrders.filter((o: Order) => {
        const d = new Date(o.createdAt);
        if (range === '今日') return d.toDateString() === now.toDateString();
@@ -684,7 +524,6 @@ export class AdminPanelComponent {
   accountingCustomEnd = signal('');
   
   accountingStats = computed(() => {
-     // 1. Filter Orders by Time Range
      const orders = this.store.orders();
      const range = this.accountingRange();
      const now = new Date();
@@ -715,7 +554,6 @@ export class AdminPanelComponent {
         return true;
      });
 
-     // 2. Calculate Real Numbers
      let revenue = 0;
      let cost = 0;
      let discounts = 0;
