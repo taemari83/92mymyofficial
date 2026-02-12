@@ -633,7 +633,7 @@ export class AdminPanelComponent {
   });
   
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
-  topProducts = computed(() => [...this.store.products()].sort((a,b) => b.soldCount - a.soldCount).slice(0, 5));
+  topProducts = computed(() => [...this.store.products()].sort((a: Product, b: Product) => b.soldCount - a.soldCount).slice(0, 5));
 
   // Orders Logic
   statsRange = signal('今日');
@@ -704,7 +704,7 @@ export class AdminPanelComponent {
         list = list.filter((o: Order) => o.id.includes(q) || o.items.some((i: CartItem) => i.productName.toLowerCase().includes(q)) || this.getUserName(o.userId).toLowerCase().includes(q));
      }
      
-     return list.sort((a,b) => b.createdAt - a.createdAt);
+     return list.sort((a: Order, b: Order) => b.createdAt - a.createdAt);
   });
 
   paginatedOrders = computed(() => {
@@ -783,7 +783,7 @@ export class AdminPanelComponent {
   customerRanking = computed(() => {
      return this.store.users().map((u: User) => {
         return { user: u, spend: u.totalSpend, count: Math.floor(u.totalSpend / 1000), lastOrder: Date.now() - Math.random()*1000000000 };
-     }).sort((a,b) => {
+     }).sort((a: any, b: any) => {
         if(this.rankMetric() === 'spend') return b.spend - a.spend;
         if(this.rankMetric() === 'count') return b.count - a.count;
         return b.lastOrder - a.lastOrder; 
@@ -910,7 +910,7 @@ export class AdminPanelComponent {
         const revenue = p.soldCount * p.priceGeneral;
         const cost = p.soldCount * (p.localPrice * p.exchangeRate + p.costMaterial);
         return { product: p, sold: p.soldCount, revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0 };
-     }).sort((a,b) => b.profit - a.profit);
+     }).sort((a: any, b: any) => b.profit - a.profit);
   });
 
   // Product Form

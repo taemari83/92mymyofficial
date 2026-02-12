@@ -61,9 +61,68 @@ import { StoreService } from '../services/store.service';
           </div>
           
           <div class="text-center text-sm text-gray-400">
-            會員編號: {{ storeService.currentUser()?.memberId || storeService.currentUser()?.id }}
+            會員編號: {{ storeService.currentUser()?.memberNo || storeService.currentUser()?.memberId || storeService.currentUser()?.id }}
           </div>
 
+          <div class="mt-4 pt-4 border-t border-gray-100">
+            <h3 class="font-bold text-gray-800 text-lg mb-4">📦 我的訂單紀錄</h3>
+            
+            @if(storeService.orders().length === 0) {
+              <div class="text-center text-gray-400 py-4 text-sm bg-gray-50 rounded-lg">
+                目前沒有訂單紀錄
+              </div>
+            } @else {
+              <div class="space-y-4">
+                @for(order of storeService.orders(); track order.id) {
+                  <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:border-gray-300 transition-colors">
+                    
+                    <div class="flex justify-between items-center mb-2">
+                      <div class="flex items-center gap-2 overflow-hidden">
+                        <span class="text-xs text-gray-400 font-bold shrink-0">編號</span>
+                        <span class="font-mono text-sm font-bold text-gray-800 truncate">{{ order.id }}</span>
+                      </div>
+                      <button (click)="storeService.copyToClipboard(order.id)" class="shrink-0 px-2 py-1 bg-gray-100 hover:bg-gray-200 text-xs text-gray-600 rounded-lg transition-colors font-bold border border-gray-200">
+                        複製
+                      </button>
+                    </div>
+
+                    <div class="flex justify-between items-end border-t border-gray-100 pt-2 mt-2">
+                      <div>
+                        <div class="text-xs text-gray-500 mb-1">
+                          {{ order.createdAt | date:'yyyy/MM/dd HH:mm' }}
+                        </div>
+                        <span class="inline-block px-2 py-0.5 rounded text-xs font-bold"
+                           [class.bg-yellow-100]="order.status === 'pending_payment'"
+                           [class.text-yellow-800]="order.status === 'pending_payment'"
+                           [class.bg-blue-100]="order.status === 'payment_confirmed' || order.status === 'shipped'"
+                           [class.text-blue-800]="order.status === 'payment_confirmed' || order.status === 'shipped'"
+                           [class.bg-green-100]="order.status === 'completed'"
+                           [class.text-green-800]="order.status === 'completed'"
+                           [class.bg-purple-100]="order.status === 'arrived_notified'"
+                           [class.text-purple-800]="order.status === 'arrived_notified'">
+                          @switch(order.status) {
+                            @case('pending_payment') { 待付款 }
+                            @case('paid_verifying') { 對帳中 }
+                            @case('payment_confirmed') { 已付款 / 待出貨 }
+                            @case('shipped') { 已出貨 }
+                            @case('arrived_notified') { 貨到 / 請下單賣貨便 }
+                            @case('completed') { 已完成 }
+                            @case('cancelled') { 已取消 }
+                            @default { {{order.status}} }
+                          }
+                        </span>
+                      </div>
+                      <div class="text-right">
+                        <div class="text-lg font-bold text-gray-800">
+                          NT$ {{ order.finalTotal | number }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
           @if (storeService.currentUser()?.isAdmin) {
              <a href="/admin" class="block w-full text-center py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
                進入管理員後台

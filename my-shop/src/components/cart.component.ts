@@ -51,11 +51,8 @@ import { StoreService, CartItem } from '../services/store.service';
                       <p class="text-xs text-gray-500 mb-1">{{ item.option }}</p>
                       
                       <div class="flex flex-wrap gap-1">
-                         @if (getProduct(item.productId); as p) {
-                            @if(p.allowShipping?.myship !== false) { <span class="px-1.5 py-0.5 bg-orange-50 text-orange-600 text-[10px] rounded border border-orange-100">7-11</span> }
-                            @if(p.allowShipping?.family !== false) { <span class="px-1.5 py-0.5 bg-green-50 text-green-600 text-[10px] rounded border border-green-100">全家</span> }
-                            @if(p.allowShipping?.delivery !== false) { <span class="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[10px] rounded border border-blue-100">宅配</span> }
-                            @if(p.allowShipping?.meetup !== false) { <span class="px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[10px] rounded border border-purple-100">面交</span> }
+                         @if(item.isPreorder) { 
+                            <span class="px-1.5 py-0.5 bg-blue-100 text-blue-600 text-[10px] rounded font-bold border border-blue-200">預購</span> 
                          }
                       </div>
                    </div>
@@ -314,10 +311,8 @@ export class CartComponent {
         }
      }, { allowSignalWrites: true });
 
-     // Removed strict validation for Bank Transfer to allow 'Pending Payment' status
      // Dynamic Validators
      this.form.get('shippingMethod')?.valueChanges.subscribe(m => {
-        // IMPORTANT: Update the signal so computed values re-trigger
         this.selectedShippingMethod.set(m);
 
         const addr = this.form.get('shipAddress');
@@ -422,30 +417,25 @@ export class CartComponent {
   // Totals
   selectedSubtotal = computed(() => this.checkoutList().reduce((sum, i) => sum + (i.price * i.quantity), 0));
   
-  // Use selectedShippingMethod() signal here to ensure reactivity
   currentShippingFee = computed(() => {
      const m = this.selectedShippingMethod();
      const settings = this.storeService.settings().shipping;
      
-     // Check Free Threshold
      if (settings.freeThreshold > 0 && this.selectedSubtotal() >= settings.freeThreshold) return 0;
 
      if (m === 'delivery') return settings.methods.delivery.fee;
      if (m === 'meetup') return settings.methods.meetup.fee;
-     
-     // UPDATED: No shipping fee for myship/family
-     if (m === 'myship') return 0;
-     if (m === 'family') return 0;
+     if (m === 'myship') return 0; // 賣貨便0元
+     if (m === 'family') return 0; // 全家0元
      
      return 0;
   });
 
   // Automatic Discount Logic for Myship/Family
-  // Use selectedShippingMethod() signal here to ensure reactivity
   currentDiscount = computed(() => {
     const m = this.selectedShippingMethod();
     if (m === 'myship' || m === 'family') {
-      return 20;
+      return 20; // 扣除尾款
     }
     return 0;
   });
@@ -454,7 +444,6 @@ export class CartComponent {
      if (!this.useCredits()) return 0;
      const user = this.storeService.currentUser();
      const max = user?.credits || 0;
-     // Deduct discount first before calculating credit usage
      const sub = this.selectedSubtotal() + this.currentShippingFee() - this.currentDiscount();
      return Math.min(max, Math.max(0, sub));
   });
@@ -487,7 +476,7 @@ export class CartComponent {
      if (this.form.valid) {
         const val = this.form.value;
         this.storeService.createOrder(
-           { name: val.payName, time: val.payDate, last5: val.payLast5 }, // Added name
+           { name: val.payName, time: val.payDate, last5: val.payLast5 },
            { name: val.shipName, phone: val.shipPhone, address: val.shipAddress, store: val.shipStore },
            this.calculatedCredits(),
            val.paymentMethod,
@@ -495,7 +484,7 @@ export class CartComponent {
            this.currentShippingFee(),
            this.checkoutList()
         );
-        this.selectedIndices.set(new Set()); // Clear selection
+        this.selectedIndices.set(new Set());
         this.step.set(3);
      }
   }
@@ -510,7 +499,6 @@ export class CartComponent {
 
   // UI Helpers
   getShippingLabel(m: string) { const map: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; return map[m] || m; }
-  
   getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; return map[m] || m; }
   getPaymentIcon(m: string) { const map: any = { cash: '💵', bank_transfer: '🏦', cod: '🚚' }; return map[m] || ''; }
 }
