@@ -371,7 +371,7 @@ export class StoreService {
       // 🔥 [新增] 呼叫 Google Apps Script 發送通知 (Telegram + Email)
       // =======================================================
       // 請將下方的網址換成您剛剛部署 GAS 取得的那串網址
-      const gasUrl = "https://script.google.com/macros/s/AKfycbw65_8-https://script.google.com/macros/s/AKfycbzOKiHDFP3zs5VB4zntpZYB9daht0hL1Lfwlat6otLFJVy48m8CI7rwCHro3u-CrCIk/exec_xxxxxxxx/exec"; 
+      const gasUrl = "https://script.google.com/macros/s/AKfycbzOKiHDFP3zs5VB4zntpZYB9daht0hL1Lfwlat6otLFJVy48m8CI7rwCHro3u-CrCIk/exec"; 
       
       const notifyData = {
         orderId: result.orderId,
