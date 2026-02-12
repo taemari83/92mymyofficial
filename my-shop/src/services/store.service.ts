@@ -335,6 +335,7 @@ export class StoreService {
     }
 
     try {
+      // 1. 呼叫後端 API 建立訂單
       const response = await fetch('/api/createOrder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -353,6 +354,7 @@ export class StoreService {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || '訂單建立失敗');
 
+      // 2. 更新本地 User 資料
       const updatedUser = { 
         ...user, 
         totalSpend: user.totalSpend + result.finalTotal, 
@@ -360,9 +362,30 @@ export class StoreService {
       };
       this.currentUser.set(updatedUser);
 
+      // 3. 清空購物車中已結帳商品
       this.cart.update(current => current.filter(c => 
         !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)
       ));
+
+      // =======================================================
+      // 🔥 [新增] 呼叫 Google Apps Script 發送通知 (Telegram + Email)
+      // =======================================================
+      // 請將下方的網址換成您剛剛部署 GAS 取得的那串網址
+      const gasUrl = "https://script.google.com/macros/s/AKfycbw65_8-https://script.google.com/macros/s/AKfycbzOKiHDFP3zs5VB4zntpZYB9daht0hL1Lfwlat6otLFJVy48m8CI7rwCHro3u-CrCIk/exec_xxxxxxxx/exec"; 
+      
+      const notifyData = {
+        orderId: result.orderId,
+        total: result.finalTotal,
+        name: shippingInfo.name || user.name || '訪客'
+      };
+
+      // 使用 no-cors 模式發送，避免跨域錯誤 (fire and forget)
+      fetch(gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(notifyData)
+      }).catch(err => console.error('通知發送異常(不影響訂單):', err));
+      // =======================================================
 
       return { 
           id: result.orderId, 
