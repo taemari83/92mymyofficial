@@ -1352,31 +1352,35 @@ export class AdminPanelComponent {
      const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode());
 
      const p: Product = {
-        id: this.editingProduct()?.id || Date.now().toString(), 
-        code: finalCode,
-        name: val.name,
-        category: val.category,
-        image: mainImage, 
-        images: finalImages, 
-        priceGeneral: val.priceGeneral,
-        priceVip: val.priceVip,
-        priceWholesale: 0,
-        localPrice: val.localPrice,
-        stock: val.stock,
-        options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [],
-        note: val.note,
-        
-        exchangeRate: val.exchangeRate,
-        costMaterial: val.costMaterial,
-        weight: val.weight,
-        shippingCostPerKg: val.shippingCostPerKg,
-        
-        priceType: 'normal',
-        soldCount: this.editingProduct()?.soldCount || 0,
-        country: 'Korea',
-        allowPayment: { cash: true, bankTransfer: true, cod: true },
-        allowShipping: { meetup: true, myship: true, family: true, delivery: true }
-     };
+    id: this.editingProduct()?.id || Date.now().toString(), 
+    code: finalCode,
+    name: val.name,
+    category: val.category,
+    image: mainImage, 
+    images: finalImages, 
+    priceGeneral: val.priceGeneral,
+    priceVip: val.priceVip,
+    priceWholesale: 0,
+    localPrice: val.localPrice,
+    stock: val.stock,
+    options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [],
+    note: val.note,
+
+    // 🔥 在這裡補上這兩行，紅字就會消失了！
+    isPreorder: false,  // 預設為「現貨」，若要預購可在畫面勾選（如果有做勾選框的話）
+    isListed: true,     // 預設為「上架」，讓新商品直接在官網顯示
+
+    exchangeRate: val.exchangeRate,
+    costMaterial: val.costMaterial,
+    weight: val.weight,
+    shippingCostPerKg: val.shippingCostPerKg,
+    
+    priceType: 'normal',
+    soldCount: this.editingProduct()?.soldCount || 0,
+    country: 'Korea',
+    allowPayment: { cash: true, bankTransfer: true, cod: true },
+    allowShipping: { meetup: true, myship: true, family: true, delivery: true }
+};
      
      if (this.editingProduct()) {
         this.store.updateProduct(p);
