@@ -463,7 +463,6 @@ export class AdminPanelComponent {
 
   activeTab = signal('dashboard');
   
-  // Dashboard Logic
   dashboardMetrics = computed(() => {
      const orders = this.store.orders(); 
      const today = new Date().toDateString();
@@ -504,7 +503,6 @@ export class AdminPanelComponent {
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   topProducts = computed(() => [...this.store.products()].sort((a: any, b: any) => b.soldCount - a.soldCount).slice(0, 5));
 
-  // Orders Logic
   statsRange = signal('今日');
   orderStart = signal('');
   orderEnd = signal('');
@@ -513,7 +511,6 @@ export class AdminPanelComponent {
   orderPage = signal(1);
   orderStatusTab = signal('all');
 
-  // Action Modal
   actionModalOrder = signal<Order | null>(null);
   cancelConfirmState = signal(false);
 
@@ -615,7 +612,6 @@ export class AdminPanelComponent {
      return list.slice(start, start + size);
   });
 
-  // Customer Logic 
   customerViewMode = signal<'list' | 'ranking'>('list');
   customerPageSize = signal<number | 'all'>(50);
   customerPage = signal(1);
@@ -686,7 +682,6 @@ export class AdminPanelComponent {
   topCustomers = computed(() => this.customerRanking().slice(0, 3));
   restCustomers = computed(() => this.customerRanking().slice(3, 50));
 
-  // Accounting Logic
   accountingRange = signal('month');
   accountingCustomStart = signal('');
   accountingCustomEnd = signal('');
@@ -795,7 +790,6 @@ export class AdminPanelComponent {
      }).sort((a: any, b: any) => b.profit - a.profit);
   });
 
-  // Product Form
   showProductModal = signal(false);
   editingProduct = signal<Product | null>(null);
   productForm: FormGroup;
@@ -806,7 +800,6 @@ export class AdminPanelComponent {
   currentCategoryCode = signal('');
   generatedSkuPreview = signal(''); 
 
-  // Settings Form
   settingsForm: FormGroup;
 
   constructor() {
@@ -1010,8 +1003,8 @@ export class AdminPanelComponent {
   }
 
   doDeleteOrder(o: Order) {
-     if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原！(通常僅用於清除測試資料)`)) {
-        this.store.deleteOrder(o.id);
+     if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原，且系統會自動扣除該會員對應的累積消費金額！(購物金如有使用亦會退還)`)) {
+        this.store.deleteOrder(o);
         this.closeActionModal();
      }
   }

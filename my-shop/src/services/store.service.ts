@@ -194,12 +194,28 @@ export class StoreService {
   async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), { ...u }); if (this.currentUser()?.id === u.id) this.currentUser.set(u); }
   logout() { signOut(this.auth); this.currentUser.set(null); if (typeof localStorage !== 'undefined') localStorage.removeItem('92mymy_uid'); }
 
-  // 🔥 新增：徹底刪除訂單
-  async deleteOrder(id: string) {
-    await deleteDoc(doc(this.firestore, 'orders', id));
+  // 🔥 修正：徹底刪除訂單時，一併扣除會員的累積消費與退還購物金
+  async deleteOrder(order: Order) {
+    try {
+      const userRef = doc(this.firestore, 'users', order.userId);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+         const userData = userSnap.data() as User;
+         // 扣除這筆訂單的金額，最低扣到 0
+         const newTotalSpend = Math.max(0, userData.totalSpend - order.finalTotal);
+         // 如果這筆訂單有使用購物金，刪除時退還給會員
+         const newCredits = userData.credits + (order.usedCredits || 0);
+         
+         await updateDoc(userRef, { totalSpend: newTotalSpend, credits: newCredits });
+      }
+      // 最後徹底刪除這筆訂單
+      await deleteDoc(doc(this.firestore, 'orders', order.id));
+    } catch (error) {
+      console.error("Delete order failed", error);
+    }
   }
 
-  // 🔥 新增：刪除商品分類
   async removeCategory(name: string) {
      const current = this.categories();
      const newList = current.filter(c => c !== name);
@@ -208,7 +224,6 @@ export class StoreService {
      if (s.categoryCodes && s.categoryCodes[name]) { delete s.categoryCodes[name]; await this.updateSettings(s); }
   }
 
-  // 🔥 新增：重新命名商品分類
   async renameCategory(oldName: string, newName: string) {
      const trimmedNew = newName.trim();
      if (!trimmedNew || trimmedNew === oldName) return;
