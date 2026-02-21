@@ -257,7 +257,28 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 <div class="space-y-4"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg text-lg">💳</span> 收款方式</h4><div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableCash" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">現金付款</span></label><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableBank" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">銀行轉帳</span></label><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableCod" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">貨到付款</span></label></div></div>
                 <div class="space-y-6" formGroupName="shipping"><div class="flex justify-between items-end"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-green-100 text-green-600 p-1.5 rounded-lg text-lg">🚚</span> 物流設定</h4><div class="flex items-center gap-2"><span class="text-sm font-bold text-gray-500">全館免運門檻 $</span><input type="number" formControlName="freeThreshold" class="w-24 border border-gray-200 rounded-lg p-2 text-center font-bold"></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4" formGroupName="methods"><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="meetup"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 面交自取</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="myship"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 7-11 賣貨便</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="family"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 全家 好賣家</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="delivery"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 宅配寄送</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div></div></div>
                 <div class="space-y-4"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-yellow-100 text-yellow-600 p-1.5 rounded-lg text-lg">🎁</span> 會員回饋 (生日禮金)</h4><div class="grid grid-cols-2 gap-6"><div><label class="block text-xs font-bold text-gray-500 mb-1">一般會員生日禮 ($)</label><input type="number" formControlName="birthdayGiftGeneral" class="w-full border border-gray-200 rounded-xl p-3 font-bold"></div><div><label class="block text-xs font-bold text-gray-500 mb-1">VIP 生日禮 ($)</label><input type="number" formControlName="birthdayGiftVip" class="w-full border border-gray-200 rounded-xl p-3 font-bold"></div></div></div>
-                <div class="space-y-4"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-purple-100 text-purple-600 p-1.5 rounded-lg text-lg">🏷️</span> 商品類別代碼 (自動生成 SKU)</h4><div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">@for(cat of store.categories(); track cat) { <div class="flex items-center gap-2"><label class="text-sm font-bold text-gray-500 w-24 truncate">{{ cat }}</label><input type="text" [value]="categoryCodes()[cat] || ''" (change)="updateCategoryCode(cat, $any($event.target).value)" class="w-full border border-gray-200 rounded px-2 py-1 uppercase text-center font-mono font-bold text-brand-900 focus:outline-none focus:border-brand-300" maxlength="1" placeholder="?"></div> }</div><p class="text-xs text-gray-400 mt-2">* 請輸入單一英文字母 (A-Z)，用於 SKU 編號開頭 (例如: A250520001)</p></div> 
+                
+                <div class="space-y-4">
+                   <h4 class="font-bold text-gray-600 flex items-center gap-2">
+                      <span class="bg-purple-100 text-purple-600 p-1.5 rounded-lg text-lg">🏷️</span> 商品分類管理 (類別增刪改與代碼)
+                   </h4>
+                   <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
+                      @for(cat of store.categories(); track cat) { 
+                         <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
+                            <input type="text" [value]="cat" (change)="renameCategory(cat, $any($event.target).value)" class="flex-1 min-w-[120px] border border-transparent hover:border-gray-200 outline-none font-bold text-sm text-gray-700 bg-transparent focus:ring-1 focus:ring-brand-200 rounded px-2 py-1" title="點擊修改名稱">
+                            <span class="text-xs text-gray-400 font-bold ml-auto sm:ml-2">SKU代碼:</span>
+                            <input type="text" [value]="categoryCodes()[cat] || ''" (change)="updateCategoryCode(cat, $any($event.target).value)" class="w-12 border border-gray-200 rounded px-1 py-1 uppercase text-center font-mono font-bold text-brand-900 focus:outline-none focus:border-brand-300 shadow-inner" maxlength="1" placeholder="?">
+                            <button type="button" (click)="deleteCategory(cat)" class="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此分類">✕</button>
+                         </div> 
+                      }
+                      <div class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200">
+                         <input #newCatInput type="text" placeholder="輸入新分類名稱..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-300 shadow-inner">
+                         <button type="button" (click)="addNewCategory(newCatInput.value); newCatInput.value=''" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-black whitespace-nowrap">＋ 新增分類</button>
+                      </div>
+                      <p class="text-xs text-gray-400 mt-2">* SKU 代碼請輸入單一英文字母 (A-Z)，用於貨號開頭 (例如: A250520001)</p>
+                   </div>
+                </div>
+
                 <div class="pt-6 border-t border-gray-100 flex justify-end"><button type="submit" class="px-10 py-4 bg-brand-900 text-white rounded-xl font-bold shadow-lg hover:bg-black transition-transform active:scale-95 text-lg">儲存所有設定</button></div> 
               </form> 
             </div> 
@@ -381,12 +402,14 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 <button (click)="doRefundNeeded(o)" class="p-4 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'refund_needed' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">⚠️</div> <div> <div class="font-bold text-red-900">缺貨/需退款</div> <div class="text-[10px] text-red-400">標記為問題訂單</div> </div> </button> 
                 <button (click)="doRefundDone(o)" class="col-span-2 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">💸</div> <div> <div class="font-bold text-gray-800">確認已退款</div> <div class="text-[10px] text-gray-400">強制結案並標記為已退款 (任何狀態可用)</div> </div> </button> 
                 <button (click)="quickComplete($event, o)" class="col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> <div> <div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> </button> 
-                <button (click)="doCancel(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-b-2xl" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
+                <button (click)="doCancel(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
+                
+                <button (click)="doDeleteOrder(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-b-2xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700">
+                  🗑️ 徹底刪除訂單 (測試用)
+                </button>
               </div> 
               
-              <div class="p-4 bg-gray-50 border-t border-gray-100 shrink-0"> 
-                 <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> 
-              </div> 
+              <div class="p-4 bg-gray-50 border-t border-gray-100 shrink-0"> <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> </div> 
             </div> 
           </div> 
         }
@@ -953,6 +976,14 @@ export class AdminPanelComponent {
      }
   }
 
+  // 🔥 新增：徹底刪除訂單
+  doDeleteOrder(o: Order) {
+     if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原！(通常僅用於清除測試資料)`)) {
+        this.store.deleteOrder(o.id);
+        this.closeActionModal();
+     }
+  }
+
   quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); }
   quickShip(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'shipped'); }
   quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); }
@@ -1374,6 +1405,25 @@ export class AdminPanelComponent {
         alert('會員資料已更新');
      } else {
         alert('請檢查必填欄位');
+     }
+  }
+
+  // 🔥 新增：重新命名商品分類
+  renameCategory(oldName: string, newName: string) {
+     this.store.renameCategory(oldName, newName);
+  }
+
+  // 🔥 新增：刪除分類
+  deleteCategory(cat: string) {
+     if(confirm(`確定要徹底刪除分類「${cat}」嗎？\n注意：這不會刪除該分類下的商品，但建議您將現有商品轉移至其他分類。`)) {
+        this.store.removeCategory(cat);
+     }
+  }
+
+  // 🔥 新增：新增分類
+  addNewCategory(name: string) {
+     if(name.trim()) {
+        this.store.addCategory(name);
      }
   }
 
