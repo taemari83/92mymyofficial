@@ -406,7 +406,46 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         }
 
         @if (showUserModal()) { 
-          <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeUserModal()"> <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> <div class="p-6 border-b border-gray-100 flex justify-between items-center"> <h3 class="text-xl font-bold text-brand-900">編輯會員資料</h3> <button (click)="closeUserModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button> </div> <div class="p-6 overflow-y-auto flex-1"> <form [formGroup]="userForm" class="space-y-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">會員 ID (無法修改)</label> <div class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono font-bold text-gray-600">{{ editingUser()?.id }}</div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">姓名</label> <input formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">電話</label> <input formControlName="phone" class="w-full p-3 border border-gray-200 rounded-xl"> </div> </div> <div class="grid grid-cols-2 gap-4"> <div> <label class="block text-xs font-bold text-gray-500 mb-1">生日</label> <input type="date" formControlName="birthday" class="w-full p-3 border border-gray-200 rounded-xl"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">會員等級</label> <select formControlName="tier" class="w-full p-3 border border-gray-200 rounded-xl bg-white"> <option value="general">一般會員</option> <option value="vip">VIP 會員</option> <option value="wholesale">批發會員</option> </select> </div> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">購物金餘額 ($)</label> <input type="number" formControlName="credits" class="w-full p-3 border border-gray-200 rounded-xl"> </div> <div> <label class="block text-xs font-bold text-gray-500 mb-1">管理員備註</label> <textarea formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl" rows="3"></textarea> </div> </form> </div> <div class="p-6 border-t border-gray-100 flex justify-end gap-3"> <button (click)="closeUserModal()" class="px-6 py-2 rounded-xl border border-gray-200 font-bold text-gray-500">取消</button> <button (click)="saveUser()" class="px-6 py-2 rounded-xl bg-brand-900 text-white font-bold hover:bg-black">確認儲存</button> </div> </div> </div> 
+          <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeUserModal()"> 
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
+              <div class="p-6 border-b border-gray-100 flex justify-between items-center"> 
+                <h3 class="text-xl font-bold text-brand-900">編輯會員資料</h3> 
+                <button (click)="closeUserModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button> 
+              </div> 
+              <div class="p-6 overflow-y-auto flex-1"> 
+                <form [formGroup]="userForm" class="space-y-4"> 
+                  <div> 
+                    <label class="block text-xs font-bold text-gray-500 mb-1">會員 ID (無法修改)</label> 
+                    <div class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono font-bold text-gray-600">{{ editingUser()?.id }}</div> 
+                  </div> 
+                  <div class="grid grid-cols-2 gap-4"> 
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">姓名</label> <input formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl"> </div> 
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">電話</label> <input formControlName="phone" class="w-full p-3 border border-gray-200 rounded-xl"> </div> 
+                  </div> 
+                  <div class="grid grid-cols-2 gap-4"> 
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">生日</label> <input type="date" formControlName="birthday" class="w-full p-3 border border-gray-200 rounded-xl"> </div> 
+                    <div> 
+                      <label class="block text-xs font-bold text-gray-500 mb-1">會員等級</label> 
+                      <select formControlName="tier" class="w-full p-3 border border-gray-200 rounded-xl bg-white"> 
+                        <option value="general">一般會員</option> 
+                        <option value="vip">VIP 會員</option> 
+                        <option value="wholesale">批發會員</option> 
+                      </select> 
+                    </div> 
+                  </div> 
+                  <div class="grid grid-cols-2 gap-4"> 
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">購物金餘額 ($)</label> <input type="number" formControlName="credits" class="w-full p-3 border border-gray-200 rounded-xl font-bold text-brand-600"> </div> 
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">累積消費 ($)</label> <input type="number" formControlName="totalSpend" class="w-full p-3 border border-gray-200 rounded-xl font-bold text-gray-800"> </div> 
+                  </div> 
+                  <div> <label class="block text-xs font-bold text-gray-500 mb-1">管理員備註</label> <textarea formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl" rows="3"></textarea> </div> 
+                </form> 
+              </div> 
+              <div class="p-6 border-t border-gray-100 flex justify-end gap-3"> 
+                <button (click)="closeUserModal()" class="px-6 py-2 rounded-xl border border-gray-200 font-bold text-gray-500">取消</button> 
+                <button (click)="saveUser()" class="px-6 py-2 rounded-xl bg-brand-900 text-white font-bold hover:bg-black">確認儲存</button> 
+              </div> 
+            </div> 
+          </div> 
         }
 
         @if (actionModalOrder(); as o) { 
@@ -850,6 +889,7 @@ export class AdminPanelComponent {
        birthday: [''],
        tier: ['general'],
        credits: [0],
+       totalSpend: [0], // 🔥 新增：讓表單支援修改累積消費
        note: ['']
     });
   }
@@ -1416,6 +1456,7 @@ export class AdminPanelComponent {
   openUserModal(u: User) { this.editingUser.set(u); this.userForm.patchValue(u); this.showUserModal.set(true); }
   closeUserModal() { this.showUserModal.set(false); this.editingUser.set(null); }
   
+  // 🔥 修正：儲存時確保 totalSpend 與 credits 為數字
   saveUser() {
      if (this.userForm.valid && this.editingUser()) {
         const formVals = this.userForm.value;
@@ -1423,7 +1464,9 @@ export class AdminPanelComponent {
            ...this.editingUser()!, 
            ...formVals,
            phone: formVals.phone ? formVals.phone.trim() : '',
-           name: formVals.name ? formVals.name.trim() : ''
+           name: formVals.name ? formVals.name.trim() : '',
+           totalSpend: Number(formVals.totalSpend) || 0,
+           credits: Number(formVals.credits) || 0
         };
         this.store.updateUser(updatedUser);
         this.closeUserModal();
