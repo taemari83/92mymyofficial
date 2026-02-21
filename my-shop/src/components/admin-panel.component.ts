@@ -442,7 +442,6 @@ export class AdminPanelComponent {
     const range = this.statsRange();
     const now = new Date();
     
-    // Filter by date range first
     const list = allOrders.filter((o: Order) => {
        const d = new Date(o.createdAt);
        if (range === '今日') return d.toDateString() === now.toDateString();
@@ -1164,7 +1163,7 @@ export class AdminPanelComponent {
      return rows;
   }
 
-  // --- 2. 批量匯入主要邏輯 (支援成本結構與多圖) ---
+  // --- 2. 批量匯入主要邏輯 (支援橫式 16 欄 CSV 模板) ---
   async handleBatchImport(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1182,23 +1181,28 @@ export class AdminPanelComponent {
       let successCount = 0;
       let failCount = 0;
 
+      // 🔥 橫式模板：真正的資料可能從第 4 行開始 (i = 3)，為了安全我們從 i = 1 開始但跳過標題文字
       for (let i = 1; i < rows.length; i++) {
          const row = rows[i];
-         if (row.length < 3 || !row[0] || !row[1]) continue;
+         // 確保有足夠欄位，且 B(索引1) C(索引2) 不為空
+         if (row.length < 3 || !row[1] || !row[2]) continue;
+         
+         // 跳過橫式模板的「表頭文字」或「說明範例」
+         if (row[1] === '商品名稱' || row[1] === '秋季毛衣') continue;
 
          try {
-            const name = row[0];
-            const category = row[1];
-            const priceGeneral = Number(row[2]) || 0;
-            const priceVip = Number(row[3]) || 0;
+            const name = row[1];
+            const category = row[2];
+            const priceGeneral = Number(row[3]) || 0;
+            const priceVip = Number(row[4]) || 0;
             
-            const localPrice = Number(row[4]) || 0;
-            const exchangeRate = Number(row[5]) || 0.22;
-            const weight = Number(row[6]) || 0;
-            const shippingCostPerKg = Number(row[7]) || 200;
-            const costMaterial = Number(row[8]) || 0;
+            const localPrice = Number(row[5]) || 0;
+            const exchangeRate = Number(row[6]) || 0.22;
+            const weight = Number(row[7]) || 0;
+            const shippingCostPerKg = Number(row[8]) || 200;
+            const costMaterial = Number(row[9]) || 0;
 
-            const imageRaw = row[9] || '';
+            const imageRaw = row[10] || '';
             const imagesArray = imageRaw
                .split(/[,\n]+/) 
                .map(s => s.trim()) 
@@ -1207,15 +1211,16 @@ export class AdminPanelComponent {
             const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
             const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-            const optionsStr = row[10] || '';
-            const stockInput = Number(row[11]) || 0;
-            const isPreorder = row[12]?.toUpperCase() === 'TRUE';
-            const isListed = row[13]?.toUpperCase() !== 'FALSE'; 
+            const optionsStr = row[11] || '';
+            const stockInput = Number(row[12]) || 0;
+            // 容錯解析 TRUE (忽略空白與大小寫)
+            const isPreorder = row[13]?.trim().toUpperCase() === 'TRUE';
+            const isListed = row[14]?.trim().toUpperCase() !== 'FALSE'; 
             
             const stock = isPreorder ? 99999 : stockInput;
             
-            const code = row[14] || `B${Date.now().toString().slice(-6)}${Math.floor(Math.random()*100)}`;
-            const note = row[15] || '';
+            const code = row[15] || `B${Date.now().toString().slice(-6)}${Math.floor(Math.random()*100)}`;
+            const note = row[16] || '';
 
             const options = optionsStr ? optionsStr.split(',').map(s => s.trim()).filter(s => s) : [];
 
