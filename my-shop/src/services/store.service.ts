@@ -35,13 +35,11 @@ export interface Product {
   category: string;
   options: string[]; 
   country: string;
-  // --- 成本與其他欄位 ---
   localPrice: number;
   exchangeRate: number;
   costMaterial: number; 
   weight: number; 
   shippingCostPerKg: number; 
-  // -------------------
   priceGeneral: number;    
   priceVip: number;        
   priceWholesale: number; 
@@ -53,8 +51,6 @@ export interface Product {
   note: string;
   soldCount: number;
   buyUrl?: string;
-
-  // 🔥 確保這兩個欄位存在
   isPreorder: boolean; 
   isListed: boolean;   
 }
@@ -109,7 +105,8 @@ export interface Order {
   shippingStore?: string; 
   shippingAddress?: string; 
   shippingLink?: string; 
-  status: 'pending_payment' | 'paid_verifying' | 'unpaid_alert' | 'refund_needed' | 'refunded' | 'payment_confirmed' | 'shipped' | 'completed' | 'cancelled' | 'arrived_notified';
+  // 🔥 這裡加入了 'picked_up'
+  status: 'pending_payment' | 'paid_verifying' | 'unpaid_alert' | 'refund_needed' | 'refunded' | 'payment_confirmed' | 'shipped' | 'completed' | 'cancelled' | 'arrived_notified' | 'picked_up';
   createdAt: number;
   note?: string;
 }
@@ -187,8 +184,6 @@ export class StoreService {
   private products$: Observable<Product[]> = collectionData(collection(this.firestore, 'products'), { idField: 'id' }) as Observable<Product[]>;
   products = toSignal(this.products$, { initialValue: [] as Product[] });
 
-  // 🔥 新增：前台專用的商品列表 (過濾掉未上架的商品)
-  // 前台頁面請改用 store.visibleProducts() 進行迴圈
   visibleProducts = computed(() => {
     return this.products().filter(p => p.isListed === true);
   });
@@ -251,7 +246,6 @@ export class StoreService {
     });
   }
 
-  // --- Helpers ---
   private generateMemberNo(): string {
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
@@ -285,7 +279,6 @@ export class StoreService {
     }
   }
 
-  // --- Actions ---
   async updateSettings(s: StoreSettings) {
     const docRef = doc(this.firestore, 'config/storeSettings');
     await setDoc(docRef, s, { merge: true });
@@ -301,7 +294,6 @@ export class StoreService {
   }
 
   async addProduct(p: Product) {
-    // 🔥 確保新增時有預設值
     const newProduct = {
       ...p,
       isPreorder: p.isPreorder ?? false,
