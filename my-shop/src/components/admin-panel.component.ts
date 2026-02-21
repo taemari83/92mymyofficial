@@ -911,10 +911,24 @@ export class AdminPanelComponent {
   
   exportOrdersCSV() {
      const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容'];
+     
+     const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' };
+     const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' };
+
      const rows = this.filteredOrders().map((o: Order) => {
-        const date = new Date(o.createdAt).toLocaleDateString();
-        const items = o.items.map((i: CartItem) => `${i.productName}(${i.option})x${i.quantity}`).join('; ');
-        return [ o.id, date, this.getUserName(o.userId), this.getPaymentStatusLabel('temp', o.paymentMethod), o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod), o.shippingLink || '', items ];
+        const date = new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false });
+        const items = o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n');
+        return [ 
+           `\t${o.id}`, 
+           date, 
+           this.getUserName(o.userId), 
+           payMap[o.paymentMethod] || o.paymentMethod, 
+           shipMap[o.shippingMethod] || o.shippingMethod, 
+           o.finalTotal, 
+           this.getPaymentStatusLabel(o.status, o.paymentMethod), 
+           o.shippingLink || '', 
+           items 
+        ];
      });
      this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
@@ -924,14 +938,17 @@ export class AdminPanelComponent {
      const rows = this.store.products().map((p: Product) => {
         const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg);
         const profit = p.priceGeneral - cost;
-        return [ p.code, p.name, p.category, p.options.join('|'), p.stock, p.soldCount, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, profit.toFixed(0) ];
+        return [ `\t${p.code}`, p.name, p.category, p.options.join('|'), p.stock, p.soldCount, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, profit.toFixed(0) ];
      });
      this.downloadCSV(`商品總表_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
 
   exportCustomersCSV() {
      const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日'];
-     const rows = this.filteredUsers().map((u: User) => [ this.formatMemberNo(u.memberNo), u.id, u.name, u.phone, u.tier, u.totalSpend, u.credits, u.birthday || '' ]);
+     const rows = this.filteredUsers().map((u: User) => {
+        const tierLabel = u.tier === 'vip' ? 'VIP' : (u.tier === 'wholesale' ? '批發' : '一般');
+        return [ `\t${this.formatMemberNo(u.memberNo)}`, `\t${u.id}`, u.name, `\t${u.phone || ''}`, tierLabel, u.totalSpend, u.credits, u.birthday || '' ];
+     });
      this.downloadCSV(`會員名單_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
 
@@ -941,7 +958,7 @@ export class AdminPanelComponent {
         let status = '充足';
         if (p.stock <= 0) status = '缺貨';
         else if (p.stock < 5) status = '低庫存';
-        return [ p.code, p.name, p.category, p.stock, status ];
+        return [ `\t${p.code}`, p.name, p.category, p.stock, status ];
      });
      this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
@@ -973,7 +990,9 @@ export class AdminPanelComponent {
         });
         const profit = o.finalTotal - cost;
         const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
-        return [ o.id, new Date(o.createdAt).toLocaleDateString(), o.items.map((i: CartItem) => i.productName).join(';'), o.finalTotal, cost.toFixed(0), profit.toFixed(0), margin.toFixed(1) ];
+        const itemsStr = o.items.map((i: CartItem) => `${i.productName} x${i.quantity}`).join('\n');
+        
+        return [ `\t${o.id}`, new Date(o.createdAt).toLocaleDateString(), itemsStr, o.finalTotal, cost.toFixed(0), profit.toFixed(0), margin.toFixed(1) ];
      });
      this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
@@ -1138,7 +1157,6 @@ export class AdminPanelComponent {
      this.closeProductModal();
   }
 
-  // --- 1. CSV 解析工具 (處理欄位內有逗號或換行的情況) ---
   private parseCSV(text: string): string[][] {
      const rows: string[][] = [];
      let row: string[] = [];
@@ -1163,7 +1181,6 @@ export class AdminPanelComponent {
      return rows;
   }
 
-  // --- 2. 批量匯入主要邏輯 (支援橫式 16 欄 CSV 模板) ---
   async handleBatchImport(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1181,13 +1198,10 @@ export class AdminPanelComponent {
       let successCount = 0;
       let failCount = 0;
 
-      // 🔥 橫式模板：真正的資料可能從第 4 行開始 (i = 3)，為了安全我們從 i = 1 開始但跳過標題文字
       for (let i = 1; i < rows.length; i++) {
          const row = rows[i];
-         // 確保有足夠欄位，且 B(索引1) C(索引2) 不為空
          if (row.length < 3 || !row[1] || !row[2]) continue;
          
-         // 跳過橫式模板的「表頭文字」或「說明範例」
          if (row[1] === '商品名稱' || row[1] === '秋季毛衣') continue;
 
          try {
@@ -1213,7 +1227,6 @@ export class AdminPanelComponent {
 
             const optionsStr = row[11] || '';
             const stockInput = Number(row[12]) || 0;
-            // 容錯解析 TRUE (忽略空白與大小寫)
             const isPreorder = row[13]?.trim().toUpperCase() === 'TRUE';
             const isListed = row[14]?.trim().toUpperCase() !== 'FALSE'; 
             
