@@ -54,7 +54,7 @@ export interface Product {
   soldCount: number;
   buyUrl?: string;
 
-  // 🔥 修正：確保欄位存在
+  // 🔥 確保這兩個欄位存在
   isPreorder: boolean; 
   isListed: boolean;   
 }
@@ -141,9 +141,7 @@ export class StoreService {
   private firestore = inject(Firestore);
   private auth = inject(Auth);
 
-  // 🔥 您的專屬賣貨便連結
   private readonly MY_SHIP_LINK = "https://myship.7-11.com.tw/general/detail/GM2602124017223";
-  // 🔥 GAS 連結
   private readonly GAS_URL = "https://script.google.com/macros/s/AKfycbzOKiHDFP3zs5VB4zntpZYB9daht0hL1Lfwlat6otLFJVy48m8CI7rwCHro3u-CrCIk/exec";
 
   // --- Default Settings ---
@@ -189,10 +187,15 @@ export class StoreService {
   private products$: Observable<Product[]> = collectionData(collection(this.firestore, 'products'), { idField: 'id' }) as Observable<Product[]>;
   products = toSignal(this.products$, { initialValue: [] as Product[] });
 
+  // 🔥 新增：前台專用的商品列表 (過濾掉未上架的商品)
+  // 前台頁面請改用 store.visibleProducts() 進行迴圈
+  visibleProducts = computed(() => {
+    return this.products().filter(p => p.isListed === true);
+  });
+
   currentUser = signal<User | null>(null);
   private user$ = toObservable(this.currentUser);
 
-  // 🔥 確保 users 是公開的，解決 Admin Panel 找不到屬性的問題
   users = toSignal(
     this.user$.pipe(
       switchMap(u => {
@@ -255,7 +258,6 @@ export class StoreService {
     return `M${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
   }
 
-  // 🔥 黃色筆：產生日期時間格式的訂單編號
   private generateOrderId(): string {
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
@@ -269,12 +271,10 @@ export class StoreService {
     return `${yyyy}${MM}${dd}${HH}${mm}${ss}${random}`;
   }
 
-  // 🔥 綠色筆：複製訂單編號功能
   copyToClipboard(text: string) {
     if (navigator && navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => alert('已複製訂單編號！'));
     } else {
-      // Fallback
       const textArea = document.createElement("textarea");
       textArea.value = text;
       document.body.appendChild(textArea);
@@ -301,6 +301,7 @@ export class StoreService {
   }
 
   async addProduct(p: Product) {
+    // 🔥 確保新增時有預設值
     const newProduct = {
       ...p,
       isPreorder: p.isPreorder ?? false,
@@ -372,7 +373,6 @@ export class StoreService {
 
   clearCart() { this.cart.set([]); }
 
-  // 🔥 核心修正：createOrder
   async createOrder(
     paymentInfo: any, 
     shippingInfo: any, 
@@ -396,7 +396,6 @@ export class StoreService {
       const balanceDue = shippingMethod === 'myship' ? 20 : 0;
       const depositPaid = Math.max(0, finalTotal - balanceDue);
 
-      // 🔥 黃色筆：生成自定義訂單 ID
       const orderId = this.generateOrderId();
 
       const newOrder: Order = {
@@ -480,7 +479,6 @@ export class StoreService {
     alert('已發送通知！');
   }
 
-  // 🔥 藍色筆修正：確保 GAS 傳送乾淨數據
   private sendGasNotification(data: any) {
     fetch(this.GAS_URL, {
       method: "POST",
