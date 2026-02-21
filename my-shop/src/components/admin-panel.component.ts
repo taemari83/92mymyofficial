@@ -357,12 +357,14 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (actionModalOrder(); as o) { 
           <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="closeActionModal()"> 
-            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-fade-in" (click)="$event.stopPropagation()"> 
-              <div class="p-6 border-b border-gray-100 bg-gray-50"> 
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-fade-in flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()"> 
+              
+              <div class="p-6 border-b border-gray-100 bg-gray-50 shrink-0"> 
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"> <span>⚡️ 操作訂單</span> <span class="font-mono text-gray-400">#{{ o.id }}</span> </h3> 
                 <div class="flex gap-2 mt-2"> <span class="px-2 py-1 rounded text-xs font-bold bg-white border border-gray-200"> 狀態: {{ getPaymentStatusLabel(o.status, o.paymentMethod) }} </span> </div> 
               </div> 
-              <div class="p-6 grid grid-cols-2 gap-4"> 
+              
+              <div class="p-6 grid grid-cols-2 gap-4 overflow-y-auto flex-1"> 
                 <button (click)="store.notifyArrival(o)" class="col-span-2 p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed">
                    <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-purple-600">🚛</div>
                    <div><div class="font-bold text-purple-900">通知貨到 (發送賣貨便)</div><div class="text-[10px] text-purple-400">發送 Email/TG 通知客人下單</div></div>
@@ -381,7 +383,10 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 <button (click)="quickComplete($event, o)" class="col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> <div> <div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> </button> 
                 <button (click)="doCancel(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-b-2xl" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
               </div> 
-              <div class="p-4 bg-gray-50 border-t border-gray-100"> <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> </div> 
+              
+              <div class="p-4 bg-gray-50 border-t border-gray-100 shrink-0"> 
+                 <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> 
+              </div> 
             </div> 
           </div> 
         }
@@ -516,7 +521,6 @@ export class AdminPanelComponent {
      const range = this.statsRange();
      const now = new Date();
 
-     // 🔥 日期篩選
      if (range === '今日') {
         const todayStr = now.toDateString();
         list = list.filter((o: Order) => new Date(o.createdAt).toDateString() === todayStr);
@@ -534,7 +538,6 @@ export class AdminPanelComponent {
      if (os) { const st = new Date(os).setHours(0,0,0,0); list = list.filter((o: Order) => o.createdAt >= st); }
      if (oe) { const en = new Date(oe).setHours(23,59,59,999); list = list.filter((o: Order) => o.createdAt <= en); }
 
-     // 狀態與搜尋篩選
      if (tab === 'pending') list = list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status));
      else if (tab === 'verifying') list = list.filter((o: Order) => o.status === 'paid_verifying');
      else if (tab === 'shipping') list = list.filter((o: Order) => o.status === 'payment_confirmed');
@@ -591,11 +594,10 @@ export class AdminPanelComponent {
         });
      }
 
-     // 🔥 修正：客戶日期篩選邏輯 (M20260221123456 -> 取出 20260221 比較)
      if (start || end) {
        list = list.filter(u => {
           if (!u.memberNo || u.memberNo.length < 9) return false; 
-          const noDatePart = u.memberNo.substring(1, 9); // e.g. 20260221
+          const noDatePart = u.memberNo.substring(1, 9); 
           const startDate = start ? start.replace(/-/g, '') : null;
           const endDate = end ? end.replace(/-/g, '') : null;
 
@@ -937,7 +939,6 @@ export class AdminPanelComponent {
      }
   }
 
-  // 🔥 新增：賣貨便確認取貨
   doMyshipPickup(o: Order) {
      this.store.updateOrderStatus(o.id, 'picked_up' as any);
      this.closeActionModal();
@@ -1359,7 +1360,6 @@ export class AdminPanelComponent {
   openUserModal(u: User) { this.editingUser.set(u); this.userForm.patchValue(u); this.showUserModal.set(true); }
   closeUserModal() { this.showUserModal.set(false); this.editingUser.set(null); }
   
-  // 🔥 修正：防呆儲存，自動清除電話前後的空白
   saveUser() {
      if (this.userForm.valid && this.editingUser()) {
         const formVals = this.userForm.value;
