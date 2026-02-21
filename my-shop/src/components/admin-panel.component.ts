@@ -441,6 +441,8 @@ export class AdminPanelComponent {
     const allOrders = this.store.orders();
     const range = this.statsRange();
     const now = new Date();
+    
+    // Filter by date range first
     const list = allOrders.filter((o: Order) => {
        const d = new Date(o.createdAt);
        if (range === '今日') return d.toDateString() === now.toDateString();
@@ -483,6 +485,7 @@ export class AdminPanelComponent {
      if (q) {
         list = list.filter((o: Order) => o.id.includes(q) || o.items.some((i: CartItem) => i.productName.toLowerCase().includes(q)) || this.getUserName(o.userId).toLowerCase().includes(q));
      }
+     
      return list.sort((a: any, b: any) => b.createdAt - a.createdAt);
   });
 
@@ -569,6 +572,7 @@ export class AdminPanelComponent {
   accountingRange = signal('month');
   accountingCustomStart = signal('');
   accountingCustomEnd = signal('');
+  
   accountingStats = computed(() => {
      const orders = this.store.orders();
      const range = this.accountingRange();
@@ -603,6 +607,7 @@ export class AdminPanelComponent {
      let revenue = 0;
      let cost = 0;
      let discounts = 0;
+     
      let payReceived = 0;
      let payVerifying = 0;
      let payUnpaid = 0;
@@ -628,6 +633,7 @@ export class AdminPanelComponent {
         
         if (o.status !== 'pending_payment' && o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled') {
            revenue += o.finalTotal;
+           
            o.items.forEach((i: CartItem) => {
              const p = this.store.products().find((x: Product) => x.id === i.productId);
              if (p) {
@@ -635,6 +641,7 @@ export class AdminPanelComponent {
                cost += c * i.quantity;
              }
            });
+           
            discounts += o.discount + o.usedCredits;
         }
      });
@@ -691,14 +698,17 @@ export class AdminPanelComponent {
        code: [''], 
        priceGeneral: [0],
        priceVip: [0],
+       
        localPrice: [0],
        exchangeRate: [0.22],
        weight: [0],
        shippingCostPerKg: [200],
        costMaterial: [0],
+
        stock: [0],
        optionsStr: [''], 
        note: [''],
+       
        isPreorder: [false],
        isListed: [true]
     });
@@ -876,7 +886,6 @@ export class AdminPanelComponent {
   quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); }
   quickComplete(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'completed'); }
 
-  // CSV Export helpers (keep original)
   private downloadCSV(filename: string, headers: string[], rows: any[]) {
     const BOM = '\uFEFF';
     const csvContent = [
@@ -977,7 +986,9 @@ export class AdminPanelComponent {
        exchangeRate: 0.22,
        shippingCostPerKg: 200,
        weight: 0,
-       costMaterial: 0
+       costMaterial: 0,
+       isPreorder: false,
+       isListed: true
     });
     this.tempImages.set([]);
     this.currentCategoryCode.set('');
@@ -994,7 +1005,9 @@ export class AdminPanelComponent {
         exchangeRate: p.exchangeRate || 0.22,
         shippingCostPerKg: p.shippingCostPerKg || 200,
         weight: p.weight || 0,
-        costMaterial: p.costMaterial || 0
+        costMaterial: p.costMaterial || 0,
+        isPreorder: p.isPreorder ?? false,
+        isListed: p.isListed ?? true
      });
      const imgs = p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : []);
      this.tempImages.set(imgs);
@@ -1086,7 +1099,6 @@ export class AdminPanelComponent {
 
      const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode());
 
-     // 🔥 修正：如果是預購商品，庫存設為 99999
      const finalStock = val.isPreorder ? 99999 : val.stock;
 
      const p: Product = {
@@ -1126,7 +1138,129 @@ export class AdminPanelComponent {
      }
      this.closeProductModal();
   }
-  handleBatchImport(e: any) {}
+
+  // --- 1. CSV 解析工具 (處理欄位內有逗號或換行的情況) ---
+  private parseCSV(text: string): string[][] {
+     const rows: string[][] = [];
+     let row: string[] = [];
+     let inQuotes = false;
+     let val = '';
+     for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+        if (char === '"' && inQuotes && nextChar === '"') {
+           val += '"'; i++; 
+        } else if (char === '"') {
+           inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+           row.push(val.trim()); val = '';
+        } else if (char === '\n' && !inQuotes) {
+           row.push(val.trim()); rows.push(row); row = []; val = '';
+        } else if (char !== '\r') {
+           val += char;
+        }
+     }
+     if (val || row.length > 0) { row.push(val.trim()); rows.push(row); }
+     return rows;
+  }
+
+  // --- 2. 批量匯入主要邏輯 (支援成本結構與多圖) ---
+  async handleBatchImport(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e: any) => {
+      const text = e.target.result;
+      const rows = this.parseCSV(text);
+      
+      if (rows.length < 2) {
+         alert('CSV 檔案格式錯誤或沒有資料！');
+         return;
+      }
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 1; i < rows.length; i++) {
+         const row = rows[i];
+         if (row.length < 3 || !row[0] || !row[1]) continue;
+
+         try {
+            const name = row[0];
+            const category = row[1];
+            const priceGeneral = Number(row[2]) || 0;
+            const priceVip = Number(row[3]) || 0;
+            
+            const localPrice = Number(row[4]) || 0;
+            const exchangeRate = Number(row[5]) || 0.22;
+            const weight = Number(row[6]) || 0;
+            const shippingCostPerKg = Number(row[7]) || 200;
+            const costMaterial = Number(row[8]) || 0;
+
+            const imageRaw = row[9] || '';
+            const imagesArray = imageRaw
+               .split(/[,\n]+/) 
+               .map(s => s.trim()) 
+               .filter(s => s.startsWith('http')); 
+            
+            const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
+            const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
+
+            const optionsStr = row[10] || '';
+            const stockInput = Number(row[11]) || 0;
+            const isPreorder = row[12]?.toUpperCase() === 'TRUE';
+            const isListed = row[13]?.toUpperCase() !== 'FALSE'; 
+            
+            const stock = isPreorder ? 99999 : stockInput;
+            
+            const code = row[14] || `B${Date.now().toString().slice(-6)}${Math.floor(Math.random()*100)}`;
+            const note = row[15] || '';
+
+            const options = optionsStr ? optionsStr.split(',').map(s => s.trim()).filter(s => s) : [];
+
+            const p: Product = {
+               id: Date.now().toString() + Math.floor(Math.random() * 1000).toString(), 
+               code,
+               name,
+               category,
+               image: mainImage,
+               images: allImages,
+               priceGeneral,
+               priceVip,
+               priceWholesale: 0,
+               localPrice,
+               exchangeRate,        
+               weight,              
+               shippingCostPerKg,   
+               costMaterial,        
+               stock,
+               options,
+               note,
+               priceType: 'normal',
+               soldCount: 0,
+               country: 'Korea',
+               allowPayment: { cash: true, bankTransfer: true, cod: true },
+               allowShipping: { meetup: true, myship: true, family: true, delivery: true },
+               isPreorder,
+               isListed
+            };
+
+            this.store.addCategory(category);
+            await this.store.addProduct(p);
+            successCount++;
+         } catch (err) {
+            console.error('Row import failed:', row, err);
+            failCount++;
+         }
+      }
+
+      alert(`✅ 批量上架完成！\n成功：${successCount} 筆\n失敗/略過：${failCount} 筆`);
+      event.target.value = ''; 
+    };
+    
+    reader.readAsText(file, 'UTF-8');
+  }
 
   getPeriodLabel(p: string) { const map: any = { all_time: '全期', this_month: '本月', last_month: '上月', this_quarter: '本季' }; return map[p] || p; }
   getMetricLabel(m: string) { const map: any = { spend: '消費金額', count: '訂單數', recency: '最近購買' }; return map[m] || m; }
