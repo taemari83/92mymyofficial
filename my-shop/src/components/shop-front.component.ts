@@ -1,14 +1,14 @@
 import { Component, computed, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, Params, RouterModule } from '@angular/router'; // 👈 1. 這裡加了 RouterModule
+import { ActivatedRoute, Router, Params, RouterModule } from '@angular/router'; 
 import { toSignal } from '@angular/core/rxjs-interop';
 import { StoreService, Product } from '../services/store.service';
 
 @Component({
   selector: 'app-shop-front',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], // 👈 2. 這裡一定要加 RouterModule，連結才會動！
+  imports: [CommonModule, FormsModule, RouterModule], 
   template: `
     <div class="space-y-8 pb-20">
       <div class="sticky top-20 z-10 bg-cream-50/90 backdrop-blur-md pb-4 pt-2 space-y-3">
@@ -75,8 +75,15 @@ import { StoreService, Product } from '../services/store.service';
             <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
               <img [src]="product.image" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
               
-              <div class="absolute top-4 left-4 bg-white/80 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-brand-900 uppercase tracking-widest">
-                {{ product.category || 'NEW' }}
+              <div class="absolute top-4 left-4 flex gap-1 flex-wrap">
+                 <div class="bg-white/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-brand-900 uppercase tracking-widest shadow-sm">
+                   {{ product.category || 'NEW' }}
+                 </div>
+                 @if(product.isPreorder) {
+                   <div class="bg-blue-100/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-blue-600 tracking-widest shadow-sm">
+                     預購
+                   </div>
+                 }
               </div>
 
               @if (product.stock <= 0) {
@@ -158,7 +165,17 @@ import { StoreService, Product } from '../services/store.service';
                <div class="flex-1 overflow-y-auto p-5 md:p-8 scrollbar-hide">
                   <div class="mb-6">
                     <div class="flex justify-between items-start mb-2 pr-10">
-                      <div class="text-sm text-brand-400 font-bold uppercase tracking-widest bg-brand-50 px-2 py-1 rounded-lg">{{ selectedProduct()!.category }}</div>
+                      
+                      <div class="flex flex-wrap gap-2">
+                         <div class="text-sm text-brand-400 font-bold uppercase tracking-widest bg-brand-50 px-2 py-1 rounded-lg">
+                           {{ selectedProduct()!.category }}
+                         </div>
+                         @if(selectedProduct()!.isPreorder) {
+                           <div class="text-sm text-blue-500 font-bold tracking-widest bg-blue-50 px-2 py-1 rounded-lg">
+                             預購
+                           </div>
+                         }
+                      </div>
                       
                       <button (click)="copyLink()" class="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-900 transition-colors border border-gray-200 rounded-full px-3 py-1 bg-white">
                         <span>🔗</span> 複製連結
@@ -303,8 +320,9 @@ export class ShopFrontComponent {
      return p.images && p.images.length > 0 ? p.images : [p.image];
   });
 
+  // 🔥 紅色筆修正：改為使用 visibleProducts() 確保只顯示有打勾上架的商品
   filteredProducts = computed(() => {
-    let list = [...this.store.products()];
+    let list = [...this.store.visibleProducts()];
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
     const sort = this.sortOption();
@@ -348,10 +366,11 @@ export class ShopFrontComponent {
     this.router.navigate([], { queryParams: { p: null } });
   }
 
+  // 🔥 綠色筆修正：刪除多餘的提示文字
   copyLink() {
      const url = window.location.href;
      navigator.clipboard.writeText(url).then(() => {
-        alert('連結已複製！可直接貼給客人。');
+        alert('連結已複製！');
      });
   }
 
