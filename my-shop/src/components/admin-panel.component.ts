@@ -87,10 +87,30 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         @if (activeTab() === 'orders') {
           <div class="space-y-6 w-full">
             <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-x-auto w-full">
-               <div class="flex gap-1 mb-6 border-b border-gray-100 pb-4 overflow-x-auto">
-                 @for(range of ['今日', '本週', '本月', '全部']; track range) { <button (click)="statsRange.set(range)" [class.text-brand-600]="statsRange() === range" [class.bg-brand-50]="statsRange() === range" [class.border-brand-200]="statsRange() === range" class="px-4 py-1.5 rounded-lg text-sm font-medium border border-transparent hover:bg-gray-50 text-gray-500 transition-colors whitespace-nowrap">{{ range }}</button> }
-                 <span class="ml-auto text-xs text-gray-400 flex items-center whitespace-nowrap pl-4">📅 {{ now | date:'yyyy/MM/dd' }}</span>
+               
+               <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-100 pb-4 items-center">
+                 <div class="flex gap-1">
+                   @for(range of ['今日', '本週', '本月', '全部']; track range) { 
+                     <button (click)="setOrderRange(range)" 
+                             [class.text-brand-600]="statsRange() === range" 
+                             [class.bg-brand-50]="statsRange() === range" 
+                             [class.border-brand-200]="statsRange() === range" 
+                             class="px-4 py-1.5 rounded-lg text-sm font-medium border border-transparent hover:bg-gray-50 text-gray-500 transition-colors whitespace-nowrap">
+                        {{ range }}
+                     </button> 
+                   }
+                 </div>
+                 
+                 <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200 ml-auto md:ml-4">
+                    <span class="text-xs text-gray-400 font-bold whitespace-nowrap">自訂:</span>
+                    <input type="date" [ngModel]="orderStart()" (ngModelChange)="orderStart.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32">
+                    <span class="text-gray-300">-</span>
+                    <input type="date" [ngModel]="orderEnd()" (ngModelChange)="orderEnd.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32">
+                 </div>
+                 
+                 <span class="ml-auto md:ml-4 text-xs text-gray-400 flex items-center whitespace-nowrap">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                </div>
+               
                <div class="flex flex-col xl:flex-row gap-4 justify-between items-center mb-4 w-full">
                   <div class="flex flex-col sm:flex-row gap-4 w-full xl:w-auto items-start sm:items-center flex-1">
                     <div class="relative w-full sm:w-auto sm:flex-1 xl:w-80">
@@ -108,7 +128,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                <div class="overflow-x-auto w-full">
                  <table class="w-full text-sm text-left whitespace-nowrap">
                    <thead class="bg-[#F9FAFB] text-gray-500 font-medium border-b border-gray-200">
-                     <tr><th class="p-4 w-10"><input type="checkbox" class="rounded border-gray-300"></th><th class="p-4">商品 訂單資訊</th><th class="p-4">客戶</th><th class="p-4">付款方式</th><th class="p-4">金額</th><th class="p-4">匯款狀態</th><th class="p-4">物流</th><th class="p-4">時間</th><th class="p-4 text-right">操作</th></tr>
+                     <tr><th class="p-4 w-10"><input type="checkbox" class="rounded border-gray-300"></th><th class="p-4">商品 訂單資訊</th><th class="p-4">客戶</th><th class="p-4">付款方式</th><th class="p-4">金額</th><th class="p-4">匯款狀態</th><th class="p-4">物流狀態</th><th class="p-4">時間</th><th class="p-4 text-right">操作</th></tr>
                    </thead>
                    <tbody class="divide-y divide-gray-100">
                      @for(order of paginatedOrders(); track order.id) {
@@ -193,7 +213,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                          @for(u of paginatedUsers(); track u.id) {
                             <tr class="hover:bg-brand-50/30 transition-colors">
                                <td class="p-4"><div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u.memberNo) }}</span><div class="flex items-center gap-1 mt-1 group cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div></td>
-                               <td class="p-4"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone }}</div></td>
+                               <td class="p-4"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></td>
                                <td class="p-4">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</td>
                                <td class="p-4 text-right font-bold text-brand-900">NT$ {{ u.totalSpend | number }}</td>
                                <td class="p-4 text-right text-brand-600 font-bold">{{ u.credits }}</td>
@@ -347,13 +367,19 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                    <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-purple-600">🚛</div>
                    <div><div class="font-bold text-purple-900">通知貨到 (發送賣貨便)</div><div class="text-[10px] text-purple-400">發送 Email/TG 通知客人下單</div></div>
                 </button>
-                <button (click)="doShip(o)" class="p-4 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'shipped' || o.status === 'pending_payment' || o.status === 'unpaid_alert' || o.status === 'refund_needed' || o.status === 'refunded' || o.status === 'completed' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">📦</div> <div> <div class="font-bold text-blue-900">安排出貨</div> <div class="text-[10px] text-blue-400">標記為已出貨</div> </div> </button> 
+
+                <button (click)="doMyshipPickup(o)" class="col-span-2 p-4 rounded-2xl bg-teal-50 hover:bg-teal-100 border border-teal-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'picked_up' || o.status === 'completed' || o.status === 'cancelled'">
+                   <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-teal-600">🏪</div>
+                   <div><div class="font-bold text-teal-900">賣貨便確認取貨</div><div class="text-[10px] text-teal-500">標記買家已於門市取件</div></div>
+                </button>
+
+                <button (click)="doShip(o)" class="p-4 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'shipped' || o.status === 'picked_up' || o.status === 'pending_payment' || o.status === 'unpaid_alert' || o.status === 'refund_needed' || o.status === 'refunded' || o.status === 'completed' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">📦</div> <div> <div class="font-bold text-blue-900">安排出貨</div> <div class="text-[10px] text-blue-400">標記為已出貨</div> </div> </button> 
                 <button (click)="doConfirm(o)" class="p-4 rounded-2xl bg-green-50 hover:bg-green-100 border border-green-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status !== 'paid_verifying' && o.status !== 'pending_payment' && o.status !== 'unpaid_alert'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">✅</div> <div> <div class="font-bold text-green-900">確認收款</div> <div class="text-[10px] text-green-500">轉為已付款</div> </div> </button> 
                 <button (click)="doAlert(o)" class="p-4 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status !== 'pending_payment' && o.status !== 'unpaid_alert' && o.status !== 'paid_verifying'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">🔔</div> <div> <div class="font-bold text-orange-900">提醒付款</div> <div class="text-[10px] text-orange-400">發送提醒</div> </div> </button> 
-                <button (click)="doRefundNeeded(o)" class="p-4 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'refund_needed' || o.status === 'shipped' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">⚠️</div> <div> <div class="font-bold text-red-900">缺貨/需退款</div> <div class="text-[10px] text-red-400">標記為問題訂單</div> </div> </button> 
+                <button (click)="doRefundNeeded(o)" class="p-4 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'refund_needed' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">⚠️</div> <div> <div class="font-bold text-red-900">缺貨/需退款</div> <div class="text-[10px] text-red-400">標記為問題訂單</div> </div> </button> 
                 <button (click)="doRefundDone(o)" class="col-span-2 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">💸</div> <div> <div class="font-bold text-gray-800">確認已退款</div> <div class="text-[10px] text-gray-400">強制結案並標記為已退款 (任何狀態可用)</div> </div> </button> 
-                <button (click)="quickComplete($event, o)" class="col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status !== 'shipped' || o.paymentMethod !== 'cod'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> <div> <div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> </button> 
-                <button (click)="doCancel(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-b-2xl" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
+                <button (click)="quickComplete($event, o)" class="col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> <div> <div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> </button> 
+                <button (click)="doCancel(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-b-2xl" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
               </div> 
               <div class="p-4 bg-gray-50 border-t border-gray-100"> <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> </div> 
             </div> 
@@ -419,6 +445,8 @@ export class AdminPanelComponent {
 
   // Orders Logic
   statsRange = signal('今日');
+  orderStart = signal('');
+  orderEnd = signal('');
   orderSearch = signal('');
   orderPageSize = signal<number | 'all'>(50);
   orderPage = signal(1);
@@ -437,28 +465,39 @@ export class AdminPanelComponent {
     { id: 'refund', label: '退款/取消' }
   ];
 
+  setOrderRange(range: string) {
+     this.statsRange.set(range);
+     this.orderStart.set('');
+     this.orderEnd.set('');
+  }
+
   dashboardStats = computed(() => {
     const allOrders = this.store.orders();
     const range = this.statsRange();
     const now = new Date();
     
-    const list = allOrders.filter((o: Order) => {
-       const d = new Date(o.createdAt);
-       if (range === '今日') return d.toDateString() === now.toDateString();
-       if (range === '本週') {
-          const start = new Date(now);
-          start.setDate(now.getDate() - now.getDay());
-          start.setHours(0,0,0,0);
-          return d >= start;
-       }
-       if (range === '本月') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-       return true;
-    });
+    let list = allOrders;
+
+    if (range === '今日') {
+       list = list.filter((o: Order) => new Date(o.createdAt).toDateString() === now.toDateString());
+    } else if (range === '本週') {
+       const start = new Date(now);
+       start.setDate(now.getDate() - now.getDay());
+       start.setHours(0,0,0,0);
+       list = list.filter((o: Order) => o.createdAt >= start.getTime());
+    } else if (range === '本月') {
+       list = list.filter((o: Order) => new Date(o.createdAt).getMonth() === now.getMonth() && new Date(o.createdAt).getFullYear() === now.getFullYear());
+    }
+
+    const os = this.orderStart();
+    const oe = this.orderEnd();
+    if (os) { const st = new Date(os).setHours(0,0,0,0); list = list.filter((o: Order) => o.createdAt >= st); }
+    if (oe) { const en = new Date(oe).setHours(23,59,59,999); list = list.filter((o: Order) => o.createdAt <= en); }
 
     const pendingRevenue = list.reduce((sum: number, o: Order) => {
        if (o.status === 'cancelled') return sum;
        if (o.status === 'pending_payment' || o.status === 'unpaid_alert') return sum + o.finalTotal;
-       if (o.paymentMethod === 'cod' && (o.status === 'payment_confirmed' || o.status === 'shipped')) return sum + o.finalTotal;
+       if (o.paymentMethod === 'cod' && (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'arrived_notified' || o.status === 'picked_up' as any)) return sum + o.finalTotal;
        return sum;
     }, 0);
 
@@ -474,11 +513,32 @@ export class AdminPanelComponent {
      let list = [...this.store.orders()];
      const q = this.orderSearch().toLowerCase();
      const tab = this.orderStatusTab();
+     const range = this.statsRange();
+     const now = new Date();
 
+     // 🔥 日期篩選
+     if (range === '今日') {
+        const todayStr = now.toDateString();
+        list = list.filter((o: Order) => new Date(o.createdAt).toDateString() === todayStr);
+     } else if (range === '本週') {
+        const start = new Date(now);
+        start.setDate(now.getDate() - now.getDay());
+        start.setHours(0,0,0,0);
+        list = list.filter((o: Order) => o.createdAt >= start.getTime());
+     } else if (range === '本月') {
+        list = list.filter((o: Order) => new Date(o.createdAt).getMonth() === now.getMonth() && new Date(o.createdAt).getFullYear() === now.getFullYear());
+     }
+
+     const os = this.orderStart();
+     const oe = this.orderEnd();
+     if (os) { const st = new Date(os).setHours(0,0,0,0); list = list.filter((o: Order) => o.createdAt >= st); }
+     if (oe) { const en = new Date(oe).setHours(23,59,59,999); list = list.filter((o: Order) => o.createdAt <= en); }
+
+     // 狀態與搜尋篩選
      if (tab === 'pending') list = list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status));
      else if (tab === 'verifying') list = list.filter((o: Order) => o.status === 'paid_verifying');
      else if (tab === 'shipping') list = list.filter((o: Order) => o.status === 'payment_confirmed');
-     else if (tab === 'completed') list = list.filter((o: Order) => ['shipped', 'completed'].includes(o.status));
+     else if (tab === 'completed') list = list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any));
      else if (tab === 'refund') list = list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status));
 
      if (q) {
@@ -531,12 +591,13 @@ export class AdminPanelComponent {
         });
      }
 
+     // 🔥 修正：客戶日期篩選邏輯 (M20260221123456 -> 取出 20260221 比較)
      if (start || end) {
        list = list.filter(u => {
-          if (!u.memberNo) return false; 
-          const noDatePart = u.memberNo.substring(0, 10); 
-          const startDate = start ? start.replace(/-/g, '/') : null;
-          const endDate = end ? end.replace(/-/g, '/') : null;
+          if (!u.memberNo || u.memberNo.length < 9) return false; 
+          const noDatePart = u.memberNo.substring(1, 9); // e.g. 20260221
+          const startDate = start ? start.replace(/-/g, '') : null;
+          const endDate = end ? end.replace(/-/g, '') : null;
 
           if (startDate && noDatePart < startDate) return false;
           if (endDate && noDatePart > endDate) return false;
@@ -622,7 +683,7 @@ export class AdminPanelComponent {
            payVerifying += o.finalTotal;
         } else if (o.status === 'pending_payment' || o.status === 'unpaid_alert') {
            payUnpaid += o.finalTotal;
-        } else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed') {
+        } else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed' || o.status === 'picked_up' as any) {
            if (o.paymentMethod === 'cod' && o.status !== 'completed') {
               payUnpaid += o.finalTotal;
            } else {
@@ -808,6 +869,7 @@ export class AdminPanelComponent {
         refunded: '已退款',
         payment_confirmed: method === 'cod' ? '待出貨 (未入帳)' : '已付款',
         shipped: method === 'cod' ? '已出貨 (未入帳)' : '已出貨',
+        picked_up: method === 'cod' ? '已取貨 (等待代收撥款)' : '已取貨',
         completed: '已完成 (已入帳)',
         cancelled: '🚫 已取消' 
      };
@@ -821,15 +883,19 @@ export class AdminPanelComponent {
      if(s==='refunded') return 'bg-gray-200 text-gray-500 line-through';
      if(s==='cancelled') return 'bg-gray-200 text-gray-400 border border-gray-300';
      if(s==='refund_needed') return 'bg-red-100 text-red-700 font-bold border border-red-200';
+     if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; 
      if(s==='completed') return 'bg-green-600 text-white font-bold'; 
      return 'bg-gray-100 text-gray-500';
   }
+
   getShippingStatusLabel(s: string) {
-     const map: any = { payment_confirmed: '待出貨', shipped: '已出貨', completed: '已完成' };
+     const map: any = { payment_confirmed: '待出貨', shipped: '已出貨', picked_up: '門市已取貨', completed: '已完成' };
      return map[s] || '-';
   }
+
   getShippingStatusClass(s: string) {
      if(s==='shipped') return 'bg-blue-100 text-blue-700';
+     if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold';
      if(s==='completed') return 'bg-gray-800 text-white';
      return 'text-gray-400';
   }
@@ -869,6 +935,12 @@ export class AdminPanelComponent {
         this.store.updateOrderStatus(o.id, 'shipped', { shippingLink: code }); 
         this.closeActionModal(); 
      }
+  }
+
+  // 🔥 新增：賣貨便確認取貨
+  doMyshipPickup(o: Order) {
+     this.store.updateOrderStatus(o.id, 'picked_up' as any);
+     this.closeActionModal();
   }
   
   doCancel(o: Order) {
@@ -1286,9 +1358,17 @@ export class AdminPanelComponent {
   isBirthdayMonth(d: string) { return new Date(d).getMonth() === new Date().getMonth(); }
   openUserModal(u: User) { this.editingUser.set(u); this.userForm.patchValue(u); this.showUserModal.set(true); }
   closeUserModal() { this.showUserModal.set(false); this.editingUser.set(null); }
+  
+  // 🔥 修正：防呆儲存，自動清除電話前後的空白
   saveUser() {
      if (this.userForm.valid && this.editingUser()) {
-        const updatedUser = { ...this.editingUser()!, ...this.userForm.value };
+        const formVals = this.userForm.value;
+        const updatedUser = { 
+           ...this.editingUser()!, 
+           ...formVals,
+           phone: formVals.phone ? formVals.phone.trim() : '',
+           name: formVals.name ? formVals.name.trim() : ''
+        };
         this.store.updateUser(updatedUser);
         this.closeUserModal();
         alert('會員資料已更新');
@@ -1296,6 +1376,7 @@ export class AdminPanelComponent {
         alert('請檢查必填欄位');
      }
   }
+
   updateCategoryCode(cat: string, code: string) {
      const newCodes = { ...this.categoryCodes() };
      newCodes[cat] = code.toUpperCase();
@@ -1303,6 +1384,7 @@ export class AdminPanelComponent {
      s.categoryCodes = newCodes;
      this.store.updateSettings(s);
   }
+  
   saveSettings() {
      const val = this.settingsForm.value;
      const currentSettings = this.store.settings(); 
