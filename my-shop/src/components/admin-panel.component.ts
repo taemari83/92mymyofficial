@@ -883,13 +883,14 @@ export class AdminPanelComponent {
        })
     });
 
+    // 🔥 修正：將 phone 的 Validators.required 拿掉
     this.userForm = this.fb.group({
        name: ['', Validators.required],
-       phone: ['', Validators.required],
+       phone: [''], // 👈 改為非必填
        birthday: [''],
        tier: ['general'],
        credits: [0],
-       totalSpend: [0], // 🔥 新增：讓表單支援修改累積消費
+       totalSpend: [0],
        note: ['']
     });
   }
@@ -1456,7 +1457,6 @@ export class AdminPanelComponent {
   openUserModal(u: User) { this.editingUser.set(u); this.userForm.patchValue(u); this.showUserModal.set(true); }
   closeUserModal() { this.showUserModal.set(false); this.editingUser.set(null); }
   
-  // 🔥 修正：儲存時確保 totalSpend 與 credits 為數字
   saveUser() {
      if (this.userForm.valid && this.editingUser()) {
         const formVals = this.userForm.value;
@@ -1472,7 +1472,7 @@ export class AdminPanelComponent {
         this.closeUserModal();
         alert('會員資料已更新');
      } else {
-        alert('請檢查必填欄位');
+        alert('請檢查必填欄位 (電話已改為非必填，請確認姓名是否空白)');
      }
   }
 
