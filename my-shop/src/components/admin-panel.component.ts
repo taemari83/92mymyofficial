@@ -128,20 +128,46 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                <div class="overflow-x-auto w-full">
                  <table class="w-full text-sm text-left whitespace-nowrap">
                    <thead class="bg-[#F9FAFB] text-gray-500 font-medium border-b border-gray-200">
-                     <tr><th class="p-4 w-10"><input type="checkbox" class="rounded border-gray-300"></th><th class="p-4">商品 訂單資訊</th><th class="p-4">客戶</th><th class="p-4">付款方式</th><th class="p-4">金額</th><th class="p-4">匯款狀態</th><th class="p-4">物流狀態</th><th class="p-4">時間</th><th class="p-4 text-right">操作</th></tr>
+                     <tr>
+                       <th class="p-4 sticky left-0 z-20 bg-[#F9FAFB] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">
+                         <div class="flex items-center gap-4">
+                           <input type="checkbox" class="rounded border-gray-300">
+                           <span>商品 訂單資訊</span>
+                         </div>
+                       </th>
+                       <th class="p-4">客戶</th>
+                       <th class="p-4">付款方式</th>
+                       <th class="p-4">金額</th>
+                       <th class="p-4">匯款狀態</th>
+                       <th class="p-4">物流狀態</th>
+                       <th class="p-4">時間</th>
+                       <th class="p-4 text-right">操作</th>
+                     </tr>
                    </thead>
                    <tbody class="divide-y divide-gray-100">
                      @for(order of paginatedOrders(); track order.id) {
-                       <tr class="hover:bg-brand-50/30 transition-colors group">
-                         <td class="p-4"><input type="checkbox" class="rounded border-gray-300"></td>
-                         <td class="p-4"><div class="flex gap-3 items-start"><div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">@if(order.items.length > 0) { <img [src]="getThumb(order)" (error)="handleImageError($event)" class="w-full h-full object-cover"> }</div><div><div class="flex items-center gap-2 mb-1"><span class="font-bold text-gray-800 font-mono">#{{ order.id }}</span>@if(order.paymentName) { <span class="w-2 h-2 rounded-full bg-blue-500"></span> }</div><div class="text-xs text-gray-500 truncate max-w-[150px]">{{ order.items[0].productName }} ...</div></div></div></td>
+                       <tr class="hover:bg-gray-50 transition-colors group">
+                         <td class="p-4 sticky left-0 z-10 bg-white group-hover:bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors">
+                           <div class="flex items-center gap-4">
+                             <input type="checkbox" class="rounded border-gray-300 shrink-0">
+                             <div class="flex gap-3 items-start min-w-[200px]">
+                               <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                                 @if(order.items.length > 0) { <img [src]="getThumb(order)" (error)="handleImageError($event)" class="w-full h-full object-cover"> }
+                               </div>
+                               <div>
+                                 <div class="flex items-center gap-2 mb-1"><span class="font-bold text-gray-800 font-mono">#{{ order.id }}</span>@if(order.paymentName) { <span class="w-2 h-2 rounded-full bg-blue-500"></span> }</div>
+                                 <div class="text-xs text-gray-500 truncate max-w-[180px]">{{ order.items[0].productName }} ...</div>
+                               </div>
+                             </div>
+                           </div>
+                         </td>
                          <td class="p-4"><div class="flex items-center gap-2"><span class="font-medium text-gray-800">{{ getUserName(order.userId) }}</span></div></td>
                          <td class="p-4">@if(order.paymentMethod === 'bank_transfer') { <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">🏦 轉帳</span> }@else if(order.paymentMethod === 'cod') { <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">🚚 貨到付款</span> }@else { <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">💵 現金</span> }</td>
                          <td class="p-4 font-bold text-brand-600">NT$ {{ order.finalTotal | number }}</td>
                          <td class="p-4"><div class="flex flex-col gap-1"><span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>@if(order.status === 'paid_verifying') { <div class="text-[10px] text-gray-500 font-mono">後五碼: <span class="font-bold text-brand-900">{{ order.paymentLast5 }}</span></div> }</div></td>
                          <td class="p-4"><span [class]="getShippingStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold">{{ getShippingStatusLabel(order.status) }}</span></td>
                          <td class="p-4 text-gray-400 text-xs">{{ timeAgo(order.createdAt) }}</td>
-                         <td class="p-4 text-right"><div class="flex items-center justify-end gap-2">@if (order.status === 'paid_verifying') { <button (click)="quickConfirm($event, order)" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold whitespace-nowrap">✅ 確認</button> } @else if (order.status === 'payment_confirmed') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap">📦 出貨</button> }@else if (order.status === 'shipped' && order.paymentMethod === 'cod') { <button (click)="quickComplete($event, order)" class="px-3 py-1.5 bg-green-800 text-white rounded-lg text-xs font-bold whitespace-nowrap">💰 確認收款</button> }@else if (order.status === 'refund_needed') { <button (click)="quickRefundDone($event, order)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap">💸 已退款</button> }<button (click)="openAction($event, order)" class="p-2 hover:bg-gray-100 rounded-lg text-gray-400">•••</button></div></td>
+                         <td class="p-4 text-right"><div class="flex items-center justify-end gap-2">@if (order.status === 'paid_verifying') { <button (click)="quickConfirm($event, order)" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold whitespace-nowrap">✅ 確認</button> } @else if (order.status === 'payment_confirmed') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap">📦 出貨</button> }@else if (order.status === 'shipped' && order.paymentMethod === 'cod') { <button (click)="quickComplete($event, order)" class="px-3 py-1.5 bg-green-800 text-white rounded-lg text-xs font-bold whitespace-nowrap">💰 確認收款</button> }@else if (order.status === 'refund_needed') { <button (click)="quickRefundDone($event, order)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap">💸 已退款</button> }<button (click)="openAction($event, order)" class="p-2 hover:bg-gray-200 rounded-lg text-gray-400">•••</button></div></td>
                        </tr>
                      }
                    </tbody>
@@ -208,16 +234,23 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full">
                  <div class="overflow-x-auto w-full">
                    <table class="w-full text-sm text-left whitespace-nowrap">
-                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100"><tr><th class="p-4">會員編號 / Google UID</th><th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th></tr></thead>
+                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+                        <tr>
+                          <th class="p-4 sticky left-0 z-20 bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">會員編號 / Google UID</th>
+                          <th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th>
+                        </tr>
+                      </thead>
                       <tbody class="divide-y divide-gray-100">
                          @for(u of paginatedUsers(); track u.id) {
-                            <tr class="hover:bg-brand-50/30 transition-colors">
-                               <td class="p-4"><div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u.memberNo) }}</span><div class="flex items-center gap-1 mt-1 group cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div></td>
+                            <tr class="hover:bg-gray-50 transition-colors group">
+                               <td class="p-4 sticky left-0 z-10 bg-white group-hover:bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors">
+                                  <div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u.memberNo) }}</span><div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div>
+                               </td>
                                <td class="p-4"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></td>
                                <td class="p-4">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</td>
                                <td class="p-4 text-right font-bold text-brand-900">NT$ {{ u.totalSpend | number }}</td>
                                <td class="p-4 text-right text-brand-600 font-bold">{{ u.credits }}</td>
-                               <td class="p-4 text-right"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-gray-50 px-3 py-1 rounded-lg transition-colors">編輯</button></td>
+                               <td class="p-4 text-right"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-3 py-1 rounded-lg transition-colors">編輯</button></td>
                             </tr>
                          }
                       </tbody>
@@ -976,7 +1009,6 @@ export class AdminPanelComponent {
      }
   }
 
-  // 🔥 新增：徹底刪除訂單
   doDeleteOrder(o: Order) {
      if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原！(通常僅用於清除測試資料)`)) {
         this.store.deleteOrder(o.id);
@@ -1408,19 +1440,16 @@ export class AdminPanelComponent {
      }
   }
 
-  // 🔥 新增：重新命名商品分類
   renameCategory(oldName: string, newName: string) {
      this.store.renameCategory(oldName, newName);
   }
 
-  // 🔥 新增：刪除分類
   deleteCategory(cat: string) {
      if(confirm(`確定要徹底刪除分類「${cat}」嗎？\n注意：這不會刪除該分類下的商品，但建議您將現有商品轉移至其他分類。`)) {
         this.store.removeCategory(cat);
      }
   }
 
-  // 🔥 新增：新增分類
   addNewCategory(name: string) {
      if(name.trim()) {
         this.store.addCategory(name);
