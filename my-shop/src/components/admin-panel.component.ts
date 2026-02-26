@@ -11,6 +11,12 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
   template: `
     <div class="flex h-screen w-full bg-[#FDFBF9] font-sans overflow-hidden relative">
       
+      @if (!store.currentUser()?.isAdmin) {
+        <div class="absolute top-0 left-0 right-0 bg-red-500 text-white p-2.5 text-center text-sm font-bold z-[100] shadow-md animate-pulse">
+           ⚠️ 系統偵測：您目前「未登入」或「非管理員帳號」！請回前台登入管理員帳號，否則部分資料將受限。
+        </div>
+      }
+
       <aside class="w-20 md:w-64 h-full bg-white border-r border-gray-100 flex flex-col shrink-0 z-20 shadow-lg md:shadow-none overflow-y-auto custom-scrollbar">
         <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start mt-6 md:mt-0">
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
@@ -196,6 +202,13 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   <button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button> 
                 </div> 
               </div>
+
+              <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-100">
+                <div class="relative w-full sm:max-w-md">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                    <input type="text" [(ngModel)]="productSearch" placeholder="搜尋商品名稱、SKU 貨號或分類..." class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200 transition-all">
+                </div>
+              </div>
             </div> 
             
             <div class="grid grid-cols-1 gap-4 w-full"> 
@@ -237,6 +250,48 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 }
               </div> 
           </div> 
+        }
+
+        @if (activeTab() === 'customers') { 
+          <div class="space-y-6 w-full">
+              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-wrap lg:flex-nowrap justify-between items-center gap-4 w-full">
+                 <div class="min-w-[150px]"><h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">客戶管理</h3><p class="text-sm text-gray-400 mt-1">查看會員資料與消費紀錄</p></div>
+                 <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
+                    <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span><input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"><span class="text-gray-300">-</span><input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"></div>
+                    <button (click)="exportCustomersCSV()" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm">📥 匯出</button>
+                    <div class="relative w-full lg:w-64 min-w-[200px]"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
+                 </div>
+              </div>
+              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
+                 <div class="overflow-x-auto w-full custom-scrollbar">
+                   <table class="w-full text-sm text-left whitespace-nowrap">
+                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+                        <tr>
+                          <th class="p-4 sticky left-0 z-20 bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">會員編號 / Google UID</th>
+                          <th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-gray-100">
+                         @for(u of paginatedUsers(); track u.id) {
+                            <tr class="hover:bg-gray-50 transition-colors group">
+                               <td class="p-4 sticky left-0 z-10 bg-white group-hover:bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors">
+                                  <div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u.memberNo) }}</span><div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div>
+                               </td>
+                               <td class="p-4"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></td>
+                               <td class="p-4">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</td>
+                               <td class="p-4 text-right font-bold text-brand-900">NT$ {{ u.totalSpend | number }}</td>
+                               <td class="p-4 text-right text-brand-600 font-bold">{{ u.credits }}</td>
+                               <td class="p-4 text-right"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-3 py-1 rounded-lg transition-colors">編輯</button></td>
+                            </tr>
+                         }
+                      </tbody>
+                   </table>
+                 </div>
+                 @if(customerPageSize() !== 'all' && filteredUsers().length > toNumber(customerPageSize())) {
+                    <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2"><button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">上一頁</button><span class="px-3 py-1 bg-white border border-gray-200 rounded text-sm font-bold text-brand-900">{{ customerPage() }}</span><button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">下一頁</button></div>
+                 }
+              </div>
+          </div>
         }
 
         @if (activeTab() === 'accounting') {
@@ -480,6 +535,41 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"> <span>⚡️ 操作訂單</span> <span class="font-mono text-gray-400">#{{ o.id }}</span> </h3> 
                 <div class="flex gap-2 mt-2"> <span class="px-2 py-1 rounded text-xs font-bold bg-white border border-gray-200"> 狀態: {{ getPaymentStatusLabel(o.status, o.paymentMethod) }} </span> </div> 
               </div> 
+
+              <div class="p-6 border-b border-gray-100 bg-white shrink-0">
+                 <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">客戶資訊</div>
+                 <div class="text-xs text-gray-600 mb-4 grid grid-cols-2 gap-2">
+                    <div><span class="text-gray-400">姓名:</span> {{ o.userName }}</div>
+                    <div><span class="text-gray-400">Email:</span> {{ o.userEmail || '無' }}</div>
+                    <div><span class="text-gray-400">付款:</span> {{ o.paymentMethod === 'bank_transfer' ? '銀行轉帳' : (o.paymentMethod === 'cod' ? '貨到付款' : '現金付款') }}</div>
+                    <div><span class="text-gray-400">物流:</span> {{ o.shippingMethod === 'myship' ? '7-11 賣貨便' : (o.shippingMethod === 'family' ? '全家好賣家' : (o.shippingMethod === 'delivery' ? '宅配' : '面交自取')) }}</div>
+                    @if(o.paymentName) { <div class="col-span-2 text-blue-600"><span class="text-blue-400">匯款回報:</span> {{ o.paymentName }} (後五碼: {{ o.paymentLast5 }})</div> }
+                 </div>
+
+                 <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">商品明細</div>
+                 <div class="space-y-2 mb-4 max-h-40 overflow-y-auto custom-scrollbar pr-2">
+                    @for(item of o.items; track item.productId + item.option) {
+                       <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-lg">
+                          <img [src]="item.productImage" class="w-10 h-10 rounded-md object-cover bg-gray-200 shrink-0">
+                          <div class="flex-1 min-w-0">
+                             <div class="text-xs font-bold text-gray-800 truncate">{{ item.productName }}</div>
+                             <div class="text-[10px] text-gray-500">{{ item.option }}</div>
+                          </div>
+                          <div class="text-right shrink-0">
+                             <div class="text-xs font-bold text-brand-900">NT$ {{ item.price }}</div>
+                             <div class="text-[10px] text-gray-500">x{{ item.quantity }}</div>
+                          </div>
+                       </div>
+                    }
+                 </div>
+                 
+                 <div class="bg-gray-50 p-3 rounded-lg text-xs space-y-1">
+                    <div class="flex justify-between"><span class="text-gray-500">商品小計</span><span>NT$ {{ o.subtotal }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">運費</span><span>NT$ {{ o.shippingFee }}</span></div>
+                    <div class="flex justify-between text-red-500"><span class="">折扣/購物金</span><span>- NT$ {{ o.discount + o.usedCredits }}</span></div>
+                    <div class="flex justify-between font-bold text-sm text-brand-900 pt-1 border-t border-gray-200 mt-1"><span>總計</span><span>NT$ {{ o.finalTotal }}</span></div>
+                 </div>
+              </div>
               
               <div class="p-6 grid grid-cols-2 gap-4 overflow-y-auto flex-1 custom-scrollbar"> 
                 <button (click)="store.notifyArrival(o)" class="col-span-2 p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed">
@@ -535,7 +625,6 @@ export class AdminPanelComponent {
   productSearch = signal('');
   productViewMode = signal<'list' | 'grid'>('list');
 
-  // 🔥 恢復完整且無阻擋的商品過濾邏輯
   filteredAdminProducts = computed(() => {
      const q = this.productSearch().toLowerCase();
      let list = [...this.store.products()];
@@ -755,8 +844,47 @@ export class AdminPanelComponent {
   topSellingProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.sold - a.sold));
   topProfitProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.profit - a.profit));
 
+  // 🔥 圖四與圖五修復：確保主控台的 4 個泡泡數字正確統計所有訂單
   dashboardMetrics = computed(() => { 
-      const orders = this.store.orders(); const today = new Date().toDateString(); const thisMonth = new Date().getMonth(); const todayOrders = orders.filter((o: Order) => new Date(o.createdAt).toDateString() === today); const monthOrders = orders.filter((o: Order) => new Date(o.createdAt).getMonth() === thisMonth); let todayRev = 0; let monthSales = 0; let monthCost = 0; todayOrders.forEach((o: Order) => { if(o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled') todayRev += o.finalTotal; }); monthOrders.forEach((o: Order) => { if(o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled') { monthSales += o.finalTotal; o.items.forEach((i: CartItem) => { const p = this.store.products().find((x: Product) => x.id === i.productId); if(p) monthCost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; }); } }); return { todayRevenue: todayRev, monthSales, monthProfit: monthSales - monthCost, toConfirm: orders.filter((o: Order) => o.status === 'paid_verifying').length, toShip: orders.filter((o: Order) => o.status === 'payment_confirmed').length, unpaid: orders.filter((o: Order) => o.status === 'pending_payment' || o.status === 'unpaid_alert').length, processing: orders.filter((o: Order) => o.status === 'refund_needed').length }; 
+      const orders = this.store.orders(); 
+      const today = new Date().toDateString(); 
+      const thisMonth = new Date().getMonth(); 
+      
+      let todayRev = 0; let monthSales = 0; let monthCost = 0; 
+      let toConfirmCount = 0; let toShipCount = 0; let unpaidCount = 0; let processingCount = 0;
+
+      orders.forEach((o: Order) => { 
+         const dStr = new Date(o.createdAt).toDateString();
+         const dMonth = new Date(o.createdAt).getMonth();
+
+         // 精準計算 4 個泡泡的數量
+         if (o.status === 'paid_verifying') toConfirmCount++;
+         if (o.status === 'payment_confirmed') toShipCount++;
+         if (o.status === 'pending_payment' || o.status === 'unpaid_alert') unpaidCount++;
+         if (o.status === 'refund_needed') processingCount++;
+
+         // 計算今日與本月營收
+         if(o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled' && o.status !== 'pending_payment') { 
+            if (dStr === today) todayRev += o.finalTotal; 
+            if (dMonth === thisMonth) {
+               monthSales += o.finalTotal; 
+               o.items.forEach((i: CartItem) => { 
+                  const p = this.store.products().find((x: Product) => x.id === i.productId); 
+                  if(p) monthCost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
+               }); 
+            }
+         } 
+      }); 
+      
+      return { 
+         todayRevenue: todayRev, 
+         monthSales, 
+         monthProfit: monthSales - monthCost, 
+         toConfirm: toConfirmCount, 
+         toShip: toShipCount, 
+         unpaid: unpaidCount, 
+         processing: processingCount 
+      }; 
   });
   
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
@@ -793,7 +921,6 @@ export class AdminPanelComponent {
 
   customerPageSize = signal<number | 'all'>(50); customerPage = signal(1); customerSearch = signal(''); birthMonthFilter = signal('all'); memberStart = signal(''); memberEnd = signal(''); showUserModal = signal(false); editingUser = signal<User | null>(null); userForm: FormGroup;
   
-  // 🔥 恢復完整且無阻擋的客戶過濾邏輯
   filteredUsers = computed(() => { 
      let list = [...this.store.users()]; 
      const q = this.customerSearch().toLowerCase(); const bm = this.birthMonthFilter(); const start = this.memberStart(); const end = this.memberEnd(); 
@@ -830,6 +957,8 @@ export class AdminPanelComponent {
   getPaymentStatusClass(s: string) { if(s==='payment_confirmed') return 'bg-green-100 text-green-700'; if(s==='paid_verifying') return 'bg-yellow-100 text-yellow-700'; if(s==='pending_payment' || s==='unpaid_alert') return 'bg-red-50 text-red-500'; if(s==='refunded') return 'bg-gray-200 text-gray-500 line-through'; if(s==='cancelled') return 'bg-gray-200 text-gray-400 border border-gray-300'; if(s==='refund_needed') return 'bg-red-100 text-red-700 font-bold border border-red-200'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-green-600 text-white font-bold'; return 'bg-gray-100 text-gray-500'; } 
   getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', shipped: '已出貨', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
   getShippingStatusClass(s: string) { if(s==='shipped') return 'bg-blue-100 text-blue-700'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-gray-800 text-white'; return 'text-gray-400'; } 
+  getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; return map[m] || m; }
+  getShippingLabel(m: string) { const map: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; return map[m] || m; }
   formatMemberNo(no?: string): string { if (!no) return '舊會員 (待更新)'; if (no.includes('/')) return 'M' + no.replace(/\//g, ''); return no; }
   
   openAction(e: Event, order: Order) { e.stopPropagation(); this.actionModalOrder.set(order); this.cancelConfirmState.set(false); } 
