@@ -2,7 +2,7 @@ import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { 
   Firestore, collection, collectionData, doc, docData, 
-  setDoc, updateDoc, deleteDoc, query, where, getDoc, addDoc
+  setDoc, updateDoc, deleteDoc, query, where, getDocs, getDoc, addDoc
 } from '@angular/fire/firestore';
 import { Auth, signInWithPopup, GoogleAuthProvider, signOut } from '@angular/fire/auth';
 import { map, switchMap, of, Observable } from 'rxjs';
@@ -25,16 +25,21 @@ export interface CartItem {
 export interface User {
   id: string; memberId?: string; memberNo?: string; phone?: string; email?: string; name: string; photoURL?: string; 
   totalSpend: number; isAdmin: boolean; tier: 'general' | 'vip' | 'wholesale'; credits: number; note?: string;
-  birthday?: string; address?: string; // 🔥 補回 birthday 與 address
+  birthday?: string; address?: string;
 }
 
-export type OrderStatus = 'pending_payment' | 'paid_verifying' | 'unpaid_alert' | 'refund_needed' | 'refunded' | 'payment_confirmed' | 'pending_shipping' | 'arrived_notified' | 'shipped' | 'completed' | 'cancelled';
+// 🔥 修復：加入 'picked_up' 狀態
+export type OrderStatus = 'pending_payment' | 'paid_verifying' | 'unpaid_alert' | 'refund_needed' | 'refunded' | 'payment_confirmed' | 'pending_shipping' | 'arrived_notified' | 'shipped' | 'picked_up' | 'completed' | 'cancelled';
 
 export interface Order {
   id: string; userId: string; userEmail?: string; userName: string; items: CartItem[]; subtotal: number;
   discount: number; shippingFee: number; usedCredits: number; finalTotal: number; depositPaid: number; balanceDue: number;
   status: OrderStatus; paymentMethod: 'cash' | 'bank_transfer' | 'cod'; shippingMethod: 'meetup' | 'myship' | 'family' | 'delivery'; 
   createdAt: number; shippingLink?: string;
+  // 🔥 修復：補回匯款資訊欄位
+  paymentName?: string;
+  paymentTime?: string;
+  paymentLast5?: string;
 }
 
 export interface StoreSettings {
@@ -53,7 +58,6 @@ export class StoreService {
   private products$ = collectionData(collection(this.firestore, 'products'), { idField: 'id' }) as Observable<Product[]>;
   products = toSignal(this.products$, { initialValue: [] });
 
-  // 🔥 補回 visibleProducts 給前台使用
   visibleProducts = computed(() => this.products().filter(p => p.isListed !== false));
 
   currentUser = signal<User | null>(null);
@@ -87,6 +91,21 @@ export class StoreService {
       const savedUserId = localStorage.getItem('92mymy_uid'); if (savedUserId) getDoc(doc(this.firestore, 'users', savedUserId)).then(snap => snap.exists() && this.currentUser.set(snap.data() as User));
     }
     effect(() => localStorage.setItem('92mymy_cart', JSON.stringify(this.cart())));
+  }
+
+  // 🔥 修復：補回會員專區的複製剪貼簿功能
+  copyToClipboard(text: string) {
+    if (navigator && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => alert('已複製到剪貼簿！'));
+    } else {
+      const el = document.createElement('textarea');
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+      alert('已複製到剪貼簿！');
+    }
   }
 
   async updateSettings(s: any) { await setDoc(doc(this.firestore, 'config/storeSettings'), s, { merge: true }); }
