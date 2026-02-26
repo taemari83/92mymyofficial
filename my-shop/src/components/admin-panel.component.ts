@@ -63,8 +63,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2 w-full custom-scrollbar">
               <div (click)="goToOrders('verifying')" class="bg-white p-6 rounded-[1.5rem] border border-yellow-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl mb-1 group-hover:bg-yellow-200">📝</div><div class="text-2xl md:text-3xl font-black text-yellow-600">{{ dashboardMetrics().toConfirm }}</div><div class="text-sm font-bold text-yellow-800 whitespace-nowrap">未對帳訂單</div></div>
-              <div (click)="goToOrders('paid')" class="bg-white p-6 rounded-[1.5rem] border border-green-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mb-1 group-hover:bg-green-200">💰</div><div class="text-2xl md:text-3xl font-black text-green-600">{{ dashboardMetrics().toShip }}</div><div class="text-sm font-bold text-green-800 whitespace-nowrap">已付款/待出貨</div></div>
-              <div (click)="goToOrders('unpaid')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div><div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div><div class="text-sm font-bold text-gray-600 whitespace-nowrap">未付款</div></div>
+              <div (click)="goToOrders('shipping')" class="bg-white p-6 rounded-[1.5rem] border border-green-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mb-1 group-hover:bg-green-200">💰</div><div class="text-2xl md:text-3xl font-black text-green-600">{{ dashboardMetrics().toShip }}</div><div class="text-sm font-bold text-green-800 whitespace-nowrap">已付款/待出貨</div></div>
+              <div (click)="goToOrders('pending')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div><div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div><div class="text-sm font-bold text-gray-600 whitespace-nowrap">未付款</div></div>
               <div (click)="goToOrders('refund')" class="bg-white p-6 rounded-[1.5rem] border border-red-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-red-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl mb-1 group-hover:bg-red-200">⚡️</div><div class="text-2xl md:text-3xl font-black text-red-500">{{ dashboardMetrics().processing }}</div><div class="text-sm font-bold text-red-800 whitespace-nowrap">待處理 / 退款</div></div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
@@ -250,48 +250,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 }
               </div> 
           </div> 
-        }
-
-        @if (activeTab() === 'customers') { 
-          <div class="space-y-6 w-full">
-              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-wrap lg:flex-nowrap justify-between items-center gap-4 w-full">
-                 <div class="min-w-[150px]"><h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">客戶管理</h3><p class="text-sm text-gray-400 mt-1">查看會員資料與消費紀錄</p></div>
-                 <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-end">
-                    <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span><input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"><span class="text-gray-300">-</span><input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"></div>
-                    <button (click)="exportCustomersCSV()" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm">📥 匯出</button>
-                    <div class="relative w-full lg:w-64 min-w-[200px]"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
-                 </div>
-              </div>
-              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
-                 <div class="overflow-x-auto w-full custom-scrollbar">
-                   <table class="w-full text-sm text-left whitespace-nowrap">
-                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
-                        <tr>
-                          <th class="p-4 sticky left-0 z-20 bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">會員編號 / Google UID</th>
-                          <th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody class="divide-y divide-gray-100">
-                         @for(u of paginatedUsers(); track u.id) {
-                            <tr class="hover:bg-gray-50 transition-colors group">
-                               <td class="p-4 sticky left-0 z-10 bg-white group-hover:bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors">
-                                  <div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u.memberNo) }}</span><div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div>
-                               </td>
-                               <td class="p-4"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></td>
-                               <td class="p-4">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</td>
-                               <td class="p-4 text-right font-bold text-brand-900">NT$ {{ u.totalSpend | number }}</td>
-                               <td class="p-4 text-right text-brand-600 font-bold">{{ u.credits }}</td>
-                               <td class="p-4 text-right"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-3 py-1 rounded-lg transition-colors">編輯</button></td>
-                            </tr>
-                         }
-                      </tbody>
-                   </table>
-                 </div>
-                 @if(customerPageSize() !== 'all' && filteredUsers().length > toNumber(customerPageSize())) {
-                    <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2"><button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">上一頁</button><span class="px-3 py-1 bg-white border border-gray-200 rounded text-sm font-bold text-brand-900">{{ customerPage() }}</span><button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">下一頁</button></div>
-                 }
-              </div>
-          </div>
         }
 
         @if (activeTab() === 'accounting') {
@@ -541,8 +499,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                  <div class="text-xs text-gray-600 mb-4 grid grid-cols-2 gap-2">
                     <div><span class="text-gray-400">姓名:</span> {{ o.userName }}</div>
                     <div><span class="text-gray-400">Email:</span> {{ o.userEmail || '無' }}</div>
-                    <div><span class="text-gray-400">付款:</span> {{ o.paymentMethod === 'bank_transfer' ? '銀行轉帳' : (o.paymentMethod === 'cod' ? '貨到付款' : '現金付款') }}</div>
-                    <div><span class="text-gray-400">物流:</span> {{ o.shippingMethod === 'myship' ? '7-11 賣貨便' : (o.shippingMethod === 'family' ? '全家好賣家' : (o.shippingMethod === 'delivery' ? '宅配' : '面交自取')) }}</div>
+                    <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
+                    <div><span class="text-gray-400">物流:</span> {{ getShippingLabel(o.shippingMethod) }}</div>
                     @if(o.paymentName) { <div class="col-span-2 text-blue-600"><span class="text-blue-400">匯款回報:</span> {{ o.paymentName }} (後五碼: {{ o.paymentLast5 }})</div> }
                  </div>
 
@@ -570,52 +528,52 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     <div class="flex justify-between font-bold text-sm text-brand-900 pt-1 border-t border-gray-200 mt-1"><span>總計</span><span>NT$ {{ o.finalTotal }}</span></div>
                  </div>
               </div>
-              
-              <div class="p-6 grid grid-cols-2 gap-4 overflow-y-auto flex-1 custom-scrollbar"> 
-                <button (click)="store.notifyArrival(o)" class="col-span-2 p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed">
-                   <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-purple-600">🚛</div>
-                   <div><div class="font-bold text-purple-900">通知貨到 (發送賣貨便)</div><div class="text-[10px] text-purple-400">發送 Email/TG 通知客人下單</div></div>
-                </button>
+              
+              <div class="p-6 grid grid-cols-2 gap-4 overflow-y-auto flex-1 custom-scrollbar"> 
+                <button (click)="store.notifyArrival(o)" class="col-span-2 p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed">
+                   <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-purple-600">🚛</div>
+                   <div><div class="font-bold text-purple-900">通知貨到 (發送賣貨便)</div><div class="text-[10px] text-purple-400">發送 Email/TG 通知客人下單</div></div>
+                </button>
 
-                <button (click)="doMyshipPickup(o)" class="col-span-2 p-4 rounded-2xl bg-teal-50 hover:bg-teal-100 border border-teal-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'picked_up' || o.status === 'completed' || o.status === 'cancelled'">
-                   <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-teal-600">🏪</div>
-                   <div><div class="font-bold text-teal-900">賣貨便確認取貨</div><div class="text-[10px] text-teal-500">標記買家已於門市取件</div></div>
-                </button>
+                <button (click)="doMyshipPickup(o)" class="col-span-2 p-4 rounded-2xl bg-teal-50 hover:bg-teal-100 border border-teal-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'picked_up' || o.status === 'completed' || o.status === 'cancelled'">
+                   <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-teal-600">🏪</div>
+                   <div><div class="font-bold text-teal-900">賣貨便確認取貨</div><div class="text-[10px] text-teal-500">標記買家已於門市取件</div></div>
+                </button>
 
-                <button (click)="doShip(o)" class="p-4 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'shipped' || o.status === 'picked_up' || o.status === 'pending_payment' || o.status === 'unpaid_alert' || o.status === 'refund_needed' || o.status === 'refunded' || o.status === 'completed' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">📦</div> <div> <div class="font-bold text-blue-900">安排出貨</div> <div class="text-[10px] text-blue-400">標記為已出貨</div> </div> </button> 
-                <button (click)="doConfirm(o)" class="p-4 rounded-2xl bg-green-50 hover:bg-green-100 border border-green-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status !== 'paid_verifying' && o.status !== 'pending_payment' && o.status !== 'unpaid_alert'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">✅</div> <div> <div class="font-bold text-green-900">確認收款</div> <div class="text-[10px] text-green-500">轉為已付款</div> </div> </button> 
-                <button (click)="doAlert(o)" class="p-4 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status !== 'pending_payment' && o.status !== 'unpaid_alert' && o.status !== 'paid_verifying'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">🔔</div> <div> <div class="font-bold text-orange-900">提醒付款</div> <div class="text-[10px] text-orange-400">發送提醒</div> </div> </button> 
-                <button (click)="doRefundNeeded(o)" class="p-4 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'refund_needed' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">⚠️</div> <div> <div class="font-bold text-red-900">缺貨/需退款</div> <div class="text-[10px] text-red-400">標記為問題訂單</div> </div> </button> 
-                <button (click)="doRefundDone(o)" class="col-span-2 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">💸</div> <div> <div class="font-bold text-gray-800">確認已退款</div> <div class="text-[10px] text-gray-400">強制結案並標記為已退款 (任何狀態可用)</div> </div> </button> 
-                <button (click)="quickComplete($event, o)" class="col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> <div> <div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> </button> 
-                <button (click)="doCancel(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
-                
-                <button (click)="doDeleteOrder(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-b-2xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700">
-                  🗑️ 徹底刪除訂單 (測試用)
-                </button>
-              </div> 
-              
-              <div class="p-4 bg-gray-50 border-t border-gray-100 shrink-0"> <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> </div> 
-            </div> 
-          </div> 
-        }
-      </main>
-    </div>
-  `,
-  styles: [`
-    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-    .animate-fade-in { animation: fadeIn 0.2s ease-out; }
-    .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-    .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    @keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
-  `]
+                <button (click)="doShip(o)" class="p-4 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'shipped' || o.status === 'picked_up' || o.status === 'pending_payment' || o.status === 'unpaid_alert' || o.status === 'refund_needed' || o.status === 'refunded' || o.status === 'completed' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">📦</div> <div> <div class="font-bold text-blue-900">安排出貨</div> <div class="text-[10px] text-blue-400">標記為已出貨</div> </div> </button> 
+                <button (click)="doConfirm(o)" class="p-4 rounded-2xl bg-green-50 hover:bg-green-100 border border-green-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status !== 'paid_verifying' && o.status !== 'pending_payment' && o.status !== 'unpaid_alert'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">✅</div> <div> <div class="font-bold text-green-900">確認收款</div> <div class="text-[10px] text-green-500">轉為已付款</div> </div> </button> 
+                <button (click)="doAlert(o)" class="p-4 rounded-2xl bg-orange-50 hover:bg-orange-100 border border-orange-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status !== 'pending_payment' && o.status !== 'unpaid_alert' && o.status !== 'paid_verifying'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">🔔</div> <div> <div class="font-bold text-orange-900">提醒付款</div> <div class="text-[10px] text-orange-400">發送提醒</div> </div> </button> 
+                <button (click)="doRefundNeeded(o)" class="p-4 rounded-2xl bg-red-50 hover:bg-red-100 border border-red-100 text-left transition-colors flex flex-col gap-2 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'refund_needed' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">⚠️</div> <div> <div class="font-bold text-red-900">缺貨/需退款</div> <div class="text-[10px] text-red-400">標記為問題訂單</div> </div> </button> 
+                <button (click)="doRefundDone(o)" class="col-span-2 p-4 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'refunded' || o.status === 'cancelled'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit">💸</div> <div> <div class="font-bold text-gray-800">確認已退款</div> <div class="text-[10px] text-gray-400">強制結案並標記為已退款 (任何狀態可用)</div> </div> </button> 
+                <button (click)="quickComplete($event, o)" class="col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> <div> <div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> </button> 
+                <button (click)="doCancel(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
+                
+                <button (click)="doDeleteOrder(o)" class="col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-b-2xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700">
+                  🗑️ 徹底刪除訂單 (測試用)
+                </button>
+              </div> 
+              
+              <div class="p-4 bg-gray-50 border-t border-gray-100 shrink-0"> <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> </div> 
+            </div> 
+          </div> 
+        }
+      </main>
+    </div>
+  `,
+  styles: [`
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+    .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    @keyframes bounceIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+  `]
 })
 export class AdminPanelComponent {
   store = inject(StoreService);
@@ -626,40 +584,40 @@ export class AdminPanelComponent {
   productViewMode = signal<'list' | 'grid'>('list');
 
   filteredAdminProducts = computed(() => {
-     const q = this.productSearch().toLowerCase();
-     let list = [...this.store.products()];
-     if (q) {
-        list = list.filter(p => 
-           p.name.toLowerCase().includes(q) || 
-           p.code.toLowerCase().includes(q) || 
-           p.category.toLowerCase().includes(q)
-        );
-     }
-     return list.sort((a, b) => b.id.localeCompare(a.id));
+    const q = this.productSearch().toLowerCase();
+    let list = [...this.store.products()];
+    if (q) {
+      list = list.filter(p => 
+        p.name.toLowerCase().includes(q) || 
+        p.code.toLowerCase().includes(q) || 
+        p.category.toLowerCase().includes(q)
+      );
+    }
+    return list.sort((a, b) => b.id.localeCompare(a.id));
   });
 
   private parseCSV(text: string): string[][] {
-     const rows: string[][] = [];
-     let row: string[] = [];
-     let inQuotes = false;
-     let val = '';
-     for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const nextChar = text[i + 1];
-        if (char === '"' && inQuotes && nextChar === '"') {
-           val += '"'; i++; 
-        } else if (char === '"') {
-           inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-           row.push(val.trim()); val = '';
-        } else if (char === '\n' && !inQuotes) {
-           row.push(val.trim()); rows.push(row); row = []; val = '';
-        } else if (char !== '\r') {
-           val += char;
-        }
-     }
-     if (val || row.length > 0) { row.push(val.trim()); rows.push(row); }
-     return rows;
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let inQuotes = false;
+    let val = '';
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      const nextChar = text[i + 1];
+      if (char === '"' && inQuotes && nextChar === '"') {
+        val += '"'; i++; 
+      } else if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        row.push(val.trim()); val = '';
+      } else if (char === '\n' && !inQuotes) {
+        row.push(val.trim()); rows.push(row); row = []; val = '';
+      } else if (char !== '\r') {
+        val += char;
+      }
+    }
+    if (val || row.length > 0) { row.push(val.trim()); rows.push(row); }
+    return rows;
   }
 
   async handleBatchImport(event: any) {
@@ -675,78 +633,78 @@ export class AdminPanelComponent {
       let successCount = 0; let failCount = 0;
 
       for (let i = 1; i < rows.length; i++) {
-         const row = rows[i];
-         if (row.length < 4 || !row[2] || !row[3]) continue;
-         if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; 
+        const row = rows[i];
+        if (row.length < 4 || !row[2] || !row[3]) continue;
+        if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; 
 
-         try {
-            const name = String(row[2] || '').trim(); 
-            const category = String(row[3] || '').trim();
-            const priceGeneral = Number(row[4]) || 0; 
-            const priceVip = Number(row[5]) || 0;
-            const localPrice = Number(row[6]) || 0; 
-            const exchangeRate = Number(row[7]) || 0.22;
-            const weight = Number(row[8]) || 0; 
-            const shippingCostPerKg = Number(row[9]) || 200;
-            const costMaterial = Number(row[10]) || 0;
-            
-            const bulkCount = Number(row[11]) || 0;
-            const bulkTotal = Number(row[12]) || 0;
+        try {
+          const name = String(row[2] || '').trim(); 
+          const category = String(row[3] || '').trim();
+          const priceGeneral = Number(row[4]) || 0; 
+          const priceVip = Number(row[5]) || 0;
+          const localPrice = Number(row[6]) || 0; 
+          const exchangeRate = Number(row[7]) || 0.22;
+          const weight = Number(row[8]) || 0; 
+          const shippingCostPerKg = Number(row[9]) || 200;
+          const costMaterial = Number(row[10]) || 0;
+          
+          const bulkCount = Number(row[11]) || 0;
+          const bulkTotal = Number(row[12]) || 0;
 
-            const imageRaw = String(row[13] || '');
-            const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
-            const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
-            const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
+          const imageRaw = String(row[13] || '');
+          const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
+          const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
+          const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-            const optionsStr = String(row[14] || '');
-            const stockInput = Number(row[15]) || 0;
-            
-            const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
-            const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
-            const note = String(row[19] || '');
-            
-            const stock = isPreorder ? 99999 : stockInput;
-            const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
-            
-            let code = String(row[18] || '').replace(/\t/g, '').trim(); 
-            if (!code) {
-               const codeMap = this.store.settings().categoryCodes || {};
-               const prefix = codeMap[category] || 'Z'; 
-               const now = new Date();
-               const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-               code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
-            }
+          const optionsStr = String(row[14] || '');
+          const stockInput = Number(row[15]) || 0;
+          
+          const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
+          const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
+          const note = String(row[19] || '');
+          
+          const stock = isPreorder ? 99999 : stockInput;
+          const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+          
+          let code = String(row[18] || '').replace(/\t/g, '').trim(); 
+          if (!code) {
+            const codeMap = this.store.settings().categoryCodes || {};
+            const prefix = codeMap[category] || 'Z'; 
+            const now = new Date();
+            const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+            code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
+          }
 
-            const existingProduct = this.store.products().find(p => p.code === code);
-            const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
+          const existingProduct = this.store.products().find(p => p.code === code);
+          const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
 
-            const p: any = {
-               id: uniqueId, 
-               code, name, category, image: mainImage, images: allImages,
-               priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
-               weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
-               soldCount: existingProduct?.soldCount || 0, country: 'Korea',
-               allowPayment: { cash: true, bankTransfer: true, cod: true },
-               allowShipping: { meetup: true, myship: true, family: true, delivery: true },
-               isPreorder, isListed
-            };
+          const p: any = {
+            id: uniqueId, 
+            code, name, category, image: mainImage, images: allImages,
+            priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
+            weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
+            soldCount: existingProduct?.soldCount || 0, country: 'Korea',
+            allowPayment: { cash: true, bankTransfer: true, cod: true },
+            allowShipping: { meetup: true, myship: true, family: true, delivery: true },
+            isPreorder, isListed
+          };
 
-            if (bulkCount > 1 && bulkTotal > 0) {
-               p.bulkDiscount = { count: bulkCount, total: bulkTotal };
-            }
+          if (bulkCount > 1 && bulkTotal > 0) {
+            p.bulkDiscount = { count: bulkCount, total: bulkTotal };
+          }
 
-            this.store.addCategory(category);
-            
-            if (existingProduct) {
-               await this.store.updateProduct(p);
-            } else {
-               await this.store.addProduct(p);
-            }
-            successCount++;
-         } catch (err) { 
-            console.error('匯入失敗的商品:', row[2], err);
-            failCount++; 
-         }
+          this.store.addCategory(category);
+          
+          if (existingProduct) {
+            await this.store.updateProduct(p);
+          } else {
+            await this.store.addProduct(p);
+          }
+          successCount++;
+        } catch (err) { 
+          console.error('匯入失敗的商品:', row[2], err);
+          failCount++; 
+        }
       }
       alert(`✅ 批量操作完成！\n成功新增/更新：${successCount} 筆\n失敗/略過：${failCount} 筆`);
       event.target.value = ''; 
@@ -754,187 +712,223 @@ export class AdminPanelComponent {
     reader.readAsText(file, 'UTF-8');
   }
 
-  // 🔥 報表切換狀態與邏輯
   reportSortBy = signal<'sold' | 'profit'>('sold');
   accountingRange = signal('month'); 
   accountingCustomStart = signal(''); 
   accountingCustomEnd = signal('');
 
   accountingFilteredOrders = computed(() => {
-     const orders = this.store.orders(); 
-     const range = this.accountingRange(); 
-     const now = new Date();
-     let startDate: Date | null = null; let endDate: Date | null = null;
-     
-     if (range === 'today') startDate = new Date(now.setHours(0,0,0,0));
-     else if (range === 'week') startDate = new Date(now.setHours(0,0,0,0) - ((now.getDay() || 7) - 1) * 24 * 60 * 60 * 1000);
-     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-     else if (range === 'custom' && this.accountingCustomStart()) { startDate = new Date(this.accountingCustomStart()); if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd()); }
+    const orders = this.store.orders(); 
+    const range = this.accountingRange(); 
+    const now = new Date();
+    let startDate: Date | null = null; let endDate: Date | null = null;
+    
+    if (range === 'today') startDate = new Date(now.setHours(0,0,0,0));
+    else if (range === 'week') startDate = new Date(now.setHours(0,0,0,0) - ((now.getDay() || 7) - 1) * 24 * 60 * 60 * 1000);
+    else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    else if (range === 'custom' && this.accountingCustomStart()) { startDate = new Date(this.accountingCustomStart()); if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd()); }
 
-     return orders.filter((o: Order) => {
-        const d = new Date(o.createdAt);
-        if (startDate && d < startDate) return false;
-        if (endDate) { const e = new Date(endDate); e.setHours(23,59,59,999); if (d > e) return false; }
-        // 🚨 排除已取消與退款，其餘(含剛下單未付款)都計入業績
-        if (['cancelled', 'refunded'].includes(o.status)) return false;
-        return true;
-     });
+    return orders.filter((o: Order) => {
+      const d = new Date(o.createdAt);
+      if (startDate && d < startDate) return false;
+      if (endDate) { const e = new Date(endDate); e.setHours(23,59,59,999); if (d > e) return false; }
+      if (['cancelled', 'refunded'].includes(o.status)) return false;
+      return true;
+    });
   });
 
   accountingStats = computed(() => {
-     const filteredOrders = this.accountingFilteredOrders();
-     let revenue = 0; let cost = 0; let discounts = 0;
-     let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
+    const filteredOrders = this.accountingFilteredOrders();
+    let revenue = 0; let cost = 0; let discounts = 0;
+    let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
 
-     filteredOrders.forEach((o: Order) => {
-        if (o.status === 'refund_needed') payRefund += o.finalTotal;
-        else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
-        else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed' || o.status === 'picked_up' as any) {
-           if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
-        } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
-           payUnpaid += o.finalTotal;
-        }
-        
-        revenue += o.finalTotal;
-        o.items.forEach((i: CartItem) => {
-           const p = this.store.products().find((x: Product) => x.id === i.productId);
-           if (p) cost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity;
-        });
-        discounts += o.discount + o.usedCredits;
-     });
+    filteredOrders.forEach((o: Order) => {
+      if (o.status === 'refund_needed') payRefund += o.finalTotal;
+      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
+      else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed' || o.status === 'picked_up' as any) {
+          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
+      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
+          payUnpaid += o.finalTotal;
+      }
+      
+      revenue += o.finalTotal;
+      o.items.forEach((i: CartItem) => {
+          const p = this.store.products().find((x: Product) => x.id === i.productId);
+          if (p) cost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity;
+      });
+      discounts += o.discount + o.usedCredits;
+    });
 
-     return { 
-         revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal } 
-     };
+    return { 
+        revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal } 
+    };
   });
 
   productPerformance = computed(() => { 
-     const orders = this.accountingFilteredOrders();
-     const productMap = new Map<string, any>();
-     
-     orders.forEach(o => {
-        o.items.forEach(item => {
-           if (!productMap.has(item.productId)) {
-              const p = this.store.products().find(x => x.id === item.productId);
-              if(p) productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0 });
-           }
-           const stats = productMap.get(item.productId);
-           if (stats) stats.sold += item.quantity;
-        });
-     });
+    const orders = this.accountingFilteredOrders();
+    const productMap = new Map<string, any>();
+    
+    orders.forEach(o => {
+      o.items.forEach(item => {
+          if (!productMap.has(item.productId)) {
+            const p = this.store.products().find(x => x.id === item.productId);
+            if(p) productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0 });
+          }
+          const stats = productMap.get(item.productId);
+          if (stats) stats.sold += item.quantity;
+      });
+    });
 
-     return Array.from(productMap.values()).map(stats => {
-        const p = stats.product;
-        const costPerUnit = (p.localPrice * p.exchangeRate) + (p.weight * p.shippingCostPerKg) + p.costMaterial;
-        stats.cost = stats.sold * costPerUnit;
+    return Array.from(productMap.values()).map(stats => {
+      const p = stats.product;
+      const costPerUnit = (p.localPrice * p.exchangeRate) + (p.weight * p.shippingCostPerKg) + p.costMaterial;
+      stats.cost = stats.sold * costPerUnit;
 
-        let estimatedRevenue = 0; let hasBulk = false;
-        if (p.bulkDiscount && p.bulkDiscount.count > 1 && p.bulkDiscount.total > 0 && stats.sold >= p.bulkDiscount.count) {
-           hasBulk = true;
-           const sets = Math.floor(stats.sold / p.bulkDiscount.count);
-           const remainder = stats.sold % p.bulkDiscount.count;
-           estimatedRevenue = (sets * p.bulkDiscount.total) + (remainder * p.priceGeneral);
-        } else { estimatedRevenue = stats.sold * p.priceGeneral; }
+      let estimatedRevenue = 0; let hasBulk = false;
+      if (p.bulkDiscount && p.bulkDiscount.count > 1 && p.bulkDiscount.total > 0 && stats.sold >= p.bulkDiscount.count) {
+          hasBulk = true;
+          const sets = Math.floor(stats.sold / p.bulkDiscount.count);
+          const remainder = stats.sold % p.bulkDiscount.count;
+          estimatedRevenue = (sets * p.bulkDiscount.total) + (remainder * p.priceGeneral);
+      } else { estimatedRevenue = stats.sold * p.priceGeneral; }
 
-        stats.revenue = estimatedRevenue; stats.profit = estimatedRevenue - stats.cost; stats.margin = estimatedRevenue ? (stats.profit / estimatedRevenue) * 100 : 0; stats.hasBulk = hasBulk;
-        return stats;
-     });
+      stats.revenue = estimatedRevenue; stats.profit = estimatedRevenue - stats.cost; stats.margin = estimatedRevenue ? (stats.profit / estimatedRevenue) * 100 : 0; stats.hasBulk = hasBulk;
+      return stats;
+    });
   });
 
   topSellingProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.sold - a.sold));
   topProfitProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.profit - a.profit));
 
-  // 🔥 圖四與圖五修復：確保主控台的 4 個泡泡數字正確統計所有訂單
   dashboardMetrics = computed(() => { 
-      const orders = this.store.orders(); 
-      const today = new Date().toDateString(); 
-      const thisMonth = new Date().getMonth(); 
-      
-      let todayRev = 0; let monthSales = 0; let monthCost = 0; 
-      let toConfirmCount = 0; let toShipCount = 0; let unpaidCount = 0; let processingCount = 0;
+    const orders = this.store.orders(); 
+    const today = new Date().toDateString(); 
+    const thisMonth = new Date().getMonth(); 
+    let todayRev = 0; let monthSales = 0; let monthCost = 0; 
+    
+    orders.forEach((o: Order) => {
+        const dStr = new Date(o.createdAt).toDateString();
+        const dMonth = new Date(o.createdAt).getMonth();
 
-      orders.forEach((o: Order) => { 
-         const dStr = new Date(o.createdAt).toDateString();
-         const dMonth = new Date(o.createdAt).getMonth();
-
-         // 精準計算 4 個泡泡的數量
-         if (o.status === 'paid_verifying') toConfirmCount++;
-         if (o.status === 'payment_confirmed') toShipCount++;
-         if (o.status === 'pending_payment' || o.status === 'unpaid_alert') unpaidCount++;
-         if (o.status === 'refund_needed') processingCount++;
-
-         // 計算今日與本月營收
-         if(o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled' && o.status !== 'pending_payment') { 
-            if (dStr === today) todayRev += o.finalTotal; 
-            if (dMonth === thisMonth) {
-               monthSales += o.finalTotal; 
-               o.items.forEach((i: CartItem) => { 
-                  const p = this.store.products().find((x: Product) => x.id === i.productId); 
-                  if(p) monthCost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
-               }); 
-            }
-         } 
-      }); 
-      
-      return { 
-         todayRevenue: todayRev, 
-         monthSales, 
-         monthProfit: monthSales - monthCost, 
-         toConfirm: toConfirmCount, 
-         toShip: toShipCount, 
-         unpaid: unpaidCount, 
-         processing: processingCount 
-      }; 
+        if(!['pending_payment', 'unpaid_alert', 'cancelled', 'refunded'].includes(o.status)) { 
+          if (dStr === today) todayRev += o.finalTotal; 
+          if (dMonth === thisMonth) {
+              monthSales += o.finalTotal; 
+              o.items.forEach((i: CartItem) => { 
+                const p = this.store.products().find((x: Product) => x.id === i.productId); 
+                if(p) monthCost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
+              }); 
+          }
+        } 
+    }); 
+    
+    return { 
+        todayRevenue: todayRev, 
+        monthSales, 
+        monthProfit: monthSales - monthCost, 
+        toConfirm: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert', 'paid_verifying'].includes(o.status)).length, 
+        toShip: orders.filter((o: Order) => o.status === 'payment_confirmed').length, 
+        unpaid: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)).length, 
+        processing: orders.filter((o: Order) => o.status === 'refund_needed').length 
+    }; 
   });
-  
+
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   topProducts = computed(() => [...this.store.products()].sort((a: any, b: any) => b.soldCount - a.soldCount).slice(0, 5));
 
-  statsRange = signal('今日'); orderStart = signal(''); orderEnd = signal(''); orderSearch = signal(''); orderPageSize = signal<number | 'all'>(50); orderPage = signal(1); orderStatusTab = signal('all'); actionModalOrder = signal<Order | null>(null); cancelConfirmState = signal(false);
-  orderTabs = [ { id: 'all', label: '全部' }, { id: 'pending', label: '待付款' }, { id: 'verifying', label: '待對帳' }, { id: 'shipping', label: '待出貨' }, { id: 'completed', label: '已完成' }, { id: 'refund', label: '退款/取消' } ];
+  statsRange = signal('今日'); 
+  orderStart = signal(''); 
+  orderEnd = signal(''); 
+  orderSearch = signal(''); 
+  orderPageSize = signal<number | 'all'>(50); 
+  orderPage = signal(1); 
+  orderStatusTab = signal('all'); 
+  actionModalOrder = signal<Order | null>(null); 
+  cancelConfirmState = signal(false);
+  
+  orderTabs = [ 
+    { id: 'all', label: '全部' }, 
+    { id: 'pending', label: '待付款' }, 
+    { id: 'verifying', label: '待對帳' }, 
+    { id: 'shipping', label: '待出貨' }, 
+    { id: 'completed', label: '已完成' }, 
+    { id: 'refund', label: '退款/取消' } 
+  ];
   
   setOrderRange(range: string) { 
-      this.statsRange.set(range); this.orderStart.set(''); this.orderEnd.set(''); 
+    this.statsRange.set(range); 
+    this.orderStart.set(''); 
+    this.orderEnd.set(''); 
   }
 
   filteredOrders = computed(() => { 
-     let list = [...this.store.orders()]; 
-     const q = this.orderSearch().toLowerCase(); const tab = this.orderStatusTab(); const range = this.statsRange(); const now = new Date(); 
-     if (range === '今日') list = list.filter((o: Order) => new Date(o.createdAt).toDateString() === now.toDateString()); 
-     else if (range === '本週') { const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0,0,0,0); list = list.filter((o: Order) => o.createdAt >= s.getTime()); } 
-     else if (range === '本月') list = list.filter((o: Order) => new Date(o.createdAt).getMonth() === now.getMonth() && new Date(o.createdAt).getFullYear() === now.getFullYear()); 
-     const os = this.orderStart(); const oe = this.orderEnd(); 
-     if (os) list = list.filter((o: Order) => o.createdAt >= new Date(os).setHours(0,0,0,0)); 
-     if (oe) list = list.filter((o: Order) => o.createdAt <= new Date(oe).setHours(23,59,59,999)); 
-     if (tab === 'pending') list = list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)); 
-     else if (tab === 'verifying') list = list.filter((o: Order) => o.status === 'paid_verifying'); 
-     else if (tab === 'shipping') list = list.filter((o: Order) => o.status === 'payment_confirmed'); 
-     else if (tab === 'completed') list = list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any)); 
-     else if (tab === 'refund') list = list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status)); 
-     if (q) list = list.filter((o: Order) => o.id.includes(q) || o.items.some((i: CartItem) => i.productName.toLowerCase().includes(q)) || this.getUserName(o.userId).toLowerCase().includes(q)); 
-     return list.sort((a: any, b: any) => b.createdAt - a.createdAt); 
+    let list = [...this.store.orders()]; 
+    const q = this.orderSearch().toLowerCase(); 
+    const tab = this.orderStatusTab(); 
+    const range = this.statsRange(); 
+    const now = new Date(); 
+    if (range === '今日') list = list.filter((o: Order) => new Date(o.createdAt).toDateString() === now.toDateString()); 
+    else if (range === '本週') { const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0,0,0,0); list = list.filter((o: Order) => o.createdAt >= s.getTime()); } 
+    else if (range === '本月') list = list.filter((o: Order) => new Date(o.createdAt).getMonth() === now.getMonth() && new Date(o.createdAt).getFullYear() === now.getFullYear()); 
+    const os = this.orderStart(); const oe = this.orderEnd(); 
+    if (os) list = list.filter((o: Order) => o.createdAt >= new Date(os).setHours(0,0,0,0)); 
+    if (oe) list = list.filter((o: Order) => o.createdAt <= new Date(oe).setHours(23,59,59,999)); 
+    if (tab === 'pending') list = list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)); 
+    else if (tab === 'verifying') list = list.filter((o: Order) => o.status === 'paid_verifying'); 
+    else if (tab === 'shipping') list = list.filter((o: Order) => o.status === 'payment_confirmed'); 
+    else if (tab === 'completed') list = list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any)); 
+    else if (tab === 'refund') list = list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status)); 
+    if (q) list = list.filter((o: Order) => o.id.includes(q) || o.items.some((i: CartItem) => i.productName.toLowerCase().includes(q)) || this.getUserName(o.userId).toLowerCase().includes(q)); 
+    return list.sort((a: any, b: any) => b.createdAt - a.createdAt); 
   });
   
   paginatedOrders = computed(() => { 
-      const list = this.filteredOrders(); const size = this.orderPageSize(); if (size === 'all') return list; const start = (this.orderPage() - 1) * size; return list.slice(start, start + size); 
+    const list = this.filteredOrders(); 
+    const size = this.orderPageSize(); 
+    if (size === 'all') return list; 
+    const start = (this.orderPage() - 1) * size; 
+    return list.slice(start, start + size); 
   });
 
-  customerPageSize = signal<number | 'all'>(50); customerPage = signal(1); customerSearch = signal(''); birthMonthFilter = signal('all'); memberStart = signal(''); memberEnd = signal(''); showUserModal = signal(false); editingUser = signal<User | null>(null); userForm: FormGroup;
+  customerPageSize = signal<number | 'all'>(50); 
+  customerPage = signal(1); 
+  customerSearch = signal(''); 
+  birthMonthFilter = signal('all'); 
+  memberStart = signal(''); 
+  memberEnd = signal(''); 
+  showUserModal = signal(false); 
+  editingUser = signal<User | null>(null); 
+  userForm: FormGroup;
   
   filteredUsers = computed(() => { 
-     let list = [...this.store.users()]; 
-     const q = this.customerSearch().toLowerCase(); const bm = this.birthMonthFilter(); const start = this.memberStart(); const end = this.memberEnd(); 
-     if (q) list = list.filter((u: User) => u.name.toLowerCase().includes(q) || (u.phone && u.phone.includes(q)) || u.id.toLowerCase().includes(q) || (u.memberNo && u.memberNo.includes(q))); 
-     if (bm !== 'all') list = list.filter((u: User) => { if (!u.birthday) return false; return new Date(u.birthday).getMonth() + 1 === parseInt(bm); }); 
-     if (start || end) { list = list.filter(u => { if (!u.memberNo || u.memberNo.length < 9) return false; const noDatePart = u.memberNo.substring(1, 9); const startDate = start ? start.replace(/-/g, '') : null; const endDate = end ? end.replace(/-/g, '') : null; if (startDate && noDatePart < startDate) return false; if (endDate && noDatePart > endDate) return false; return true; }); } 
-     return list; 
+    let list = [...this.store.users()]; 
+    const q = this.customerSearch().toLowerCase(); 
+    const bm = this.birthMonthFilter(); 
+    const start = this.memberStart(); 
+    const end = this.memberEnd(); 
+    if (q) list = list.filter((u: User) => u.name.toLowerCase().includes(q) || (u.phone && u.phone.includes(q)) || u.id.toLowerCase().includes(q) || (u.memberNo && u.memberNo.includes(q))); 
+    if (bm !== 'all') list = list.filter((u: User) => { if (!u.birthday) return false; return new Date(u.birthday).getMonth() + 1 === parseInt(bm); }); 
+    if (start || end) { list = list.filter(u => { if (!u.memberNo || u.memberNo.length < 9) return false; const noDatePart = u.memberNo.substring(1, 9); const startDate = start ? start.replace(/-/g, '') : null; const endDate = end ? end.replace(/-/g, '') : null; if (startDate && noDatePart < startDate) return false; if (endDate && noDatePart > endDate) return false; return true; }); } 
+    return list; 
   });
   
   paginatedUsers = computed(() => { 
-      const list = this.filteredUsers(); const size = this.customerPageSize(); if (size === 'all') return list; const start = (this.customerPage() - 1) * size; return list.slice(start, start + size); 
+    const list = this.filteredUsers(); 
+    const size = this.customerPageSize(); 
+    if (size === 'all') return list; 
+    const start = (this.customerPage() - 1) * size; 
+    return list.slice(start, start + size); 
   });
 
-  showProductModal = signal(false); editingProduct = signal<Product | null>(null); productForm: FormGroup; tempImages = signal<string[]>([]); formValues = signal<any>({}); categoryCodes = computed(() => this.store.settings().categoryCodes); currentCategoryCode = signal(''); generatedSkuPreview = signal(''); settingsForm: FormGroup;
+  showProductModal = signal(false); 
+  editingProduct = signal<Product | null>(null); 
+  productForm: FormGroup; 
+  tempImages = signal<string[]>([]); 
+  formValues = signal<any>({}); 
+  categoryCodes = computed(() => this.store.settings().categoryCodes); 
+  currentCategoryCode = signal(''); 
+  generatedSkuPreview = signal(''); 
+  settingsForm: FormGroup;
   
   constructor() {
     this.productForm = this.fb.group({ name: ['', Validators.required], category: [''], code: [''], priceGeneral: [0], priceVip: [0], localPrice: [0], exchangeRate: [0.22], weight: [0], shippingCostPerKg: [200], costMaterial: [0], stock: [0], optionsStr: [''], note: [''], isPreorder: [false], isListed: [true], bulkCount: [0], bulkTotal: [0] });
@@ -944,7 +938,10 @@ export class AdminPanelComponent {
     this.userForm = this.fb.group({ name: ['', Validators.required], phone: [''], birthday: [''], tier: ['general'], credits: [0], totalSpend: [0], note: [''] });
   }
 
-  estimatedCost = computed(() => { const v = this.formValues(); if (!v) return 0; return (v.localPrice * v.exchangeRate) + (v.weight * v.shippingCostPerKg) + v.costMaterial; }); estimatedProfit = computed(() => (this.formValues()?.priceGeneral || 0) - this.estimatedCost()); estimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.estimatedProfit() / this.formValues().priceGeneral) * 100 : 0);
+  estimatedCost = computed(() => { const v = this.formValues(); if (!v) return 0; return (v.localPrice * v.exchangeRate) + (v.weight * v.shippingCostPerKg) + v.costMaterial; }); 
+  estimatedProfit = computed(() => (this.formValues()?.priceGeneral || 0) - this.estimatedCost()); 
+  estimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.estimatedProfit() / this.formValues().priceGeneral) * 100 : 0);
+  
   navClass(tab: string) { return `w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all mb-1 ${this.activeTab() === tab ? 'bg-brand-900 text-white font-bold shadow-md' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`; } 
   getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '訂單管理 Orders', products: '商品管理 Products', customers: '客戶管理 Customers', accounting: '銷售報表 Accounting', inventory: '庫存盤點 Inventory', settings: '商店設定 Settings' }; return map[this.activeTab()] || ''; } 
   goToOrders(filter: string) { this.activeTab.set('orders'); this.orderStatusTab.set(filter); } 
@@ -1020,11 +1017,50 @@ export class AdminPanelComponent {
   editUser(u: User) { this.openUserModal(u); } 
   openUserModal(u: User) { this.editingUser.set(u); this.userForm.patchValue(u); this.showUserModal.set(true); } 
   closeUserModal() { this.showUserModal.set(false); this.editingUser.set(null); } 
-  saveUser() { if (this.userForm.valid && this.editingUser()) { const formVals = this.userForm.value; const updatedUser = { ...this.editingUser()!, ...formVals, phone: formVals.phone ? formVals.phone.trim() : '', name: formVals.name ? formVals.name.trim() : '', totalSpend: Number(formVals.totalSpend) || 0, credits: Number(formVals.credits) || 0 }; this.store.updateUser(updatedUser); this.closeUserModal(); alert('會員資料已更新'); } else { alert('請檢查必填欄位'); } }
+  
+  saveUser() { 
+    if (this.userForm.valid && this.editingUser()) { 
+      const formVals = this.userForm.value; 
+      const updatedUser = { 
+        ...this.editingUser()!, 
+        ...formVals, 
+        phone: formVals.phone ? formVals.phone.trim() : '', 
+        name: formVals.name ? formVals.name.trim() : '', 
+        totalSpend: Number(formVals.totalSpend) || 0, 
+        credits: Number(formVals.credits) || 0 
+      }; 
+      this.store.updateUser(updatedUser); 
+      this.closeUserModal(); 
+      alert('會員資料已更新'); 
+    } else { 
+      alert('請檢查必填欄位'); 
+    } 
+  }
 
   renameCategory(oldName: string, newName: string) { this.store.renameCategory(oldName, newName); }
   deleteCategory(cat: string) { if(confirm(`確定要徹底刪除分類「${cat}」嗎？\n注意：這不會刪除該分類下的商品，但建議您將現有商品轉移至其他分類。`)) { this.store.removeCategory(cat); } }
   addNewCategory(name: string) { if(name.trim()) this.store.addCategory(name); }
   updateCategoryCode(cat: string, code: string) { const newCodes = { ...this.categoryCodes() }; newCodes[cat] = code.toUpperCase(); const s = { ...this.store.settings() }; s.categoryCodes = newCodes; this.store.updateSettings(s); }
-  saveSettings() { const val = this.settingsForm.value; const currentSettings = this.store.settings(); const settings: StoreSettings = { birthdayGiftGeneral: val.birthdayGiftGeneral, birthdayGiftVip: val.birthdayGiftVip, categoryCodes: currentSettings.categoryCodes, paymentMethods: { cash: val.enableCash, bankTransfer: val.enableBank, cod: val.enableCod }, shipping: { freeThreshold: val.shipping.freeThreshold, methods: { meetup: val.shipping.methods.meetup, myship: val.shipping.methods.myship, family: val.shipping.methods.family, delivery: val.shipping.methods.delivery } } }; this.store.updateSettings(settings); alert('設定已儲存'); }
+  
+  saveSettings() { 
+    const val = this.settingsForm.value; 
+    const currentSettings = this.store.settings(); 
+    const settings: StoreSettings = { 
+      birthdayGiftGeneral: val.birthdayGiftGeneral, 
+      birthdayGiftVip: val.birthdayGiftVip, 
+      categoryCodes: currentSettings.categoryCodes, 
+      paymentMethods: { cash: val.enableCash, bankTransfer: val.enableBank, cod: val.enableCod }, 
+      shipping: { 
+        freeThreshold: val.shipping.freeThreshold, 
+        methods: { 
+          meetup: val.shipping.methods.meetup, 
+          myship: val.shipping.methods.myship, 
+          family: val.shipping.methods.family, 
+          delivery: val.shipping.methods.delivery 
+        } 
+      } 
+    }; 
+    this.store.updateSettings(settings); 
+    alert('設定已儲存'); 
+  }
 }
