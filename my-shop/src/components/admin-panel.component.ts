@@ -179,45 +179,106 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (activeTab() === 'products') { 
           <div class="space-y-6 w-full"> 
-            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col md:flex-row justify-between items-center gap-4 w-full"> 
-              <div><h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">上架連線商品</h3><p class="text-sm text-gray-400 mt-1">管理商品、庫存與定價</p></div> 
-              <div class="flex gap-3 w-full md:w-auto"><button (click)="exportProductsCSV()" class="px-4 py-3 bg-white border border-gray-200 text-gray-600 rounded-full font-bold hover:bg-gray-50 shadow-sm flex items-center gap-2 whitespace-nowrap"><span>📥</span> 匯出商品表</button><label class="flex-1 md:flex-none justify-center flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-brand-900 rounded-full font-bold shadow-sm hover:bg-brand-50 cursor-pointer transition-colors hover:shadow-md whitespace-nowrap"> <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> </label> <button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button> </div> 
-            </div> 
-            <div class="grid grid-cols-1 gap-4 w-full"> 
-              @for (p of store.products(); track p.id) { 
-                <div class="bg-white rounded-[1.5rem] p-4 flex items-center gap-5 hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full"> 
-                   <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative"> 
-                      <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover"> 
-                      <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-0.5"> {{ p.code }} </div> 
-                   </div> 
-                   <div class="flex-1 min-w-0"> 
-                      <div class="flex justify-between items-start"> 
-                         <div> 
-                            <div class="flex items-center gap-2 mb-1 flex-wrap"> 
-                               <span class="text-xs text-brand-400 font-bold tracking-wider uppercase whitespace-nowrap">{{ p.category }}</span> 
-                               @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">預購</span> }
-                               @if(!p.isListed) { <span class="bg-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">未上架</span> }
-                               @if(p.priceType === 'event') { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">活動價</span> } 
-                               @if(p.priceType === 'clearance') { <span class="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">清倉價</span> } 
-                            </div> 
-                            <h4 class="text-lg font-bold text-brand-900 truncate">{{ p.name }}</h4> 
-                         </div> 
-                         <div class="text-right shrink-0 ml-2"> 
-                            <div class="font-bold text-lg text-brand-900 whitespace-nowrap">NT$ {{ p.priceGeneral }}</div> 
-                            <div class="text-[10px] text-gray-400 whitespace-nowrap">庫存 {{ p.stock >= 9999 ? '無限' : p.stock }}</div> 
-                         </div> 
-                      </div> 
-                      <div class="flex justify-between items-end mt-2"> 
-                         <div class="text-xs text-gray-400 truncate"> {{ p.options.join(', ') }} </div> 
-                         <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"> 
-                            <button (click)="editProduct(p)" class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200 whitespace-nowrap">Edit</button> 
-                            <button (click)="store.deleteProduct(p.id)" class="px-3 py-1 rounded-full bg-red-50 text-xs font-bold text-red-400 hover:bg-red-100 whitespace-nowrap">Del</button> 
-                         </div> 
-                      </div> 
-                   </div> 
+            
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
+              <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                <div><h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">商品管理</h3><p class="text-sm text-gray-400 mt-1">管理商品、庫存與定價</p></div> 
+                <div class="flex flex-wrap gap-3 w-full md:w-auto">
+                  <button (click)="exportProductsCSV()" class="px-4 py-3 bg-white border border-gray-200 text-gray-600 rounded-full font-bold hover:bg-gray-50 shadow-sm flex items-center gap-2 whitespace-nowrap"><span>📥</span> 匯出</button>
+                  <label class="flex-1 md:flex-none justify-center flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-brand-900 rounded-full font-bold shadow-sm hover:bg-brand-50 cursor-pointer transition-colors hover:shadow-md whitespace-nowrap"> 
+                    <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> 
+                    <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
+                  </label> 
+                  <button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button> 
                 </div> 
-              } 
+              </div>
+
+              <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-100">
+                <div class="relative w-full sm:max-w-md">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                    <input type="text" [(ngModel)]="productSearch" placeholder="搜尋商品名稱、SKU 貨號或分類..." class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200 transition-all">
+                </div>
+                <div class="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner w-full sm:w-auto justify-center">
+                    <button (click)="productViewMode.set('list')" [class.bg-white]="productViewMode() === 'list'" [class.shadow-sm]="productViewMode() === 'list'" [class.text-brand-900]="productViewMode() === 'list'" [class.text-gray-400]="productViewMode() !== 'list'" class="flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2">
+                      <span class="text-lg">≣</span> 條列
+                    </button>
+                    <button (click)="productViewMode.set('grid')" [class.bg-white]="productViewMode() === 'grid'" [class.shadow-sm]="productViewMode() === 'grid'" [class.text-brand-900]="productViewMode() === 'grid'" [class.text-gray-400]="productViewMode() !== 'grid'" class="flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2">
+                      <span class="text-lg">⊞</span> 宮格
+                    </button>
+                </div>
+              </div>
             </div> 
+
+            @if(productViewMode() === 'list') {
+              <div class="grid grid-cols-1 gap-4 w-full"> 
+                @for (p of filteredAdminProducts(); track p.id) { 
+                  <div class="bg-white rounded-[1.5rem] p-4 flex items-center gap-5 hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full"> 
+                     <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative"> 
+                        <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover"> 
+                        <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-0.5"> {{ p.code }} </div> 
+                     </div> 
+                     <div class="flex-1 min-w-0"> 
+                        <div class="flex justify-between items-start gap-4"> 
+                           <div class="flex-1 min-w-0"> 
+                              <div class="flex items-center gap-2 mb-1 flex-wrap"> 
+                                 <span class="text-xs text-brand-400 font-bold tracking-wider uppercase whitespace-nowrap">{{ p.category }}</span> 
+                                 @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">預購</span> }
+                                 @if(!p.isListed) { <span class="bg-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">未上架</span> }
+                                 @if(p.priceType === 'event') { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">活動價</span> } 
+                                 @if(p.priceType === 'clearance') { <span class="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">清倉價</span> } 
+                              </div> 
+                              <h4 class="text-lg font-bold text-brand-900 truncate" [title]="p.name">{{ p.name }}</h4> 
+                           </div> 
+                           <div class="text-right shrink-0"> 
+                              <div class="font-bold text-lg text-brand-900 whitespace-nowrap">NT$ {{ p.priceGeneral }}</div> 
+                              <div class="text-[10px] text-gray-400 whitespace-nowrap">庫存 {{ p.stock >= 9999 ? '無限' : p.stock }}</div> 
+                           </div> 
+                        </div> 
+                        <div class="flex justify-between items-end mt-2"> 
+                           <div class="text-xs text-gray-400 truncate"> {{ p.options.join(', ') }} </div> 
+                           <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 pl-2"> 
+                              <button (click)="editProduct(p)" class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200 whitespace-nowrap">Edit</button> 
+                              <button (click)="store.deleteProduct(p.id)" class="px-3 py-1 rounded-full bg-red-50 text-xs font-bold text-red-400 hover:bg-red-100 whitespace-nowrap">Del</button> 
+                           </div> 
+                        </div> 
+                     </div> 
+                  </div> 
+                } @empty {
+                  <div class="text-center py-10 text-gray-400 font-bold">找不到符合條件的商品</div>
+                }
+              </div> 
+            } @else {
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
+                @for (p of filteredAdminProducts(); track p.id) {
+                  <div class="bg-white rounded-[1.5rem] p-3 flex flex-col hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full">
+                     <div class="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 relative mb-3">
+                        <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-1"> {{ p.code }} </div>
+                        <div class="absolute top-2 left-2 flex flex-col gap-1">
+                           @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm w-fit">預購</span> }
+                           @if(!p.isListed) { <span class="bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm w-fit">未上架</span> }
+                        </div>
+                     </div>
+                     <div class="flex flex-col flex-1 min-w-0">
+                        <span class="text-[10px] text-brand-400 font-bold uppercase mb-1 truncate">{{ p.category }}</span>
+                        <h4 class="text-sm font-bold text-brand-900 line-clamp-2 leading-tight mb-2 flex-1" [title]="p.name">{{ p.name }}</h4>
+                        <div class="flex justify-between items-end mt-auto pt-2 border-t border-gray-50">
+                           <div>
+                              <div class="font-black text-brand-900">NT$ {{ p.priceGeneral }}</div>
+                              <div class="text-[10px] text-gray-400">庫存 {{ p.stock >= 9999 ? '無限' : p.stock }}</div>
+                           </div>
+                           <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button (click)="editProduct(p)" class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors" title="編輯">✎</button>
+                              <button (click)="store.deleteProduct(p.id)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors" title="刪除">✕</button>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+                } @empty {
+                  <div class="col-span-full text-center py-10 text-gray-400 font-bold">找不到符合條件的商品</div>
+                }
+              </div>
+            }
           </div> 
         }
         
@@ -502,7 +563,25 @@ export class AdminPanelComponent {
 
   activeTab = signal('dashboard');
   
-  // 🔥 新增：修復批量上傳 SKU 邏輯
+  // 🔥 新增：商品搜尋與視窗模式切換的狀態
+  productSearch = signal('');
+  productViewMode = signal<'list' | 'grid'>('list');
+
+  // 🔥 新增：過濾後的後台商品列表
+  filteredAdminProducts = computed(() => {
+     const q = this.productSearch().toLowerCase();
+     let list = [...this.store.products()];
+     if (q) {
+        list = list.filter(p => 
+           p.name.toLowerCase().includes(q) || 
+           p.code.toLowerCase().includes(q) || 
+           p.category.toLowerCase().includes(q)
+        );
+     }
+     // 預設將最新上傳的放最上面
+     return list.sort((a, b) => b.id.localeCompare(a.id));
+  });
+
   async handleBatchImport(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -523,7 +602,6 @@ export class AdminPanelComponent {
       for (let i = 1; i < rows.length; i++) {
          const row = rows[i];
          if (row.length < 3 || !row[1] || !row[2]) continue;
-         
          if (row[1] === '商品名稱' || row[1] === '秋季毛衣') continue;
 
          try {
@@ -531,7 +609,6 @@ export class AdminPanelComponent {
             const category = row[2];
             const priceGeneral = Number(row[3]) || 0;
             const priceVip = Number(row[4]) || 0;
-            
             const localPrice = Number(row[5]) || 0;
             const exchangeRate = Number(row[6]) || 0.22;
             const weight = Number(row[7]) || 0;
@@ -554,19 +631,16 @@ export class AdminPanelComponent {
             
             const stock = isPreorder ? 99999 : stockInput;
             
-            // 🔥 修正：批量上架的 SKU 自動產生邏輯
             let code = row[15];
             if (!code) {
                const codeMap = this.store.settings().categoryCodes || {};
-               const prefix = codeMap[category] || 'Z'; // 找不到對應代碼預設用 Z
+               const prefix = codeMap[category] || 'Z'; 
                const now = new Date();
                const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-               // 為了避免同一批上傳產生重複序號，後面加上該行的行號 (i) 確保唯一性
                code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
             }
 
             const note = row[16] || '';
-
             const options = optionsStr ? optionsStr.split(',').map(s => s.trim()).filter(s => s) : [];
 
             const p: Product = {
@@ -612,7 +686,6 @@ export class AdminPanelComponent {
     reader.readAsText(file, 'UTF-8');
   }
 
-  // 下方保留原有的其餘函數，不做刪減...
   dashboardMetrics = computed(() => {
      const orders = this.store.orders(); 
      const today = new Date().toDateString();
