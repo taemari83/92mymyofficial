@@ -72,8 +72,8 @@ import { StoreService, Product } from '../services/store.service';
             (click)="openProductModal(product)"
             class="bg-white rounded-[2rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer"
           >
-            <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
-              <img [src]="product.image" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+            <div class="relative aspect-[4/5] overflow-hidden bg-white">
+              <img [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700">
               
               <div class="absolute top-4 left-4 flex gap-1 flex-wrap">
                  <div class="bg-white/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-brand-900 uppercase tracking-widest shadow-sm">
@@ -142,17 +142,17 @@ import { StoreService, Product } from '../services/store.service';
             class="bg-[#FDFBF9] w-full max-w-5xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in h-full md:h-auto max-h-[100vh] md:max-h-[90vh] flex flex-col md:flex-row" 
             (click)="$event.stopPropagation()"
           >
-            <div class="md:w-1/2 bg-gray-100 relative group flex flex-col h-[40vh] md:h-auto shrink-0">
-               <div class="flex-1 relative overflow-hidden">
-                  <img [src]="activeImage()" class="w-full h-full object-cover">
+            <div class="md:w-1/2 bg-white relative group flex flex-col h-[40vh] md:h-auto shrink-0 border-r border-gray-100">
+               <div class="flex-1 relative overflow-hidden bg-white p-4">
+                  <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain p-4">
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-black/20 backdrop-blur rounded-full text-white flex items-center justify-center font-bold hover:bg-black/40 transition-colors z-20">✕</button>
                </div>
                
                @if(productImages().length > 1) {
-                  <div class="p-4 bg-white/10 backdrop-blur-md absolute bottom-0 left-0 right-0 flex gap-2 overflow-x-auto scrollbar-hide z-10">
+                  <div class="p-4 bg-gray-50/80 backdrop-blur-md absolute bottom-0 left-0 right-0 flex gap-2 overflow-x-auto scrollbar-hide z-10">
                      @for(img of productImages(); track img) {
-                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm" [class.border-brand-900]="activeImage() === img" [class.border-white]="activeImage() !== img">
-                           <img [src]="img" class="w-full h-full object-cover">
+                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white p-1" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
+                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-contain">
                         </button>
                      }
                   </div>
@@ -320,7 +320,6 @@ export class ShopFrontComponent {
      return p.images && p.images.length > 0 ? p.images : [p.image];
   });
 
-  // 🔥 紅色筆修正：改為使用 visibleProducts() 確保只顯示有打勾上架的商品
   filteredProducts = computed(() => {
     let list = [...this.store.visibleProducts()];
     const query = this.searchQuery().toLowerCase();
@@ -366,7 +365,10 @@ export class ShopFrontComponent {
     this.router.navigate([], { queryParams: { p: null } });
   }
 
-  // 🔥 綠色筆修正：刪除多餘的提示文字
+  handleImageError(event: any) {
+    event.target.src = 'https://placehold.co/400x500?text=No+Image';
+  }
+
   copyLink() {
      const url = window.location.href;
      navigator.clipboard.writeText(url).then(() => {
