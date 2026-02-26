@@ -47,21 +47,35 @@ import { StoreService, Product } from '../services/store.service';
               [class.text-white]="selectedCategory() === 'all'"
               [class.bg-white]="selectedCategory() !== 'all'"
               [class.text-gray-500]="selectedCategory() !== 'all'"
-              class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm"
+              class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0"
             >
               All
             </button>
+            
+            <button 
+              (click)="selectedCategory.set('新品')"
+              [class.bg-red-500]="selectedCategory() === '新品'"
+              [class.text-white]="selectedCategory() === '新品'"
+              [class.bg-white]="selectedCategory() !== '新品'"
+              [class.text-red-500]="selectedCategory() !== '新品'"
+              class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0 flex items-center gap-1"
+            >
+              <span>✨</span> 本月新品
+            </button>
+
             @for (cat of store.categories(); track cat) {
-              <button 
-                (click)="selectedCategory.set(cat)"
-                [class.bg-brand-900]="selectedCategory() === cat"
-                [class.text-white]="selectedCategory() === cat"
-                [class.bg-white]="selectedCategory() !== cat"
-                [class.text-gray-500]="selectedCategory() !== cat"
-                class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm"
-              >
-                {{ cat }}
-              </button>
+              @if(cat !== '新品') {
+                <button 
+                  (click)="selectedCategory.set(cat)"
+                  [class.bg-brand-900]="selectedCategory() === cat"
+                  [class.text-white]="selectedCategory() === cat"
+                  [class.bg-white]="selectedCategory() !== cat"
+                  [class.text-gray-500]="selectedCategory() !== cat"
+                  class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0"
+                >
+                  {{ cat }}
+                </button>
+              }
             }
          </div>
       </div>
@@ -76,8 +90,13 @@ import { StoreService, Product } from '../services/store.service';
               <img [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700">
               
               <div class="absolute top-4 left-4 flex gap-1 flex-wrap">
-                 <div class="bg-white/80 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-brand-900 uppercase tracking-widest shadow-sm">
-                   {{ product.category || 'NEW' }}
+                 @if(isNewProduct(product)) {
+                   <div class="bg-red-500/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-white tracking-widest shadow-sm animate-pulse">
+                     NEW
+                   </div>
+                 }
+                 <div class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-brand-900 uppercase tracking-widest shadow-sm">
+                   {{ product.category }}
                  </div>
                  @if(product.isPreorder) {
                    <div class="bg-blue-100/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-blue-600 tracking-widest shadow-sm">
@@ -116,9 +135,12 @@ import { StoreService, Product } from '../services/store.service';
             </div>
           </div>
         } @empty {
-          <div class="col-span-full py-20 text-center">
+          <div class="col-span-full py-20 text-center flex flex-col items-center justify-center">
             <div class="text-6xl mb-4">🍂</div>
             <p class="text-xl text-gray-400 font-medium">Coming Soon...</p>
+            @if(selectedCategory() === '新品') {
+               <p class="text-sm text-gray-400 mt-2">本月尚未上架新商品喔！</p>
+            }
           </div>
         }
       </div>
@@ -143,16 +165,17 @@ import { StoreService, Product } from '../services/store.service';
             (click)="$event.stopPropagation()"
           >
             <div class="md:w-1/2 bg-white relative group flex flex-col h-[40vh] md:h-auto shrink-0 border-r border-gray-100">
-               <div class="flex-1 relative overflow-hidden bg-white p-4">
-                  <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain p-4">
-                  <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-black/20 backdrop-blur rounded-full text-white flex items-center justify-center font-bold hover:bg-black/40 transition-colors z-20">✕</button>
+               
+               <div class="flex-1 relative overflow-hidden bg-white p-2 md:p-4">
+                  <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain">
+                  <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-gray-100/80 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm">✕</button>
                </div>
                
                @if(productImages().length > 1) {
-                  <div class="p-4 bg-gray-50/80 backdrop-blur-md absolute bottom-0 left-0 right-0 flex gap-2 overflow-x-auto scrollbar-hide z-10">
+                  <div class="p-3 md:p-4 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
                      @for(img of productImages(); track img) {
-                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white p-1" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
-                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-contain">
+                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
+                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover">
                         </button>
                      }
                   </div>
@@ -167,6 +190,11 @@ import { StoreService, Product } from '../services/store.service';
                     <div class="flex justify-between items-start mb-2 pr-10">
                       
                       <div class="flex flex-wrap gap-2">
+                         @if(isNewProduct(selectedProduct()!)) {
+                           <div class="text-sm text-red-500 font-bold uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1">
+                             ✨ NEW
+                           </div>
+                         }
                          <div class="text-sm text-brand-400 font-bold uppercase tracking-widest bg-brand-50 px-2 py-1 rounded-lg">
                            {{ selectedProduct()!.category }}
                          </div>
@@ -182,6 +210,7 @@ import { StoreService, Product } from '../services/store.service';
                       </button>
                     </div>
                     <h2 class="text-2xl md:text-3xl font-black text-gray-800 leading-tight mb-2">{{ selectedProduct()!.name }}</h2>
+                    <div class="text-sm text-gray-400 font-mono mb-2">SKU: {{ selectedProduct()!.code }}</div>
                     
                     <div class="flex items-end gap-3 mt-3 border-b border-gray-100 pb-4">
                        <div class="text-3xl font-black text-brand-900 tracking-tight">NT$ {{ getPrice(selectedProduct()!) | number }}</div>
@@ -320,17 +349,39 @@ export class ShopFrontComponent {
      return p.images && p.images.length > 0 ? p.images : [p.image];
   });
 
+  // 🔥 核心邏輯：判斷是否為當月新品 (透過拆解 SKU 的年與月)
+  isNewProduct(p: Product): boolean {
+    if (!p.code || p.code.length < 5) return false;
+    
+    // 假設 SKU 為 C260226001 (1碼英文 + 2碼年 + 2碼月 + 2碼日 + 3碼流水號)
+    const productYear = p.code.substring(1, 3);
+    const productMonth = p.code.substring(3, 5);
+
+    const now = new Date();
+    const currentYear = String(now.getFullYear()).slice(-2);
+    const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+
+    return productYear === currentYear && productMonth === currentMonth;
+  }
+
   filteredProducts = computed(() => {
     let list = [...this.store.visibleProducts()];
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
     const sort = this.sortOption();
 
-    // 1. Filter
+    // 1. Filter by Search Query
     if (query) list = list.filter(p => p.name.toLowerCase().includes(query));
-    if (cat !== 'all') list = list.filter(p => p.category === cat);
     
-    // 2. Sort
+    // 2. 🔥 智慧過濾：如果點擊的是「新品」，透過時間戳判斷
+    if (cat === '新品') {
+       list = list.filter(p => this.isNewProduct(p));
+    } else if (cat !== 'all') {
+       // 一般分類過濾
+       list = list.filter(p => p.category === cat);
+    }
+    
+    // 3. Sort
     switch (sort) {
       case 'newest': list = list.reverse(); break;
       case 'oldest': break;
