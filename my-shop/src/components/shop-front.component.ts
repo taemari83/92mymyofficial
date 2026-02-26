@@ -95,6 +95,11 @@ import { StoreService, Product } from '../services/store.service';
               >
               
               <div class="absolute top-4 left-4 flex gap-1 flex-wrap">
+                 @if(product.bulkDiscount?.count) {
+                   <div class="bg-red-500/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-white tracking-widest shadow-sm animate-pulse">
+                     任選 {{ product.bulkDiscount!.count }} 件 $ {{ product.bulkDiscount!.total }}
+                   </div>
+                 }
                  @if(isNewProduct(product)) {
                    <div class="bg-red-500/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-white tracking-widest shadow-sm animate-pulse">
                      NEW
@@ -171,20 +176,20 @@ import { StoreService, Product } from '../services/store.service';
           >
             <div class="md:w-1/2 bg-white relative group flex flex-col h-[40vh] md:h-auto shrink-0 border-r border-gray-100">
                
-               <div class="flex-1 relative overflow-hidden bg-white">
+               <div class="flex-1 relative overflow-hidden bg-white p-2 md:p-4">
                   <img 
                     [src]="activeImage()" 
                     (error)="handleImageError($event)" 
-                    class="absolute inset-0 w-full h-full object-contain p-2"
+                    class="absolute inset-0 w-full h-full object-contain"
                   >
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-gray-100/80 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm">✕</button>
                </div>
                
                @if(productImages().length > 1) {
-                  <div class="p-3 md:p-4 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0 pb-3">
+                  <div class="p-3 md:p-4 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0">
                      @for(img of productImages(); track $index) {
-                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white p-0.5" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
-                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-contain">
+                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
+                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover">
                         </button>
                      }
                   </div>
@@ -199,6 +204,11 @@ import { StoreService, Product } from '../services/store.service';
                     <div class="flex justify-between items-start mb-2 pr-10">
                       
                       <div class="flex flex-wrap gap-2">
+                         @if(selectedProduct()!.bulkDiscount?.count) {
+                           <div class="text-sm text-red-500 font-bold tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1 animate-pulse">
+                             🔥 任選 {{ selectedProduct()!.bulkDiscount!.count }} 件 $ {{ selectedProduct()!.bulkDiscount!.total }}
+                           </div>
+                         }
                          @if(isNewProduct(selectedProduct()!)) {
                            <div class="text-sm text-red-500 font-bold uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1">
                              ✨ NEW
@@ -214,7 +224,7 @@ import { StoreService, Product } from '../services/store.service';
                          }
                       </div>
                       
-                      <button (click)="copyLink()" class="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-900 transition-colors border border-gray-200 rounded-full px-3 py-1 bg-white">
+                      <button (click)="copyLink()" class="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-900 transition-colors border border-gray-200 rounded-full px-3 py-1 bg-white shrink-0">
                         <span>🔗</span> 複製連結
                       </button>
                     </div>
@@ -305,12 +315,10 @@ import { StoreService, Product } from '../services/store.service';
     </div>
   `,
   styles: [`
-    /* 🔥 新增：客製化細緻捲軸，讓滑鼠可以順利拖曳，又不會太突兀 */
     .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: transparent; border-radius: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
-
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     .animate-fade-in { animation: fadeIn 0.2s ease-out; }
@@ -330,7 +338,6 @@ export class ShopFrontComponent {
   selectedCategory = signal<string>('all');
   sortOption = signal<'hot'|'price_asc'|'price_desc'|'newest'|'oldest'>('newest');
 
-  // Modal State
   selectedProduct = signal<Product | null>(null);
   selectedOption = signal<string>('');
   qty = signal(1);

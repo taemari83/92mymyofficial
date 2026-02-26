@@ -11,7 +11,8 @@ export interface Product {
   id: string; code: string; name: string; image: string; images?: string[]; category: string;
   options: string[]; country: string; localPrice: number; exchangeRate: number; costMaterial: number; 
   weight: number; shippingCostPerKg: number; priceGeneral: number; priceVip: number; priceWholesale: number; 
-  priceType: 'normal' | 'event' | 'clearance'; bulkDiscount?: { count: number, total: number }; 
+  priceType: 'normal' | 'event' | 'clearance'; 
+  bulkDiscount?: { count: number, total: number }; // 🔥 支援多件優惠
   allowPayment?: { cash: boolean; bankTransfer: boolean; cod: boolean; };
   allowShipping?: { meetup: boolean; myship: boolean; family: boolean; delivery: boolean; };
   stock: number; note: string; soldCount: number; buyUrl?: string; isPreorder: boolean; isListed: boolean;   
@@ -79,7 +80,48 @@ export class StoreService {
   })), { initialValue: [] as Order[] });
 
   cart = signal<CartItem[]>([]);
-  cartTotal = computed(() => this.cart().reduce((sum, item) => sum + (item.price * item.quantity), 0));
+  
+  // 🔥 核心：自動計算多入組優惠的小計金額
+  calculateSubtotal(items: CartItem[]): number {
+    const allProducts = this.products();
+    let total = 0;
+    
+    // 將購物車商品依照 productId 進行分組 (同款不同色合併計算件數)
+    const grouped = items.reduce((acc, item) => {
+      if (!acc[item.productId]) acc[item.productId] = { quantity: 0, items: [] };
+      acc[item.productId].quantity += item.quantity;
+      acc[item.productId].items.push(item);
+      return acc;
+    }, {} as any);
+
+    Object.keys(grouped).forEach(productId => {
+      const group = grouped[productId];
+      const p = allProducts.find(x => x.id === productId);
+      
+      // 如果有設定多入優惠，且購買數量達標
+      if (p?.bulkDiscount && p.bulkDiscount.count > 1 && p.bulkDiscount.total > 0) {
+         const sets = Math.floor(group.quantity / p.bulkDiscount.count); // 有幾組優惠
+         const remainder = group.quantity % p.bulkDiscount.count; // 剩下的單件
+         
+         total += sets * p.bulkDiscount.total; // 優惠組數金額
+         
+         let remainQty = remainder;
+         for (const item of group.items) {
+           if (remainQty <= 0) break;
+           const take = Math.min(item.quantity, remainQty);
+           total += take * item.price; // 單件原價金額
+           remainQty -= take;
+         }
+      } else {
+         // 一般商品直接相乘
+         group.items.forEach((item: any) => { total += item.quantity * item.price; });
+      }
+    });
+    return total;
+  }
+
+  // 購物車總計自動套用折扣
+  cartTotal = computed(() => this.calculateSubtotal(this.cart()));
   cartCount = computed(() => this.cart().reduce((count, item) => count + item.quantity, 0));
 
   constructor() {
@@ -147,10 +189,23 @@ export class StoreService {
   async createOrder(paymentInfo: any, shippingInfo: any, usedCredits: number, paymentMethod: 'cash'|'bank_transfer'|'cod', shippingMethod: 'meetup'|'myship'|'family'|'delivery', shippingFee: number, checkoutItems: CartItem[]) {
     const user = this.currentUser(); if (!user) { alert('請先登入會員'); return null; }
     try {
-      const subtotal = checkoutItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-      const finalTotal = subtotal + shippingFee - usedCredits;
+      // 🔥 計算原價與優惠價的差額，記錄在報表中的 Discount
+      const originalSubtotal = checkoutItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+      const discountedSubtotal = this.calculateSubtotal(checkoutItems);
+      const bulkDiscountValue = originalSubtotal - discountedSubtotal;
+      
+      const finalTotal = discountedSubtotal + shippingFee - usedCredits;
       const orderId = this.generateOrderId();
-      const newOrder: Order = { id: orderId, userId: user.id, userEmail: user.email, userName: shippingInfo.name || user.name, items: checkoutItems, subtotal, discount: 0, shippingFee, usedCredits, finalTotal, depositPaid: Math.max(0, finalTotal - (shippingMethod === 'myship' ? 20 : 0)), balanceDue: shippingMethod === 'myship' ? 20 : 0, paymentMethod, paymentName: paymentInfo?.name || '', paymentLast5: paymentInfo?.last5 || '', shippingMethod, shippingName: shippingInfo.name, shippingPhone: shippingInfo.phone, shippingStore: shippingInfo.storeName || '', shippingAddress: shippingInfo.address || '', status: 'pending_payment', createdAt: Date.now(), note: shippingInfo.note || paymentInfo.note || '' };
+      
+      const newOrder: Order = { 
+         id: orderId, userId: user.id, userEmail: user.email, userName: shippingInfo.name || user.name, items: checkoutItems, 
+         subtotal: originalSubtotal, discount: bulkDiscountValue, shippingFee, usedCredits, finalTotal, 
+         depositPaid: Math.max(0, finalTotal - (shippingMethod === 'myship' ? 20 : 0)), balanceDue: shippingMethod === 'myship' ? 20 : 0, 
+         paymentMethod, paymentName: paymentInfo?.name || '', paymentLast5: paymentInfo?.last5 || '', shippingMethod, 
+         shippingName: shippingInfo.name, shippingPhone: shippingInfo.phone, shippingStore: shippingInfo.storeName || '', shippingAddress: shippingInfo.address || '', 
+         status: 'pending_payment', createdAt: Date.now(), note: shippingInfo.note || paymentInfo.note || '' 
+      };
+      
       await setDoc(doc(this.firestore, 'orders', orderId), newOrder);
       await this.updateUser({ ...user, totalSpend: user.totalSpend + finalTotal, credits: user.credits - usedCredits });
       this.cart.update(current => current.filter(c => !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)));
@@ -194,26 +249,18 @@ export class StoreService {
   async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), { ...u }); if (this.currentUser()?.id === u.id) this.currentUser.set(u); }
   logout() { signOut(this.auth); this.currentUser.set(null); if (typeof localStorage !== 'undefined') localStorage.removeItem('92mymy_uid'); }
 
-  // 🔥 修正：徹底刪除訂單時，一併扣除會員的累積消費與退還購物金
   async deleteOrder(order: Order) {
     try {
       const userRef = doc(this.firestore, 'users', order.userId);
       const userSnap = await getDoc(userRef);
-      
       if (userSnap.exists()) {
          const userData = userSnap.data() as User;
-         // 扣除這筆訂單的金額，最低扣到 0
          const newTotalSpend = Math.max(0, userData.totalSpend - order.finalTotal);
-         // 如果這筆訂單有使用購物金，刪除時退還給會員
          const newCredits = userData.credits + (order.usedCredits || 0);
-         
          await updateDoc(userRef, { totalSpend: newTotalSpend, credits: newCredits });
       }
-      // 最後徹底刪除這筆訂單
       await deleteDoc(doc(this.firestore, 'orders', order.id));
-    } catch (error) {
-      console.error("Delete order failed", error);
-    }
+    } catch (error) { console.error("Delete order failed", error); }
   }
 
   async removeCategory(name: string) {
@@ -239,7 +286,6 @@ export class StoreService {
         delete s.categoryCodes[oldName];
         await this.updateSettings(s);
      }
-
      try {
         const q = query(collection(this.firestore, 'products'), where('category', '==', oldName));
         const snap = await getDocs(q);
