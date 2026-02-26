@@ -86,8 +86,13 @@ import { StoreService, Product } from '../services/store.service';
             (click)="openProductModal(product)"
             class="bg-white rounded-[2rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer"
           >
-            <div class="relative aspect-[4/5] overflow-hidden bg-white">
-              <img [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-700">
+            <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
+              <img 
+                [src]="product.image" 
+                (error)="handleImageError($event)" 
+                [alt]="product.name" 
+                class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              >
               
               <div class="absolute top-4 left-4 flex gap-1 flex-wrap">
                  @if(isNewProduct(product)) {
@@ -114,7 +119,7 @@ import { StoreService, Product } from '../services/store.service';
 
             <div class="p-5 flex-1 flex flex-col">
               <div class="flex-1">
-                 <h3 class="font-bold text-brand-900 text-lg leading-tight mb-2">{{ product.name }}</h3>
+                 <h3 class="font-bold text-brand-900 text-lg leading-tight mb-2 line-clamp-2">{{ product.name }}</h3>
                  <p class="text-sm text-gray-400 line-clamp-2 mb-4">{{ product.note || 'Winter Special Selection' }}</p>
               </div>
 
@@ -166,8 +171,12 @@ import { StoreService, Product } from '../services/store.service';
           >
             <div class="md:w-1/2 bg-white relative group flex flex-col h-[40vh] md:h-auto shrink-0 border-r border-gray-100">
                
-               <div class="flex-1 relative overflow-hidden bg-white p-2 md:p-4">
-                  <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain">
+               <div class="flex-1 relative overflow-hidden bg-white">
+                  <img 
+                    [src]="activeImage()" 
+                    (error)="handleImageError($event)" 
+                    class="absolute inset-0 w-full h-full object-cover"
+                  >
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-gray-100/80 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm">✕</button>
                </div>
                
@@ -349,18 +358,13 @@ export class ShopFrontComponent {
      return p.images && p.images.length > 0 ? p.images : [p.image];
   });
 
-  // 🔥 核心邏輯：判斷是否為當月新品 (透過拆解 SKU 的年與月)
   isNewProduct(p: Product): boolean {
     if (!p.code || p.code.length < 5) return false;
-    
-    // 假設 SKU 為 C260226001 (1碼英文 + 2碼年 + 2碼月 + 2碼日 + 3碼流水號)
     const productYear = p.code.substring(1, 3);
     const productMonth = p.code.substring(3, 5);
-
     const now = new Date();
     const currentYear = String(now.getFullYear()).slice(-2);
     const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-
     return productYear === currentYear && productMonth === currentMonth;
   }
 
@@ -370,18 +374,13 @@ export class ShopFrontComponent {
     const cat = this.selectedCategory();
     const sort = this.sortOption();
 
-    // 1. Filter by Search Query
     if (query) list = list.filter(p => p.name.toLowerCase().includes(query));
-    
-    // 2. 🔥 智慧過濾：如果點擊的是「新品」，透過時間戳判斷
     if (cat === '新品') {
        list = list.filter(p => this.isNewProduct(p));
     } else if (cat !== 'all') {
-       // 一般分類過濾
        list = list.filter(p => p.category === cat);
     }
     
-    // 3. Sort
     switch (sort) {
       case 'newest': list = list.reverse(); break;
       case 'oldest': break;
@@ -417,6 +416,8 @@ export class ShopFrontComponent {
   }
 
   handleImageError(event: any) {
+    // 錯誤圖片也改為 cover
+    event.target.className = 'absolute inset-0 w-full h-full object-cover';
     event.target.src = 'https://placehold.co/400x500?text=No+Image';
   }
 
@@ -430,13 +431,10 @@ export class ShopFrontComponent {
   addToCart() {
     const p = this.selectedProduct();
     if (!p) return;
-    
     const opt = p.options.length > 0 ? this.selectedOption() : '單一規格';
     if (p.options.length > 0 && !opt) return;
-
     this.store.addToCart(p, opt, this.qty());
     this.closeModal();
-    
     const div = document.createElement('div');
     div.className = 'fixed top-6 left-1/2 -translate-x-1/2 bg-brand-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] text-sm font-bold animate-fade-in flex items-center gap-2';
     div.innerHTML = '<span>👜</span> 已加入購物車';
