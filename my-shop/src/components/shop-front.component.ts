@@ -20,171 +20,173 @@ import { StoreService, Product } from '../services/store.service';
                 type="text" 
                 [(ngModel)]="searchQuery"
                 placeholder="搜尋 Winter Collection..." 
-                class="flex-1 px-3 py-2 outline-none bg-transparent placeholder-gray-400 text-brand-900"
+                class="flex-1 px-3 py-2 outline-none bg-transparent placeholder-gray-400 text-brand-900 text-sm"
               >
            </div>
 
-           <div class="relative min-w-[160px]">
-             <select 
-               [ngModel]="sortOption()" 
-               (ngModelChange)="sortOption.set($event)"
-               class="w-full h-full appearance-none bg-white border border-gray-100 text-brand-900 text-sm rounded-full px-6 py-3 outline-none focus:border-brand-300 shadow-sm font-bold cursor-pointer"
-             >
-               <option value="newest">📅 上架：新到舊</option>
-               <option value="oldest">📅 上架：舊到新</option>
-               <option value="hot">🔥 熱銷排行</option>
-               <option value="price_asc">💰 價格：低到高</option>
-               <option value="price_desc">💰 價格：高到低</option>
-             </select>
-             <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-gray-400">▼</div>
+           <div class="flex gap-2 w-full sm:w-auto">
+             <div class="relative flex-1 sm:min-w-[160px]">
+               <select 
+                 [ngModel]="sortOption()" 
+                 (ngModelChange)="sortOption.set($event)"
+                 class="w-full h-full appearance-none bg-white border border-gray-100 text-brand-900 text-sm rounded-full pl-4 pr-8 py-3 outline-none focus:border-brand-300 shadow-sm font-bold cursor-pointer"
+               >
+                 <option value="newest">📅 上架：新到舊</option>
+                 <option value="oldest">📅 上架：舊到新</option>
+                 <option value="hot">🔥 熱銷排行</option>
+                 <option value="price_asc">💰 價格：低到高</option>
+                 <option value="price_desc">💰 價格：高到低</option>
+               </select>
+               <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-gray-400">▼</div>
+             </div>
+
+             <div class="flex items-center p-1 bg-white rounded-full border border-gray-100 shadow-sm shrink-0">
+                <button (click)="viewMode.set('grid')" [class.bg-gray-100]="viewMode() === 'grid'" [class.text-brand-900]="viewMode() === 'grid'" [class.text-gray-400]="viewMode() !== 'grid'" class="w-10 h-10 rounded-full flex items-center justify-center transition-colors" title="宮格檢視">
+                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                </button>
+                <button (click)="viewMode.set('list')" [class.bg-gray-100]="viewMode() === 'list'" [class.text-brand-900]="viewMode() === 'list'" [class.text-gray-400]="viewMode() !== 'list'" class="w-10 h-10 rounded-full flex items-center justify-center transition-colors" title="條列檢視">
+                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+             </div>
            </div>
          </div>
          
          <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar px-2">
             <button 
               (click)="selectedCategory.set('all')"
-              [class.bg-brand-900]="selectedCategory() === 'all'"
-              [class.text-white]="selectedCategory() === 'all'"
-              [class.bg-white]="selectedCategory() !== 'all'"
-              [class.text-gray-500]="selectedCategory() !== 'all'"
+              [class.bg-brand-900]="selectedCategory() === 'all'" [class.text-white]="selectedCategory() === 'all'" [class.bg-white]="selectedCategory() !== 'all'" [class.text-gray-500]="selectedCategory() !== 'all'"
               class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0"
-            >
-              All
-            </button>
-            
+            >All</button>
             <button 
               (click)="selectedCategory.set('新品')"
-              [class.bg-red-500]="selectedCategory() === '新品'"
-              [class.text-white]="selectedCategory() === '新品'"
-              [class.bg-white]="selectedCategory() !== '新品'"
-              [class.text-red-500]="selectedCategory() !== '新品'"
+              [class.bg-red-500]="selectedCategory() === '新品'" [class.text-white]="selectedCategory() === '新品'" [class.bg-white]="selectedCategory() !== '新品'" [class.text-red-500]="selectedCategory() !== '新品'"
               class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0 flex items-center gap-1"
-            >
-              <span>✨</span> 本月新品
-            </button>
+            ><span>✨</span> 本月新品</button>
 
             @for (cat of store.categories(); track cat) {
               @if(cat !== '新品') {
                 <button 
                   (click)="selectedCategory.set(cat)"
-                  [class.bg-brand-900]="selectedCategory() === cat"
-                  [class.text-white]="selectedCategory() === cat"
-                  [class.bg-white]="selectedCategory() !== cat"
-                  [class.text-gray-500]="selectedCategory() !== cat"
+                  [class.bg-brand-900]="selectedCategory() === cat" [class.text-white]="selectedCategory() === cat" [class.bg-white]="selectedCategory() !== cat" [class.text-gray-500]="selectedCategory() !== cat"
                   class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0"
-                >
-                  {{ cat }}
-                </button>
+                >{{ cat }}</button>
               }
             }
          </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-2">
-        @for (product of filteredProducts(); track product.id) {
-          <div 
-            (click)="openProductModal(product)"
-            class="bg-white rounded-[2rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer"
-          >
-            <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
-              <img 
-                [src]="product.image" 
-                (error)="handleImageError($event)" 
-                [alt]="product.name" 
-                class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-              >
-              
-              <div class="absolute top-4 left-4 flex gap-1 flex-wrap">
-                 @if(product.bulkDiscount?.count) {
-                   <div class="bg-red-500/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-white tracking-widest shadow-sm animate-pulse">
-                     任選 {{ product.bulkDiscount!.count }} 件 $ {{ product.bulkDiscount!.total }}
-                   </div>
-                 }
-                 @if(isNewProduct(product)) {
-                   <div class="bg-red-500/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-white tracking-widest shadow-sm animate-pulse">
-                     NEW
-                   </div>
-                 }
-                 <div class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-brand-900 uppercase tracking-widest shadow-sm">
-                   {{ product.category }}
+      @if (viewMode() === 'grid') {
+         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6 px-2">
+           @for (product of filteredProducts(); track product.id) {
+             <div (click)="openProductModal(product)" class="bg-white rounded-[1.5rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer">
+               <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
+                 <img [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                 
+                 <div class="absolute top-2 left-2 right-2 flex gap-1 flex-wrap">
+                    @if(product.bulkDiscount?.count) { <div class="bg-red-500/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm animate-pulse">任選 {{ product.bulkDiscount!.count }} 件 $ {{ product.bulkDiscount!.total }}</div> }
+                    @if(isNewProduct(product)) { <div class="bg-red-500/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm animate-pulse">NEW</div> }
+                    <div class="bg-white/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-brand-900 uppercase shadow-sm">{{ product.category }}</div>
+                    @if(product.isPreorder) { <div class="bg-blue-100/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-blue-600 shadow-sm">預購</div> }
                  </div>
-                 @if(product.isPreorder) {
-                   <div class="bg-blue-100/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-blue-600 tracking-widest shadow-sm">
-                     預購
+
+                 @if (product.stock <= 0) {
+                   <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                      <div class="bg-white px-3 py-1 sm:px-6 sm:py-2 rounded-full font-bold text-brand-900 text-xs sm:text-base">SOLD OUT</div>
                    </div>
                  }
-              </div>
+               </div>
 
-              @if (product.stock <= 0) {
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
-                   <div class="bg-white px-6 py-2 rounded-full font-bold text-brand-900">SOLD OUT</div>
-                </div>
-              }
-            </div>
+               <div class="p-3 sm:p-5 flex-1 flex flex-col">
+                 <div class="flex-1">
+                    <h3 class="font-bold text-brand-900 text-sm sm:text-lg leading-tight mb-1 sm:mb-2 line-clamp-2">{{ product.name }}</h3>
+                    <p class="text-[10px] sm:text-sm text-gray-400 line-clamp-1 sm:line-clamp-2 mb-2 sm:mb-4">{{ product.note || 'Winter Special Selection' }}</p>
+                 </div>
 
-            <div class="p-5 flex-1 flex flex-col">
-              <div class="flex-1">
-                 <h3 class="font-bold text-brand-900 text-lg leading-tight mb-2 line-clamp-2">{{ product.name }}</h3>
-                 <p class="text-sm text-gray-400 line-clamp-2 mb-4">{{ product.note || 'Winter Special Selection' }}</p>
-              </div>
-
-              <div class="flex items-center justify-between mt-2">
-                <div class="flex flex-col">
-                   @if(getTierBadge(product)) {
-                     <span class="text-[10px] font-bold text-white bg-black px-2 py-0.5 rounded-full w-fit mb-1">{{ getTierBadge(product) }}</span>
+                 <div class="flex items-end justify-between mt-auto">
+                   <div>
+                      @if(getTierBadge(product)) { <span class="text-[9px] font-bold text-white bg-black px-1.5 py-0.5 rounded-full w-fit block mb-0.5">{{ getTierBadge(product) }}</span> }
+                      <span class="text-sm sm:text-xl font-bold text-brand-900">NT$ {{ getPrice(product) }}</span>
+                   </div>
+                   @if(product.stock > 0) {
+                     <button class="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors shrink-0">
+                       +
+                     </button>
                    }
-                   <span class="text-xl font-bold text-brand-900">NT$ {{ getPrice(product) }}</span>
-                </div>
-                
-                @if(product.stock > 0) {
-                  <button class="w-10 h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors">
-                    +
-                  </button>
-                }
-              </div>
-            </div>
-          </div>
-        } @empty {
-          <div class="col-span-full py-20 text-center flex flex-col items-center justify-center">
-            <div class="text-6xl mb-4">🍂</div>
-            <p class="text-xl text-gray-400 font-medium">Coming Soon...</p>
-            @if(selectedCategory() === '新品') {
-               <p class="text-sm text-gray-400 mt-2">本月尚未上架新商品喔！</p>
-            }
-          </div>
-        }
-      </div>
+                 </div>
+               </div>
+             </div>
+           } @empty {
+             <div class="col-span-full py-20 text-center flex flex-col items-center justify-center">
+               <div class="text-6xl mb-4">🍂</div>
+               <p class="text-xl text-gray-400 font-medium">Coming Soon...</p>
+             </div>
+           }
+         </div>
+      } @else {
+         <div class="flex flex-col gap-3 px-2">
+           @for (product of filteredProducts(); track product.id) {
+             <div (click)="openProductModal(product)" class="bg-white rounded-[1.2rem] sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-gray-50 flex p-2.5 sm:p-4 gap-3 sm:gap-5 cursor-pointer">
+               <div class="relative w-24 sm:w-32 h-28 sm:h-36 shrink-0 rounded-xl overflow-hidden bg-gray-100">
+                 <img [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                 @if (product.stock <= 0) {
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                       <span class="bg-white px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand-900">售完</span>
+                    </div>
+                 }
+               </div>
+               
+               <div class="flex-1 min-w-0 flex flex-col py-0.5 sm:py-1 justify-between pr-1">
+                 <div>
+                    <div class="flex gap-1.5 flex-wrap mb-1 sm:mb-1.5">
+                       @if(isNewProduct(product)) { <span class="text-[9px] sm:text-[10px] text-red-500 font-bold bg-red-50 px-1.5 py-0.5 rounded">NEW</span> }
+                       @if(product.isPreorder) { <span class="text-[9px] sm:text-[10px] text-blue-500 font-bold bg-blue-50 px-1.5 py-0.5 rounded">預購</span> }
+                       <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold bg-gray-100 px-1.5 py-0.5 rounded uppercase">{{ product.category }}</span>
+                    </div>
+                    <h3 class="font-bold text-brand-900 text-sm sm:text-lg leading-tight mb-1 line-clamp-2">{{ product.name }}</h3>
+                    @if(product.bulkDiscount?.count) {
+                       <div class="text-[10px] sm:text-xs text-red-500 font-bold line-clamp-1">🔥 任選 {{ product.bulkDiscount!.count }} 件 $ {{ product.bulkDiscount!.total }}</div>
+                    }
+                 </div>
+                 
+                 <div class="flex items-end justify-between">
+                    <div>
+                       @if(getTierBadge(product)) { <div class="text-[9px] font-bold text-white bg-black px-1.5 py-0.5 rounded w-fit mb-0.5">{{ getTierBadge(product) }}</div> }
+                       <div class="font-black text-brand-900 text-base sm:text-xl">NT$ {{ getPrice(product) }}</div>
+                    </div>
+                    @if(product.stock > 0) {
+                      <button class="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors shadow-sm text-lg">
+                        +
+                      </button>
+                    }
+                 </div>
+               </div>
+             </div>
+           } @empty {
+             <div class="py-20 text-center flex flex-col items-center justify-center w-full">
+               <div class="text-6xl mb-4">🍂</div>
+               <p class="text-xl text-gray-400 font-medium">Coming Soon...</p>
+             </div>
+           }
+         </div>
+      }
 
       @if (store.cartCount() > 0) {
-        <a 
-          routerLink="/checkout" 
-          class="fixed bottom-6 right-6 z-40 bg-brand-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform cursor-pointer animate-bounce-in border-none outline-none text-decoration-none"
-        >
+        <a routerLink="/checkout" class="fixed bottom-6 right-6 z-40 bg-brand-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform cursor-pointer animate-bounce-in border-none outline-none text-decoration-none">
           <div class="relative pointer-events-none">
             <span class="text-3xl">👜</span>
-            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white">
-              {{ store.cartCount() }}
-            </span>
+            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white">{{ store.cartCount() }}</span>
           </div>
         </a>
       }
+
       @if (selectedProduct()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 bg-brand-900/60 backdrop-blur-sm" (click)="closeModal()">
-          <div 
-            class="bg-[#FDFBF9] w-full max-w-5xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in h-full md:h-auto max-h-[100vh] md:max-h-[90vh] flex flex-col md:flex-row" 
-            (click)="$event.stopPropagation()"
-          >
+          <div class="bg-[#FDFBF9] w-full max-w-5xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in h-full md:h-auto max-h-[100vh] md:max-h-[90vh] flex flex-col md:flex-row" (click)="$event.stopPropagation()">
             <div class="md:w-1/2 bg-white relative group flex flex-col h-[40vh] md:h-auto shrink-0 border-r border-gray-100">
-               
                <div class="flex-1 relative overflow-hidden bg-white p-2 md:p-4">
-                  <img 
-                    [src]="activeImage()" 
-                    (error)="handleImageError($event)" 
-                    class="absolute inset-0 w-full h-full object-contain"
-                  >
+                  <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain">
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-gray-100/80 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm">✕</button>
                </div>
-               
                @if(productImages().length > 1) {
                   <div class="p-3 md:p-4 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0">
                      @for(img of productImages(); track $index) {
@@ -202,40 +204,20 @@ import { StoreService, Product } from '../services/store.service';
                <div class="flex-1 overflow-y-auto p-5 md:p-8 custom-scrollbar">
                   <div class="mb-6">
                     <div class="flex justify-between items-start mb-2 pr-10">
-                      
                       <div class="flex flex-wrap gap-2">
-                         @if(selectedProduct()!.bulkDiscount?.count) {
-                           <div class="text-sm text-red-500 font-bold tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1 animate-pulse">
-                             🔥 任選 {{ selectedProduct()!.bulkDiscount!.count }} 件 $ {{ selectedProduct()!.bulkDiscount!.total }}
-                           </div>
-                         }
-                         @if(isNewProduct(selectedProduct()!)) {
-                           <div class="text-sm text-red-500 font-bold uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1">
-                             ✨ NEW
-                           </div>
-                         }
-                         <div class="text-sm text-brand-400 font-bold uppercase tracking-widest bg-brand-50 px-2 py-1 rounded-lg">
-                           {{ selectedProduct()!.category }}
-                         </div>
-                         @if(selectedProduct()!.isPreorder) {
-                           <div class="text-sm text-blue-500 font-bold tracking-widest bg-blue-50 px-2 py-1 rounded-lg">
-                             預購
-                           </div>
-                         }
+                         @if(selectedProduct()!.bulkDiscount?.count) { <div class="text-sm text-red-500 font-bold tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1 animate-pulse">🔥 任選 {{ selectedProduct()!.bulkDiscount!.count }} 件 $ {{ selectedProduct()!.bulkDiscount!.total }}</div> }
+                         @if(isNewProduct(selectedProduct()!)) { <div class="text-sm text-red-500 font-bold uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1">✨ NEW</div> }
+                         <div class="text-sm text-brand-400 font-bold uppercase tracking-widest bg-brand-50 px-2 py-1 rounded-lg">{{ selectedProduct()!.category }}</div>
+                         @if(selectedProduct()!.isPreorder) { <div class="text-sm text-blue-500 font-bold tracking-widest bg-blue-50 px-2 py-1 rounded-lg">預購</div> }
                       </div>
-                      
-                      <button (click)="copyLink()" class="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-900 transition-colors border border-gray-200 rounded-full px-3 py-1 bg-white shrink-0">
-                        <span>🔗</span> 複製連結
-                      </button>
+                      <button (click)="copyLink()" class="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-900 transition-colors border border-gray-200 rounded-full px-3 py-1 bg-white shrink-0"><span>🔗</span> 複製</button>
                     </div>
                     <h2 class="text-2xl md:text-3xl font-black text-gray-800 leading-tight mb-2">{{ selectedProduct()!.name }}</h2>
                     <div class="text-sm text-gray-400 font-mono mb-2">SKU: {{ selectedProduct()!.code }}</div>
                     
                     <div class="flex items-end gap-3 mt-3 border-b border-gray-100 pb-4">
                        <div class="text-3xl font-black text-brand-900 tracking-tight">NT$ {{ getPrice(selectedProduct()!) | number }}</div>
-                       @if(getTierBadge(selectedProduct()!)) {
-                          <div class="text-sm bg-black text-white px-3 py-1 rounded-full font-bold mb-1">{{ getTierBadge(selectedProduct()!) }}</div>
-                       }
+                       @if(getTierBadge(selectedProduct()!)) { <div class="text-sm bg-black text-white px-3 py-1 rounded-full font-bold mb-1">{{ getTierBadge(selectedProduct()!) }}</div> }
                     </div>
                   </div>
 
@@ -244,24 +226,15 @@ import { StoreService, Product } from '../services/store.service';
                         <div class="mb-6">
                           <div class="flex items-center justify-between mb-3">
                              <label class="text-sm font-bold text-gray-800">選擇規格</label>
-                             @if(selectedOption()) {
-                                <span class="text-xs text-brand-600 font-bold bg-white px-2 py-1 rounded-md shadow-sm border border-brand-100 animate-fade-in">{{ selectedOption() }}</span>
-                             }
+                             @if(selectedOption()) { <span class="text-xs text-brand-600 font-bold bg-white px-2 py-1 rounded-md shadow-sm border border-brand-100 animate-fade-in">{{ selectedOption() }}</span> }
                           </div>
                           <div class="flex flex-wrap gap-2.5">
                             @for (opt of selectedProduct()!.options; track opt) {
                               <button 
                                 (click)="selectedOption.set(opt)"
                                 class="px-4 py-3 md:px-5 md:py-3 rounded-xl text-sm md:text-base font-bold transition-all shadow-sm active:scale-95 flex-1 min-w-[80px] text-center relative overflow-hidden"
-                                [class.bg-brand-900]="selectedOption() === opt"
-                                [class.text-white]="selectedOption() === opt"
-                                [class.ring-2]="selectedOption() === opt"
-                                [class.ring-brand-200]="selectedOption() === opt"
-                                [class.bg-white]="selectedOption() !== opt"
-                                [class.text-gray-600]="selectedOption() !== opt"
-                                [class.border]="selectedOption() !== opt"
-                                [class.border-gray-200]="selectedOption() !== opt"
-                                [class.hover:border-brand-300]="selectedOption() !== opt"
+                                [class.bg-brand-900]="selectedOption() === opt" [class.text-white]="selectedOption() === opt" [class.ring-2]="selectedOption() === opt" [class.ring-brand-200]="selectedOption() === opt"
+                                [class.bg-white]="selectedOption() !== opt" [class.text-gray-600]="selectedOption() !== opt" [class.border]="selectedOption() !== opt" [class.border-gray-200]="selectedOption() !== opt" [class.hover:border-brand-300]="selectedOption() !== opt"
                               >
                                 {{ opt }}
                                 @if(selectedOption() === opt) { <div class="absolute inset-0 bg-white/10"></div> }
@@ -274,13 +247,9 @@ import { StoreService, Product } from '../services/store.service';
                       <div>
                          <label class="block text-sm font-bold text-gray-800 mb-2">購買數量</label>
                          <div class="flex items-center justify-between bg-white rounded-xl border border-gray-200 p-1.5 shadow-sm w-full">
-                           <button (click)="qty.set(qty() > 1 ? qty() - 1 : 1)" class="w-14 h-14 flex items-center justify-center text-gray-400 hover:text-brand-900 hover:bg-gray-100 rounded-lg text-2xl transition-colors font-bold disabled:opacity-30" [disabled]="qty() <= 1">
-                             <span class="mb-1">-</span>
-                           </button>
+                           <button (click)="qty.set(qty() > 1 ? qty() - 1 : 1)" class="w-14 h-14 flex items-center justify-center text-gray-400 hover:text-brand-900 hover:bg-gray-100 rounded-lg text-2xl transition-colors font-bold disabled:opacity-30" [disabled]="qty() <= 1"><span class="mb-1">-</span></button>
                            <span class="flex-1 text-center font-black text-brand-900 text-2xl select-none">{{ qty() }}</span>
-                           <button (click)="qty.set(qty() + 1)" class="w-14 h-14 flex items-center justify-center text-gray-400 hover:text-brand-900 hover:bg-gray-100 rounded-lg text-2xl transition-colors font-bold">
-                             <span class="mb-1">+</span>
-                           </button>
+                           <button (click)="qty.set(qty() + 1)" class="w-14 h-14 flex items-center justify-center text-gray-400 hover:text-brand-900 hover:bg-gray-100 rounded-lg text-2xl transition-colors font-bold"><span class="mb-1">+</span></button>
                          </div>
                       </div>
                   </div>
@@ -308,7 +277,6 @@ import { StoreService, Product } from '../services/store.service';
                   </button>
                </div>
             </div>
-
           </div>
         </div>
       }
@@ -337,6 +305,9 @@ export class ShopFrontComponent {
   searchQuery = signal('');
   selectedCategory = signal<string>('all');
   sortOption = signal<'hot'|'price_asc'|'price_desc'|'newest'|'oldest'>('newest');
+  
+  // 🔥 新增：視圖切換狀態 (預設為 grid 宮格)
+  viewMode = signal<'grid' | 'list'>('grid');
 
   selectedProduct = signal<Product | null>(null);
   selectedOption = signal<string>('');
@@ -382,7 +353,7 @@ export class ShopFrontComponent {
   }
 
   filteredProducts = computed(() => {
-    let list = [...this.store.visibleProducts()]; // 🔥 現在能正確呼叫 visibleProducts 了
+    let list = [...this.store.visibleProducts()]; 
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
     const sort = this.sortOption();
@@ -435,9 +406,7 @@ export class ShopFrontComponent {
 
   copyLink() {
      const url = window.location.href;
-     navigator.clipboard.writeText(url).then(() => {
-        alert('連結已複製！');
-     });
+     navigator.clipboard.writeText(url).then(() => alert('連結已複製！'));
   }
 
   addToCart() {
