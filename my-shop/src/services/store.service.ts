@@ -28,7 +28,6 @@ export interface User {
   birthday?: string; address?: string;
 }
 
-// 🔥 修復：加入 'picked_up' 狀態
 export type OrderStatus = 'pending_payment' | 'paid_verifying' | 'unpaid_alert' | 'refund_needed' | 'refunded' | 'payment_confirmed' | 'pending_shipping' | 'arrived_notified' | 'shipped' | 'picked_up' | 'completed' | 'cancelled';
 
 export interface Order {
@@ -36,10 +35,7 @@ export interface Order {
   discount: number; shippingFee: number; usedCredits: number; finalTotal: number; depositPaid: number; balanceDue: number;
   status: OrderStatus; paymentMethod: 'cash' | 'bank_transfer' | 'cod'; shippingMethod: 'meetup' | 'myship' | 'family' | 'delivery'; 
   createdAt: number; shippingLink?: string;
-  // 🔥 修復：補回匯款資訊欄位
-  paymentName?: string;
-  paymentTime?: string;
-  paymentLast5?: string;
+  paymentName?: string; paymentTime?: string; paymentLast5?: string;
 }
 
 export interface StoreSettings {
@@ -93,19 +89,9 @@ export class StoreService {
     effect(() => localStorage.setItem('92mymy_cart', JSON.stringify(this.cart())));
   }
 
-  // 🔥 修復：補回會員專區的複製剪貼簿功能
   copyToClipboard(text: string) {
-    if (navigator && navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => alert('已複製到剪貼簿！'));
-    } else {
-      const el = document.createElement('textarea');
-      el.value = text;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-      alert('已複製到剪貼簿！');
-    }
+    if (navigator && navigator.clipboard) { navigator.clipboard.writeText(text).then(() => alert('已複製到剪貼簿！'));
+    } else { const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); alert('已複製到剪貼簿！'); }
   }
 
   async updateSettings(s: any) { await setDoc(doc(this.firestore, 'config/storeSettings'), s, { merge: true }); }
@@ -122,6 +108,24 @@ export class StoreService {
   async updateProduct(p: Product) { await updateDoc(doc(this.firestore, 'products', p.id), { ...p }); }
   async toggleProductListing(id: string, current: boolean) { await updateDoc(doc(this.firestore, 'products', id), { isListed: !current }); }
   async deleteProduct(id: string) { await deleteDoc(doc(this.firestore, 'products', id)); }
+
+  // 🔥 新增：自動產生 YYMMDD + 流水號的訂單編號
+  generateOrderId(): string {
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const prefix = `${yy}${mm}${dd}`;
+    
+    let maxSeq = 0;
+    this.orders().forEach(o => {
+       if (o.id.startsWith(prefix)) {
+          const seq = parseInt(o.id.substring(6), 10);
+          if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+       }
+    });
+    return `${prefix}${String(maxSeq + 1).padStart(3, '0')}`;
+  }
 
   generateProductCode(prefix: string): string {
     const now = new Date(); const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
@@ -153,14 +157,30 @@ export class StoreService {
        } else { finalItemsTotal += checkoutItems.filter(i => i.productId === productId).reduce((s, i) => s + (i.price * i.quantity), 0); }
     });
     const bulkDiscountAmount = originalTotal - finalItemsTotal; const finalTotal = finalItemsTotal + shippingFee - usedCredits;
-    const orderData: Omit<Order, 'id'> = {
+    
+    // 🔥 套用自訂流水號
+    const orderId = this.generateOrderId();
+
+    const orderData: Order = {
+      id: orderId,
       userId: user.id, userEmail: user.email, userName: shippingInfo.name || user.name, items: checkoutItems, subtotal: originalTotal, discount: bulkDiscountAmount, shippingFee, usedCredits, finalTotal,
       depositPaid: finalTotal - 20, balanceDue: 20, status: 'pending_payment', paymentMethod, shippingMethod, createdAt: Date.now()
     };
-    const ref = await addDoc(collection(this.firestore, 'orders'), orderData);
-    fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'new_order', orderId: ref.id, total: finalTotal, name: orderData.userName, email: user.email }) }).catch(e => console.error(e));
+    
+    // 🔥 儲存訂單
+    await setDoc(doc(this.firestore, 'orders', orderId), orderData);
+
+    // 🔥 自動增加商品的已售出數量 (soldCount)
+    checkoutItems.forEach(item => {
+       const p = this.products().find(x => x.id === item.productId);
+       if (p) {
+          updateDoc(doc(this.firestore, 'products', p.id), { soldCount: (p.soldCount || 0) + item.quantity }).catch(e => console.error(e));
+       }
+    });
+
+    fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'new_order', orderId: orderId, total: finalTotal, name: orderData.userName, email: user.email }) }).catch(e => console.error(e));
     this.cart.update(current => current.filter(c => !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)));
-    return { id: ref.id, ...orderData } as Order;
+    return orderData;
   }
 
   async notifyArrival(order: Order) {
