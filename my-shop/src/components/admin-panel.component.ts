@@ -624,7 +624,7 @@ export class AdminPanelComponent {
      return rows;
   }
 
-  // 🔥 更新：支援「統一格式」的大型批量上傳解析
+  // 🔥 修正：安全解析 CSV 並避免 undefined 被傳入 Firebase
   async handleBatchImport(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -639,14 +639,15 @@ export class AdminPanelComponent {
 
       for (let i = 1; i < rows.length; i++) {
          const row = rows[i];
-         // 防呆：至少要有 商品名稱(2) 和 分類(3)
+         // 防呆：至少要有 商品名稱(B=2) 和 分類(C=3)
          if (row.length < 4 || !row[2] || !row[3]) continue;
-         if (row[2] === '商品名稱' || row[2] === '秋季毛衣') continue; // 略過範例列
+         if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; // 略過範例列
 
          try {
-            // 對應新的大統一格式：左邊貨號為 0(忽略), A(1):表頭, B(2):名稱, C(3):分類, D(4):售價, E(5):VIP價, F(6):當地原價, G(7):匯率, H(8):重量, I(9):國際運費, J(10):額外成本, K(11):多入數量, L(12):多入總價, M(13):圖片, N(14):規格, O(15):庫存, P(16):預購, Q(17):上架, R(18):SKU, S(19):備註
-            const name = row[2]; 
-            const category = row[3];
+            // 對應新的大統一格式：左邊貨號為 0(忽略), A(1):表頭, B(2):名稱, C(3):分類... 
+            // ⚠️ 使用 String(row[X] || '') 確保遇到空欄位不會報錯
+            const name = String(row[2] || '').trim(); 
+            const category = String(row[3] || '').trim();
             const priceGeneral = Number(row[4]) || 0; 
             const priceVip = Number(row[5]) || 0;
             const localPrice = Number(row[6]) || 0; 
@@ -655,25 +656,28 @@ export class AdminPanelComponent {
             const shippingCostPerKg = Number(row[9]) || 200;
             const costMaterial = Number(row[10]) || 0;
             
-            // 🔥 新增：擷取多入組優惠資料
+            // 擷取多入組優惠資料
             const bulkCount = Number(row[11]) || 0;
             const bulkTotal = Number(row[12]) || 0;
 
-            const imageRaw = row[13] || '';
-            const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
+            const imageRaw = String(row[13] || '');
+            const imagesArray = imageRaw.split(/[,\n]+/).map(s => s.trim()).filter(s => s.startsWith('http')); 
             const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
             const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-            const optionsStr = row[14] || '';
+            const optionsStr = String(row[14] || '');
             const stockInput = Number(row[15]) || 0;
-            const isPreorder = row[16]?.trim().toUpperCase() === 'TRUE';
-            const isListed = row[17]?.trim().toUpperCase() !== 'FALSE'; 
-            const note = row[19] || '';
+            
+            // 安全處理布林值判斷，避免 toUpperCase 報錯
+            const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
+            const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
+            const note = String(row[19] || '');
             
             const stock = isPreorder ? 99999 : stockInput;
-            const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+            const options = optionsStr ? optionsStr.split(',').map(s => s.trim()).filter(s => s) : [];
             
-            let code = row[18] ? row[18].replace(/\t/g, '').trim() : ''; 
+            // 自訂貨號 (去掉匯出時產生的 \t 以免出錯)
+            let code = String(row[18] || '').replace(/\t/g, '').trim(); 
             if (!code) {
                const codeMap = this.store.settings().categoryCodes || {};
                const prefix = codeMap[category] || 'Z'; 
@@ -684,18 +688,26 @@ export class AdminPanelComponent {
 
             // 檢查是否已有相同 SKU 的商品（若有則為更新）
             const existingProduct = this.store.products().find(p => p.code === code);
+            
+            // 為了避免瞬間產生相同 ID，加上 row index 與亂數確保絕對唯一
+            const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
 
-            const p: Product = {
-               id: existingProduct?.id || (Date.now().toString() + Math.floor(Math.random() * 1000).toString()), 
+            const p: any = {
+               id: uniqueId, 
                code, name, category, image: mainImage, images: allImages,
                priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
                weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
                soldCount: existingProduct?.soldCount || 0, country: 'Korea',
                allowPayment: { cash: true, bankTransfer: true, cod: true },
                allowShipping: { meetup: true, myship: true, family: true, delivery: true },
-               isPreorder, isListed,
-               bulkDiscount: (bulkCount > 1 && bulkTotal > 0) ? { count: bulkCount, total: bulkTotal } : undefined
+               isPreorder, isListed
             };
+
+            // 🔥 關鍵修復：絕對不能把 undefined 塞進 Firebase！
+            // 只有當數量與金額大於 0 時，才建立這個屬性。
+            if (bulkCount > 1 && bulkTotal > 0) {
+               p.bulkDiscount = { count: bulkCount, total: bulkTotal };
+            }
 
             this.store.addCategory(category);
             
@@ -705,7 +717,10 @@ export class AdminPanelComponent {
                await this.store.addProduct(p);
             }
             successCount++;
-         } catch (err) { failCount++; }
+         } catch (err) { 
+            console.error('匯入失敗的商品:', row[2], err);
+            failCount++; 
+         }
       }
       alert(`✅ 批量操作完成！\n成功新增/更新：${successCount} 筆\n失敗/略過：${failCount} 筆`);
       event.target.value = ''; 
@@ -941,7 +956,7 @@ export class AdminPanelComponent {
   exportInventoryCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '庫存數量', '狀態']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') ]); this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); }
   exportToCSV() { const range = this.accountingRange(); const now = new Date(); let startDate: Date | null = null; if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); let list = this.store.orders(); if (startDate) list = list.filter((o: Order) => o.createdAt >= startDate!.getTime()); list = list.filter((o: Order) => !['pending_payment', 'unpaid_alert', 'refunded', 'cancelled'].includes(o.status)); const headers = ['訂單編號', '日期', '商品內容', '總營收', '商品成本', '預估利潤', '毛利率%']; const rows = list.map((o: Order) => { let cost = 0; o.items.forEach((i: CartItem) => { const p = this.store.products().find((x: Product) => x.id === i.productId); if (p) cost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; }); const profit = o.finalTotal - cost; return [ `\t${o.id}`, new Date(o.createdAt).toLocaleDateString(), o.items.map((i: CartItem) => `${i.productName} x${i.quantity}`).join('\n'), o.finalTotal, cost.toFixed(0), profit.toFixed(0), (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) ]; }); this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); }
 
-  // 🔥 更新：大統一格式匯出 (可直接作為批量上傳的模板)
+  // 🔥 匯出時也完全對齊新的 CSV 格式
   exportProductsCSV() { 
      const headers = [
        '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', 
@@ -1015,9 +1030,13 @@ export class AdminPanelComponent {
 
      const p: Product = {
         id: this.editingProduct()?.id || Date.now().toString(), 
-        code: finalCode, name: val.name, category: val.category, image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed,
-        bulkDiscount: (bulkCount > 1 && bulkTotal > 0) ? { count: bulkCount, total: bulkTotal } : undefined
+        code: finalCode, name: val.name, category: val.category, image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed
      };
+
+     // 🔥 安全寫入多入優惠，避免 Firebase 阻擋
+     if (bulkCount > 1 && bulkTotal > 0) {
+        p.bulkDiscount = { count: bulkCount, total: bulkTotal };
+     }
      
      if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p);
      this.closeProductModal();
