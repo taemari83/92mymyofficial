@@ -180,9 +180,11 @@ import { StoreService, Product } from '../services/store.service';
       }
 
       @if (selectedProduct()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-6 bg-brand-900/60 backdrop-blur-sm" (click)="closeModal()">
-          <div class="bg-[#FDFBF9] w-full max-w-5xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in h-full md:h-auto max-h-[100vh] md:max-h-[90vh] flex flex-col md:flex-row" (click)="$event.stopPropagation()">
-            <div class="md:w-1/2 bg-white relative group flex flex-col h-[40vh] md:h-auto shrink-0 border-r border-gray-100">
+        <div class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6 bg-brand-900/60 backdrop-blur-sm" (click)="closeModal()">
+          
+          <div class="bg-[#FDFBF9] w-full max-w-5xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in h-[100dvh] max-h-[100dvh] md:h-auto md:max-h-[90vh] flex flex-col md:flex-row relative" (click)="$event.stopPropagation()">
+            
+            <div class="md:w-1/2 bg-white relative group flex flex-col h-[40dvh] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
                <div class="flex-1 relative overflow-hidden bg-white p-2 md:p-4">
                   <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain">
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-gray-100/80 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm">✕</button>
@@ -198,10 +200,10 @@ import { StoreService, Product } from '../services/store.service';
                }
             </div>
 
-            <div class="md:w-1/2 flex flex-col bg-[#FDFBF9] h-[60vh] md:h-auto relative">
+            <div class="md:w-1/2 flex flex-col flex-1 min-h-0 bg-[#FDFBF9] relative">
                <button (click)="closeModal()" class="hidden md:flex absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full text-gray-500 items-center justify-center hover:bg-gray-200 transition-colors z-20">✕</button>
 
-               <div class="flex-1 overflow-y-auto p-5 md:p-8 custom-scrollbar">
+               <div class="flex-1 overflow-y-auto p-5 md:p-8 custom-scrollbar pb-10">
                   <div class="mb-6">
                     <div class="flex justify-between items-start mb-2 pr-10">
                       <div class="flex flex-wrap gap-2">
@@ -213,8 +215,6 @@ import { StoreService, Product } from '../services/store.service';
                       <button (click)="copyLink()" class="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-900 transition-colors border border-gray-200 rounded-full px-3 py-1 bg-white shrink-0"><span>🔗</span> 複製</button>
                     </div>
                     <h2 class="text-2xl md:text-3xl font-black text-gray-800 leading-tight mb-2">{{ selectedProduct()!.name }}</h2>
-                    <div class="text-sm text-gray-400 font-mono mb-2">SKU: {{ selectedProduct()!.code }}</div>
-                    
                     <div class="flex items-end gap-3 mt-3 border-b border-gray-100 pb-4">
                        <div class="text-3xl font-black text-brand-900 tracking-tight">NT$ {{ getPrice(selectedProduct()!) | number }}</div>
                        @if(getTierBadge(selectedProduct()!)) { <div class="text-sm bg-black text-white px-3 py-1 rounded-full font-bold mb-1">{{ getTierBadge(selectedProduct()!) }}</div> }
@@ -260,7 +260,7 @@ import { StoreService, Product } from '../services/store.service';
                   </div>
                </div>
 
-               <div class="p-5 border-t border-gray-100 bg-white z-10 relative shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+               <div class="p-4 pb-8 md:p-6 md:pb-6 border-t border-gray-100 bg-white z-20 relative shadow-[0_-10px_20px_rgba(0,0,0,0.05)] shrink-0">
                   @if (!store.currentUser()) {
                      <button 
                        (click)="store.loginWithGoogle()"
