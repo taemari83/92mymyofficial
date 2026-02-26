@@ -180,19 +180,19 @@ import { StoreService, Product } from '../services/store.service';
       }
 
       @if (selectedProduct()) {
-        <div class="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-6 bg-black/70 backdrop-blur-md" (click)="closeModal()">
+        <div class="fixed top-0 left-0 right-0 bottom-0 z-[100] flex flex-col md:flex-row md:items-center justify-center p-0 md:p-6 bg-white md:bg-black/70 md:backdrop-blur-md" (click)="closeModal()">
           
-          <div class="bg-white w-full max-w-5xl md:rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in h-[100dvh] max-h-[100dvh] md:h-auto md:max-h-[90vh] flex flex-col md:flex-row relative" (click)="$event.stopPropagation()">
+          <div class="bg-white w-full h-full md:max-w-5xl md:rounded-[2.5rem] md:shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in md:h-auto md:max-h-[90vh] flex flex-col md:flex-row relative" (click)="$event.stopPropagation()">
             
-            <div class="md:w-1/2 bg-white relative group flex flex-col h-[40dvh] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
-               <div class="flex-1 relative overflow-hidden bg-white p-2 md:p-4">
-                  <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain">
-                  <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-gray-100/90 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm">✕</button>
+            <div class="md:w-1/2 bg-white relative group flex flex-col h-[45%] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
+               <div class="flex-1 relative overflow-hidden bg-gray-50 p-2 md:p-4">
+                  <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply">
+                  <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm border border-gray-100">✕</button>
                </div>
                @if(productImages().length > 1) {
-                  <div class="p-3 md:p-4 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0">
+                  <div class="p-3 md:p-4 bg-white border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0">
                      @for(img of productImages(); track $index) {
-                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
+                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-gray-50" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
                            <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover">
                         </button>
                      }
@@ -203,7 +203,7 @@ import { StoreService, Product } from '../services/store.service';
             <div class="md:w-1/2 flex flex-col flex-1 min-h-0 bg-white relative">
                <button (click)="closeModal()" class="hidden md:flex absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full text-gray-500 items-center justify-center hover:bg-gray-200 transition-colors z-20">✕</button>
 
-               <div class="flex-1 overflow-y-auto p-5 md:p-8 custom-scrollbar pb-10 bg-white">
+               <div class="flex-1 overflow-y-auto p-5 md:p-8 custom-scrollbar pb-6 md:pb-10 bg-white">
                   <div class="mb-6">
                     <div class="flex justify-between items-start mb-2 pr-10">
                       <div class="flex flex-wrap gap-2">
@@ -255,13 +255,13 @@ import { StoreService, Product } from '../services/store.service';
                       </div>
                   </div>
 
-                  <div class="text-gray-500 leading-relaxed text-sm bg-white p-4 rounded-xl border border-gray-100">
+                  <div class="text-gray-500 leading-relaxed text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <h4 class="font-bold text-gray-800 mb-2 text-xs uppercase tracking-wide">商品介紹</h4>
                     <p class="whitespace-pre-wrap">{{ selectedProduct()!.note || '這是一個非常棒的商品，來自我們精選的 Winter Collection。' }}</p>
                   </div>
                </div>
 
-               <div class="p-4 pb-8 md:p-6 md:pb-6 border-t border-gray-100 bg-white z-20 relative shadow-[0_-10px_20px_rgba(0,0,0,0.05)] shrink-0">
+               <div class="p-4 md:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-gray-100 bg-white z-20 relative shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
                   @if (!store.currentUser()) {
                      <button 
                        (click)="store.loginWithGoogle()"
@@ -342,6 +342,17 @@ export class ShopFrontComponent {
           this.selectedProduct.set(null);
        }
     }, { allowSignalWrites: true });
+
+    // 🔥 當開啟商品視窗時，鎖定背景避免滑動
+    effect(() => {
+       if (typeof document !== 'undefined') {
+          if (this.selectedProduct()) {
+             document.body.style.overflow = 'hidden';
+          } else {
+             document.body.style.overflow = '';
+          }
+       }
+    });
   }
 
   productImages = computed(() => {
