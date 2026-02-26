@@ -175,7 +175,7 @@ import { StoreService, Product } from '../services/store.service';
                   <img 
                     [src]="activeImage()" 
                     (error)="handleImageError($event)" 
-                    class="absolute inset-0 w-full h-full object-cover"
+                    class="absolute inset-0 w-full h-full object-contain p-2"
                   >
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-gray-100/80 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm">✕</button>
                </div>
@@ -183,8 +183,8 @@ import { StoreService, Product } from '../services/store.service';
                @if(productImages().length > 1) {
                   <div class="p-3 md:p-4 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
                      @for(img of productImages(); track img) {
-                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
-                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover">
+                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white p-0.5" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
+                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-contain">
                         </button>
                      }
                   </div>
@@ -416,7 +416,6 @@ export class ShopFrontComponent {
   }
 
   handleImageError(event: any) {
-    // 錯誤圖片也改為 cover
     event.target.className = 'absolute inset-0 w-full h-full object-cover';
     event.target.src = 'https://placehold.co/400x500?text=No+Image';
   }
