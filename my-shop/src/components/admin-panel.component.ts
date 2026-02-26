@@ -502,6 +502,117 @@ export class AdminPanelComponent {
 
   activeTab = signal('dashboard');
   
+  // 🔥 新增：修復批量上傳 SKU 邏輯
+  async handleBatchImport(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e: any) => {
+      const text = e.target.result;
+      const rows = this.parseCSV(text);
+      
+      if (rows.length < 2) {
+         alert('CSV 檔案格式錯誤或沒有資料！');
+         return;
+      }
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (let i = 1; i < rows.length; i++) {
+         const row = rows[i];
+         if (row.length < 3 || !row[1] || !row[2]) continue;
+         
+         if (row[1] === '商品名稱' || row[1] === '秋季毛衣') continue;
+
+         try {
+            const name = row[1];
+            const category = row[2];
+            const priceGeneral = Number(row[3]) || 0;
+            const priceVip = Number(row[4]) || 0;
+            
+            const localPrice = Number(row[5]) || 0;
+            const exchangeRate = Number(row[6]) || 0.22;
+            const weight = Number(row[7]) || 0;
+            const shippingCostPerKg = Number(row[8]) || 200;
+            const costMaterial = Number(row[9]) || 0;
+
+            const imageRaw = row[10] || '';
+            const imagesArray = imageRaw
+               .split(/[,\n]+/) 
+               .map(s => s.trim()) 
+               .filter(s => s.startsWith('http')); 
+            
+            const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
+            const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
+
+            const optionsStr = row[11] || '';
+            const stockInput = Number(row[12]) || 0;
+            const isPreorder = row[13]?.trim().toUpperCase() === 'TRUE';
+            const isListed = row[14]?.trim().toUpperCase() !== 'FALSE'; 
+            
+            const stock = isPreorder ? 99999 : stockInput;
+            
+            // 🔥 修正：批量上架的 SKU 自動產生邏輯
+            let code = row[15];
+            if (!code) {
+               const codeMap = this.store.settings().categoryCodes || {};
+               const prefix = codeMap[category] || 'Z'; // 找不到對應代碼預設用 Z
+               const now = new Date();
+               const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+               // 為了避免同一批上傳產生重複序號，後面加上該行的行號 (i) 確保唯一性
+               code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
+            }
+
+            const note = row[16] || '';
+
+            const options = optionsStr ? optionsStr.split(',').map(s => s.trim()).filter(s => s) : [];
+
+            const p: Product = {
+               id: Date.now().toString() + Math.floor(Math.random() * 1000).toString(), 
+               code,
+               name,
+               category,
+               image: mainImage,
+               images: allImages,
+               priceGeneral,
+               priceVip,
+               priceWholesale: 0,
+               localPrice,
+               exchangeRate,        
+               weight,              
+               shippingCostPerKg,   
+               costMaterial,        
+               stock,
+               options,
+               note,
+               priceType: 'normal',
+               soldCount: 0,
+               country: 'Korea',
+               allowPayment: { cash: true, bankTransfer: true, cod: true },
+               allowShipping: { meetup: true, myship: true, family: true, delivery: true },
+               isPreorder,
+               isListed
+            };
+
+            this.store.addCategory(category);
+            await this.store.addProduct(p);
+            successCount++;
+         } catch (err) {
+            console.error('Row import failed:', row, err);
+            failCount++;
+         }
+      }
+
+      alert(`✅ 批量上架完成！\n成功：${successCount} 筆\n失敗/略過：${failCount} 筆`);
+      event.target.value = ''; 
+    };
+    
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  // 下方保留原有的其餘函數，不做刪減...
   dashboardMetrics = computed(() => {
      const orders = this.store.orders(); 
      const today = new Date().toDateString();
@@ -883,10 +994,9 @@ export class AdminPanelComponent {
        })
     });
 
-    // 🔥 修正：將 phone 的 Validators.required 拿掉
     this.userForm = this.fb.group({
        name: ['', Validators.required],
-       phone: [''], // 👈 改為非必填
+       phone: [''],
        birthday: [''],
        tier: ['general'],
        credits: [0],
@@ -1054,6 +1164,30 @@ export class AdminPanelComponent {
   quickShip(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'shipped'); }
   quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); }
   quickComplete(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'completed'); }
+
+  private parseCSV(text: string): string[][] {
+     const rows: string[][] = [];
+     let row: string[] = [];
+     let inQuotes = false;
+     let val = '';
+     for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const nextChar = text[i + 1];
+        if (char === '"' && inQuotes && nextChar === '"') {
+           val += '"'; i++; 
+        } else if (char === '"') {
+           inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+           row.push(val.trim()); val = '';
+        } else if (char === '\n' && !inQuotes) {
+           row.push(val.trim()); rows.push(row); row = []; val = '';
+        } else if (char !== '\r') {
+           val += char;
+        }
+     }
+     if (val || row.length > 0) { row.push(val.trim()); rows.push(row); }
+     return rows;
+  }
 
   private downloadCSV(filename: string, headers: string[], rows: any[]) {
     const BOM = '\uFEFF';
@@ -1325,129 +1459,6 @@ export class AdminPanelComponent {
         this.store.addProduct(p);
      }
      this.closeProductModal();
-  }
-
-  private parseCSV(text: string): string[][] {
-     const rows: string[][] = [];
-     let row: string[] = [];
-     let inQuotes = false;
-     let val = '';
-     for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        const nextChar = text[i + 1];
-        if (char === '"' && inQuotes && nextChar === '"') {
-           val += '"'; i++; 
-        } else if (char === '"') {
-           inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-           row.push(val.trim()); val = '';
-        } else if (char === '\n' && !inQuotes) {
-           row.push(val.trim()); rows.push(row); row = []; val = '';
-        } else if (char !== '\r') {
-           val += char;
-        }
-     }
-     if (val || row.length > 0) { row.push(val.trim()); rows.push(row); }
-     return rows;
-  }
-
-  async handleBatchImport(event: any) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e: any) => {
-      const text = e.target.result;
-      const rows = this.parseCSV(text);
-      
-      if (rows.length < 2) {
-         alert('CSV 檔案格式錯誤或沒有資料！');
-         return;
-      }
-
-      let successCount = 0;
-      let failCount = 0;
-
-      for (let i = 1; i < rows.length; i++) {
-         const row = rows[i];
-         if (row.length < 3 || !row[1] || !row[2]) continue;
-         
-         if (row[1] === '商品名稱' || row[1] === '秋季毛衣') continue;
-
-         try {
-            const name = row[1];
-            const category = row[2];
-            const priceGeneral = Number(row[3]) || 0;
-            const priceVip = Number(row[4]) || 0;
-            
-            const localPrice = Number(row[5]) || 0;
-            const exchangeRate = Number(row[6]) || 0.22;
-            const weight = Number(row[7]) || 0;
-            const shippingCostPerKg = Number(row[8]) || 200;
-            const costMaterial = Number(row[9]) || 0;
-
-            const imageRaw = row[10] || '';
-            const imagesArray = imageRaw
-               .split(/[,\n]+/) 
-               .map(s => s.trim()) 
-               .filter(s => s.startsWith('http')); 
-            
-            const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
-            const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
-
-            const optionsStr = row[11] || '';
-            const stockInput = Number(row[12]) || 0;
-            const isPreorder = row[13]?.trim().toUpperCase() === 'TRUE';
-            const isListed = row[14]?.trim().toUpperCase() !== 'FALSE'; 
-            
-            const stock = isPreorder ? 99999 : stockInput;
-            
-            const code = row[15] || `B${Date.now().toString().slice(-6)}${Math.floor(Math.random()*100)}`;
-            const note = row[16] || '';
-
-            const options = optionsStr ? optionsStr.split(',').map(s => s.trim()).filter(s => s) : [];
-
-            const p: Product = {
-               id: Date.now().toString() + Math.floor(Math.random() * 1000).toString(), 
-               code,
-               name,
-               category,
-               image: mainImage,
-               images: allImages,
-               priceGeneral,
-               priceVip,
-               priceWholesale: 0,
-               localPrice,
-               exchangeRate,        
-               weight,              
-               shippingCostPerKg,   
-               costMaterial,        
-               stock,
-               options,
-               note,
-               priceType: 'normal',
-               soldCount: 0,
-               country: 'Korea',
-               allowPayment: { cash: true, bankTransfer: true, cod: true },
-               allowShipping: { meetup: true, myship: true, family: true, delivery: true },
-               isPreorder,
-               isListed
-            };
-
-            this.store.addCategory(category);
-            await this.store.addProduct(p);
-            successCount++;
-         } catch (err) {
-            console.error('Row import failed:', row, err);
-            failCount++;
-         }
-      }
-
-      alert(`✅ 批量上架完成！\n成功：${successCount} 筆\n失敗/略過：${failCount} 筆`);
-      event.target.value = ''; 
-    };
-    
-    reader.readAsText(file, 'UTF-8');
   }
 
   getPeriodLabel(p: string) { const map: any = { all_time: '全期', this_month: '本月', last_month: '上月', this_quarter: '本季' }; return map[p] || p; }
