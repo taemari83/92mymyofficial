@@ -116,7 +116,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                      @for(order of paginatedOrders(); track order.id) {
                        <tr class="hover:bg-gray-50 transition-colors group">
                          <td class="p-4 sticky left-0 z-10 bg-white group-hover:bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors">
-                           
                            <div class="flex gap-3 items-start min-w-[200px]">
                              <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100 mt-1">
                                @if(order.items.length > 0) { <img [src]="getThumb(order)" (error)="handleImageError($event)" class="w-full h-full object-cover"> }
@@ -135,7 +134,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                                </div>
                              </div>
                            </div>
-
                          </td>
                          <td class="p-4"><div class="flex items-center gap-2"><span class="font-medium text-gray-800">{{ getUserName(order.userId) }}</span></div></td>
                          <td class="p-4">@if(order.paymentMethod === 'bank_transfer') { <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">🏦 轉帳</span> }@else if(order.paymentMethod === 'cod') { <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">🚚 貨到付款</span> }@else { <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">💵 現金</span> }</td>
@@ -517,13 +515,10 @@ export class AdminPanelComponent {
 
       for (let i = 1; i < rows.length; i++) {
          const row = rows[i];
-         // 防呆：至少要有 商品名稱(B=2) 和 分類(C=3)
          if (row.length < 4 || !row[2] || !row[3]) continue;
-         if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; // 略過範例列
+         if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; 
 
          try {
-            // 對應新的大統一格式：左邊貨號為 0(忽略), A(1):表頭, B(2):名稱, C(3):分類... 
-            // ⚠️ 使用 String(row[X] || '') 確保遇到空欄位不會報錯
             const name = String(row[2] || '').trim(); 
             const category = String(row[3] || '').trim();
             const priceGeneral = Number(row[4]) || 0; 
@@ -534,7 +529,6 @@ export class AdminPanelComponent {
             const shippingCostPerKg = Number(row[9]) || 200;
             const costMaterial = Number(row[10]) || 0;
             
-            // 擷取多入組優惠資料
             const bulkCount = Number(row[11]) || 0;
             const bulkTotal = Number(row[12]) || 0;
 
@@ -546,7 +540,6 @@ export class AdminPanelComponent {
             const optionsStr = String(row[14] || '');
             const stockInput = Number(row[15]) || 0;
             
-            // 安全處理布林值判斷，避免 toUpperCase 報錯
             const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
             const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
             const note = String(row[19] || '');
@@ -554,7 +547,6 @@ export class AdminPanelComponent {
             const stock = isPreorder ? 99999 : stockInput;
             const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
             
-            // 自訂貨號 (去掉匯出時產生的 \t 以免出錯)
             let code = String(row[18] || '').replace(/\t/g, '').trim(); 
             if (!code) {
                const codeMap = this.store.settings().categoryCodes || {};
@@ -564,10 +556,7 @@ export class AdminPanelComponent {
                code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
             }
 
-            // 檢查是否已有相同 SKU 的商品（若有則為更新）
             const existingProduct = this.store.products().find(p => p.code === code);
-            
-            // 為了避免瞬間產生相同 ID，加上 row index 與亂數確保絕對唯一
             const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
 
             const p: any = {
@@ -690,7 +679,7 @@ export class AdminPanelComponent {
   topSellingProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.sold - a.sold));
   topProfitProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.profit - a.profit));
 
-  // --- 以下保留原有屬性與單行方法 ---
+  // --- 以下為一般清單與操作方法 ---
   dashboardMetrics = computed(() => { const orders = this.store.orders(); const today = new Date().toDateString(); const thisMonth = new Date().getMonth(); const todayOrders = orders.filter((o: Order) => new Date(o.createdAt).toDateString() === today); const monthOrders = orders.filter((o: Order) => new Date(o.createdAt).getMonth() === thisMonth); let todayRev = 0; let monthSales = 0; let monthCost = 0; todayOrders.forEach((o: Order) => { if(o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled') todayRev += o.finalTotal; }); monthOrders.forEach((o: Order) => { if(o.status !== 'unpaid_alert' && o.status !== 'refunded' && o.status !== 'cancelled') { monthSales += o.finalTotal; o.items.forEach((i: CartItem) => { const p = this.store.products().find((x: Product) => x.id === i.productId); if(p) monthCost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; }); } }); return { todayRevenue: todayRev, monthSales, monthProfit: monthSales - monthCost, toConfirm: orders.filter((o: Order) => o.status === 'paid_verifying').length, toShip: orders.filter((o: Order) => o.status === 'payment_confirmed').length, unpaid: orders.filter((o: Order) => o.status === 'pending_payment' || o.status === 'unpaid_alert').length, processing: orders.filter((o: Order) => o.status === 'refund_needed').length }; });
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   topProducts = computed(() => [...this.store.products()].sort((a: any, b: any) => b.soldCount - a.soldCount).slice(0, 5));
@@ -725,4 +714,11 @@ export class AdminPanelComponent {
 
   openProductForm() { this.editingProduct.set(null); this.productForm.reset(); this.productForm.patchValue({ exchangeRate: 0.22, shippingCostPerKg: 200, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0 }); this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } editProduct(p: Product) { this.editingProduct.set(p); this.productForm.patchValue({ ...p, optionsStr: p.options.join(', '), exchangeRate: p.exchangeRate || 0.22, shippingCostPerKg: p.shippingCostPerKg || 200, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 }); this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } closeProductModal() { this.showProductModal.set(false); } onCategoryChange() { const cat = this.productForm.get('category')?.value; if (cat && !this.editingProduct()) { const codeMap = this.categoryCodes(); const foundCode = codeMap[cat] || ''; this.currentCategoryCode.set(foundCode); this.updateSkuPreview(foundCode); } } onCodeInput(e: any) { const val = e.target.value.toUpperCase(); this.currentCategoryCode.set(val); if (!this.editingProduct()) { this.updateSkuPreview(val); } } updateSkuPreview(prefix: string) { if (prefix) { const sku = this.store.generateProductCode(prefix); this.generatedSkuPreview.set(sku); this.productForm.patchValue({ code: sku }); } } handleImageError(event: any) { event.target.src = 'https://placehold.co/100x100?text=Broken+Link'; } addImageUrl(url: string) { if(!url || !url.trim()) return; const u = url.trim(); if (u.includes('flickr.com/photos/') && !u.match(/\.(jpg|jpeg|png|gif)$/i) && !u.includes('live.staticflickr.com')) { alert('⚠️ 注意：您貼上的是 Flickr「網頁」網址，不是「圖片」連結！\n\n請在圖片上按右鍵 -> 選擇「複製圖片位址」(Copy Image Address)。'); return; } this.tempImages.update(l => [...l, u]); } handleFileSelect(event: any) { const files = event.target.files; if (files) { for (let i = 0; i < files.length; i++) { const file = files[i]; const reader = new FileReader(); reader.onload = (e: any) => { this.tempImages.update(l => [...l, e.target.result]); }; reader.readAsDataURL(file); } } } removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); } submitProduct() { const val = this.productForm.value; if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; const p: Product = { id: this.editingProduct()?.id || Date.now().toString(), code: finalCode, name: val.name, category: val.category, image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed }; if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); this.closeProductModal(); }
   editUser(u: User) { this.openUserModal(u); } openUserModal(u: User) { this.editingUser.set(u); this.userForm.patchValue(u); this.showUserModal.set(true); } closeUserModal() { this.showUserModal.set(false); this.editingUser.set(null); } saveUser() { if (this.userForm.valid && this.editingUser()) { const formVals = this.userForm.value; const updatedUser = { ...this.editingUser()!, ...formVals, phone: formVals.phone ? formVals.phone.trim() : '', name: formVals.name ? formVals.name.trim() : '', totalSpend: Number(formVals.totalSpend) || 0, credits: Number(formVals.credits) || 0 }; this.store.updateUser(updatedUser); this.closeUserModal(); alert('會員資料已更新'); } else { alert('請檢查必填欄位'); } }
+
+  // 🔥 補回設定與分類相關函式
+  renameCategory(oldName: string, newName: string) { this.store.renameCategory(oldName, newName); }
+  deleteCategory(cat: string) { if(confirm(`確定要徹底刪除分類「${cat}」嗎？\n注意：這不會刪除該分類下的商品，但建議您將現有商品轉移至其他分類。`)) { this.store.removeCategory(cat); } }
+  addNewCategory(name: string) { if(name.trim()) this.store.addCategory(name); }
+  updateCategoryCode(cat: string, code: string) { const newCodes = { ...this.categoryCodes() }; newCodes[cat] = code.toUpperCase(); const s = { ...this.store.settings() }; s.categoryCodes = newCodes; this.store.updateSettings(s); }
+  saveSettings() { const val = this.settingsForm.value; const currentSettings = this.store.settings(); const settings: StoreSettings = { birthdayGiftGeneral: val.birthdayGiftGeneral, birthdayGiftVip: val.birthdayGiftVip, categoryCodes: currentSettings.categoryCodes, paymentMethods: { cash: val.enableCash, bankTransfer: val.enableBank, cod: val.enableCod }, shipping: { freeThreshold: val.shipping.freeThreshold, methods: { meetup: val.shipping.methods.meetup, myship: val.shipping.methods.myship, family: val.shipping.methods.family, delivery: val.shipping.methods.delivery } } }; this.store.updateSettings(settings); alert('設定已儲存'); }
 }
