@@ -188,10 +188,10 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                 </div> 
                 <div class="flex flex-wrap gap-3 w-full md:w-auto">
                   <button (click)="exportProductsCSV()" class="px-4 py-3 bg-brand-50 text-brand-700 border border-brand-200 rounded-full font-bold hover:bg-brand-100 shadow-sm flex items-center gap-2 whitespace-nowrap">
-                    <span>📥</span> 匯出標準格式 (可直接上傳)
+                    <span>📥</span> 匯出
                   </button>
                   <label class="flex-1 md:flex-none justify-center flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-brand-900 rounded-full font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md whitespace-nowrap"> 
-                    <span class="text-lg">📂</span> <span class="text-sm">批量新增/更新</span> 
+                    <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> 
                     <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
                   </label> 
                   <button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button> 
@@ -639,41 +639,41 @@ export class AdminPanelComponent {
 
       for (let i = 1; i < rows.length; i++) {
          const row = rows[i];
-         // 防呆：至少要有 商品名稱(1) 和 分類(2)
-         if (row.length < 3 || !row[1] || !row[2]) continue;
-         if (row[1] === '商品名稱' || row[1] === '秋季毛衣') continue; // 略過範例列
+         // 防呆：至少要有 商品名稱(2) 和 分類(3)
+         if (row.length < 4 || !row[2] || !row[3]) continue;
+         if (row[2] === '商品名稱' || row[2] === '秋季毛衣') continue; // 略過範例列
 
          try {
-            // 對應新的大統一格式：0:SKU, 1:名稱, 2:分類, 3:售價, 4:VIP價, 5:當地原價, 6:匯率, 7:重量, 8:國際運費, 9:額外成本, 10:圖片, 11:規格, 12:庫存, 13:預購, 14:上架, 15:備註, 16:多入數量, 17:多入總價
-            const name = row[1]; 
-            const category = row[2];
-            const priceGeneral = Number(row[3]) || 0; 
-            const priceVip = Number(row[4]) || 0;
-            const localPrice = Number(row[5]) || 0; 
-            const exchangeRate = Number(row[6]) || 0.22;
-            const weight = Number(row[7]) || 0; 
-            const shippingCostPerKg = Number(row[8]) || 200;
-            const costMaterial = Number(row[9]) || 0;
+            // 對應新的大統一格式：左邊貨號為 0(忽略), A(1):表頭, B(2):名稱, C(3):分類, D(4):售價, E(5):VIP價, F(6):當地原價, G(7):匯率, H(8):重量, I(9):國際運費, J(10):額外成本, K(11):多入數量, L(12):多入總價, M(13):圖片, N(14):規格, O(15):庫存, P(16):預購, Q(17):上架, R(18):SKU, S(19):備註
+            const name = row[2]; 
+            const category = row[3];
+            const priceGeneral = Number(row[4]) || 0; 
+            const priceVip = Number(row[5]) || 0;
+            const localPrice = Number(row[6]) || 0; 
+            const exchangeRate = Number(row[7]) || 0.22;
+            const weight = Number(row[8]) || 0; 
+            const shippingCostPerKg = Number(row[9]) || 200;
+            const costMaterial = Number(row[10]) || 0;
+            
+            // 🔥 新增：擷取多入組優惠資料
+            const bulkCount = Number(row[11]) || 0;
+            const bulkTotal = Number(row[12]) || 0;
 
-            const imageRaw = row[10] || '';
+            const imageRaw = row[13] || '';
             const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
             const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
             const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-            const optionsStr = row[11] || '';
-            const stockInput = Number(row[12]) || 0;
-            const isPreorder = row[13]?.trim().toUpperCase() === 'TRUE';
-            const isListed = row[14]?.trim().toUpperCase() !== 'FALSE'; 
-            const note = row[15] || '';
+            const optionsStr = row[14] || '';
+            const stockInput = Number(row[15]) || 0;
+            const isPreorder = row[16]?.trim().toUpperCase() === 'TRUE';
+            const isListed = row[17]?.trim().toUpperCase() !== 'FALSE'; 
+            const note = row[19] || '';
             
-            // 🔥 新增：擷取多入組優惠資料
-            const bulkCount = Number(row[16]) || 0;
-            const bulkTotal = Number(row[17]) || 0;
-
             const stock = isPreorder ? 99999 : stockInput;
             const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
             
-            let code = row[0]; // 現在 SKU 是第 0 欄
+            let code = row[18] ? row[18].replace(/\t/g, '').trim() : ''; 
             if (!code) {
                const codeMap = this.store.settings().categoryCodes || {};
                const prefix = codeMap[category] || 'Z'; 
@@ -792,7 +792,7 @@ export class AdminPanelComponent {
 
   filteredUsers = computed(() => {
      let list = [...this.store.users()]; 
-     const q = this.customerSearch().toLowerCase(); const bm = this.birthMonthFilter(); const start = this.memberStart(); const end = this.memberEnd();      
+     const q = this.customerSearch().toLowerCase(); const bm = this.birthMonthFilter(); const start = this.memberStart(); const end = this.memberEnd();       
      if (q) list = list.filter((u: User) => u.name.toLowerCase().includes(q) || (u.phone && u.phone.includes(q)) || u.id.toLowerCase().includes(q) || (u.memberNo && u.memberNo.includes(q)));
      if (bm !== 'all') list = list.filter((u: User) => { if (!u.birthday) return false; return new Date(u.birthday).getMonth() + 1 === parseInt(bm); });
      if (start || end) {
@@ -859,7 +859,6 @@ export class AdminPanelComponent {
 
   accountingInsights = computed(() => ({ topProducts: this.store.products().slice(0,3).map(p => ({ product: p, qty: p.soldCount })), topCustomers: this.store.users().slice(0,3).map(u => ({ name: u.name, spend: u.totalSpend, count: 5 })) }));
   
-  // 🔥 更新：精準計算「商品毛利分析排行」，若有多入組優惠，會模擬混合計算利潤
   productPerformance = computed(() => this.store.products().map((p: Product) => { 
      const costPerUnit = (p.localPrice * p.exchangeRate) + (p.weight * p.shippingCostPerKg) + p.costMaterial;
      const totalCost = p.soldCount * costPerUnit;
@@ -945,9 +944,9 @@ export class AdminPanelComponent {
   // 🔥 更新：大統一格式匯出 (可直接作為批量上傳的模板)
   exportProductsCSV() { 
      const headers = [
-       'SKU(貨號)', '商品名稱', '分類', '售價', 'VIP價', '當地原價', '匯率', '重量(kg)', '國際運費/kg', '額外成本(包材)', 
-       '圖片網址(逗號分隔)', '規格(逗號分隔)', '庫存', '是否預購(TRUE/FALSE)', '是否上架(TRUE/FALSE)', '備註',
-       '任選數量(多入優惠)', '優惠總價(多入優惠)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出'
+       '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', 
+       '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)',
+       '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出'
      ]; 
      const rows = this.store.products().map((p: Product) => {
         const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg);
@@ -955,10 +954,26 @@ export class AdminPanelComponent {
         const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠';
 
         return [ 
-           `\t${p.code}`, p.name, p.category, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial,
-           (p.images && p.images.length > 0) ? p.images.join(',') : p.image,
-           p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', p.note || '',
-           p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', 
+           p.code, // 貨號(註記用)
+           '', // A: 表頭說明範例
+           p.name, // B
+           p.category, // C
+           p.priceGeneral, // D
+           p.priceVip, // E
+           p.localPrice, // F
+           p.exchangeRate, // G
+           p.weight, // H
+           p.shippingCostPerKg, // I
+           p.costMaterial, // J
+           p.bulkDiscount?.count || '', // K: 任選數量
+           p.bulkDiscount?.total || '', // L: 優惠總價
+           (p.images && p.images.length > 0) ? p.images.join(',') : p.image, // M
+           p.options.join(','), // N
+           p.stock, // O
+           p.isPreorder ? 'TRUE' : 'FALSE', // P
+           p.isListed ? 'TRUE' : 'FALSE', // Q
+           `\t${p.code}`, // R: 加 \t 避免被 Excel 轉成科學記號
+           p.note || '', // S
            cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount 
         ];
      }); 
