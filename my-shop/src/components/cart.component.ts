@@ -97,16 +97,24 @@ import { StoreService, CartItem } from '../services/store.service';
                     </div>
                  </div>
 
-                 <button (click)="proceed()" 
-                    [disabled]="selectedIndices().size === 0 || commonLogistics().shipping.length === 0"
-                    class="w-full py-3.5 rounded-xl font-bold text-lg shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-                    [class.bg-brand-900]="selectedIndices().size > 0 && commonLogistics().shipping.length > 0"
-                    [class.text-white]="selectedIndices().size > 0 && commonLogistics().shipping.length > 0"
-                    [class.bg-gray-200]="selectedIndices().size === 0 || commonLogistics().shipping.length === 0"
-                    [class.text-gray-500]="selectedIndices().size === 0 || commonLogistics().shipping.length === 0"
-                 >
-                    {{ commonLogistics().shipping.length === 0 && selectedIndices().size > 0 ? '物流衝突，請調整選擇' : '前往結帳' }}
-                 </button>
+                 @if (!storeService.currentUser()) {
+                    <button (click)="storeService.loginWithGoogle()" 
+                       class="w-full py-3.5 rounded-xl font-bold text-lg shadow-lg transition-all active:scale-[0.98] bg-gray-800 text-white hover:bg-black flex items-center justify-center gap-2"
+                    >
+                       <span>👤</span> 登入會員以進行結帳
+                    </button>
+                 } @else {
+                    <button (click)="proceed()" 
+                       [disabled]="selectedIndices().size === 0 || commonLogistics().shipping.length === 0"
+                       class="w-full py-3.5 rounded-xl font-bold text-lg shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                       [class.bg-brand-900]="selectedIndices().size > 0 && commonLogistics().shipping.length > 0"
+                       [class.text-white]="selectedIndices().size > 0 && commonLogistics().shipping.length > 0"
+                       [class.bg-gray-200]="selectedIndices().size === 0 || commonLogistics().shipping.length === 0"
+                       [class.text-gray-500]="selectedIndices().size === 0 || commonLogistics().shipping.length === 0"
+                    >
+                       {{ commonLogistics().shipping.length === 0 && selectedIndices().size > 0 ? '物流衝突，請調整選擇' : '前往結帳' }}
+                    </button>
+                 }
               </div>
            </div>
         }
@@ -348,10 +356,7 @@ export class CartComponent {
      return { payment: Array.from(pay), shipping: Array.from(ship) };
   });
 
-  // 計算選中商品的原價總和
   selectedOriginalSubtotal = computed(() => this.checkoutList().reduce((sum, i) => sum + (i.price * i.quantity), 0));
-  
-  // 計算折扣後的小計 (原價 - 折扣)
   selectedSubtotal = computed(() => Math.max(0, this.selectedOriginalSubtotal() - this.storeService.cartDiscount()));
 
   currentShippingFee = computed(() => {

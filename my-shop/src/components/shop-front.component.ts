@@ -91,7 +91,7 @@ import { StoreService, Product } from '../services/store.service';
 
                  @if (product.stock <= 0) {
                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
-                      <div class="bg-white px-3 py-1 sm:px-6 sm:py-2 rounded-full font-bold text-brand-900 text-xs sm:text-base">SOLD OUT</div>
+                      <div class="bg-white px-3 py-1 sm:px-6 py-2 rounded-full font-bold text-brand-900 text-xs sm:text-base">SOLD OUT</div>
                    </div>
                  }
                </div>
@@ -261,20 +261,29 @@ import { StoreService, Product } from '../services/store.service';
                </div>
 
                <div class="p-5 border-t border-gray-100 bg-white z-10 relative shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
-                  <button 
-                    (click)="addToCart()"
-                    [disabled]="selectedProduct()!.options.length > 0 && !selectedOption()"
-                    class="w-full py-4 bg-brand-900 text-white rounded-2xl font-bold text-xl shadow-xl shadow-brand-900/20 hover:bg-black hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-between px-6 group"
-                  >
-                    <div class="flex flex-col items-start">
-                       <span class="text-[10px] text-white/60 font-medium uppercase tracking-wider">Total</span>
-                       <span class="text-xl font-mono">NT$ {{ getPrice(selectedProduct()!) * qty() | number }}</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                       <span>加入購物車</span>
-                       <span class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center text-base group-hover:translate-x-1 transition-transform group-hover:bg-white group-hover:text-brand-900">→</span>
-                    </div>
-                  </button>
+                  @if (!store.currentUser()) {
+                     <button 
+                       (click)="store.loginWithGoogle()"
+                       class="w-full py-4 bg-gray-800 text-white rounded-2xl font-bold text-lg shadow-xl shadow-gray-800/20 hover:bg-black hover:scale-[1.01] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                     >
+                       <span>👤</span> 登入會員以加入購物車
+                     </button>
+                  } @else {
+                     <button 
+                       (click)="addToCart()"
+                       [disabled]="selectedProduct()!.options.length > 0 && !selectedOption()"
+                       class="w-full py-4 bg-brand-900 text-white rounded-2xl font-bold text-xl shadow-xl shadow-brand-900/20 hover:bg-black hover:scale-[1.01] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-between px-6 group"
+                     >
+                       <div class="flex flex-col items-start">
+                          <span class="text-[10px] text-white/60 font-medium uppercase tracking-wider">Total</span>
+                          <span class="text-xl font-mono">NT$ {{ getPrice(selectedProduct()!) * qty() | number }}</span>
+                       </div>
+                       <div class="flex items-center gap-2">
+                          <span>加入購物車</span>
+                          <span class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center text-base group-hover:translate-x-1 transition-transform group-hover:bg-white group-hover:text-brand-900">→</span>
+                       </div>
+                     </button>
+                  }
                </div>
             </div>
           </div>
@@ -305,8 +314,6 @@ export class ShopFrontComponent {
   searchQuery = signal('');
   selectedCategory = signal<string>('all');
   sortOption = signal<'hot'|'price_asc'|'price_desc'|'newest'|'oldest'>('newest');
-  
-  // 🔥 新增：視圖切換狀態 (預設為 grid 宮格)
   viewMode = signal<'grid' | 'list'>('grid');
 
   selectedProduct = signal<Product | null>(null);
