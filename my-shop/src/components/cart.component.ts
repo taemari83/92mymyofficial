@@ -66,9 +66,7 @@ import { StoreService, CartItem } from '../services/store.service';
                       </div>
                    </div>
                    
-                   <button (click)="$event.stopPropagation(); storeService.removeFromCart($index)" class="text-gray-300 hover:text-red-400 p-2">
-                      ✕
-                   </button>
+                   <button (click)="$event.stopPropagation(); storeService.removeFromCart($index)" class="text-gray-300 hover:text-red-400 p-2">✕</button>
                 </div>
               }
            </div>
@@ -95,7 +93,7 @@ import { StoreService, CartItem } from '../services/store.service';
                     </div>
                     <div class="text-right">
                        <div class="text-xs text-gray-400">小計</div>
-                       <div class="text-2xl font-black text-brand-900">NT$ {{ selectedSubtotal() }}</div>
+                       <div class="text-2xl font-black text-brand-900">NT$ {{ storeService.cartTotal() }}</div>
                     </div>
                  </div>
 
@@ -119,15 +117,6 @@ import { StoreService, CartItem } from '../services/store.service';
             <div class="flex items-center gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded-xl transition-colors" (click)="step.set(1)">
                <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">←</div>
                <h3 class="font-bold text-xl text-gray-800">確認結帳資訊</h3>
-            </div>
-
-            <div class="flex gap-2 overflow-x-auto pb-2">
-               @for(item of checkoutList(); track $index) {
-                  <img [src]="item.productImage" class="w-12 h-12 rounded-lg border border-gray-200 object-cover shrink-0">
-               }
-               <div class="flex items-center justify-center w-12 h-12 rounded-lg bg-gray-50 text-xs text-gray-500 font-bold shrink-0">
-                  +{{ checkoutList().length }}
-               </div>
             </div>
 
             <div class="space-y-4">
@@ -159,31 +148,11 @@ import { StoreService, CartItem } from '../services/store.service';
                      </label>
                   }
                </div>
-               
                @if(form.get('paymentMethod')?.value === 'bank_transfer') {
                   <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 border border-blue-100 animate-fade-in">
                      <div class="font-bold mb-1">匯款資訊 (凱基商業銀行 809)</div>
                      <div class="font-mono text-lg">606-904-0006-7288</div>
                      <div class="font-bold mt-1">戶名：蘇*婷</div>
-                     <div class="mt-2 text-xs opacity-70">
-                        * 若您尚未匯款，下方欄位可留空，待匯款後至「會員中心 > 我的訂單」回報即可。
-                     </div>
-                  </div>
-                  <div class="space-y-3 animate-fade-in">
-                     <div>
-                        <label class="text-xs font-bold text-gray-500">匯款戶名</label>
-                        <input formControlName="payName" class="w-full border rounded-lg p-2 mt-1" placeholder="王小美">
-                     </div>
-                     <div class="grid grid-cols-2 gap-3">
-                        <div>
-                           <label class="text-xs font-bold text-gray-500">帳號後五碼</label>
-                           <input formControlName="payLast5" class="w-full border rounded-lg p-2 mt-1" maxlength="5">
-                        </div>
-                        <div>
-                           <label class="text-xs font-bold text-gray-500">匯款日期</label>
-                           <input type="date" formControlName="payDate" class="w-full border rounded-lg p-2 mt-1">
-                        </div>
-                     </div>
                   </div>
                }
             </div>
@@ -217,10 +186,17 @@ import { StoreService, CartItem } from '../services/store.service';
 
             <div class="bg-gray-50 p-4 rounded-xl space-y-2">
                <div class="flex justify-between text-sm">
-                  <span class="text-gray-500">商品小計</span>
-                  <span class="font-bold">NT$ {{ selectedSubtotal() }}</span>
+                  <span class="text-gray-500">商品原價小計</span>
+                  <span class="font-bold">NT$ {{ selectedOriginalSubtotal() }}</span>
                </div>
                
+               @if(storeService.cartDiscount() > 0) {
+                 <div class="flex justify-between text-sm text-red-500 font-bold">
+                    <span>🎉 任選多入優惠折扣</span>
+                    <span>- NT$ {{ storeService.cartDiscount() }}</span>
+                 </div>
+               }
+
                @if(currentShippingFee() > 0) {
                  <div class="flex justify-between text-sm">
                     <span class="text-gray-500">運費</span>
@@ -285,11 +261,8 @@ export class CartComponent {
   step = signal(1);
   selectedIndices = signal<Set<number>>(new Set());
   useCredits = signal(false);
-  
-  // Create a reactive signal for the shipping method to ensure computed values update
   selectedShippingMethod = signal('');
   
-  // Checkout Form
   form: FormGroup = this.fb.group({
      paymentMethod: ['', Validators.required],
      shippingMethod: ['', Validators.required],
@@ -297,13 +270,12 @@ export class CartComponent {
      shipPhone: ['', Validators.required],
      shipAddress: [''],
      shipStore: [''],
-     payName: [''], // Added Account Name
+     payName: [''],
      payLast5: [''],
      payDate: ['']
   });
 
   constructor() {
-     // Auto-select all on load
      effect(() => {
         const len = this.storeService.cart().length;
         if (len > 0 && this.selectedIndices().size === 0) {
@@ -311,10 +283,8 @@ export class CartComponent {
         }
      }, { allowSignalWrites: true });
 
-     // Dynamic Validators
      this.form.get('shippingMethod')?.valueChanges.subscribe(m => {
         this.selectedShippingMethod.set(m);
-
         const addr = this.form.get('shipAddress');
         const store = this.form.get('shipStore');
         
@@ -333,55 +303,21 @@ export class CartComponent {
      });
   }
 
-  // Selection Logic
-  toggleItem(index: number) {
-     this.selectedIndices.update(s => {
-        const n = new Set(s);
-        if (n.has(index)) n.delete(index);
-        else n.add(index);
-        return n;
-     });
-  }
-
-  toggleAll() {
-     if (this.isAllSelected()) {
-        this.selectedIndices.set(new Set());
-     } else {
-        this.selectAll();
-     }
-  }
-
-  selectAll() {
-     const all = new Set<number>();
-     this.storeService.cart().forEach((_, i) => all.add(i));
-     this.selectedIndices.set(all);
-  }
-
-  isAllSelected() {
-     return this.storeService.cart().length > 0 && this.selectedIndices().size === this.storeService.cart().length;
-  }
-  
+  toggleItem(index: number) { this.selectedIndices.update(s => { const n = new Set(s); if (n.has(index)) n.delete(index); else n.add(index); return n; }); }
+  toggleAll() { if (this.isAllSelected()) this.selectedIndices.set(new Set()); else this.selectAll(); }
+  selectAll() { const all = new Set<number>(); this.storeService.cart().forEach((_, i) => all.add(i)); this.selectedIndices.set(all); }
+  isAllSelected() { return this.storeService.cart().length > 0 && this.selectedIndices().size === this.storeService.cart().length; }
   isSelected(i: number) { return this.selectedIndices().has(i); }
-  
-  clearSelected() {
-     const indices = Array.from(this.selectedIndices()).sort((a: number, b: number) => b - a);
-     indices.forEach(i => this.storeService.removeFromCart(i));
-     this.selectedIndices.set(new Set());
-  }
+  clearSelected() { Array.from(this.selectedIndices()).sort((a, b) => b - a).forEach(i => this.storeService.removeFromCart(i)); this.selectedIndices.set(new Set()); }
 
-  getProduct(id: string) { return this.storeService.products().find(p => p.id === id); }
-
-  // Intersection Logic
   checkoutList = computed(() => this.storeService.cart().filter((_, i) => this.selectedIndices().has(i)));
   
   commonLogistics = computed(() => {
      const items = this.checkoutList();
      if (items.length === 0) return { payment: [], shipping: [] };
-
      const settings = this.storeService.settings();
      const allProducts = this.storeService.products();
 
-     // Start with global settings
      let pay = new Set<string>();
      if (settings.paymentMethods.cash) pay.add('cash');
      if (settings.paymentMethods.bankTransfer) pay.add('bank_transfer');
@@ -393,7 +329,6 @@ export class CartComponent {
      if (settings.shipping.methods.family.enabled) ship.add('family');
      if (settings.shipping.methods.delivery.enabled) ship.add('delivery');
 
-     // Intersect with each product's allowed methods
      items.forEach(item => {
         const p = allProducts.find(x => x.id === item.productId);
         if (p) {
@@ -410,35 +345,26 @@ export class CartComponent {
            }
         }
      });
-
      return { payment: Array.from(pay), shipping: Array.from(ship) };
   });
 
-  // Totals
-  selectedSubtotal = computed(() => this.checkoutList().reduce((sum, i) => sum + (i.price * i.quantity), 0));
+  // 計算選中商品的原價總和
+  selectedOriginalSubtotal = computed(() => this.checkoutList().reduce((sum, i) => sum + (i.price * i.quantity), 0));
   
+  // 計算折扣後的小計 (原價 - 折扣)
+  selectedSubtotal = computed(() => Math.max(0, this.selectedOriginalSubtotal() - this.storeService.cartDiscount()));
+
   currentShippingFee = computed(() => {
      const m = this.selectedShippingMethod();
      const settings = this.storeService.settings().shipping;
-     
      if (settings.freeThreshold > 0 && this.selectedSubtotal() >= settings.freeThreshold) return 0;
-
      if (m === 'delivery') return settings.methods.delivery.fee;
      if (m === 'meetup') return settings.methods.meetup.fee;
-     if (m === 'myship') return 0; // 賣貨便0元
-     if (m === 'family') return 0; // 全家0元
-     
+     if (m === 'myship' || m === 'family') return 0;
      return 0;
   });
 
-  // Automatic Discount Logic for Myship/Family
-  currentDiscount = computed(() => {
-    const m = this.selectedShippingMethod();
-    if (m === 'myship' || m === 'family') {
-      return 20; // 扣除尾款
-    }
-    return 0;
-  });
+  currentDiscount = computed(() => (this.selectedShippingMethod() === 'myship' || this.selectedShippingMethod() === 'family') ? 20 : 0);
 
   calculatedCredits = computed(() => {
      if (!this.useCredits()) return 0;
@@ -448,27 +374,15 @@ export class CartComponent {
      return Math.min(max, Math.max(0, sub));
   });
 
-  finalTotal = computed(() => {
-     return Math.max(0, this.selectedSubtotal() + this.currentShippingFee() - this.currentDiscount() - this.calculatedCredits());
-  });
+  finalTotal = computed(() => Math.max(0, this.selectedSubtotal() + this.currentShippingFee() - this.currentDiscount() - this.calculatedCredits()));
 
   toggleCredits(e: Event) { this.useCredits.set((e.target as HTMLInputElement).checked); }
 
   proceed() {
      if (this.selectedIndices().size === 0) return;
-     if (this.commonLogistics().shipping.length === 0) {
-        alert('您選擇的商品物流方式衝突，請重新選擇！');
-        return;
-     }
-
+     if (this.commonLogistics().shipping.length === 0) { alert('您選擇的商品物流方式衝突，請重新選擇！'); return; }
      const user = this.storeService.currentUser();
-     if (user) {
-        this.form.patchValue({
-           shipName: user.name,
-           shipPhone: user.phone,
-           shipAddress: user.address
-        });
-     }
+     if (user) { this.form.patchValue({ shipName: user.name, shipPhone: user.phone, shipAddress: user.address || '' }); }
      this.step.set(2);
   }
 
@@ -478,26 +392,16 @@ export class CartComponent {
         this.storeService.createOrder(
            { name: val.payName, time: val.payDate, last5: val.payLast5 },
            { name: val.shipName, phone: val.shipPhone, address: val.shipAddress, store: val.shipStore },
-           this.calculatedCredits(),
-           val.paymentMethod,
-           val.shippingMethod,
-           this.currentShippingFee(),
-           this.checkoutList()
+           this.calculatedCredits(), val.paymentMethod, val.shippingMethod, this.currentShippingFee(), this.checkoutList()
         );
         this.selectedIndices.set(new Set());
         this.step.set(3);
      }
   }
   
-  goToShop() {
-     this.router.navigate(['/']);
-  }
-  
-  goToMemberOrder() {
-     this.router.navigate(['/member']);
-  }
+  goToShop() { this.router.navigate(['/']); }
+  goToMemberOrder() { this.router.navigate(['/member']); }
 
-  // UI Helpers
   getShippingLabel(m: string) { const map: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; return map[m] || m; }
   getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; return map[m] || m; }
   getPaymentIcon(m: string) { const map: any = { cash: '💵', bank_transfer: '🏦', cod: '🚚' }; return map[m] || ''; }

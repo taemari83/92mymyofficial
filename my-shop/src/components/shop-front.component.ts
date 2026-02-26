@@ -382,7 +382,7 @@ export class ShopFrontComponent {
   }
 
   filteredProducts = computed(() => {
-    let list = [...this.store.visibleProducts()];
+    let list = [...this.store.visibleProducts()]; // 🔥 現在能正確呼叫 visibleProducts 了
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
     const sort = this.sortOption();
