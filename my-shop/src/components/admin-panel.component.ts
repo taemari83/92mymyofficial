@@ -11,7 +11,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
   template: `
     <div class="flex h-screen w-full bg-[#FDFBF9] font-sans overflow-hidden">
       
-      <aside class="w-20 md:w-64 h-full bg-white border-r border-gray-100 flex flex-col shrink-0 z-20 shadow-lg md:shadow-none overflow-y-auto">
+      <aside class="w-20 md:w-64 h-full bg-white border-r border-gray-100 flex flex-col shrink-0 z-20 shadow-lg md:shadow-none overflow-y-auto custom-scrollbar">
         <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start">
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
         </div>
@@ -37,7 +37,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         </div>
       </aside>
 
-      <main class="flex-1 h-full overflow-y-auto bg-[#FDFBF9] p-4 md:p-8 w-full relative">
+      <main class="flex-1 h-full overflow-y-auto custom-scrollbar bg-[#FDFBF9] p-4 md:p-8 w-full relative">
         <div class="flex justify-between items-center mb-6">
            <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
            <div class="flex gap-2"><button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button></div>
@@ -50,7 +50,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center w-full"><div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">本月銷售總額</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">NT$ {{ dashboardMetrics().monthSales | number }}</div><div class="mt-2 text-xs text-green-500 font-bold bg-green-50 px-2 py-1 rounded w-fit">持續成長中 📈</div></div>
               <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center w-full"><div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2">本月預估利潤</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-[#2D5B46] break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthProfit | number)">NT$ {{ dashboardMetrics().monthProfit | number:'1.0-0' }}</div><div class="mt-2 text-xs text-[#5A8C74]">已扣除商品成本</div></div>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2 w-full">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2 w-full custom-scrollbar">
               <div (click)="goToOrders('verifying')" class="bg-white p-6 rounded-[1.5rem] border border-yellow-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl mb-1 group-hover:bg-yellow-200">📝</div><div class="text-2xl md:text-3xl font-black text-yellow-600">{{ dashboardMetrics().toConfirm }}</div><div class="text-sm font-bold text-yellow-800 whitespace-nowrap">未對帳訂單</div></div>
               <div (click)="goToOrders('paid')" class="bg-white p-6 rounded-[1.5rem] border border-green-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xl mb-1 group-hover:bg-green-200">💰</div><div class="text-2xl md:text-3xl font-black text-green-600">{{ dashboardMetrics().toShip }}</div><div class="text-sm font-bold text-green-800 whitespace-nowrap">已付款/待出貨</div></div>
               <div (click)="goToOrders('unpaid')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div><div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div><div class="text-sm font-bold text-gray-600 whitespace-nowrap">未付款</div></div>
@@ -86,7 +86,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (activeTab() === 'orders') {
           <div class="space-y-6 w-full">
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-x-auto w-full">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-x-auto w-full custom-scrollbar">
                
                <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-100 pb-4 items-center">
                  <div class="flex gap-1">
@@ -118,14 +118,14 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                       <input type="text" [(ngModel)]="orderSearch" placeholder="搜尋訂單編號、客戶名稱..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200">
                     </div>
                   </div>
-                  <div class="flex gap-2 w-full md:w-auto overflow-x-auto items-center pb-2">
+                  <div class="flex gap-2 w-full md:w-auto overflow-x-auto items-center pb-2 custom-scrollbar">
                     <button (click)="exportOrdersCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center gap-2 whitespace-nowrap"><span>📥</span> 匯出報表</button>
                     <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
                       @for(tab of orderTabs; track tab.id) { <button (click)="orderStatusTab.set(tab.id)" [class.bg-brand-900]="orderStatusTab() === tab.id" [class.text-white]="orderStatusTab() === tab.id" [class.text-gray-600]="orderStatusTab() !== tab.id" class="px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">{{ tab.label }}</button> }
                     </div>
                   </div>
                </div>
-               <div class="overflow-x-auto w-full">
+               <div class="overflow-x-auto w-full custom-scrollbar">
                  <table class="w-full text-sm text-left whitespace-nowrap">
                    <thead class="bg-[#F9FAFB] text-gray-500 font-medium border-b border-gray-200">
                      <tr>
@@ -182,11 +182,16 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
             
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
               <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
-                <div><h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">商品管理</h3><p class="text-sm text-gray-400 mt-1">管理商品、庫存與定價</p></div> 
+                <div>
+                   <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">商品管理</h3>
+                   <p class="text-sm text-gray-400 mt-1">管理商品、庫存與定價</p>
+                </div> 
                 <div class="flex flex-wrap gap-3 w-full md:w-auto">
-                  <button (click)="exportProductsCSV()" class="px-4 py-3 bg-white border border-gray-200 text-gray-600 rounded-full font-bold hover:bg-gray-50 shadow-sm flex items-center gap-2 whitespace-nowrap"><span>📥</span> 匯出</button>
-                  <label class="flex-1 md:flex-none justify-center flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-brand-900 rounded-full font-bold shadow-sm hover:bg-brand-50 cursor-pointer transition-colors hover:shadow-md whitespace-nowrap"> 
-                    <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> 
+                  <button (click)="exportProductsCSV()" class="px-4 py-3 bg-brand-50 text-brand-700 border border-brand-200 rounded-full font-bold hover:bg-brand-100 shadow-sm flex items-center gap-2 whitespace-nowrap">
+                    <span>📥</span> 匯出標準格式 (可直接上傳)
+                  </button>
+                  <label class="flex-1 md:flex-none justify-center flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-brand-900 rounded-full font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md whitespace-nowrap"> 
+                    <span class="text-lg">📂</span> <span class="text-sm">批量新增/更新</span> 
                     <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
                   </label> 
                   <button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button> 
@@ -293,8 +298,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     <div class="relative w-full lg:w-64 min-w-[200px]"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
                  </div>
               </div>
-              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full">
-                 <div class="overflow-x-auto w-full">
+              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
+                 <div class="overflow-x-auto w-full custom-scrollbar">
                    <table class="w-full text-sm text-left whitespace-nowrap">
                       <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
                         <tr>
@@ -328,17 +333,17 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         @if (activeTab() === 'accounting') {
            <div class="space-y-6 pt-2 w-full">
             <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 w-full">
-               <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1">@for(r of ['today', 'week', 'month', 'custom']; track r) { <button (click)="accountingRange.set(r)" class="px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap" [class.bg-brand-900]="accountingRange() === r" [class.text-white]="accountingRange() === r" [class.bg-gray-100]="accountingRange() !== r" [class.text-gray-500]="accountingRange() !== r"> @switch(r) { @case('today') { 今日 } @case('week') { 本週 } @case('month') { 本月 } @case('custom') { 自訂 } } </button> }</div>
+               <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1 custom-scrollbar">@for(r of ['today', 'week', 'month', 'custom']; track r) { <button (click)="accountingRange.set(r)" class="px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap" [class.bg-brand-900]="accountingRange() === r" [class.text-white]="accountingRange() === r" [class.bg-gray-100]="accountingRange() !== r" [class.text-gray-500]="accountingRange() !== r"> @switch(r) { @case('today') { 今日 } @case('week') { 本週 } @case('month') { 本月 } @case('custom') { 自訂 } } </button> }</div>
                <div class="flex items-center gap-2">@if(accountingRange() === 'custom') { <div class="flex items-center gap-2 animate-fade-in"> <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> <span class="text-gray-400">~</span> <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> </div> }<button (click)="exportToCSV()" class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold hover:bg-green-100 whitespace-nowrap flex items-center gap-1"><span>📊</span> 匯出報表</button></div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full"><div class="bg-brand-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div><div class="relative z-10"><div class="text-brand-200 text-xs font-bold uppercase tracking-widest mb-1">總營收 (已扣除折扣)</div><div class="text-3xl font-black">NT$ {{ accountingStats().revenue | number }}</div></div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">淨利潤</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().profit | number:'1.0-0' }}</div><div class="mt-2 inline-block px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">淨利率 {{ accountingStats().margin | number:'1.1-1' }}%</div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">總成本 (商品+物流)</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().cost | number:'1.0-0' }}</div></div><div class="lg:col-span-3 bg-blue-50/50 p-4 rounded-[2rem] border border-blue-50 flex items-center text-blue-800/70 text-xs leading-relaxed">💡 報表說明：<br>• 上方「總營收/淨利」僅計算已成交訂單 (排除未付款、取消)。<br>• 下方「收款狀態分析」為全狀態統計，方便追蹤現金流。<br>• 貨到付款 (COD) 訂單，在訂單狀態為「已完成」前，皆視為「未收款 (應收帳款)」。</div></div>
             <div class="mt-4 w-full"><h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><span>💰 收款狀態分析</span><span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-normal">Cash Flow</span></h4><div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full"><div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">應收總額</div><div class="text-lg font-black text-gray-800 whitespace-nowrap">\${{ accountingStats().payment.total | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🧾</div></div><div class="bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm relative overflow-hidden"><div class="text-xs text-green-600 font-bold mb-1 uppercase">已實收 (入帳)</div><div class="text-lg font-black text-green-700 whitespace-nowrap">\${{ accountingStats().payment.received | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">💰</div></div><div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm relative overflow-hidden"><div class="text-xs text-yellow-600 font-bold mb-1 uppercase">對帳中</div><div class="text-lg font-black text-yellow-700 whitespace-nowrap">\${{ accountingStats().payment.verifying | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">🔍</div></div><div class="bg-red-50 p-4 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden"><div class="text-xs text-red-600 font-bold mb-1 uppercase">未收款</div><div class="text-lg font-black text-red-700 whitespace-nowrap">\${{ accountingStats().payment.unpaid | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">⚠️</div></div><div class="bg-gray-100 p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden opacity-75"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">待退款</div><div class="text-lg font-black text-gray-600 whitespace-nowrap">\${{ accountingStats().payment.refund | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">↩️</div></div><div class="bg-gray-800 text-white p-4 rounded-2xl border border-gray-700 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-400 font-bold mb-1 uppercase">已退款 (結案)</div><div class="text-lg font-black text-white whitespace-nowrap">\${{ accountingStats().payment.refundedTotal | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-20 text-4xl">💸</div></div></div></div>
-            <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full"><div class="p-6 border-b border-gray-100 bg-gray-50/50"><h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📈 商品毛利分析排行</span></h4></div><div class="overflow-x-auto w-full"><table class="w-full text-sm text-left whitespace-nowrap"><thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase border-b border-gray-200"><tr> <th class="p-4 w-16 text-center">排名</th> <th class="p-4">商品名稱</th> <th class="p-4 text-right">銷售數量</th> <th class="p-4 text-right">總營收</th> <th class="p-4 text-right">總成本</th> <th class="p-4 text-right">總利潤</th> <th class="p-4 text-right">毛利率 %</th> </tr></thead><tbody class="divide-y divide-gray-100">@for(item of productPerformance(); track item.product.id; let i = $index) {<tr class="hover:bg-brand-50/30 transition-colors"><td class="p-4 text-center font-bold text-gray-400 font-mono">{{ i + 1 }}</td><td class="p-4"> <div class="flex items-center gap-3"> <div class="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 shrink-0"> <img [src]="item.product.image" (error)="handleImageError($event)" class="w-full h-full object-cover"> </div> <div> <div class="font-bold text-brand-900">{{ item.product.name }}</div> </div> </div> </td><td class="p-4 text-right font-bold text-gray-600">{{ item.sold }}</td><td class="p-4 text-right font-mono text-gray-500">$ {{ item.revenue | number }}</td><td class="p-4 text-right font-mono text-gray-400">$ {{ item.cost | number:'1.0-0' }}</td><td class="p-4 text-right font-bold text-brand-900 text-base" [class.text-red-500]="item.profit < 0">$ {{ item.profit | number:'1.0-0' }}</td><td class="p-4 text-right"> {{ item.margin | number:'1.1-1' }}% </td></tr>}</tbody></table></div></div>
+            <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full"><div class="p-6 border-b border-gray-100 bg-gray-50/50"><h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📈 商品毛利分析排行</span></h4></div><div class="overflow-x-auto w-full custom-scrollbar"><table class="w-full text-sm text-left whitespace-nowrap"><thead class="bg-gray-50 text-gray-500 font-bold text-xs uppercase border-b border-gray-200"><tr> <th class="p-4 w-16 text-center">排名</th> <th class="p-4">商品名稱</th> <th class="p-4 text-right">銷售數量</th> <th class="p-4 text-right">預估總營收</th> <th class="p-4 text-right">總成本</th> <th class="p-4 text-right">預估總利潤</th> <th class="p-4 text-right">綜合毛利率 %</th> </tr></thead><tbody class="divide-y divide-gray-100">@for(item of productPerformance(); track item.product.id; let i = $index) {<tr class="hover:bg-brand-50/30 transition-colors"><td class="p-4 text-center font-bold text-gray-400 font-mono">{{ i + 1 }}</td><td class="p-4"> <div class="flex items-center gap-3"> <div class="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 shrink-0"> <img [src]="item.product.image" (error)="handleImageError($event)" class="w-full h-full object-cover"> </div> <div> <div class="font-bold text-brand-900">{{ item.product.name }}</div> <div class="text-[10px] text-gray-400">{{ item.hasBulk ? '含多入優惠計算' : '單件計價' }}</div> </div> </div> </td><td class="p-4 text-right font-bold text-gray-600">{{ item.sold }}</td><td class="p-4 text-right font-mono text-gray-500">$ {{ item.revenue | number:'1.0-0' }}</td><td class="p-4 text-right font-mono text-gray-400">$ {{ item.cost | number:'1.0-0' }}</td><td class="p-4 text-right font-bold text-brand-900 text-base" [class.text-red-500]="item.profit < 0">$ {{ item.profit | number:'1.0-0' }}</td><td class="p-4 text-right"> {{ item.margin | number:'1.1-1' }}% </td></tr>}</tbody></table></div></div>
          </div>
         }
 
         @if (activeTab() === 'inventory') {
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full custom-scrollbar">
              <div class="p-6 border-b border-gray-100 flex justify-between items-center"><h3 class="font-bold text-lg text-gray-800">庫存總覽</h3><button (click)="exportInventoryCSV()" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm">📥 匯出盤點單</button></div>
              <div class="overflow-x-auto w-full"><table class="w-full text-sm text-left whitespace-nowrap"><thead class="bg-gray-50 text-gray-500"><tr><th class="p-4">貨號</th><th class="p-4">商品名稱</th><th class="p-4">規格</th><th class="p-4 text-right">剩餘庫存</th><th class="p-4 text-right">已售出</th><th class="p-4">狀態</th></tr></thead><tbody class="divide-y divide-gray-100">@for (p of store.products(); track p.id) {<tr class="hover:bg-gray-50"><td class="p-4 font-mono text-gray-400 text-xs">{{ p.code }}</td><td class="p-4 font-bold text-gray-800">{{ p.name }}</td><td class="p-4 text-gray-500">{{ p.options.join(', ') || '單一規格' }}</td><td class="p-4 text-right font-mono font-bold" [class.text-red-500]="p.stock < 5">{{ p.stock >= 9999 ? '無限' : p.stock }}</td><td class="p-4 text-right text-gray-500">{{ p.soldCount }}</td><td class="p-4">@if(p.stock <= 0) { <span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs font-bold">缺貨</span> }@else if(p.stock < 5) { <span class="bg-red-100 text-red-500 px-2 py-1 rounded text-xs font-bold">低庫存</span> }@else { <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-bold">充足</span> }</td></tr>}</tbody></table></div>
           </div>
@@ -595,7 +600,6 @@ export class AdminPanelComponent {
      return list.sort((a, b) => b.id.localeCompare(a.id));
   });
 
-  // 🔥 修正：加入解析函數，解決找不到 parseCSV 的錯誤
   private parseCSV(text: string): string[][] {
      const rows: string[][] = [];
      let row: string[] = [];
@@ -620,6 +624,7 @@ export class AdminPanelComponent {
      return rows;
   }
 
+  // 🔥 更新：支援「統一格式」的大型批量上傳解析
   async handleBatchImport(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -634,18 +639,23 @@ export class AdminPanelComponent {
 
       for (let i = 1; i < rows.length; i++) {
          const row = rows[i];
+         // 防呆：至少要有 商品名稱(1) 和 分類(2)
          if (row.length < 3 || !row[1] || !row[2]) continue;
-         if (row[1] === '商品名稱' || row[1] === '秋季毛衣') continue;
+         if (row[1] === '商品名稱' || row[1] === '秋季毛衣') continue; // 略過範例列
 
          try {
-            const name = row[1]; const category = row[2];
-            const priceGeneral = Number(row[3]) || 0; const priceVip = Number(row[4]) || 0;
-            const localPrice = Number(row[5]) || 0; const exchangeRate = Number(row[6]) || 0.22;
-            const weight = Number(row[7]) || 0; const shippingCostPerKg = Number(row[8]) || 200;
+            // 對應新的大統一格式：0:SKU, 1:名稱, 2:分類, 3:售價, 4:VIP價, 5:當地原價, 6:匯率, 7:重量, 8:國際運費, 9:額外成本, 10:圖片, 11:規格, 12:庫存, 13:預購, 14:上架, 15:備註, 16:多入數量, 17:多入總價
+            const name = row[1]; 
+            const category = row[2];
+            const priceGeneral = Number(row[3]) || 0; 
+            const priceVip = Number(row[4]) || 0;
+            const localPrice = Number(row[5]) || 0; 
+            const exchangeRate = Number(row[6]) || 0.22;
+            const weight = Number(row[7]) || 0; 
+            const shippingCostPerKg = Number(row[8]) || 200;
             const costMaterial = Number(row[9]) || 0;
 
             const imageRaw = row[10] || '';
-            // 🔥 修正：明確指定變數類型為 string，解決 TypeScript 報錯
             const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
             const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
             const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
@@ -654,9 +664,16 @@ export class AdminPanelComponent {
             const stockInput = Number(row[12]) || 0;
             const isPreorder = row[13]?.trim().toUpperCase() === 'TRUE';
             const isListed = row[14]?.trim().toUpperCase() !== 'FALSE'; 
-            const stock = isPreorder ? 99999 : stockInput;
+            const note = row[15] || '';
             
-            let code = row[15];
+            // 🔥 新增：擷取多入組優惠資料
+            const bulkCount = Number(row[16]) || 0;
+            const bulkTotal = Number(row[17]) || 0;
+
+            const stock = isPreorder ? 99999 : stockInput;
+            const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+            
+            let code = row[0]; // 現在 SKU 是第 0 欄
             if (!code) {
                const codeMap = this.store.settings().categoryCodes || {};
                const prefix = codeMap[category] || 'Z'; 
@@ -665,27 +682,32 @@ export class AdminPanelComponent {
                code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
             }
 
-            const note = row[16] || '';
-            // 🔥 修正：明確指定變數類型為 string，解決 TypeScript 報錯
-            const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+            // 檢查是否已有相同 SKU 的商品（若有則為更新）
+            const existingProduct = this.store.products().find(p => p.code === code);
 
             const p: Product = {
-               id: Date.now().toString() + Math.floor(Math.random() * 1000).toString(), 
+               id: existingProduct?.id || (Date.now().toString() + Math.floor(Math.random() * 1000).toString()), 
                code, name, category, image: mainImage, images: allImages,
                priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
                weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
-               soldCount: 0, country: 'Korea',
+               soldCount: existingProduct?.soldCount || 0, country: 'Korea',
                allowPayment: { cash: true, bankTransfer: true, cod: true },
                allowShipping: { meetup: true, myship: true, family: true, delivery: true },
-               isPreorder, isListed
+               isPreorder, isListed,
+               bulkDiscount: (bulkCount > 1 && bulkTotal > 0) ? { count: bulkCount, total: bulkTotal } : undefined
             };
 
             this.store.addCategory(category);
-            await this.store.addProduct(p);
+            
+            if (existingProduct) {
+               await this.store.updateProduct(p);
+            } else {
+               await this.store.addProduct(p);
+            }
             successCount++;
          } catch (err) { failCount++; }
       }
-      alert(`✅ 批量上架完成！\n成功：${successCount} 筆\n失敗/略過：${failCount} 筆`);
+      alert(`✅ 批量操作完成！\n成功新增/更新：${successCount} 筆\n失敗/略過：${failCount} 筆`);
       event.target.value = ''; 
     };
     reader.readAsText(file, 'UTF-8');
@@ -836,7 +858,29 @@ export class AdminPanelComponent {
   });
 
   accountingInsights = computed(() => ({ topProducts: this.store.products().slice(0,3).map(p => ({ product: p, qty: p.soldCount })), topCustomers: this.store.users().slice(0,3).map(u => ({ name: u.name, spend: u.totalSpend, count: 5 })) }));
-  productPerformance = computed(() => this.store.products().map((p: Product) => { const revenue = p.soldCount * p.priceGeneral; const cost = p.soldCount * (p.localPrice * p.exchangeRate + p.costMaterial); return { product: p, sold: p.soldCount, revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0 }; }).sort((a: any, b: any) => b.profit - a.profit));
+  
+  // 🔥 更新：精準計算「商品毛利分析排行」，若有多入組優惠，會模擬混合計算利潤
+  productPerformance = computed(() => this.store.products().map((p: Product) => { 
+     const costPerUnit = (p.localPrice * p.exchangeRate) + (p.weight * p.shippingCostPerKg) + p.costMaterial;
+     const totalCost = p.soldCount * costPerUnit;
+     
+     let estimatedRevenue = 0;
+     let hasBulk = false;
+
+     if (p.bulkDiscount && p.bulkDiscount.count > 1 && p.bulkDiscount.total > 0 && p.soldCount >= p.bulkDiscount.count) {
+        hasBulk = true;
+        const sets = Math.floor(p.soldCount / p.bulkDiscount.count);
+        const remainder = p.soldCount % p.bulkDiscount.count;
+        estimatedRevenue = (sets * p.bulkDiscount.total) + (remainder * p.priceGeneral);
+     } else {
+        estimatedRevenue = p.soldCount * p.priceGeneral;
+     }
+
+     const profit = estimatedRevenue - totalCost;
+     const margin = estimatedRevenue ? (profit / estimatedRevenue) * 100 : 0;
+
+     return { product: p, sold: p.soldCount, revenue: estimatedRevenue, cost: totalCost, profit: profit, margin: margin, hasBulk }; 
+  }).sort((a: any, b: any) => b.profit - a.profit));
 
   showProductModal = signal(false); editingProduct = signal<Product | null>(null); productForm: FormGroup; tempImages = signal<string[]>([]); formValues = signal<any>({}); 
   categoryCodes = computed(() => this.store.settings().categoryCodes); currentCategoryCode = signal(''); generatedSkuPreview = signal(''); settingsForm: FormGroup;
@@ -891,14 +935,35 @@ export class AdminPanelComponent {
   quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); }
   quickComplete(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'completed'); }
 
-  // 🔥 修正：修正這一段不小心加到 HTML template 的變數衝突
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
   copyOrdersToClipboard() { const list = this.filteredOrders().map((o: Order) => `${o.id}\t${this.getUserName(o.userId)}\tNT$${o.finalTotal}`).join('\n'); navigator.clipboard.writeText(list).then(() => alert('訂單摘要已複製！')); }
   exportOrdersCSV() { const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; const rows = this.filteredOrders().map((o: Order) => [ `\t${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId), payMap[o.paymentMethod] || o.paymentMethod, shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod), o.shippingLink || '', o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') ]); this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); }
-  exportProductsCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '規格', '庫存', '已售', '一般售價', 'VIP價', '本地成本', '匯率', '預估毛利']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.options.join('|'), p.stock, p.soldCount, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, (p.priceGeneral - ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg))).toFixed(0) ]); this.downloadCSV(`商品總表_${new Date().toISOString().slice(0,10)}`, headers, rows); }
   exportCustomersCSV() { const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; const rows = this.filteredUsers().map((u: User) => [ `\t${this.formatMemberNo(u.memberNo)}`, `\t${u.id}`, u.name, `\t${u.phone || ''}`, u.tier === 'vip' ? 'VIP' : (u.tier === 'wholesale' ? '批發' : '一般'), u.totalSpend, u.credits, u.birthday || '' ]); this.downloadCSV(`會員名單_${new Date().toISOString().slice(0,10)}`, headers, rows); }
   exportInventoryCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '庫存數量', '狀態']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') ]); this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); }
   exportToCSV() { const range = this.accountingRange(); const now = new Date(); let startDate: Date | null = null; if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); let list = this.store.orders(); if (startDate) list = list.filter((o: Order) => o.createdAt >= startDate!.getTime()); list = list.filter((o: Order) => !['pending_payment', 'unpaid_alert', 'refunded', 'cancelled'].includes(o.status)); const headers = ['訂單編號', '日期', '商品內容', '總營收', '商品成本', '預估利潤', '毛利率%']; const rows = list.map((o: Order) => { let cost = 0; o.items.forEach((i: CartItem) => { const p = this.store.products().find((x: Product) => x.id === i.productId); if (p) cost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; }); const profit = o.finalTotal - cost; return [ `\t${o.id}`, new Date(o.createdAt).toLocaleDateString(), o.items.map((i: CartItem) => `${i.productName} x${i.quantity}`).join('\n'), o.finalTotal, cost.toFixed(0), profit.toFixed(0), (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) ]; }); this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); }
+
+  // 🔥 更新：大統一格式匯出 (可直接作為批量上傳的模板)
+  exportProductsCSV() { 
+     const headers = [
+       'SKU(貨號)', '商品名稱', '分類', '售價', 'VIP價', '當地原價', '匯率', '重量(kg)', '國際運費/kg', '額外成本(包材)', 
+       '圖片網址(逗號分隔)', '規格(逗號分隔)', '庫存', '是否預購(TRUE/FALSE)', '是否上架(TRUE/FALSE)', '備註',
+       '任選數量(多入優惠)', '優惠總價(多入優惠)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出'
+     ]; 
+     const rows = this.store.products().map((p: Product) => {
+        const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg);
+        const normalProfit = p.priceGeneral - cost;
+        const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠';
+
+        return [ 
+           `\t${p.code}`, p.name, p.category, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial,
+           (p.images && p.images.length > 0) ? p.images.join(',') : p.image,
+           p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', p.note || '',
+           p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', 
+           cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount 
+        ];
+     }); 
+     this.downloadCSV(`商品總表_統一格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }
 
   openProductForm() { 
     this.editingProduct.set(null); this.productForm.reset(); 
