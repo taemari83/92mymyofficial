@@ -40,7 +40,7 @@ import { StoreService, Product } from '../services/store.service';
            </div>
          </div>
          
-         <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide px-2">
+         <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar px-2">
             <button 
               (click)="selectedCategory.set('all')"
               [class.bg-brand-900]="selectedCategory() === 'all'"
@@ -181,8 +181,8 @@ import { StoreService, Product } from '../services/store.service';
                </div>
                
                @if(productImages().length > 1) {
-                  <div class="p-3 md:p-4 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
-                     @for(img of productImages(); track img) {
+                  <div class="p-3 md:p-4 bg-gray-50 border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0 pb-3">
+                     @for(img of productImages(); track $index) {
                         <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-white p-0.5" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
                            <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-contain">
                         </button>
@@ -194,7 +194,7 @@ import { StoreService, Product } from '../services/store.service';
             <div class="md:w-1/2 flex flex-col bg-[#FDFBF9] h-[60vh] md:h-auto relative">
                <button (click)="closeModal()" class="hidden md:flex absolute top-6 right-6 w-10 h-10 bg-gray-100 rounded-full text-gray-500 items-center justify-center hover:bg-gray-200 transition-colors z-20">✕</button>
 
-               <div class="flex-1 overflow-y-auto p-5 md:p-8 scrollbar-hide">
+               <div class="flex-1 overflow-y-auto p-5 md:p-8 custom-scrollbar">
                   <div class="mb-6">
                     <div class="flex justify-between items-start mb-2 pr-10">
                       
@@ -305,6 +305,12 @@ import { StoreService, Product } from '../services/store.service';
     </div>
   `,
   styles: [`
+    /* 🔥 新增：客製化細緻捲軸，讓滑鼠可以順利拖曳，又不會太突兀 */
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     .animate-fade-in { animation: fadeIn 0.2s ease-out; }
