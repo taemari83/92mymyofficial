@@ -48,7 +48,7 @@ export interface StoreSettings {
 export class StoreService {
   private firestore = inject(Firestore);
   private auth = inject(Auth);
-  private gasUrl = "https://script.google.com/macros/s/AKfycbzOKiHDFP3zs5VB4zntpZYB9daht0hL1Lfwlat6otLFJVy48m8CI7rwCHro3u-CrCIk/exec";
+  private gasUrl = "https://script.google.com/macros/s/AKfycbwHQhjL_MDaulYgBtBH07-9eH8U4RJM6lFWE7xcL7qwLeSoMnfe_RzCaXG6KugGPqhv/exec";
   private myShipLink = "https://myship.7-11.com.tw/general/detail/GM2602124017223";
 
   private products$ = collectionData(collection(this.firestore, 'products'), { idField: 'id' }) as Observable<Product[]>;
