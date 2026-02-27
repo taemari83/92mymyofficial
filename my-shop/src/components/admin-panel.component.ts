@@ -17,22 +17,26 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         </div>
       }
 
-      <aside class="w-20 md:w-64 h-full bg-white border-r border-gray-100 flex flex-col shrink-0 z-20 shadow-lg md:shadow-none overflow-y-auto custom-scrollbar">
+      @if (isSidebarOpen()) {
+        <div class="fixed inset-0 bg-black/40 z-[60] md:hidden backdrop-blur-sm transition-opacity" (click)="isSidebarOpen.set(false)"></div>
+      }
+
+      <aside class="fixed inset-y-0 left-0 z-[70] w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-2xl transform transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none" [class.-translate-x-full]="!isSidebarOpen()">
         <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start mt-6 md:mt-0">
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
         </div>
 
         <div class="flex-1 overflow-y-auto py-4 px-2 md:px-3 space-y-1">
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-2 text-center md:text-left">主要功能</div>
-          <button (click)="activeTab.set('dashboard')" [class]="navClass('dashboard')"><span class="text-xl md:text-lg">🏠</span> <span class="hidden md:inline">主控台</span></button>
-          <button (click)="activeTab.set('orders')" [class]="navClass('orders')"><span class="text-xl md:text-lg relative">🛍️@if(pendingCount() > 0) {<span class="absolute -top-1 -right-1 md:hidden bg-red-400 text-white text-[8px] w-3 h-3 flex items-center justify-center rounded-full">{{ pendingCount() }}</span>}</span> <span class="hidden md:inline">訂單管理</span>@if(pendingCount() > 0) {<span class="hidden md:inline ml-auto bg-red-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ pendingCount() }}</span>}</button>
-          <button (click)="activeTab.set('products')" [class]="navClass('products')"><span class="text-xl md:text-lg">📦</span> <span class="hidden md:inline">商品管理</span></button>
-          <button (click)="activeTab.set('customers')" [class]="navClass('customers')"><span class="text-xl md:text-lg">👥</span> <span class="hidden md:inline">客戶管理</span></button>
+          <button (click)="activeTab.set('dashboard'); isSidebarOpen.set(false)" [class]="navClass('dashboard')"><span class="text-xl md:text-lg">🏠</span> <span class="inline">主控台</span></button>
+          <button (click)="activeTab.set('orders'); isSidebarOpen.set(false)" [class]="navClass('orders')"><span class="text-xl md:text-lg relative">🛍️@if(pendingCount() > 0) {<span class="absolute -top-1 -right-1 md:hidden bg-red-400 text-white text-[8px] w-3 h-3 flex items-center justify-center rounded-full">{{ pendingCount() }}</span>}</span> <span class="inline">訂單管理</span>@if(pendingCount() > 0) {<span class="inline ml-auto bg-red-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ pendingCount() }}</span>}</button>
+          <button (click)="activeTab.set('products'); isSidebarOpen.set(false)" [class]="navClass('products')"><span class="text-xl md:text-lg">📦</span> <span class="inline">商品管理</span></button>
+          <button (click)="activeTab.set('customers'); isSidebarOpen.set(false)" [class]="navClass('customers')"><span class="text-xl md:text-lg">👥</span> <span class="inline">客戶管理</span></button>
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">數據分析</div>
-          <button (click)="activeTab.set('accounting')" [class]="navClass('accounting')"><span class="text-xl md:text-lg">📊</span> <span class="hidden md:inline">銷售報表</span></button>
-          <button (click)="activeTab.set('inventory')" [class]="navClass('inventory')"><span class="text-xl md:text-lg">🏭</span> <span class="hidden md:inline">庫存管理</span></button>
+          <button (click)="activeTab.set('accounting'); isSidebarOpen.set(false)" [class]="navClass('accounting')"><span class="text-xl md:text-lg">📊</span> <span class="inline">銷售報表</span></button>
+          <button (click)="activeTab.set('inventory'); isSidebarOpen.set(false)" [class]="navClass('inventory')"><span class="text-xl md:text-lg">🏭</span> <span class="inline">庫存管理</span></button>
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">設定</div>
-           <button (click)="activeTab.set('settings')" [class]="navClass('settings')"><span class="text-xl md:text-lg">⚙️</span> <span class="hidden md:inline">商店設定</span></button>
+           <button (click)="activeTab.set('settings'); isSidebarOpen.set(false)" [class]="navClass('settings')"><span class="text-xl md:text-lg">⚙️</span> <span class="inline">商店設定</span></button>
         </div>
         
         <div class="p-2 md:p-4 border-t border-gray-100">
@@ -40,7 +44,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               <div class="w-8 h-8 rounded-full bg-brand-900 text-white flex items-center justify-center text-xs shrink-0">
                 {{ store.currentUser()?.name?.charAt(0) || 'M' }}
               </div>
-              <div class="text-sm hidden md:block">
+              <div class="text-sm block">
                  <div class="font-bold text-brand-900">{{ store.currentUser()?.name || '請登入' }}</div>
                  <div class="text-xs text-gray-400">{{ store.currentUser()?.isAdmin ? '管理員' : '訪客' }}</div>
               </div>
@@ -49,8 +53,13 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
       </aside>
 
       <main class="flex-1 h-full overflow-y-auto custom-scrollbar bg-[#FDFBF9] p-4 md:p-8 w-full relative">
-        <div class="flex justify-between items-center mb-6 pt-6 md:pt-0">
-           <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
+        <div class="flex justify-between items-center mb-6 pt-2 md:pt-0">
+           <div class="flex items-center gap-3">
+              <button (click)="isSidebarOpen.set(true)" class="md:hidden p-2 -ml-2 bg-white rounded-lg shadow-sm border border-gray-100 text-gray-600 hover:bg-gray-50 flex items-center justify-center h-10 w-10 shrink-0 transition-colors">
+                 <span class="text-xl leading-none">☰</span>
+              </button>
+              <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
+           </div>
            <div class="flex gap-2"><button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button></div>
         </div>
 
@@ -97,9 +106,9 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (activeTab() === 'orders') {
           <div class="space-y-6 w-full">
-            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-x-auto w-full custom-scrollbar">
+            <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-hidden w-full">
                <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-100 pb-4 items-center">
-                 <div class="flex gap-1">
+                 <div class="flex gap-1 overflow-x-auto custom-scrollbar pb-1">
                    @for(range of ['今日', '本週', '本月', '全部']; track range) { 
                      <button (click)="setOrderRange(range)" 
                              [class.text-brand-600]="statsRange() === range" 
@@ -110,13 +119,13 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                      </button> 
                    }
                  </div>
-                 <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200 ml-auto md:ml-4">
+                 <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200 ml-auto md:ml-4 w-full md:w-auto mt-2 md:mt-0 justify-between md:justify-start">
                     <span class="text-xs text-gray-400 font-bold whitespace-nowrap">自訂:</span>
-                    <input type="date" [ngModel]="orderStart()" (ngModelChange)="orderStart.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32">
+                    <input type="date" [ngModel]="orderStart()" (ngModelChange)="orderStart.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-full md:w-32">
                     <span class="text-gray-300">-</span>
-                    <input type="date" [ngModel]="orderEnd()" (ngModelChange)="orderEnd.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32">
+                    <input type="date" [ngModel]="orderEnd()" (ngModelChange)="orderEnd.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-full md:w-32">
                  </div>
-                 <span class="ml-auto md:ml-4 text-xs text-gray-400 flex items-center whitespace-nowrap">📅 {{ now | date:'yyyy/MM/dd' }}</span>
+                 <span class="hidden md:flex ml-4 text-xs text-gray-400 items-center whitespace-nowrap">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                </div>
                
                <div class="flex flex-col xl:flex-row gap-4 justify-between items-center mb-4 w-full">
@@ -127,16 +136,16 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     </div>
                   </div>
                   <div class="flex gap-2 w-full md:w-auto overflow-x-auto items-center pb-2 custom-scrollbar">
-                    <button (click)="exportOrdersCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center gap-2 whitespace-nowrap"><span>📥</span> 匯出報表</button>
-                    <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
+                    <button (click)="exportOrdersCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center gap-2 whitespace-nowrap shrink-0"><span>📥</span> 匯出報表</button>
+                    <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm shrink-0">
                       @for(tab of orderTabs; track tab.id) { <button (click)="orderStatusTab.set(tab.id)" [class.bg-brand-900]="orderStatusTab() === tab.id" [class.text-white]="orderStatusTab() === tab.id" [class.text-gray-600]="orderStatusTab() !== tab.id" class="px-4 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-all">{{ tab.label }}</button> }
                     </div>
                   </div>
                </div>
                
-               <div class="overflow-x-auto w-full custom-scrollbar">
-                 <table class="w-full text-sm text-left whitespace-nowrap">
-                   <thead class="bg-[#F9FAFB] text-gray-500 font-medium border-b border-gray-200">
+               <div class="w-full mt-4">
+                 <table class="w-full text-sm text-left whitespace-nowrap block md:table">
+                   <thead class="bg-[#F9FAFB] text-gray-500 font-medium border-b border-gray-200 hidden md:table-header-group">
                      <tr>
                        <th class="p-4 sticky left-0 z-20 bg-[#F9FAFB] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">商品 訂單資訊</th>
                        <th class="p-4">客戶</th>
@@ -148,22 +157,23 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                        <th class="p-4 text-right">操作</th>
                      </tr>
                    </thead>
-                   <tbody class="divide-y divide-gray-100">
+                   <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
                      @for(order of paginatedOrders(); track order.id) {
-                       <tr class="hover:bg-gray-50 transition-colors group">
-                         <td class="p-4 sticky left-0 z-10 bg-white group-hover:bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors">
+                       <tr class="hover:bg-gray-50 transition-colors group flex flex-col md:table-row border border-gray-200 md:border-transparent rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:bg-transparent shadow-sm md:shadow-none overflow-hidden">
+                         
+                         <td class="p-4 bg-gray-50/50 md:bg-white md:sticky md:left-0 z-10 md:group-hover:bg-gray-50 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
                            <div class="flex gap-3 items-start min-w-[200px]">
                              <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100 mt-1">
                                @if((order.items || []).length > 0) { <img [src]="getThumb(order)" (error)="handleImageError($event)" class="w-full h-full object-cover"> }
                              </div>
-                             <div class="flex-1">
+                             <div class="flex-1 min-w-0">
                                <div class="flex items-center gap-2 mb-1">
-                                 <span class="font-bold text-gray-800 font-mono">#{{ order.id }}</span>
+                                 <span class="font-bold text-gray-800 font-mono text-base md:text-sm">#{{ order.id }}</span>
                                  @if(order.paymentName) { <span class="w-2 h-2 rounded-full bg-blue-500" title="已回報匯款"></span> }
                                </div>
                                <div class="flex flex-col gap-0.5">
                                  @for(item of (order.items || []); track item.productId + item.option) {
-                                   <div class="text-[11px] text-gray-500 truncate max-w-[220px]">
+                                   <div class="text-[11px] md:text-[11px] text-gray-500 truncate max-w-full md:max-w-[220px]">
                                      • {{ item.productName }} <span class="opacity-70">({{ item.option }})</span> <span class="font-bold text-brand-900">x{{ item.quantity }}</span>
                                    </div>
                                  }
@@ -171,13 +181,51 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                              </div>
                            </div>
                          </td>
-                         <td class="p-4"><div class="flex items-center gap-2"><span class="font-medium text-gray-800">{{ getUserName(order.userId) }}</span></div></td>
-                         <td class="p-4">@if(order.paymentMethod === 'bank_transfer') { <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">🏦 轉帳</span> }@else if(order.paymentMethod === 'cod') { <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">🚚 貨到付款</span> }@else { <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">💵 現金</span> }</td>
-                         <td class="p-4 font-bold text-brand-600">NT$ {{ order.finalTotal | number }}</td>
-                         <td class="p-4 whitespace-nowrap"><div class="flex flex-col gap-1"><span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>@if(order.status === 'paid_verifying' && order.paymentLast5) { <div class="text-[10px] text-gray-500 font-mono">後五碼: <span class="font-bold text-brand-900">{{ order.paymentLast5 }}</span></div> }</div></td>
-                         <td class="p-4 whitespace-nowrap"><span [class]="getShippingStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold">{{ getShippingStatusLabel(order.status) }}</span></td>
-                         <td class="p-4 text-gray-400 text-xs">{{ timeAgo(order.createdAt) }}</td>
-                         <td class="p-4 text-right"><div class="flex items-center justify-end gap-2">@if (order.status === 'paid_verifying') { <button (click)="quickConfirm($event, order)" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold whitespace-nowrap">✅ 確認</button> } @else if (order.status === 'payment_confirmed') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap">📦 出貨</button> }@else if (order.status === 'shipped' && order.paymentMethod === 'cod') { <button (click)="quickComplete($event, order)" class="px-3 py-1.5 bg-green-800 text-white rounded-lg text-xs font-bold whitespace-nowrap">💰 確認收款</button> }@else if (order.status === 'refund_needed') { <button (click)="quickRefundDone($event, order)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap">💸 已退款</button> }<button (click)="openAction($event, order)" class="p-2 hover:bg-gray-200 rounded-lg text-gray-400">•••</button></div></td>
+                         
+                         <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100">
+                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">客戶</span>
+                           <div class="text-right md:text-left"><div class="flex items-center gap-2 justify-end md:justify-start"><span class="font-medium text-gray-800">{{ getUserName(order.userId) }}</span></div></div>
+                         </td>
+                         
+                         <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100">
+                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">付款方式</span>
+                           <div class="text-right md:text-left">
+                             @if(order.paymentMethod === 'bank_transfer') { <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">🏦 轉帳</span> }@else if(order.paymentMethod === 'cod') { <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">🚚 貨到付款</span> }@else { <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">💵 現金</span> }
+                           </div>
+                         </td>
+                         
+                         <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-600">
+                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">總金額</span>
+                           <div class="text-right md:text-left text-lg md:text-sm">NT$ {{ order.finalTotal | number }}</div>
+                         </td>
+                         
+                         <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 whitespace-nowrap">
+                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">匯款狀態</span>
+                           <div class="flex flex-col gap-1 items-end md:items-start">
+                             <span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>
+                             @if(order.status === 'paid_verifying' && order.paymentLast5) { <div class="text-[10px] text-gray-500 font-mono">後五碼: <span class="font-bold text-brand-900">{{ order.paymentLast5 }}</span></div> }
+                           </div>
+                         </td>
+                         
+                         <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 whitespace-nowrap">
+                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">物流狀態</span>
+                           <div class="text-right md:text-left"><span [class]="getShippingStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold">{{ getShippingStatusLabel(order.status) }}</span></div>
+                         </td>
+                         
+                         <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 text-gray-400 text-xs">
+                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">下單時間</span>
+                           <div class="text-right md:text-left">{{ timeAgo(order.createdAt) }}</div>
+                         </td>
+                         
+                         <td class="p-4 flex items-center justify-end md:table-cell text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none">
+                           <div class="flex items-center justify-end gap-2">
+                             @if (order.status === 'paid_verifying') { <button (click)="quickConfirm($event, order)" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold whitespace-nowrap">✅ 確認</button> } 
+                             @else if (order.status === 'payment_confirmed') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap">📦 出貨</button> }
+                             @else if (order.status === 'shipped' && order.paymentMethod === 'cod') { <button (click)="quickComplete($event, order)" class="px-3 py-1.5 bg-green-800 text-white rounded-lg text-xs font-bold whitespace-nowrap">💰 確認收款</button> }
+                             @else if (order.status === 'refund_needed') { <button (click)="quickRefundDone($event, order)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap">💸 已退款</button> }
+                             <button (click)="openAction($event, order)" class="p-2 hover:bg-gray-200 bg-white md:bg-transparent rounded-lg text-gray-500 md:text-gray-400 shadow-sm md:shadow-none border border-gray-200 md:border-transparent">•••</button>
+                           </div>
+                         </td>
                        </tr>
                      }
                    </tbody>
@@ -297,36 +345,39 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         
         @if (activeTab() === 'customers') { 
           <div class="space-y-6 w-full">
-              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-wrap lg:flex-nowrap justify-between items-center gap-4 w-full">
-                 <div class="min-w-[150px]"><h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">客戶管理</h3><p class="text-sm text-gray-400 mt-1 whitespace-nowrap">查看會員資料與消費紀錄</p></div>
-                 <div class="flex flex-col items-end gap-3 w-full lg:w-auto justify-end">
-                    <div class="flex flex-wrap items-center justify-end gap-3">
+              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4 w-full">
+                 <div class="min-w-[150px]">
+                    <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">客戶管理</h3>
+                    <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">查看會員資料與消費紀錄</p>
+                 </div>
+                 <div class="flex flex-col w-full lg:w-auto gap-3">
+                    <div class="flex flex-wrap items-center justify-start lg:justify-end gap-3 w-full">
                        <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span><input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"><span class="text-gray-300">-</span><input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"></div>
                        <button (click)="exportCustomersCSV()" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm">📥 匯出</button>
                     </div>
-                    <div class="relative w-full"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
+                    <div class="relative w-full lg:w-80"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
                  </div>
               </div>
               <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
                  <div class="overflow-x-auto w-full custom-scrollbar">
-                   <table class="w-full text-sm text-left whitespace-nowrap">
-                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+                   <table class="w-full text-sm text-left whitespace-nowrap block md:table">
+                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 hidden md:table-header-group">
                         <tr>
                           <th class="p-4 sticky left-0 z-20 bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">會員編號 / Google UID</th>
                           <th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th>
                         </tr>
                       </thead>
-                      <tbody class="divide-y divide-gray-100">
+                      <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
                          @for(u of paginatedUsers(); track u.id) {
-                            <tr class="hover:bg-gray-50 transition-colors group">
-                               <td class="p-4 sticky left-0 z-10 bg-white group-hover:bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors">
+                            <tr class="hover:bg-gray-50 transition-colors group flex flex-col md:table-row border border-gray-200 md:border-transparent rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:bg-transparent shadow-sm md:shadow-none overflow-hidden">
+                               <td class="p-4 bg-gray-50/50 md:bg-white md:sticky md:left-0 z-10 md:group-hover:bg-gray-50 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
                                   <div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u.memberNo) }}</span><div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div>
                                </td>
-                               <td class="p-4"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></td>
-                               <td class="p-4">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</td>
-                               <td class="p-4 text-right font-bold text-brand-900">NT$ {{ u.totalSpend | number }}</td>
-                               <td class="p-4 text-right text-brand-600 font-bold">{{ u.credits }}</td>
-                               <td class="p-4 text-right"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-3 py-1 rounded-lg transition-colors">編輯</button></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-900 md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">累積消費</span><div class="text-right">NT$ {{ u.totalSpend | number }}</div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 text-brand-600 font-bold md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">購物金</span><div class="text-right">{{ u.credits }}</div></td>
+                               <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-600 md:text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-4 py-2 md:px-3 md:py-1 rounded-lg transition-colors bg-white md:bg-transparent shadow-sm md:shadow-none">編輯</button></td>
                             </tr>
                          } @empty {
                             <tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold">找不到相符的會員資料</td></tr>
@@ -406,7 +457,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="space-y-10"> 
                 <div class="space-y-4"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg text-lg">💳</span> 收款方式</h4><div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableCash" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">現金付款</span></label><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableBank" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">銀行轉帳</span></label><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableCod" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">貨到付款</span></label></div></div>
                 <div class="space-y-6" formGroupName="shipping"><div class="flex justify-between items-end"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-green-100 text-green-600 p-1.5 rounded-lg text-lg">🚚</span> 物流設定</h4><div class="flex items-center gap-2"><span class="text-sm font-bold text-gray-500">全館免運門檻 $</span><input type="number" formControlName="freeThreshold" class="w-24 border border-gray-200 rounded-lg p-2 text-center font-bold"></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4" formGroupName="methods"><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="meetup"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 面交自取</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="myship"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 7-11 賣貨便</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="family"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 全家 好賣家</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="delivery"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 宅配寄送</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div></div></div>
-                <div class="space-y-4"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-yellow-100 text-yellow-600 p-1.5 rounded-lg text-lg">🎁</span> 會員回饋 (生日禮金)</h4><div class="grid grid-cols-2 gap-6"><div><label class="block text-xs font-bold text-gray-500 mb-1">一般會員生日禮 ($)</label><input type="number" formControlName="birthdayGiftGeneral" class="w-full border border-gray-200 rounded-xl p-3 font-bold"></div><div><label class="block text-xs font-bold text-gray-500 mb-1">VIP 生日禮 ($)</label><input type="number" formControlName="birthdayGiftVip" class="w-full border border-gray-200 rounded-xl p-3 font-bold"></div></div></div>
+                <div class="space-y-4"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-yellow-100 text-yellow-600 p-1.5 rounded-lg text-lg">🎁</span> 會員回饋 (生日禮金)</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div><label class="block text-xs font-bold text-gray-500 mb-1">一般會員生日禮 ($)</label><input type="number" formControlName="birthdayGiftGeneral" class="w-full border border-gray-200 rounded-xl p-3 font-bold"></div><div><label class="block text-xs font-bold text-gray-500 mb-1">VIP 生日禮 ($)</label><input type="number" formControlName="birthdayGiftVip" class="w-full border border-gray-200 rounded-xl p-3 font-bold"></div></div></div>
                 
                 <div class="space-y-4">
                    <h4 class="font-bold text-gray-600 flex items-center gap-2">
@@ -436,7 +487,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         }
 
         @if (showProductModal()) { 
-          <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeProductModal()"> 
+          <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeProductModal()"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
               <div class="p-6 border-b border-gray-100 flex justify-between items-center"> 
                 <h3 class="text-xl font-bold text-brand-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3> 
@@ -444,7 +495,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </div> 
               <div class="p-6 overflow-y-auto flex-1 custom-scrollbar"> 
                 <form [formGroup]="productForm" class="space-y-4"> 
-                  <div class="grid grid-cols-2 gap-4"> 
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label> <input formControlName="name" class="w-full p-2 border rounded-lg"> </div> 
                     <div> 
                       <label class="block text-xs font-bold text-gray-500 mb-1">分類</label> 
@@ -468,7 +519,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">重量 kg</label> <input type="number" formControlName="weight" step="0.1" class="w-full p-2 border rounded-lg bg-white"> </div> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">國際運費/kg</label> <input type="number" formControlName="shippingCostPerKg" class="w-full p-2 border rounded-lg bg-white"> </div> 
                      </div> 
-                     <div class="grid grid-cols-2 gap-4"> 
+                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本 (包材/加工)</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> 
                         <div class="flex flex-col justify-end"> <div class="text-xs text-gray-500 mb-1">預估總成本 (NT$)</div> <div class="text-xl font-bold text-gray-800 bg-white px-3 py-1.5 rounded border border-gray-200"> {{ estimatedCost() | number:'1.0-0' }} </div> </div> 
                      </div> 
@@ -481,13 +532,13 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                      </div> 
                   </div> 
 
-                  <div class="grid grid-cols-2 gap-4"> 
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">售價 (NT$)</label> <input type="number" formControlName="priceGeneral" class="w-full p-2 border rounded-lg"> </div> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-2 border rounded-lg"> </div> 
                   </div> 
 
-                  <div class="grid grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-200 mt-4">
-                     <div class="col-span-2 flex items-center justify-between border-b border-red-200 pb-2">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-200 mt-4">
+                     <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-red-200 pb-2">
                        <h4 class="font-bold text-red-600 text-sm flex items-center gap-1"><span>🔥</span> 多入組優惠設定 (選填)</h4>
                        <span class="text-[10px] text-red-400">例如: 任選 3 件 $1000</span>
                      </div>
@@ -495,7 +546,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                      <div> <label class="block text-xs font-bold text-red-500 mb-1">優惠總價 (NT$)</label> <input type="number" formControlName="bulkTotal" class="w-full p-2 border border-red-200 rounded-lg focus:outline-none focus:border-red-400" placeholder="例如: 1000"> </div>
                   </div>
                   
-                  <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                      <label class="flex items-center gap-3 cursor-pointer select-none">
                         <input type="checkbox" formControlName="isPreorder" class="w-5 h-5 rounded text-blue-600">
                         <span class="font-bold text-gray-700">這是一個「預購」商品</span>
@@ -506,7 +557,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                      </label>
                   </div>
 
-                  <div class="grid grid-cols-2 gap-4"> 
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> 
                       <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> 
                       @if(formValues().isPreorder) {
@@ -532,7 +583,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         }
 
         @if (showUserModal()) { 
-          <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeUserModal()"> 
+          <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeUserModal()"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
               <div class="p-6 border-b border-gray-100 flex justify-between items-center"> 
                 <h3 class="text-xl font-bold text-brand-900">編輯會員資料</h3> 
@@ -544,11 +595,11 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     <label class="block text-xs font-bold text-gray-500 mb-1">會員 ID (無法修改)</label> 
                     <div class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-mono font-bold text-gray-600">{{ editingUser()?.id }}</div> 
                   </div> 
-                  <div class="grid grid-cols-2 gap-4"> 
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">姓名</label> <input formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl"> </div> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">電話</label> <input formControlName="phone" class="w-full p-3 border border-gray-200 rounded-xl"> </div> 
                   </div> 
-                  <div class="grid grid-cols-2 gap-4"> 
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">生日</label> <input type="date" formControlName="birthday" class="w-full p-3 border border-gray-200 rounded-xl"> </div> 
                     <div> 
                       <label class="block text-xs font-bold text-gray-500 mb-1">會員等級</label> 
@@ -559,7 +610,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                       </select> 
                     </div> 
                   </div> 
-                  <div class="grid grid-cols-2 gap-4"> 
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">購物金餘額 ($)</label> <input type="number" formControlName="credits" class="w-full p-3 border border-gray-200 rounded-xl font-bold text-brand-600"> </div> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">累積消費 ($)</label> <input type="number" formControlName="totalSpend" class="w-full p-3 border border-gray-200 rounded-xl font-bold text-gray-800"> </div> 
                   </div> 
@@ -575,7 +626,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         }
 
         @if (actionModalOrder(); as o) { 
-          <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4" (click)="closeActionModal()"> 
+          <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] flex items-center justify-center p-4" (click)="closeActionModal()"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-fade-in flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()"> 
               
               <div class="p-6 border-b border-gray-100 bg-gray-50 shrink-0"> 
@@ -698,6 +749,7 @@ export class AdminPanelComponent {
   activeTab = signal('dashboard');
   productSearch = signal('');
   productViewMode = signal<'list' | 'grid'>('list');
+  isSidebarOpen = signal(false);
 
   filteredAdminProducts = computed(() => {
     const q = this.productSearch().toLowerCase();
