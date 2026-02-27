@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService } from '../services/store.service';
@@ -67,13 +67,13 @@ import { StoreService } from '../services/store.service';
           <div class="mt-4 pt-4 border-t border-gray-100">
             <h3 class="font-bold text-gray-800 text-lg mb-4">📦 我的訂單紀錄</h3>
             
-            @if(storeService.orders().length === 0) {
+            @if(sortedOrders().length === 0) {
               <div class="text-center text-gray-400 py-4 text-sm bg-gray-50 rounded-lg">
                 目前沒有訂單紀錄
               </div>
             } @else {
               <div class="space-y-4">
-                @for(order of storeService.orders(); track order.id) {
+                @for(order of sortedOrders(); track order.id) {
                   <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:border-gray-300 transition-colors">
                     
                     <div class="flex justify-between items-center mb-2">
@@ -142,6 +142,11 @@ import { StoreService } from '../services/store.service';
 })
 export class MemberAreaComponent {
   storeService = inject(StoreService);
+
+  // 🔥 新增：動態計算屬性，將原始訂單依照 createdAt 時間戳記由大到小（最新到最舊）排序
+  sortedOrders = computed(() => {
+    return [...this.storeService.orders()].sort((a, b) => b.createdAt - a.createdAt);
+  });
 
   async loginWithGoogle() {
     await this.storeService.loginWithGoogle();
