@@ -391,16 +391,32 @@ export class CartComponent {
      this.step.set(2);
   }
 
-  submit() {
+  async submit() {
      if (this.form.valid) {
         const val = this.form.value;
-        this.storeService.createOrder(
-           { name: val.payName, time: val.payDate, last5: val.payLast5 },
-           { name: val.shipName, phone: val.shipPhone, address: val.shipAddress, store: val.shipStore },
-           this.calculatedCredits(), val.paymentMethod, val.shippingMethod, this.currentShippingFee(), this.checkoutList()
-        );
-        this.selectedIndices.set(new Set());
-        this.step.set(3);
+        try {
+           // 1. 加上 await，等待訂單建立完成
+           const orderResult = await this.storeService.createOrder(
+              { name: val.payName, time: val.payDate, last5: val.payLast5 },
+              { name: val.shipName, phone: val.shipPhone, address: val.shipAddress, store: val.shipStore },
+              this.calculatedCredits(), val.paymentMethod, val.shippingMethod, this.currentShippingFee(), this.checkoutList()
+           );
+
+           // 2. 如果回傳 null，代表可能未登入或發生其他預期內的錯誤
+           if (!orderResult) {
+              alert('結帳失敗，請確認登入狀態後重試！');
+              return;
+           }
+
+           // 3. 確定成功後，才清空選擇並跳轉到成功畫面
+           this.selectedIndices.set(new Set());
+           this.step.set(3);
+           
+        } catch (error: any) {
+           // 4. 如果 Firebase 報錯，攔截它並顯示給用戶
+           console.error('結帳發生錯誤:', error);
+           alert('結帳過程中發生錯誤，請稍後再試！\n' + (error.message || ''));
+        }
      }
   }
   

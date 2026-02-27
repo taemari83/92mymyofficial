@@ -170,14 +170,6 @@ export class StoreService {
     // 🔥 儲存訂單
     await setDoc(doc(this.firestore, 'orders', orderId), orderData);
 
-    // 🔥 自動增加商品的已售出數量 (soldCount)
-    checkoutItems.forEach(item => {
-       const p = this.products().find(x => x.id === item.productId);
-       if (p) {
-          updateDoc(doc(this.firestore, 'products', p.id), { soldCount: (p.soldCount || 0) + item.quantity }).catch(e => console.error(e));
-       }
-    });
-
     fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'new_order', orderId: orderId, total: finalTotal, name: orderData.userName, email: user.email }) }).catch(e => console.error(e));
     this.cart.update(current => current.filter(c => !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)));
     return orderData;
