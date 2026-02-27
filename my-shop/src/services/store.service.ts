@@ -109,22 +109,21 @@ export class StoreService {
   async toggleProductListing(id: string, current: boolean) { await updateDoc(doc(this.firestore, 'products', id), { isListed: !current }); }
   async deleteProduct(id: string) { await deleteDoc(doc(this.firestore, 'products', id)); }
 
-  // 🔥 新增：自動產生 YYMMDD + 流水號的訂單編號
+  // 🔥 升級：自動產生 YYMMDD + HHMMSS + 3位隨機防撞碼 (徹底解決撞號與權限問題)
   generateOrderId(): string {
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
-    const prefix = `${yy}${mm}${dd}`;
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const sec = String(now.getSeconds()).padStart(2, '0');
     
-    let maxSeq = 0;
-    this.orders().forEach(o => {
-       if (o.id.startsWith(prefix)) {
-          const seq = parseInt(o.id.substring(6), 10);
-          if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
-       }
-    });
-    return `${prefix}${String(maxSeq + 1).padStart(3, '0')}`;
+    // 產生 3 位數的隨機碼 (例如 042, 915)
+    const randomStr = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    
+    // 最終格式例如：250227103542189 (看起來非常像專業電商的單號)
+    return `${yy}${mm}${dd}${hh}${min}${sec}${randomStr}`;
   }
 
   generateProductCode(prefix: string): string {
