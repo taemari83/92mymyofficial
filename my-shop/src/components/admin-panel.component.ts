@@ -375,7 +375,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                          @for(u of paginatedUsers(); track u.id) {
                             <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden">
                                <td class="p-4 bg-gray-50/50 md:bg-white group-even:md:bg-[#F8FAFC] group-hover:md:bg-[#F0F7FF] md:sticky md:left-0 z-10 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
-                                  <div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u.memberNo) }}</span><div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div>
+                                  <div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u) }}</span><div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div>
                                </td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
@@ -472,7 +472,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                          <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
                             <input type="text" [value]="cat" (change)="renameCategory(cat, $any($event.target).value)" class="flex-1 min-w-[120px] border border-transparent hover:border-gray-200 outline-none font-bold text-sm text-gray-700 bg-transparent focus:ring-1 focus:ring-brand-200 rounded px-2 py-1" title="點擊修改名稱">
                             <span class="text-xs text-gray-400 font-bold ml-auto sm:ml-2">SKU代碼:</span>
-                            <input type="text" [value]="categoryCodes()[cat] || ''" (change)="updateCategoryCode(cat, $any($event.target).value)" class="w-12 border border-gray-200 rounded px-1 py-1 uppercase text-center font-mono font-bold text-brand-900 focus:outline-none focus:border-brand-300 shadow-inner" maxlength="1" placeholder="?">
+                            <input type="text" [value]="categoryCodes()[cat] || ''" (change)="updateCategoryCode(cat, $any($event.target).value)" class="w-16 border border-gray-200 rounded px-1 py-1 uppercase text-center font-mono font-bold text-brand-900 focus:outline-none focus:border-brand-300 shadow-inner" maxlength="3" placeholder="ABC">
                             <button type="button" (click)="deleteCategory(cat)" class="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此分類">✕</button>
                          </div> 
                       }
@@ -480,7 +480,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                          <input #newCatInput type="text" placeholder="輸入新分類名稱..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-300 shadow-inner">
                          <button type="button" (click)="addNewCategory(newCatInput.value); newCatInput.value=''" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-black whitespace-nowrap">＋ 新增分類</button>
                       </div>
-                      <p class="text-xs text-gray-400 mt-2">* SKU 代碼請輸入單一英文字母 (A-Z)，用於貨號開頭 (例如: A250520001)</p>
+                      <p class="text-xs text-gray-400 mt-2">* SKU 代碼建議輸入 1~3 個英文字母 (A-Z)，用於貨號開頭 (例如: TS250520001)</p>
                    </div>
                 </div>
 
@@ -510,7 +510,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                             @for(c of store.categories(); track c) { <option [value]="c"></option> } 
                           </datalist> 
                         </div> 
-                        <div class="w-20"> <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-2 border rounded-lg text-center font-mono font-bold uppercase bg-gray-50" placeholder="代碼" maxlength="1" title="分類代碼 (例如 A)"> </div> 
+                        <div class="w-20"> <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-2 border rounded-lg text-center font-mono font-bold uppercase bg-gray-50" placeholder="代碼" maxlength="3" title="分類代碼 (例如 TS)"> </div> 
                       </div> 
                     </div> 
                   </div> 
@@ -1067,7 +1067,6 @@ export class AdminPanelComponent {
     this.userForm = this.fb.group({ name: ['', Validators.required], phone: [''], birthday: [''], tier: ['general'], credits: [0], totalSpend: [0], note: [''] });
   }
 
-  // 🔥 新增：動態計算會員的真實累積消費
   calculateUserTotalSpend(userId: string): number {
     const validStatuses = ['payment_confirmed', 'pending_shipping', 'shipped', 'arrived_notified', 'picked_up', 'completed'];
     return this.store.orders()
@@ -1087,6 +1086,13 @@ export class AdminPanelComponent {
   getThumb(o: Order) { return o.items[0]?.productImage; } 
   timeAgo(ts: number) { const mins = Math.floor((Date.now() - ts) / 60000); if(mins < 60) return `${mins} 分鐘前`; const hours = Math.floor(mins / 60); if(hours < 24) return `${hours} 小時前`; return `${Math.floor(hours/24)} 天前`; }
   
+  formatMemberNo(u: User): string { 
+    const no = u.memberNo || u.memberId;
+    if (!no) return u.id; 
+    if (no.includes('/')) return 'M' + no.replace(/\//g, ''); 
+    return no; 
+  }
+
   getPaymentStatusLabel(s: string, method?: string) { const map: any = { pending_payment: '未付款', paid_verifying: '對帳中', unpaid_alert: '逾期未付', refund_needed: '需退款', refunded: '已退款', payment_confirmed: method === 'cod' ? '待出貨 (未入帳)' : '已付款', pending_shipping: '待出貨', arrived_notified: method === 'cod' ? '已貨到通知 (未入帳)' : '已付款', shipped: method === 'cod' ? '已出貨 (未入帳)' : '已出貨', picked_up: method === 'cod' ? '已取貨 (未撥款)' : '已取貨', completed: '已完成 (已入帳)', cancelled: '🚫 已取消' }; return map[s] || s; } 
   getPaymentStatusClass(s: string) { if(s==='payment_confirmed') return 'bg-green-100 text-green-700'; if(s==='paid_verifying') return 'bg-yellow-100 text-yellow-700'; if(s==='pending_payment' || s==='unpaid_alert') return 'bg-red-50 text-red-500'; if(s==='refunded') return 'bg-gray-200 text-gray-500 line-through'; if(s==='cancelled') return 'bg-gray-200 text-gray-400 border border-gray-300'; if(s==='refund_needed') return 'bg-red-100 text-red-700 font-bold border border-red-200'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-green-600 text-white font-bold'; return 'bg-gray-100 text-gray-500'; } 
   getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', pending_shipping: '待出貨', shipped: '已出貨', arrived_notified: '已貨到門市', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
@@ -1094,7 +1100,6 @@ export class AdminPanelComponent {
   
   getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; return map[m] || m; }
   getShippingLabel(m: string) { const map: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; return map[m] || m; }
-  formatMemberNo(no?: string): string { if (!no) return '舊會員 (待更新)'; if (no.includes('/')) return 'M' + no.replace(/\//g, ''); return no; }
   
   openAction(e: Event, order: Order) { e.stopPropagation(); this.actionModalOrder.set(order); this.cancelConfirmState.set(false); } 
   closeActionModal() { this.actionModalOrder.set(null); } 
@@ -1117,7 +1122,7 @@ export class AdminPanelComponent {
   exportCustomersCSV() { 
      const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
      const rows = this.filteredUsers().map((u: User) => [ 
-        `\t${this.formatMemberNo(u.memberNo)}`, 
+        `\t${this.formatMemberNo(u)}`, 
         `\t${u.id}`, 
         u.name, 
         `\t${u.phone || ''}`, 
