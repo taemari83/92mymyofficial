@@ -160,11 +160,11 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                        <th class="p-4 text-right bg-[#F9FAFB]">操作</th>
                      </tr>
                    </thead>
-                   <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
+                   <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-200">
                      @for(order of paginatedOrders(); track order.id) {
-                       <tr class="hover:bg-gray-50 transition-colors group flex flex-col md:table-row border border-gray-200 md:border-transparent rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:bg-transparent shadow-sm md:shadow-none overflow-hidden">
+                       <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden">
                          
-                         <td class="p-4 bg-gray-50/50 md:bg-white md:sticky md:left-0 z-10 md:group-hover:bg-gray-50 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
+                         <td class="p-4 bg-gray-50/50 md:bg-white group-even:md:bg-[#F8FAFC] group-hover:md:bg-[#F0F7FF] md:sticky md:left-0 z-10 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
                            <div class="flex gap-3 items-start min-w-[200px]">
                              <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100 mt-1">
                                @if((order.items || []).length > 0) { <img [src]="getThumb(order)" (error)="handleImageError($event)" class="w-full h-full object-cover"> }
@@ -226,7 +226,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                              @else if (order.status === 'payment_confirmed') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap">📦 出貨</button> }
                              @else if (order.status === 'shipped' && order.paymentMethod === 'cod') { <button (click)="quickComplete($event, order)" class="px-3 py-1.5 bg-green-800 text-white rounded-lg text-xs font-bold whitespace-nowrap">💰 確認收款</button> }
                              @else if (order.status === 'refund_needed') { <button (click)="quickRefundDone($event, order)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap">💸 已退款</button> }
-                             <button (click)="openAction($event, order)" class="p-2 hover:bg-gray-200 rounded-lg text-gray-500 shadow-sm border border-gray-200 md:border-transparent md:bg-transparent bg-white transition-colors">•••</button>
+                             <button (click)="openAction($event, order)" class="p-2 hover:bg-white/50 rounded-lg text-gray-500 shadow-sm border border-gray-200 md:border-transparent md:bg-transparent bg-white transition-colors">•••</button>
                            </div>
                          </td>
                          
@@ -371,17 +371,15 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                           <th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th>
                         </tr>
                       </thead>
-                      <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
+                      <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-200">
                          @for(u of paginatedUsers(); track u.id) {
-                            <tr class="hover:bg-gray-50 transition-colors group flex flex-col md:table-row border border-gray-200 md:border-transparent rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:bg-transparent shadow-sm md:shadow-none overflow-hidden">
-                               <td class="p-4 bg-gray-50/50 md:bg-white md:sticky md:left-0 z-10 md:group-hover:bg-gray-50 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
+                            <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden">
+                               <td class="p-4 bg-gray-50/50 md:bg-white group-even:md:bg-[#F8FAFC] group-hover:md:bg-[#F0F7FF] md:sticky md:left-0 z-10 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
                                   <div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u.memberNo) }}</span><div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div>
                                </td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
-                               
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-900 md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">累積消費</span><div class="text-right">NT$ {{ calculateUserTotalSpend(u.id) | number }}</div></td>
-                               
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 text-brand-600 font-bold md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">購物金</span><div class="text-right">{{ u.credits }}</div></td>
                                <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-600 md:text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-4 py-2 md:px-3 md:py-1 rounded-lg transition-colors bg-white md:bg-transparent shadow-sm md:shadow-none">編輯</button></td>
                             </tr>
@@ -1089,7 +1087,6 @@ export class AdminPanelComponent {
   getThumb(o: Order) { return o.items[0]?.productImage; } 
   timeAgo(ts: number) { const mins = Math.floor((Date.now() - ts) / 60000); if(mins < 60) return `${mins} 分鐘前`; const hours = Math.floor(mins / 60); if(hours < 24) return `${hours} 小時前`; return `${Math.floor(hours/24)} 天前`; }
   
-  // 🔥 更新：全面中文化對照字典
   getPaymentStatusLabel(s: string, method?: string) { const map: any = { pending_payment: '未付款', paid_verifying: '對帳中', unpaid_alert: '逾期未付', refund_needed: '需退款', refunded: '已退款', payment_confirmed: method === 'cod' ? '待出貨 (未入帳)' : '已付款', pending_shipping: '待出貨', arrived_notified: method === 'cod' ? '已貨到通知 (未入帳)' : '已付款', shipped: method === 'cod' ? '已出貨 (未入帳)' : '已出貨', picked_up: method === 'cod' ? '已取貨 (未撥款)' : '已取貨', completed: '已完成 (已入帳)', cancelled: '🚫 已取消' }; return map[s] || s; } 
   getPaymentStatusClass(s: string) { if(s==='payment_confirmed') return 'bg-green-100 text-green-700'; if(s==='paid_verifying') return 'bg-yellow-100 text-yellow-700'; if(s==='pending_payment' || s==='unpaid_alert') return 'bg-red-50 text-red-500'; if(s==='refunded') return 'bg-gray-200 text-gray-500 line-through'; if(s==='cancelled') return 'bg-gray-200 text-gray-400 border border-gray-300'; if(s==='refund_needed') return 'bg-red-100 text-red-700 font-bold border border-red-200'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-green-600 text-white font-bold'; return 'bg-gray-100 text-gray-500'; } 
   getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', pending_shipping: '待出貨', shipped: '已出貨', arrived_notified: '已貨到門市', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
@@ -1117,7 +1114,6 @@ export class AdminPanelComponent {
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
   exportOrdersCSV() { const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; const rows = this.filteredOrders().map((o: Order) => [ `\t${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId), payMap[o.paymentMethod] || o.paymentMethod, shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod), o.shippingLink || '', o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') ]); this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
   
-  // 🔥 更新：匯出報表的金額也改為動態計算
   exportCustomersCSV() { 
      const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
      const rows = this.filteredUsers().map((u: User) => [ 
@@ -1172,7 +1168,6 @@ export class AdminPanelComponent {
 
   editUser(u: User) { this.openUserModal(u); } 
   
-  // 🔥 更新：開啟編輯視窗時，順便計算並帶入最新的累積消費
   openUserModal(u: User) { 
      this.editingUser.set(u); 
      const calculatedTotal = this.calculateUserTotalSpend(u.id);
