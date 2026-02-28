@@ -379,7 +379,9 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                                </td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
-                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-900 md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">累積消費</span><div class="text-right">NT$ {{ u.totalSpend | number }}</div></td>
+                               
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-900 md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">累積消費</span><div class="text-right">NT$ {{ calculateUserTotalSpend(u.id) | number }}</div></td>
+                               
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 text-brand-600 font-bold md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">購物金</span><div class="text-right">{{ u.credits }}</div></td>
                                <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-600 md:text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-4 py-2 md:px-3 md:py-1 rounded-lg transition-colors bg-white md:bg-transparent shadow-sm md:shadow-none">編輯</button></td>
                             </tr>
@@ -616,7 +618,10 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   </div> 
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">購物金餘額 ($)</label> <input type="number" formControlName="credits" class="w-full p-3 border border-gray-200 rounded-xl font-bold text-brand-600"> </div> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">累積消費 ($)</label> <input type="number" formControlName="totalSpend" class="w-full p-3 border border-gray-200 rounded-xl font-bold text-gray-800"> </div> 
+                    <div> 
+                       <label class="block text-xs font-bold text-gray-500 mb-1">累積消費 ($) <span class="text-brand-600 font-normal ml-1 text-[10px]">(自動計算)</span></label> 
+                       <input type="number" formControlName="totalSpend" readonly class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 cursor-not-allowed" title="系統將自動根據有效訂單加總"> 
+                    </div> 
                   </div> 
                   <div> <label class="block text-xs font-bold text-gray-500 mb-1">管理員備註</label> <textarea formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl" rows="3"></textarea> </div> 
                 </form> 
@@ -1064,6 +1069,14 @@ export class AdminPanelComponent {
     this.userForm = this.fb.group({ name: ['', Validators.required], phone: [''], birthday: [''], tier: ['general'], credits: [0], totalSpend: [0], note: [''] });
   }
 
+  // 🔥 新增：動態計算會員的真實累積消費
+  calculateUserTotalSpend(userId: string): number {
+    const validStatuses = ['payment_confirmed', 'pending_shipping', 'shipped', 'arrived_notified', 'picked_up', 'completed'];
+    return this.store.orders()
+      .filter((o: Order) => o.userId === userId && validStatuses.includes(o.status))
+      .reduce((sum: number, o: Order) => sum + o.finalTotal, 0);
+  }
+
   estimatedCost = computed(() => { const v = this.formValues(); if (!v) return 0; return (v.localPrice * v.exchangeRate) + (v.weight * v.shippingCostPerKg) + v.costMaterial; }); 
   estimatedProfit = computed(() => (this.formValues()?.priceGeneral || 0) - this.estimatedCost()); 
   estimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.estimatedProfit() / this.formValues().priceGeneral) * 100 : 0);
@@ -1103,7 +1116,23 @@ export class AdminPanelComponent {
   
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
   exportOrdersCSV() { const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; const rows = this.filteredOrders().map((o: Order) => [ `\t${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId), payMap[o.paymentMethod] || o.paymentMethod, shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod), o.shippingLink || '', o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') ]); this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
-  exportCustomersCSV() { const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; const rows = this.filteredUsers().map((u: User) => [ `\t${this.formatMemberNo(u.memberNo)}`, `\t${u.id}`, u.name, `\t${u.phone || ''}`, u.tier === 'vip' ? 'VIP' : (u.tier === 'wholesale' ? '批發' : '一般'), u.totalSpend, u.credits, u.birthday || '' ]); this.downloadCSV(`會員名單_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
+  
+  // 🔥 更新：匯出報表的金額也改為動態計算
+  exportCustomersCSV() { 
+     const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
+     const rows = this.filteredUsers().map((u: User) => [ 
+        `\t${this.formatMemberNo(u.memberNo)}`, 
+        `\t${u.id}`, 
+        u.name, 
+        `\t${u.phone || ''}`, 
+        u.tier === 'vip' ? 'VIP' : (u.tier === 'wholesale' ? '批發' : '一般'), 
+        this.calculateUserTotalSpend(u.id), 
+        u.credits, 
+        u.birthday || '' 
+     ]); 
+     this.downloadCSV(`會員名單_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  } 
+
   exportInventoryCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '庫存數量', '狀態']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') ]); this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
   exportToCSV() { const range = this.accountingRange(); const now = new Date(); let startDate: Date | null = null; if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); let list = this.accountingFilteredOrders(); const headers = ['訂單編號', '日期', '商品內容', '總營收', '商品成本', '預估利潤', '毛利率%']; const rows = list.map((o: Order) => { let cost = 0; o.items.forEach((i: CartItem) => { const p = this.store.products().find((x: Product) => x.id === i.productId); if (p) cost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; }); const profit = o.finalTotal - cost; return [ `\t${o.id}`, new Date(o.createdAt).toLocaleDateString(), o.items.map((i: CartItem) => `${i.productName} x${i.quantity}`).join('\n'), o.finalTotal, cost.toFixed(0), profit.toFixed(0), (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) ]; }); this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); }
 
@@ -1142,7 +1171,15 @@ export class AdminPanelComponent {
   }
 
   editUser(u: User) { this.openUserModal(u); } 
-  openUserModal(u: User) { this.editingUser.set(u); this.userForm.patchValue(u); this.showUserModal.set(true); } 
+  
+  // 🔥 更新：開啟編輯視窗時，順便計算並帶入最新的累積消費
+  openUserModal(u: User) { 
+     this.editingUser.set(u); 
+     const calculatedTotal = this.calculateUserTotalSpend(u.id);
+     this.userForm.patchValue({ ...u, totalSpend: calculatedTotal }); 
+     this.showUserModal.set(true); 
+  } 
+  
   closeUserModal() { this.showUserModal.set(false); this.editingUser.set(null); } 
   
   saveUser() { 
