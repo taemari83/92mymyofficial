@@ -168,17 +168,25 @@ import { StoreService } from '../services/store.service';
 export class MemberAreaComponent {
   storeService = inject(StoreService);
 
-  sortedOrders = computed(() => {
-    return [...this.storeService.orders()].sort((a, b) => b.createdAt - a.createdAt);
+  // 🔥 核心修正 1：先嚴格過濾出「只屬於當前登入會員」的訂單
+  myOwnOrders = computed(() => {
+    const user = this.storeService.currentUser();
+    const allOrders = this.storeService.orders();
+    if (!user) return [];
+    
+    // 即使是管理員，也只顯示 userId 符合自己的訂單
+    return allOrders.filter(o => o.userId === user.id);
   });
 
-  // 🔥 新增：動態計算累積消費金額
+  // 🔥 核心修正 2：用過濾後的訂單來排序顯示
+  sortedOrders = computed(() => {
+    return [...this.myOwnOrders()].sort((a, b) => b.createdAt - a.createdAt);
+  });
+
+  // 🔥 核心修正 3：用過濾後的訂單來計算累積消費
   calculatedTotalSpend = computed(() => {
-    const orders = this.storeService.orders();
-    // 定義哪些狀態算入真實消費（排除未付款、已取消、已退款）
     const validStatuses = ['payment_confirmed', 'pending_shipping', 'shipped', 'arrived_notified', 'picked_up', 'completed'];
-    
-    return orders
+    return this.myOwnOrders()
       .filter(o => validStatuses.includes(o.status))
       .reduce((sum, o) => sum + o.finalTotal, 0);
   });
