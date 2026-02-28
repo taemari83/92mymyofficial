@@ -52,7 +52,7 @@ import { StoreService } from '../services/store.service';
           <div class="grid grid-cols-2 gap-4 text-center">
             <div class="bg-gray-50 p-3 rounded-lg">
               <div class="text-gray-500 text-xs mb-1">累積消費</div>
-              <div class="font-bold text-lg">NT$ {{ storeService.currentUser()?.totalSpend | number }}</div>
+              <div class="font-bold text-lg">NT$ {{ calculatedTotalSpend() | number }}</div>
             </div>
             <div class="bg-gray-50 p-3 rounded-lg">
               <div class="text-gray-500 text-xs mb-1">購物金</div>
@@ -170,6 +170,17 @@ export class MemberAreaComponent {
 
   sortedOrders = computed(() => {
     return [...this.storeService.orders()].sort((a, b) => b.createdAt - a.createdAt);
+  });
+
+  // 🔥 新增：動態計算累積消費金額
+  calculatedTotalSpend = computed(() => {
+    const orders = this.storeService.orders();
+    // 定義哪些狀態算入真實消費（排除未付款、已取消、已退款）
+    const validStatuses = ['payment_confirmed', 'pending_shipping', 'shipped', 'arrived_notified', 'picked_up', 'completed'];
+    
+    return orders
+      .filter(o => validStatuses.includes(o.status))
+      .reduce((sum, o) => sum + o.finalTotal, 0);
   });
 
   async loginWithGoogle() {
