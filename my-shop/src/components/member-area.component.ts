@@ -86,27 +86,52 @@ import { StoreService } from '../services/store.service';
                       </button>
                     </div>
 
-                    <div class="flex justify-between items-end border-t border-gray-100 pt-2 mt-2">
+                    <div class="mt-3 mb-3 space-y-2">
+                      @for(item of order.items; track item.productId + item.option) {
+                        <div class="flex items-center gap-3 bg-gray-50/50 p-2 rounded-lg">
+                          <div class="w-12 h-12 rounded-md bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                            <img [src]="item.productImage" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100?text=No+Image'">
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <div class="text-sm font-bold text-gray-800 truncate">{{ item.productName }}</div>
+                            <div class="text-xs text-gray-500">{{ item.option }}</div>
+                          </div>
+                          <div class="text-right shrink-0">
+                            <div class="text-sm font-bold text-gray-800">NT$ {{ item.price }}</div>
+                            <div class="text-xs text-gray-500">x{{ item.quantity }}</div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <div class="flex justify-between items-end border-t border-gray-100 pt-3 mt-2">
                       <div>
                         <div class="text-xs text-gray-500 mb-1">
                           {{ order.createdAt | date:'yyyy/MM/dd HH:mm' }}
                         </div>
                         <span class="inline-block px-2 py-0.5 rounded text-xs font-bold"
-                           [class.bg-yellow-100]="order.status === 'pending_payment'"
-                           [class.text-yellow-800]="order.status === 'pending_payment'"
-                           [class.bg-blue-100]="order.status === 'payment_confirmed' || order.status === 'shipped'"
-                           [class.text-blue-800]="order.status === 'payment_confirmed' || order.status === 'shipped'"
-                           [class.bg-green-100]="order.status === 'completed'"
-                           [class.text-green-800]="order.status === 'completed'"
+                           [class.bg-yellow-100]="order.status === 'pending_payment' || order.status === 'paid_verifying' || order.status === 'unpaid_alert'"
+                           [class.text-yellow-800]="order.status === 'pending_payment' || order.status === 'paid_verifying' || order.status === 'unpaid_alert'"
+                           [class.bg-blue-100]="order.status === 'payment_confirmed' || order.status === 'shipped' || order.status === 'pending_shipping'"
+                           [class.text-blue-800]="order.status === 'payment_confirmed' || order.status === 'shipped' || order.status === 'pending_shipping'"
+                           [class.bg-green-100]="order.status === 'completed' || order.status === 'picked_up'"
+                           [class.text-green-800]="order.status === 'completed' || order.status === 'picked_up'"
                            [class.bg-purple-100]="order.status === 'arrived_notified'"
-                           [class.text-purple-800]="order.status === 'arrived_notified'">
+                           [class.text-purple-800]="order.status === 'arrived_notified'"
+                           [class.bg-red-100]="order.status === 'refund_needed' || order.status === 'refunded' || order.status === 'cancelled'"
+                           [class.text-red-800]="order.status === 'refund_needed' || order.status === 'refunded' || order.status === 'cancelled'">
                           @switch(order.status) {
                             @case('pending_payment') { 待付款 }
-                            @case('paid_verifying') { 對帳中 }
+                            @case('paid_verifying') { 匯款對帳中 }
+                            @case('unpaid_alert') { 逾期未付 }
                             @case('payment_confirmed') { 已付款 / 待出貨 }
+                            @case('pending_shipping') { 待出貨 }
                             @case('shipped') { 已出貨 }
-                            @case('arrived_notified') { 貨到 / 請下單賣貨便 }
-                            @case('completed') { 已完成 }
+                            @case('arrived_notified') { 貨到門市 (請留意簡訊) }
+                            @case('picked_up') { 門市已取貨 }
+                            @case('completed') { 訂單已完成 }
+                            @case('refund_needed') { 需退款 / 異常 }
+                            @case('refunded') { 已退款 }
                             @case('cancelled') { 已取消 }
                             @default { {{order.status}} }
                           }
@@ -124,14 +149,14 @@ import { StoreService } from '../services/store.service';
             }
           </div>
           @if (storeService.currentUser()?.isAdmin) {
-             <a href="/admin" class="block w-full text-center py-2 bg-gray-800 text-white rounded hover:bg-gray-700">
+             <a href="/admin" class="block w-full text-center py-2 bg-gray-800 text-white rounded hover:bg-gray-700 mt-6">
                進入管理員後台
              </a>
           }
 
           <button 
             (click)="logout()"
-            class="w-full bg-red-50 text-red-600 border border-red-200 py-2 rounded-lg hover:bg-red-100 transition-colors">
+            class="w-full bg-red-50 text-red-600 border border-red-200 py-2 rounded-lg hover:bg-red-100 transition-colors mt-4">
             登出
           </button>
         </div>
@@ -143,7 +168,6 @@ import { StoreService } from '../services/store.service';
 export class MemberAreaComponent {
   storeService = inject(StoreService);
 
-  // 🔥 新增：動態計算屬性，將原始訂單依照 createdAt 時間戳記由大到小（最新到最舊）排序
   sortedOrders = computed(() => {
     return [...this.storeService.orders()].sort((a, b) => b.createdAt - a.createdAt);
   });

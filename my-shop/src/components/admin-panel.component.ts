@@ -146,18 +146,18 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   </div>
                </div>
                
-               <div class="overflow-x-auto w-full custom-scrollbar pb-4">
+               <div class="overflow-x-auto w-full custom-scrollbar pb-4 max-h-[65vh] overflow-y-auto relative">
                  <table class="w-full text-sm text-left whitespace-nowrap block md:table">
-                   <thead class="bg-[#F9FAFB] text-gray-500 font-medium border-b border-gray-200 hidden md:table-header-group">
-                     <tr>
-                       <th class="p-4 sticky left-0 z-20 bg-[#F9FAFB] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">商品 訂單資訊</th>
-                       <th class="p-4">客戶</th>
-                       <th class="p-4">付款方式</th>
-                       <th class="p-4">金額</th>
-                       <th class="p-4">匯款狀態</th>
-                       <th class="p-4">物流狀態</th>
-                       <th class="p-4">時間</th>
-                       <th class="p-4 text-right">操作</th>
+                   <thead class="text-gray-500 font-medium hidden md:table-header-group sticky top-0 z-[40] shadow-sm">
+                     <tr class="bg-[#F9FAFB] border-b border-gray-200">
+                       <th class="p-4 sticky left-0 top-0 z-[50] bg-[#F9FAFB] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">商品 訂單資訊</th>
+                       <th class="p-4 bg-[#F9FAFB]">客戶</th>
+                       <th class="p-4 bg-[#F9FAFB]">付款方式</th>
+                       <th class="p-4 bg-[#F9FAFB]">金額</th>
+                       <th class="p-4 bg-[#F9FAFB]">匯款狀態</th>
+                       <th class="p-4 bg-[#F9FAFB]">物流狀態</th>
+                       <th class="p-4 bg-[#F9FAFB]">時間</th>
+                       <th class="p-4 text-right bg-[#F9FAFB]">操作</th>
                      </tr>
                    </thead>
                    <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
@@ -1076,10 +1076,12 @@ export class AdminPanelComponent {
   getThumb(o: Order) { return o.items[0]?.productImage; } 
   timeAgo(ts: number) { const mins = Math.floor((Date.now() - ts) / 60000); if(mins < 60) return `${mins} 分鐘前`; const hours = Math.floor(mins / 60); if(hours < 24) return `${hours} 小時前`; return `${Math.floor(hours/24)} 天前`; }
   
-  getPaymentStatusLabel(s: string, method?: string) { const map: any = { pending_payment: '未付款', paid_verifying: '對帳中', unpaid_alert: '逾期未付', refund_needed: '需退款', refunded: '已退款', payment_confirmed: method === 'cod' ? '待出貨 (未入帳)' : '已付款', shipped: method === 'cod' ? '已出貨 (未入帳)' : '已出貨', picked_up: method === 'cod' ? '已取貨 (未撥款)' : '已取貨', completed: '已完成 (已入帳)', cancelled: '🚫 已取消' }; return map[s] || s; } 
-  getPaymentStatusClass(s: string) { if(s==='payment_confirmed') return 'bg-green-100 text-green-700'; if(s==='paid_verifying') return 'bg-yellow-100 text-yellow-700'; if(s==='pending_payment' || s==='unpaid_alert') return 'bg-red-50 text-red-500'; if(s==='refunded') return 'bg-gray-200 text-gray-500 line-through'; if(s==='cancelled') return 'bg-gray-200 text-gray-400 border border-gray-300'; if(s==='refund_needed') return 'bg-red-100 text-red-700 font-bold border border-red-200'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-green-600 text-white font-bold'; return 'bg-gray-100 text-gray-500'; } 
-  getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', shipped: '已出貨', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
-  getShippingStatusClass(s: string) { if(s==='shipped') return 'bg-blue-100 text-blue-700'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-gray-800 text-white'; return 'text-gray-400'; } 
+  // 🔥 更新：全面中文化對照字典
+  getPaymentStatusLabel(s: string, method?: string) { const map: any = { pending_payment: '未付款', paid_verifying: '對帳中', unpaid_alert: '逾期未付', refund_needed: '需退款', refunded: '已退款', payment_confirmed: method === 'cod' ? '待出貨 (未入帳)' : '已付款', pending_shipping: '待出貨', arrived_notified: method === 'cod' ? '已貨到通知 (未入帳)' : '已付款', shipped: method === 'cod' ? '已出貨 (未入帳)' : '已出貨', picked_up: method === 'cod' ? '已取貨 (未撥款)' : '已取貨', completed: '已完成 (已入帳)', cancelled: '🚫 已取消' }; return map[s] || s; } 
+  getPaymentStatusClass(s: string) { if(s==='payment_confirmed') return 'bg-green-100 text-green-700'; if(s==='paid_verifying') return 'bg-yellow-100 text-yellow-700'; if(s==='pending_payment' || s==='unpaid_alert') return 'bg-red-50 text-red-500'; if(s==='refunded') return 'bg-gray-200 text-gray-500 line-through'; if(s==='cancelled') return 'bg-gray-200 text-gray-400 border border-gray-300'; if(s==='refund_needed') return 'bg-red-100 text-red-700 font-bold border border-red-200'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-green-600 text-white font-bold'; return 'bg-gray-100 text-gray-500'; } 
+  getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', pending_shipping: '待出貨', shipped: '已出貨', arrived_notified: '已貨到門市', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
+  getShippingStatusClass(s: string) { if(s==='shipped') return 'bg-blue-100 text-blue-700'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-gray-800 text-white'; return 'text-gray-400'; } 
+  
   getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; return map[m] || m; }
   getShippingLabel(m: string) { const map: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; return map[m] || m; }
   formatMemberNo(no?: string): string { if (!no) return '舊會員 (待更新)'; if (no.includes('/')) return 'M' + no.replace(/\//g, ''); return no; }
