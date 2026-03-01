@@ -574,7 +574,28 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   </div> 
                   
                   <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動生成: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-2 border rounded-lg font-mono bg-gray-50 text-gray-500"> </div> 
-                  <div> <label class="block text-xs font-bold text-gray-500 mb-2">商品圖片 (第一張為主圖)</label> <div class="flex flex-wrap gap-2 mb-3"> @for(img of tempImages(); track $index) { <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50"> <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover"> <button (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/50 hover:bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">✕</button> @if($index === 0) { <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold">主圖</div> } </div> } </div> <div class="flex flex-col gap-2 p-4 bg-gray-50 rounded-xl border border-gray-200"> <div class="flex gap-2"> <input #urlInput type="text" placeholder="請貼上「圖片連結」 (以 .jpg .png 結尾)" class="flex-1 p-2 text-sm border rounded-lg"> <button (click)="addImageUrl(urlInput.value); urlInput.value=''" class="px-3 py-2 bg-gray-200 rounded-lg text-xs font-bold hover:bg-gray-300 whitespace-nowrap">加入網址</button> </div> <div class="flex items-center gap-2 flex-wrap mt-2"> <span class="text-xs font-bold text-gray-400">或</span> <label class="cursor-pointer px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 flex items-center gap-1 whitespace-nowrap"> <span>📂 選擇電腦檔案</span> <input type="file" multiple accept="image/*" class="hidden" (change)="handleFileSelect($event)"> </label> <span class="text-xs font-bold text-gray-400">或</span> <a href="https://www.flickr.com/photos/upload" target="_blank" class="px-3 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 whitespace-nowrap" title="前往 Flickr 上傳"> <span>☁️ Flickr 上傳</span> </a> </div> </div> </div> 
+                  <div class="flex flex-wrap gap-2 mb-3"> 
+  @for(img of tempImages(); track $index) { 
+    <div 
+      draggable="true"
+      (dragstart)="onImageDragStart($index)"
+      (dragover)="onImageDragOver($event)"
+      (drop)="onImageDrop($event, $index)"
+      [class.opacity-40]="draggedImageIndex() === $index"
+      [class.ring-2]="draggedImageIndex() === $index"
+      [class.ring-brand-400]="draggedImageIndex() === $index"
+      class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
+    > 
+      <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover pointer-events-none"> 
+      
+      <button type="button" (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/50 hover:bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">✕</button> 
+      
+      @if($index === 0) { 
+        <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold pointer-events-none z-10">主圖</div> 
+      } 
+    </div> 
+  } 
+</div>
                   <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註</label> <textarea formControlName="note" class="w-full p-2 border rounded-lg" rows="3"></textarea> </div> 
                 </form> 
               </div> 
@@ -1162,6 +1183,36 @@ export class AdminPanelComponent {
   handleFileSelect(event: any) { const files = event.target.files; if (files) { for (let i = 0; i < files.length; i++) { const file = files[i]; const reader = new FileReader(); reader.onload = (e: any) => { this.tempImages.update(l => [...l, e.target.result]); }; reader.readAsDataURL(file); } } } 
   removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); } 
   
+  // === 圖片拖曳排序相關邏輯 ===
+  draggedImageIndex = signal<number | null>(null);
+
+  onImageDragStart(index: number) {
+    this.draggedImageIndex.set(index);
+  }
+
+  onImageDragOver(event: DragEvent) {
+    event.preventDefault(); // 必須 preventDefault 才能允許 drop
+  }
+
+  onImageDrop(event: DragEvent, dropIndex: number) {
+    event.preventDefault();
+    const dragIndex = this.draggedImageIndex();
+    
+    // 如果沒有拖曳來源，或是在原本的位置放下，就不做事
+    if (dragIndex === null || dragIndex === dropIndex) return;
+
+    this.tempImages.update(images => {
+      const newImages = [...images];
+      // 1. 把被拖曳的圖片從陣列中取出
+      const [draggedItem] = newImages.splice(dragIndex, 1);
+      // 2. 插入到目標位置
+      newImages.splice(dropIndex, 0, draggedItem);
+      return newImages;
+    });
+    
+    this.draggedImageIndex.set(null); // 重置狀態
+  }
+
   submitProduct() { 
      const val = this.productForm.value; 
      if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
