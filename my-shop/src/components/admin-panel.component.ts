@@ -491,7 +491,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         }
 
         @if (showProductModal()) { 
-          <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeProductModal()"> 
+          <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
               <div class="p-6 border-b border-gray-100 flex justify-between items-center"> 
                 <h3 class="text-xl font-bold text-brand-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3> 
@@ -627,7 +627,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         }
 
         @if (showUserModal()) { 
-          <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" (click)="closeUserModal()"> 
+          <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
               <div class="p-6 border-b border-gray-100 flex justify-between items-center"> 
                 <h3 class="text-xl font-bold text-brand-900">編輯會員資料</h3> 
@@ -673,7 +673,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         }
 
         @if (actionModalOrder(); as o) { 
-          <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] flex items-center justify-center p-4" (click)="closeActionModal()"> 
+          <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] flex items-center justify-center p-4"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-fade-in flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()"> 
               
               <div class="p-6 border-b border-gray-100 bg-gray-50 shrink-0"> 
