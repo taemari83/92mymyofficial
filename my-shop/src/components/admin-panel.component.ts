@@ -792,90 +792,93 @@ export class AdminPanelComponent {
   }
 
   async handleBatchImport(event: any) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (e: any) => {
-      const text = e.target.result;
-      const rows = this.parseCSV(text);
-      if (rows.length < 2) { alert('CSV 檔案格式錯誤或沒有資料！'); return; }
+    const reader = new FileReader();
+    reader.onload = async (e: any) => {
+      const text = e.target.result;
+      const rows = this.parseCSV(text);
+      if (rows.length < 2) { alert('CSV 檔案格式錯誤或沒有資料！'); return; }
 
-      let successCount = 0; let failCount = 0;
+      let successCount = 0; let failCount = 0;
 
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        if (row.length < 4 || !row[2] || !row[3]) continue;
-        if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; 
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < 4 || !row[2] || !row[3]) continue;
+        if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; 
 
-        try {
-          const name = String(row[2] || '').trim(); 
-          const category = String(row[3] || '').trim();
-          const priceGeneral = Number(row[4]) || 0; 
-          const priceVip = Number(row[5]) || 0;
-          const localPrice = Number(row[6]) || 0; 
-          const exchangeRate = Number(row[7]) || 0.22;
-          const weight = Number(row[8]) || 0; 
-          const shippingCostPerKg = Number(row[9]) || 200;
-          const costMaterial = Number(row[10]) || 0;
-          
-          const bulkCount = Number(row[11]) || 0;
-          const bulkTotal = Number(row[12]) || 0;
+        try {
+          const name = String(row[2] || '').trim(); 
+          const category = String(row[3] || '').trim();
+          const priceGeneral = Number(row[4]) || 0; 
+          const priceVip = Number(row[5]) || 0;
+          const localPrice = Number(row[6]) || 0; 
+          const exchangeRate = Number(row[7]) || 0.22;
+          const weight = Number(row[8]) || 0; 
+          const shippingCostPerKg = Number(row[9]) || 200;
+          const costMaterial = Number(row[10]) || 0;
+          
+          const bulkCount = Number(row[11]) || 0;
+          const bulkTotal = Number(row[12]) || 0;
 
-          const imageRaw = String(row[13] || '');
-          const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
-          const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
-          const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
+          const imageRaw = String(row[13] || '');
+          const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
+          const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
+          const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-          const optionsStr = String(row[14] || '');
-          const stockInput = Number(row[15]) || 0;
-          
-          const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
-          const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
-          const note = String(row[19] || '');
-          
-          const stock = isPreorder ? 99999 : stockInput;
-          const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
-          
-          let code = String(row[18] || '').replace(/\t/g, '').trim(); 
-          if (!code) {
-            const codeMap = this.store.settings().categoryCodes || {};
-            const prefix = codeMap[category] || 'Z'; 
-            const now = new Date();
-            const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-            code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
+          const optionsStr = String(row[14] || '');
+          const stockInput = Number(row[15]) || 0;
+          
+          const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
+          const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
+          const note = String(row[19] || '');
+          
+          const stock = isPreorder ? 99999 : stockInput;
+          const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+          
+          let code = String(row[18] || '').replace(/\t/g, '').trim(); 
+          if (!code) {
+            const codeMap = this.store.settings().categoryCodes || {};
+            const prefix = codeMap[category] || 'Z'; 
+            const now = new Date();
+            const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+            code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
+          }
+
+          const existingProduct = this.store.products().find(p => p.code === code);
+          const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
+
+          const p: any = {
+            id: uniqueId, 
+            code, name, category, image: mainImage, images: allImages,
+            priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
+            weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
+            soldCount: existingProduct?.soldCount || 0, country: 'Korea',
+            allowPayment: { cash: true, bankTransfer: true, cod: true },
+            allowShipping: { meetup: true, myship: true, family: true, delivery: true },
+            isPreorder, isListed
+          };
+
+          // 🔥 這裡已經幫你加上清空判斷了
+          if (bulkCount > 1 && bulkTotal > 0) {
+            p.bulkDiscount = { count: bulkCount, total: bulkTotal };
+          } else {
+            p.bulkDiscount = null; 
           }
 
-          const existingProduct = this.store.products().find(p => p.code === code);
-          const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
-
-          const p: any = {
-            id: uniqueId, 
-            code, name, category, image: mainImage, images: allImages,
-            priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
-            weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
-            soldCount: existingProduct?.soldCount || 0, country: 'Korea',
-            allowPayment: { cash: true, bankTransfer: true, cod: true },
-            allowShipping: { meetup: true, myship: true, family: true, delivery: true },
-            isPreorder, isListed
-          };
-
-          if (bulkCount > 1 && bulkTotal > 0) {
-            p.bulkDiscount = { count: bulkCount, total: bulkTotal };
-          }
-
-          this.store.addCategory(category);
-          
-          if (existingProduct) { await this.store.updateProduct(p); } 
-          else { await this.store.addProduct(p); }
-          successCount++;
-        } catch (err) { failCount++; }
-      }
-      alert(`✅ 批量操作完成！\n成功新增/更新：${successCount} 筆\n失敗/略過：${failCount} 筆`);
-      event.target.value = ''; 
-    };
-    reader.readAsText(file, 'UTF-8');
-  }
+          this.store.addCategory(category);
+          
+          if (existingProduct) { await this.store.updateProduct(p); } 
+          else { await this.store.addProduct(p); }
+          successCount++;
+        } catch (err) { failCount++; }
+      }
+      alert(`✅ 批量操作完成！\n成功新增/更新：${successCount} 筆\n失敗/略過：${failCount} 筆`);
+      event.target.value = ''; 
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
 
   reportSortBy = signal<'sold' | 'profit'>('sold');
   accountingRange = signal('month'); 
@@ -1159,17 +1162,20 @@ export class AdminPanelComponent {
   handleFileSelect(event: any) { const files = event.target.files; if (files) { for (let i = 0; i < files.length; i++) { const file = files[i]; const reader = new FileReader(); reader.onload = (e: any) => { this.tempImages.update(l => [...l, e.target.result]); }; reader.readAsDataURL(file); } } } 
   removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); } 
   
-  submitProduct() { 
-     const val = this.productForm.value; 
-     if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
-     const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
-     const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
-     const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
-     const p: Product = { id: this.editingProduct()?.id || Date.now().toString(), code: finalCode, name: val.name, category: val.category, image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed }; 
-     if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } 
-     if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
-     this.closeProductModal(); 
-  }
+  submitProduct() { 
+     const val = this.productForm.value; 
+     if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
+     const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
+     const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
+     const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
+     const p: any = { id: this.editingProduct()?.id || Date.now().toString(), code: finalCode, name: val.name, category: val.category, image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed }; 
+     
+     // 🔥 修正：明確指派 null，讓 Firebase 知道要清空此欄位
+     if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
+     
+     if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
+     this.closeProductModal(); 
+  }
 
   editUser(u: User) { this.openUserModal(u); } 
   
