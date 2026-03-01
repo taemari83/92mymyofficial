@@ -233,7 +233,7 @@ import { StoreService, Product } from '../services/store.service';
                             @for (opt of selectedProduct()!.options; track opt) {
                               <button 
                                 (click)="selectedOption.set(opt)"
-                                class="px-4 py-3 md:px-5 md:py-3 rounded-xl text-sm md:text-base font-bold transition-all shadow-sm active:scale-95 flex-1 min-w-[80px] text-center relative overflow-hidden"
+                                class="px-4 py-2 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-bold transition-all shadow-sm active:scale-95 text-center relative overflow-hidden break-words whitespace-normal h-auto min-h-[48px] flex items-center justify-center"
                                 [class.bg-brand-900]="selectedOption() === opt" [class.text-white]="selectedOption() === opt" [class.ring-2]="selectedOption() === opt" [class.ring-brand-200]="selectedOption() === opt"
                                 [class.bg-white]="selectedOption() !== opt" [class.text-gray-600]="selectedOption() !== opt" [class.border]="selectedOption() !== opt" [class.border-gray-200]="selectedOption() !== opt" [class.hover:border-brand-300]="selectedOption() !== opt"
                               >
