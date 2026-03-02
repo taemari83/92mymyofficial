@@ -570,11 +570,10 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                          <input type="number" formControlName="stock" class="w-full p-2 border rounded-lg"> 
                       }
                     </div> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (不同價位可用 = 標示)</label> <input formControlName="optionsStr" class="w-full p-2 border rounded-lg" placeholder="例如: 單件, 兩入組=1500"> </div>
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (進階可填 名稱=售價=VIP價=當地原價)</label> <input formControlName="optionsStr" class="w-full p-2 border rounded-lg" placeholder="例如: 單件, 兩入組=1500=1400=16000"> </div> 
                   </div> 
                   
                   <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動生成: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-2 border rounded-lg font-mono bg-gray-50 text-gray-500"> </div> 
-
                   <div> 
                     <label class="block text-xs font-bold text-gray-500 mb-2">商品圖片 (可拖曳排序，第一張為主圖)</label> 
                     <div class="flex flex-wrap gap-2 mb-3"> 
@@ -614,8 +613,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                         </a> 
                       </div> 
                     </div> 
-                  </div>
-                  <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註</label> <textarea formControlName="note" class="w-full p-2 border rounded-lg" rows="3"></textarea> </div>
+                  </div> 
+                  <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註</label> <textarea formControlName="note" class="w-full p-2 border rounded-lg" rows="3"></textarea> </div> 
                 </form> 
               </div> 
               <div class="p-6 border-t border-gray-100 flex justify-end gap-3"> 
@@ -840,99 +839,97 @@ export class AdminPanelComponent {
     return rows;
   }
 
-async handleBatchImport(event: any) {
-    const file = event.target.files[0];
-    if (!file) return;
+  async handleBatchImport(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (e: any) => {
-      const text = e.target.result;
-      const rows = this.parseCSV(text);
-      if (rows.length < 2) { alert('CSV 檔案格式錯誤或沒有資料！'); return; }
+    const reader = new FileReader();
+    reader.onload = async (e: any) => {
+      const text = e.target.result;
+      const rows = this.parseCSV(text);
+      if (rows.length < 2) { alert('CSV 檔案格式錯誤或沒有資料！'); return; }
 
-      let successCount = 0; let failCount = 0;
+      let successCount = 0; let failCount = 0;
 
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        // 🔥 因為前面加了3個欄位，所以索引全部 +3。商品名稱變成 [5]，分類變成 [6]
-        if (row.length < 7 || !row[5] || !row[6]) continue;
-        if (row[5].includes('商品名稱') || row[5] === '秋季毛衣') continue; 
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < 7 || !row[5] || !row[6]) continue;
+        if (row[5].includes('商品名稱') || row[5] === '秋季毛衣') continue; 
 
-        try {
-          const name = String(row[5] || '').trim(); 
-          const category = String(row[6] || '').trim();
-          
-          // 🔥 加入除錯機制：自動去除數字裡的千分位逗號 (例如 8,500 -> 8500)
-          const parseNum = (val: any, fallback: number) => Number(String(val || fallback).replace(/,/g, '')) || fallback;
+        try {
+          const name = String(row[5] || '').trim(); 
+          const category = String(row[6] || '').trim();
+          
+          const parseNum = (val: any, fallback: number) => Number(String(val || fallback).replace(/,/g, '')) || fallback;
 
-          const priceGeneral = parseNum(row[7], 0); 
-          const priceVip = parseNum(row[8], 0);
-          const localPrice = parseNum(row[9], 0); 
-          const exchangeRate = parseNum(row[10], 0.22);
-          const weight = parseNum(row[11], 0); 
-          const shippingCostPerKg = parseNum(row[12], 200);
-          const costMaterial = parseNum(row[13], 0);
-          
-          const bulkCount = parseNum(row[14], 0);
-          const bulkTotal = parseNum(row[15], 0);
+          const priceGeneral = parseNum(row[7], 0); 
+          const priceVip = parseNum(row[8], 0);
+          const localPrice = parseNum(row[9], 0); 
+          const exchangeRate = parseNum(row[10], 0.22);
+          const weight = parseNum(row[11], 0); 
+          const shippingCostPerKg = parseNum(row[12], 200);
+          const costMaterial = parseNum(row[13], 0);
+          
+          const bulkCount = parseNum(row[14], 0);
+          const bulkTotal = parseNum(row[15], 0);
 
-          const imageRaw = String(row[16] || '');
-          const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
-          const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
-          const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
+          const imageRaw = String(row[16] || '');
+          const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
+          const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
+          const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-          const optionsStr = String(row[17] || '');
-          const stockInput = parseNum(row[18], 0);
-          
-          const isPreorder = String(row[19] || '').trim().toUpperCase() === 'TRUE';
-          const isListed = String(row[20] || '').trim().toUpperCase() !== 'FALSE'; 
-          
-          let code = String(row[21] || '').replace(/\t/g, '').trim(); 
-          const note = String(row[22] || '');
-          
-          const stock = isPreorder ? 99999 : stockInput;
-          const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
-          
-          if (!code) {
-            const codeMap = this.store.settings().categoryCodes || {};
-            const prefix = codeMap[category] || 'Z'; 
-            const now = new Date();
-            const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-            code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
-          }
+          const optionsStr = String(row[17] || '');
+          const stockInput = parseNum(row[18], 0);
+          
+          const isPreorder = String(row[19] || '').trim().toUpperCase() === 'TRUE';
+          const isListed = String(row[20] || '').trim().toUpperCase() !== 'FALSE'; 
+          
+          let code = String(row[21] || '').replace(/\t/g, '').trim(); 
+          const note = String(row[22] || '');
+          
+          const stock = isPreorder ? 99999 : stockInput;
+          const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+          
+          if (!code) {
+            const codeMap = this.store.settings().categoryCodes || {};
+            const prefix = codeMap[category] || 'Z'; 
+            const now = new Date();
+            const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+            code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
+          }
 
-          const existingProduct = this.store.products().find(p => p.code === code);
-          const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
+          const existingProduct = this.store.products().find(p => p.code === code);
+          const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
 
-          const p: any = {
-            id: uniqueId, 
-            code, name, category, image: mainImage, images: allImages,
-            priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
-            weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
-            soldCount: existingProduct?.soldCount || 0, country: 'Korea',
-            allowPayment: { cash: true, bankTransfer: true, cod: true },
-            allowShipping: { meetup: true, myship: true, family: true, delivery: true },
-            isPreorder, isListed
-          };
+          const p: any = {
+            id: uniqueId, 
+            code, name, category, image: mainImage, images: allImages,
+            priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
+            weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
+            soldCount: existingProduct?.soldCount || 0, country: 'Korea',
+            allowPayment: { cash: true, bankTransfer: true, cod: true },
+            allowShipping: { meetup: true, myship: true, family: true, delivery: true },
+            isPreorder, isListed
+          };
 
-          if (bulkCount > 1 && bulkTotal > 0) {
-            p.bulkDiscount = { count: bulkCount, total: bulkTotal };
-          } else {
-            p.bulkDiscount = null; 
-          }
+          if (bulkCount > 1 && bulkTotal > 0) {
+            p.bulkDiscount = { count: bulkCount, total: bulkTotal };
+          } else {
+            p.bulkDiscount = null; 
+          }
 
-          this.store.addCategory(category);
-          
-          if (existingProduct) { await this.store.updateProduct(p); } 
-          else { await this.store.addProduct(p); }
-          successCount++;
-        } catch (err) { failCount++; }
-      }
-      alert(`✅ 批量操作完成！\n成功新增/更新：${successCount} 筆\n失敗/略過：${failCount} 筆`);
-      event.target.value = ''; 
-    };
-    reader.readAsText(file, 'UTF-8');
-  }
+          this.store.addCategory(category);
+          
+          if (existingProduct) { await this.store.updateProduct(p); } 
+          else { await this.store.addProduct(p); }
+          successCount++;
+        } catch (err) { failCount++; }
+      }
+      alert(`✅ 批量操作完成！\n成功新增/更新：${successCount} 筆\n失敗/略過：${failCount} 筆`);
+      event.target.value = ''; 
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
 
   reportSortBy = signal<'sold' | 'profit'>('sold');
   accountingRange = signal('month'); 
@@ -959,27 +956,26 @@ async handleBatchImport(event: any) {
     });
   });
 
-  aaccountingStats = computed(() => {
-    const filteredOrders = this.accountingFilteredOrders();
-    let revenue = 0; let cost = 0; let discounts = 0;
-    let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
+  accountingStats = computed(() => {
+    const filteredOrders = this.accountingFilteredOrders();
+    let revenue = 0; let cost = 0; let discounts = 0;
+    let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
 
-    filteredOrders.forEach((o: Order) => {
-      if (o.status === 'refund_needed') payRefund += o.finalTotal;
-      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
-      else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed' || o.status === 'picked_up' as any) {
-          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
-      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
-          payUnpaid += o.finalTotal;
-      }
-      
-      revenue += o.finalTotal;
-      const u = this.store.users().find((user: User) => user.id === o.userId);
+    filteredOrders.forEach((o: Order) => {
+      if (o.status === 'refund_needed') payRefund += o.finalTotal;
+      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
+      else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed' || o.status === 'picked_up' as any) {
+          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
+      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
+          payUnpaid += o.finalTotal;
+      }
+      
+      revenue += o.finalTotal;
+      const u = this.store.users().find((user: User) => user.id === o.userId);
 
-      o.items.forEach((i: CartItem) => {
-          const p = this.store.products().find((x: Product) => x.id === i.productId);
-          if (p) {
-              // 🔥 優先使用結帳時的成本快照；舊訂單沒有快照則即時運算
+      o.items.forEach((i: CartItem) => {
+          const p = this.store.products().find((x: Product) => x.id === i.productId);
+          if (p) {
               if (i.unitCost !== undefined) {
                   cost += i.unitCost * i.quantity;
               } else {
@@ -988,33 +984,32 @@ async handleBatchImport(event: any) {
                   cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity;
               }
           }
-      });
-      discounts += o.discount + o.usedCredits;
-    });
+      });
+      discounts += o.discount + o.usedCredits;
+    });
 
-    return { 
-        revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal } 
-    };
-  });
+    return { 
+        revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal } 
+    };
+  });
 
-  productPerformance = computed(() => { 
-    const orders = this.accountingFilteredOrders();
-    const productMap = new Map<string, any>();
-    
-    orders.forEach(o => {
-      const u = this.store.users().find((user: User) => user.id === o.userId);
+  productPerformance = computed(() => { 
+    const orders = this.accountingFilteredOrders();
+    const productMap = new Map<string, any>();
+    
+    orders.forEach(o => {
+      const u = this.store.users().find((user: User) => user.id === o.userId);
 
-      o.items.forEach(item => {
-          if (!productMap.has(item.productId)) {
-            const p = this.store.products().find(x => x.id === item.productId);
-            if(p) productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0 });
-          }
-          const stats = productMap.get(item.productId);
-          if (stats) {
-              stats.sold += item.quantity;
-              stats.revenue += item.price * item.quantity; 
+      o.items.forEach(item => {
+          if (!productMap.has(item.productId)) {
+            const p = this.store.products().find(x => x.id === item.productId);
+            if(p) productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0, hasBulk: p.options.some(opt => opt.includes('=')) });
+          }
+          const stats = productMap.get(item.productId);
+          if (stats) {
+              stats.sold += item.quantity;
+              stats.revenue += item.price * item.quantity; 
 
-              // 🔥 優先使用結帳時的成本快照
               if (item.unitCost !== undefined) {
                   stats.cost += item.unitCost * item.quantity;
               } else {
@@ -1022,55 +1017,59 @@ async handleBatchImport(event: any) {
                   const rate = isVip ? 0.021 : 0.025;
                   stats.cost += ((stats.product.localPrice * rate) + stats.product.costMaterial + (stats.product.weight * stats.product.shippingCostPerKg)) * item.quantity;
               }
-          }
-      });
-    });
+          }
+      });
+    });
 
-    return Array.from(productMap.values()).map(stats => {
-      stats.profit = stats.revenue - stats.cost; 
-      stats.margin = stats.revenue ? (stats.profit / stats.revenue) * 100 : 0; 
-      return stats;
-    });
-  });
+    return Array.from(productMap.values()).map(stats => {
+      stats.profit = stats.revenue - stats.cost; 
+      stats.margin = stats.revenue ? (stats.profit / stats.revenue) * 100 : 0; 
+      return stats;
+    });
+  });
 
   topSellingProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.sold - a.sold));
   topProfitProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.profit - a.profit));
 
-  dashboardMetrics = computed(() => { 
-    const orders = this.store.orders(); 
-    const today = new Date().toDateString(); 
-    const thisMonth = new Date().getMonth(); 
-    let todayRev = 0; let monthSales = 0; let monthCost = 0; 
-    
-    orders.forEach((o: Order) => {
-        const dStr = new Date(o.createdAt).toDateString();
-        const dMonth = new Date(o.createdAt).getMonth();
+  dashboardMetrics = computed(() => { 
+    const orders = this.store.orders(); 
+    const today = new Date().toDateString(); 
+    const thisMonth = new Date().getMonth(); 
+    let todayRev = 0; let monthSales = 0; let monthCost = 0; 
+    
+    orders.forEach((o: Order) => {
+        const dStr = new Date(o.createdAt).toDateString();
+        const dMonth = new Date(o.createdAt).getMonth();
 
-        if(!['pending_payment', 'unpaid_alert', 'cancelled', 'refunded'].includes(o.status)) { 
-          if (dStr === today) todayRev += o.finalTotal; 
-          if (dMonth === thisMonth) {
-              monthSales += o.finalTotal; 
+        if(!['pending_payment', 'unpaid_alert', 'cancelled', 'refunded'].includes(o.status)) { 
+          if (dStr === today) todayRev += o.finalTotal; 
+          if (dMonth === thisMonth) {
+              monthSales += o.finalTotal; 
               const u = this.store.users().find((user: User) => user.id === o.userId);
-              o.items.forEach((i: CartItem) => { 
-                const p = this.store.products().find((x: Product) => x.id === i.productId); 
-                if(p) {
-                   const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
-                   const rate = isVip ? 0.021 : 0.025;
-                   monthCost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
+              o.items.forEach((i: CartItem) => { 
+                const p = this.store.products().find((x: Product) => x.id === i.productId); 
+                if(p) {
+                   if (i.unitCost !== undefined) {
+                       monthCost += i.unitCost * i.quantity;
+                   } else {
+                       const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
+                       const rate = isVip ? 0.021 : 0.025;
+                       monthCost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
+                   }
                 }
-              }); 
-          }
-        } 
-    }); 
-    
-    return { 
-        todayRevenue: todayRev, monthSales, monthProfit: monthSales - monthCost, 
-        toConfirm: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert', 'paid_verifying'].includes(o.status)).length, 
-        toShip: orders.filter((o: Order) => o.status === 'payment_confirmed').length, 
-        unpaid: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)).length, 
-        processing: orders.filter((o: Order) => o.status === 'refund_needed').length 
-    }; 
-  });
+              }); 
+          }
+        } 
+    }); 
+    
+    return { 
+        todayRevenue: todayRev, monthSales, monthProfit: monthSales - monthCost, 
+        toConfirm: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert', 'paid_verifying'].includes(o.status)).length, 
+        toShip: orders.filter((o: Order) => o.status === 'payment_confirmed').length, 
+        unpaid: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)).length, 
+        processing: orders.filter((o: Order) => o.status === 'refund_needed').length 
+    }; 
+  });
 
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   topProducts = computed(() => [...this.store.products()].sort((a: any, b: any) => b.soldCount - a.soldCount).slice(0, 5));
@@ -1134,6 +1133,31 @@ async handleBatchImport(event: any) {
   showProductModal = signal(false); editingProduct = signal<Product | null>(null); productForm: FormGroup; 
   tempImages = signal<string[]>([]); formValues = signal<any>({}); categoryCodes = computed(() => this.store.settings().categoryCodes); 
   currentCategoryCode = signal(''); generatedSkuPreview = signal(''); settingsForm: FormGroup;
+
+  // === 圖片拖曳排序相關邏輯 ===
+  draggedImageIndex = signal<number | null>(null);
+
+  onImageDragStart(index: number) {
+    this.draggedImageIndex.set(index);
+  }
+
+  onImageDragOver(event: DragEvent) {
+    event.preventDefault(); 
+  }
+
+  onImageDrop(event: DragEvent, dropIndex: number) {
+    event.preventDefault();
+    const dragIndex = this.draggedImageIndex();
+    if (dragIndex === null || dragIndex === dropIndex) return;
+
+    this.tempImages.update(images => {
+      const newImages = [...images];
+      const [draggedItem] = newImages.splice(dragIndex, 1);
+      newImages.splice(dropIndex, 0, draggedItem);
+      return newImages;
+    });
+    this.draggedImageIndex.set(null); 
+  }
   
   constructor() {
     this.productForm = this.fb.group({ name: ['', Validators.required], category: [''], code: [''], priceGeneral: [0], priceVip: [0], localPrice: [0], exchangeRate: [0.22], weight: [0], shippingCostPerKg: [200], costMaterial: [0], stock: [0], optionsStr: [''], note: [''], isPreorder: [false], isListed: [true], bulkCount: [0], bulkTotal: [0] });
@@ -1187,36 +1211,20 @@ async handleBatchImport(event: any) {
   doMyshipPickup(o: Order) { this.store.updateOrderStatus(o.id, 'picked_up' as any); this.closeActionModal(); } 
   doCancel(o: Order) { if(this.cancelConfirmState()) { this.store.updateOrderStatus(o.id, 'cancelled'); this.closeActionModal(); } else { this.cancelConfirmState.set(true); } } 
   doDeleteOrder(o: Order) { if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原，且系統會自動扣除該會員對應的累積消費金額！`)) { this.store.deleteOrder(o); this.closeActionModal(); } } 
-  updatePaymentLast5(o: Order, event: any) { 
-    const val = event.target.value.trim(); 
-    this.store.updateOrderStatus(o.id, o.status, { paymentLast5: val }); 
-    this.actionModalOrder.set({ ...o, paymentLast5: val }); // 即時更新畫面
-  }
   quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); } 
   quickShip(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'shipped'); } 
   quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); } 
   quickComplete(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'completed'); }
+
+  updatePaymentLast5(o: Order, event: any) { 
+    const val = event.target.value.trim(); 
+    this.store.updateOrderStatus(o.id, o.status, { paymentLast5: val }); 
+    this.actionModalOrder.set({ ...o, paymentLast5: val }); 
+  }
   
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
-exportOrdersCSV() { 
-    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; 
-    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; 
-    const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
-    const rows = this.filteredOrders().map((o: Order) => [ 
-      `\t${o.id}`, 
-      new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), 
-      this.getUserName(o.userId), 
-      payMap[o.paymentMethod] || o.paymentMethod, 
-      o.paymentLast5 ? `\t${o.paymentLast5}` : '', // 🔥 新增後五碼欄位
-      shipMap[o.shippingMethod] || o.shippingMethod, 
-      o.finalTotal, 
-      this.getPaymentStatusLabel(o.status, o.paymentMethod), 
-      o.shippingLink || '', 
-      o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') 
-    ]); 
-    this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); 
-  }
-
+  exportOrdersCSV() { const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; const rows = this.filteredOrders().map((o: Order) => [ `\t${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId), payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `\t${o.paymentLast5}` : '', shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod), o.shippingLink || '', o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') ]); this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
+  
   exportCustomersCSV() { 
      const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
      const rows = this.filteredUsers().map((u: User) => [ 
@@ -1233,68 +1241,68 @@ exportOrdersCSV() {
   } 
 
   exportInventoryCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '庫存數量', '狀態']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') ]); this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
-  exportToCSV() { 
-    const range = this.accountingRange(); 
-    const now = new Date(); 
-    let startDate: Date | null = null; 
-    if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
-    else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
-    else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
-    
-    let list = this.accountingFilteredOrders(); 
-    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品成本', '預估利潤', '毛利率%']; 
+  
+  exportToCSV() { 
+    const range = this.accountingRange(); 
+    const now = new Date(); 
+    let startDate: Date | null = null; 
+    if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
+    else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+    else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+    
+    let list = this.accountingFilteredOrders(); 
+    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品成本', '預估利潤', '毛利率%']; 
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
 
-    const rows = list.map((o: Order) => { 
-      let cost = 0; 
-      const u = this.store.users().find((user: User) => user.id === o.userId);
+    const rows = list.map((o: Order) => { 
+      let cost = 0; 
+      const u = this.store.users().find((user: User) => user.id === o.userId);
 
-      // 🔥 升級商品內容：自動附加上一般價、VIP價與當下結帳單價
-      const itemDetails = o.items.map((i: CartItem) => { 
-        const p = this.store.products().find((x: Product) => x.id === i.productId); 
+      const itemDetails = o.items.map((i: CartItem) => { 
+        const p = this.store.products().find((x: Product) => x.id === i.productId); 
         let detailString = `• ${i.productName} (${i.option}) x${i.quantity}`;
 
-        if (p) { 
+        if (p) { 
           if (i.unitCost !== undefined) {
               cost += i.unitCost * i.quantity;
           } else {
               const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
               const rate = isVip ? 0.021 : 0.025;
-              cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
+              cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
           }
           detailString += ` [一般:$${p.priceGeneral} / VIP:$${p.priceVip} / 實收:$${i.price}]`;
-        } else {
+        } else {
           detailString += ` [實收:$${i.price}]`;
         }
         return detailString;
-      }).join('\n'); 
+      }).join('\n'); 
 
-      const profit = o.finalTotal - cost; 
-      return [ 
-        `\t${o.id}`, 
-        new Date(o.createdAt).toLocaleDateString(), 
+      const profit = o.finalTotal - cost; 
+      return [ 
+        `\t${o.id}`, 
+        new Date(o.createdAt).toLocaleDateString(), 
         payMap[o.paymentMethod] || o.paymentMethod,
         o.paymentLast5 ? `\t${o.paymentLast5}` : '',
-        itemDetails, 
-        o.finalTotal, 
-        cost.toFixed(0), 
-        profit.toFixed(0), 
-        (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) 
-      ]; 
-    }); 
-    this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); 
-  }
+        itemDetails, 
+        o.finalTotal, 
+        cost.toFixed(0), 
+        profit.toFixed(0), 
+        (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) 
+      ]; 
+    }); 
+    this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }
 
-  exportProductsCSV() { 
-     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
-     const rows = this.store.products().map((p: Product) => { 
-        const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
-        const normalProfit = p.priceGeneral - cost; 
-        const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
-        return [ '', '', '', p.code, '', p.name, p.category, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', `\t${p.code}`, p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount ]; 
-     }); 
-     this.downloadCSV(`商品總表_對齊格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
-  }
+  exportProductsCSV() { 
+     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
+     const rows = this.store.products().map((p: Product) => { 
+        const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
+        const normalProfit = p.priceGeneral - cost; 
+        const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
+        return [ '', '', '', p.code, '', p.name, p.category, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', `\t${p.code}`, p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount ]; 
+     }); 
+     this.downloadCSV(`商品總表_對齊格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }
 
   openProductForm() { this.editingProduct.set(null); this.productForm.reset(); this.productForm.patchValue({ exchangeRate: 0.22, shippingCostPerKg: 200, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0 }); this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
   editProduct(p: Product) { this.editingProduct.set(p); this.productForm.patchValue({ ...p, optionsStr: p.options.join(', '), exchangeRate: p.exchangeRate || 0.22, shippingCostPerKg: p.shippingCostPerKg || 200, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 }); this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
@@ -1306,51 +1314,20 @@ exportOrdersCSV() {
   addImageUrl(url: string) { if(!url || !url.trim()) return; const u = url.trim(); if (u.includes('flickr.com/photos/') && !u.match(/\.(jpg|jpeg|png|gif)$/i) && !u.includes('live.staticflickr.com')) { alert('⚠️ 注意：您貼上的是 Flickr「網頁」網址，不是「圖片」連結！\n\n請在圖片上按右鍵 -> 選擇「複製圖片位址」(Copy Image Address)。'); return; } this.tempImages.update(l => [...l, u]); } 
   handleFileSelect(event: any) { const files = event.target.files; if (files) { for (let i = 0; i < files.length; i++) { const file = files[i]; const reader = new FileReader(); reader.onload = (e: any) => { this.tempImages.update(l => [...l, e.target.result]); }; reader.readAsDataURL(file); } } } 
   removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); } 
-  
-  // === 圖片拖曳排序相關邏輯 ===
-  draggedImageIndex = signal<number | null>(null);
 
-  onImageDragStart(index: number) {
-    this.draggedImageIndex.set(index);
-  }
-
-  onImageDragOver(event: DragEvent) {
-    event.preventDefault(); // 必須 preventDefault 才能允許 drop
-  }
-
-  onImageDrop(event: DragEvent, dropIndex: number) {
-    event.preventDefault();
-    const dragIndex = this.draggedImageIndex();
-    
-    // 如果沒有拖曳來源，或是在原本的位置放下，就不做事
-    if (dragIndex === null || dragIndex === dropIndex) return;
-
-    this.tempImages.update(images => {
-      const newImages = [...images];
-      // 1. 把被拖曳的圖片從陣列中取出
-      const [draggedItem] = newImages.splice(dragIndex, 1);
-      // 2. 插入到目標位置
-      newImages.splice(dropIndex, 0, draggedItem);
-      return newImages;
-    });
-    
-    this.draggedImageIndex.set(null); // 重置狀態
-  }
-
-  submitProduct() { 
-     const val = this.productForm.value; 
-     if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
-     const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
-     const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
-     const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
-     const p: any = { id: this.editingProduct()?.id || Date.now().toString(), code: finalCode, name: val.name, category: val.category, image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed }; 
-     
-     // 🔥 修正：明確指派 null，讓 Firebase 知道要清空此欄位
-     if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
-     
-     if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
-     this.closeProductModal(); 
-  }
+  submitProduct() { 
+     const val = this.productForm.value; 
+     if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
+     const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
+     const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
+     const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
+     const p: any = { id: this.editingProduct()?.id || Date.now().toString(), code: finalCode, name: val.name, category: val.category, image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed }; 
+     
+     if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
+     
+     if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
+     this.closeProductModal(); 
+  }
 
   editUser(u: User) { this.openUserModal(u); } 
   
