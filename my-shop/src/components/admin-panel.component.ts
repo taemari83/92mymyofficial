@@ -974,18 +974,18 @@ export class AdminPanelComponent {
       }
       
       revenue += o.finalTotal;
-      const u = this.store.users().find((user: User) => user.id === o.userId);
 
       o.items.forEach((i: CartItem) => {
           const p = this.store.products().find((x: Product) => x.id === i.productId);
           if (p) {
-              if (i.unitCost !== undefined) {
-                  cost += i.unitCost * i.quantity;
-              } else {
-                  const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
-                  const rate = isVip ? 0.021 : 0.025;
-                  cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity;
-              }
+              const localPrice = p.localPrice || 0;
+              const costMat = p.costMaterial || 0;
+              const weight = p.weight || 0;
+              const shipKg = p.shippingCostPerKg || 200;
+              // 後台總覽統一使用「一般成本 (/40)」
+              cost += ((localPrice / 40) + costMat + (weight * shipKg)) * i.quantity;
+          } else {
+              cost += (i.unitCost || 0) * i.quantity;
           }
       });
       discounts += o.discount + o.usedCredits;
@@ -1001,24 +1001,31 @@ export class AdminPanelComponent {
     const productMap = new Map<string, any>();
     
     orders.forEach(o => {
-      const u = this.store.users().find((user: User) => user.id === o.userId);
-
       o.items.forEach(item => {
           if (!productMap.has(item.productId)) {
             const p = this.store.products().find(x => x.id === item.productId);
-            if(p) productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0, hasBulk: p.options.some(opt => opt.includes('=')) });
+            if(p) {
+               productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0, hasBulk: p.options.some(opt => opt.includes('=')) });
+            } else {
+               // 防呆：即使商品被刪除，也能在排行榜顯示歷史銷量
+               productMap.set(item.productId, { product: { id: item.productId, name: item.productName + ' (已刪除)', image: item.productImage }, sold: 0, revenue: 0, cost: 0, hasBulk: false });
+            }
           }
+
           const stats = productMap.get(item.productId);
           if (stats) {
               stats.sold += item.quantity;
               stats.revenue += item.price * item.quantity; 
 
-              if (item.unitCost !== undefined) {
-                  stats.cost += item.unitCost * item.quantity;
+              if (stats.product.localPrice !== undefined) {
+                  const localPrice = stats.product.localPrice || 0;
+                  const costMat = stats.product.costMaterial || 0;
+                  const weight = stats.product.weight || 0;
+                  const shipKg = stats.product.shippingCostPerKg || 200;
+                  // 排行榜統一使用「一般成本 (/40)」來計算利潤
+                  stats.cost += ((localPrice / 40) + costMat + (weight * shipKg)) * item.quantity;
               } else {
-                  const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || item.price === stats.product.priceVip;
-                  const rate = isVip ? 0.021 : 0.025;
-                  stats.cost += ((stats.product.localPrice * rate) + stats.product.costMaterial + (stats.product.weight * stats.product.shippingCostPerKg)) * item.quantity;
+                  stats.cost += (item.unitCost || 0) * item.quantity;
               }
           }
       });
@@ -1048,17 +1055,17 @@ export class AdminPanelComponent {
           if (dStr === today) todayRev += o.finalTotal; 
           if (dMonth === thisMonth) {
               monthSales += o.finalTotal; 
-              const u = this.store.users().find((user: User) => user.id === o.userId);
               o.items.forEach((i: CartItem) => { 
                 const p = this.store.products().find((x: Product) => x.id === i.productId); 
                 if(p) {
-                   if (i.unitCost !== undefined) {
-                       monthCost += i.unitCost * i.quantity;
-                   } else {
-                       const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
-                       const rate = isVip ? 0.021 : 0.025;
-                       monthCost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
-                   }
+                    const localPrice = p.localPrice || 0;
+                    const costMat = p.costMaterial || 0;
+                    const weight = p.weight || 0;
+                    const shipKg = p.shippingCostPerKg || 200;
+                    // 首頁儀表板統一使用「一般成本 (/40)」
+                    monthCost += ((localPrice / 40) + costMat + (weight * shipKg)) * i.quantity; 
+                } else {
+                    monthCost += (i.unitCost || 0) * i.quantity;
                 }
               }); 
           }
@@ -1073,7 +1080,7 @@ export class AdminPanelComponent {
         processing: orders.filter((o: Order) => o.status === 'refund_needed').length 
     }; 
   });
-
+  
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   topProducts = computed(() => [...this.store.products()].sort((a: any, b: any) => b.soldCount - a.soldCount).slice(0, 5));
 
@@ -1288,7 +1295,6 @@ export class AdminPanelComponent {
     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
     
     let list = this.accountingFilteredOrders(); 
-    // 🔥 更新表頭，加入「商品成本(一般)」與「商品成本(VIP)」
     const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品成本(一般)', '商品成本(VIP)', '預估利潤', '毛利率%']; 
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
 
@@ -1304,31 +1310,31 @@ export class AdminPanelComponent {
         let costVip = 0;
 
         if (p) { 
-          // 確保就算有漏填欄位也不會變成 NaN，給予預設值
           const localPrice = p.localPrice || 0;
           const costMat = p.costMaterial || 0;
           const weight = p.weight || 0;
           const shipKg = p.shippingCostPerKg || 200;
           
-          // 分別計算兩種成本
-          costGen = ((localPrice * 0.025) + costMat + (weight * shipKg)) * i.quantity;
-          costVip = ((localPrice * 0.021) + costMat + (weight * shipKg)) * i.quantity;
+          // 🔥 依照你的公式：一般成本 /40，VIP成本 /43
+          costGen = (localPrice / 40) + costMat + (weight * shipKg);
+          costVip = (localPrice / 43) + costMat + (weight * shipKg);
           
-          detailString += ` [一般:$${p.priceGeneral || 0} / VIP:$${p.priceVip || 0} / 實收:$${i.price}]`;
+          // 明細中自動填入客人購買商品的售價與 VIP 價
+          detailString += ` [售價:$${p.priceGeneral || 0} / VIP價:$${p.priceVip || 0} / 實收:$${i.price}]`;
         } else {
-          // 🔥 防呆：如果商品被刪除了找不到，就用訂單當下紀錄的單位成本來充當
-          costGen = (i.unitCost || 0) * i.quantity;
-          costVip = (i.unitCost || 0) * i.quantity;
-          detailString += ` [實收:$${i.price}]`;
+          // 防呆：如果商品已刪除，成本拿當時結帳紀錄墊檔，避免變成 0
+          costGen = i.unitCost || 0;
+          costVip = i.unitCost || 0;
+          detailString += ` [實收:$${i.price} (商品已下架)]`;
         }
         
-        costGeneralTotal += costGen;
-        costVipTotal += costVip;
+        costGeneralTotal += costGen * i.quantity;
+        costVipTotal += costVip * i.quantity;
 
         return detailString;
       }).join('\n'); 
 
-      // 🔥 依照你的需求，利潤與毛利都以「商品成本(一般)」去計算
+      // 毛利與毛利率統一以「商品成本(一般)」計算
       const profit = o.finalTotal - costGeneralTotal; 
       const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
       
