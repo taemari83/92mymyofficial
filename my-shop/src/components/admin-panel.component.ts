@@ -690,7 +690,6 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     <div><span class="text-gray-400">Email:</span> {{ o.userEmail || '無' }}</div>
                     <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
                     <div><span class="text-gray-400">物流:</span> {{ getShippingLabel(o.shippingMethod) }}</div>
-                    
                     @if(o.paymentMethod === 'bank_transfer') {
                        <div class="col-span-2 flex items-center gap-2 mt-1 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
                           <span class="text-blue-700 font-bold shrink-0">🏦 匯款後五碼:</span>
@@ -1223,7 +1222,24 @@ export class AdminPanelComponent {
   }
   
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
-  exportOrdersCSV() { const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; const rows = this.filteredOrders().map((o: Order) => [ `\t${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId), payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `\t${o.paymentLast5}` : '', shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod), o.shippingLink || '', o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') ]); this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
+  exportOrdersCSV() { 
+    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; 
+    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; 
+    const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
+    const rows = this.filteredOrders().map((o: Order) => [ 
+      `\t${o.id}`, 
+      new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), 
+      this.getUserName(o.userId), 
+      payMap[o.paymentMethod] || o.paymentMethod, 
+      o.paymentLast5 ? `\t${o.paymentLast5}` : '', 
+      shipMap[o.shippingMethod] || o.shippingMethod, 
+      o.finalTotal, 
+      this.getPaymentStatusLabel(o.status, o.paymentMethod), 
+      o.shippingLink || '', 
+      o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') 
+    ]); 
+    this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }
   
   exportCustomersCSV() { 
      const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
