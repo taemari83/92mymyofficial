@@ -951,98 +951,109 @@ async handleBatchImport(event: any) {
   });
 
   accountingStats = computed(() => {
-    const filteredOrders = this.accountingFilteredOrders();
-    let revenue = 0; let cost = 0; let discounts = 0;
-    let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
+    const filteredOrders = this.accountingFilteredOrders();
+    let revenue = 0; let cost = 0; let discounts = 0;
+    let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
 
-    filteredOrders.forEach((o: Order) => {
-      if (o.status === 'refund_needed') payRefund += o.finalTotal;
-      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
-      else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed' || o.status === 'picked_up' as any) {
-          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
-      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
-          payUnpaid += o.finalTotal;
-      }
-      
-      revenue += o.finalTotal;
-      o.items.forEach((i: CartItem) => {
-          const p = this.store.products().find((x: Product) => x.id === i.productId);
-          if (p) cost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity;
-      });
-      discounts += o.discount + o.usedCredits;
-    });
+    filteredOrders.forEach((o: Order) => {
+      if (o.status === 'refund_needed') payRefund += o.finalTotal;
+      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
+      else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed' || o.status === 'picked_up' as any) {
+          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
+      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
+          payUnpaid += o.finalTotal;
+      }
+      
+      revenue += o.finalTotal;
+      const u = this.store.users().find((user: User) => user.id === o.userId);
 
-    return { 
-        revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal } 
-    };
-  });
-
-  productPerformance = computed(() => { 
-    const orders = this.accountingFilteredOrders();
-    const productMap = new Map<string, any>();
-    
-    orders.forEach(o => {
-      o.items.forEach(item => {
-          if (!productMap.has(item.productId)) {
-            const p = this.store.products().find(x => x.id === item.productId);
-            if(p) productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0 });
+      o.items.forEach((i: CartItem) => {
+          const p = this.store.products().find((x: Product) => x.id === i.productId);
+          if (p) {
+              // 🔥 依照 VIP 資格或購買價格，自動切換 0.021 還是 0.025
+              const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
+              const rate = isVip ? 0.021 : 0.025;
+              cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity;
           }
-          const stats = productMap.get(item.productId);
-          if (stats) stats.sold += item.quantity;
-      });
-    });
+      });
+      discounts += o.discount + o.usedCredits;
+    });
 
-    return Array.from(productMap.values()).map(stats => {
-      const p = stats.product;
-      const costPerUnit = (p.localPrice * p.exchangeRate) + (p.weight * p.shippingCostPerKg) + p.costMaterial;
-      stats.cost = stats.sold * costPerUnit;
+    return { 
+        revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal } 
+    };
+  });
 
-      let estimatedRevenue = 0; let hasBulk = false;
-      if (p.bulkDiscount && p.bulkDiscount.count > 1 && p.bulkDiscount.total > 0 && stats.sold >= p.bulkDiscount.count) {
-          hasBulk = true;
-          const sets = Math.floor(stats.sold / p.bulkDiscount.count);
-          const remainder = stats.sold % p.bulkDiscount.count;
-          estimatedRevenue = (sets * p.bulkDiscount.total) + (remainder * p.priceGeneral);
-      } else { estimatedRevenue = stats.sold * p.priceGeneral; }
+  productPerformance = computed(() => { 
+    const orders = this.accountingFilteredOrders();
+    const productMap = new Map<string, any>();
+    
+    orders.forEach(o => {
+      const u = this.store.users().find((user: User) => user.id === o.userId);
 
-      stats.revenue = estimatedRevenue; stats.profit = estimatedRevenue - stats.cost; stats.margin = estimatedRevenue ? (stats.profit / estimatedRevenue) * 100 : 0; stats.hasBulk = hasBulk;
-      return stats;
-    });
-  });
+      o.items.forEach(item => {
+          if (!productMap.has(item.productId)) {
+            const p = this.store.products().find(x => x.id === item.productId);
+            if(p) productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0 });
+          }
+          const stats = productMap.get(item.productId);
+          if (stats) {
+              // 🔥 同樣根據訂單身分套用不同匯率
+              const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || item.price === stats.product.priceVip;
+              const rate = isVip ? 0.021 : 0.025;
+
+              stats.sold += item.quantity;
+              stats.revenue += item.price * item.quantity; // 直接用真實結帳金額
+              stats.cost += ((stats.product.localPrice * rate) + stats.product.costMaterial + (stats.product.weight * stats.product.shippingCostPerKg)) * item.quantity;
+          }
+      });
+    });
+
+    return Array.from(productMap.values()).map(stats => {
+      stats.profit = stats.revenue - stats.cost; 
+      stats.margin = stats.revenue ? (stats.profit / stats.revenue) * 100 : 0; 
+      return stats;
+    });
+  });
 
   topSellingProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.sold - a.sold));
   topProfitProducts = computed(() => [...this.productPerformance()].sort((a, b) => b.profit - a.profit));
 
-  dashboardMetrics = computed(() => { 
-    const orders = this.store.orders(); 
-    const today = new Date().toDateString(); 
-    const thisMonth = new Date().getMonth(); 
-    let todayRev = 0; let monthSales = 0; let monthCost = 0; 
-    
-    orders.forEach((o: Order) => {
-        const dStr = new Date(o.createdAt).toDateString();
-        const dMonth = new Date(o.createdAt).getMonth();
+  dashboardMetrics = computed(() => { 
+    const orders = this.store.orders(); 
+    const today = new Date().toDateString(); 
+    const thisMonth = new Date().getMonth(); 
+    let todayRev = 0; let monthSales = 0; let monthCost = 0; 
+    
+    orders.forEach((o: Order) => {
+        const dStr = new Date(o.createdAt).toDateString();
+        const dMonth = new Date(o.createdAt).getMonth();
 
-        if(!['pending_payment', 'unpaid_alert', 'cancelled', 'refunded'].includes(o.status)) { 
-          if (dStr === today) todayRev += o.finalTotal; 
-          if (dMonth === thisMonth) {
-              monthSales += o.finalTotal; 
-              o.items.forEach((i: CartItem) => { 
-                const p = this.store.products().find((x: Product) => x.id === i.productId); 
-                if(p) monthCost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
-              }); 
-          }
-        } 
-    }); 
-    
-    return { 
-        todayRevenue: todayRev, monthSales, monthProfit: monthSales - monthCost, 
-        toConfirm: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert', 'paid_verifying'].includes(o.status)).length, 
-        toShip: orders.filter((o: Order) => o.status === 'payment_confirmed').length, 
-        unpaid: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)).length, 
-        processing: orders.filter((o: Order) => o.status === 'refund_needed').length 
-    }; 
-  });
+        if(!['pending_payment', 'unpaid_alert', 'cancelled', 'refunded'].includes(o.status)) { 
+          if (dStr === today) todayRev += o.finalTotal; 
+          if (dMonth === thisMonth) {
+              monthSales += o.finalTotal; 
+              const u = this.store.users().find((user: User) => user.id === o.userId);
+              o.items.forEach((i: CartItem) => { 
+                const p = this.store.products().find((x: Product) => x.id === i.productId); 
+                if(p) {
+                   const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
+                   const rate = isVip ? 0.021 : 0.025;
+                   monthCost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
+                }
+              }); 
+          }
+        } 
+    }); 
+    
+    return { 
+        todayRevenue: todayRev, monthSales, monthProfit: monthSales - monthCost, 
+        toConfirm: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert', 'paid_verifying'].includes(o.status)).length, 
+        toShip: orders.filter((o: Order) => o.status === 'payment_confirmed').length, 
+        unpaid: orders.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)).length, 
+        processing: orders.filter((o: Order) => o.status === 'refund_needed').length 
+    }; 
+  });
 
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   topProducts = computed(() => [...this.store.products()].sort((a: any, b: any) => b.soldCount - a.soldCount).slice(0, 5));
@@ -1183,7 +1194,40 @@ async handleBatchImport(event: any) {
   } 
 
   exportInventoryCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '庫存數量', '狀態']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') ]); this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
-  exportToCSV() { const range = this.accountingRange(); const now = new Date(); let startDate: Date | null = null; if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); let list = this.accountingFilteredOrders(); const headers = ['訂單編號', '日期', '商品內容', '總營收', '商品成本', '預估利潤', '毛利率%']; const rows = list.map((o: Order) => { let cost = 0; o.items.forEach((i: CartItem) => { const p = this.store.products().find((x: Product) => x.id === i.productId); if (p) cost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; }); const profit = o.finalTotal - cost; return [ `\t${o.id}`, new Date(o.createdAt).toLocaleDateString(), o.items.map((i: CartItem) => `${i.productName} x${i.quantity}`).join('\n'), o.finalTotal, cost.toFixed(0), profit.toFixed(0), (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) ]; }); this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); }
+  exportToCSV() { 
+    const range = this.accountingRange(); 
+    const now = new Date(); 
+    let startDate: Date | null = null; 
+    if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
+    else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+    else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+    
+    let list = this.accountingFilteredOrders(); 
+    const headers = ['訂單編號', '日期', '商品內容', '總營收', '商品成本', '預估利潤', '毛利率%']; 
+    const rows = list.map((o: Order) => { 
+      let cost = 0; 
+      const u = this.store.users().find((user: User) => user.id === o.userId);
+      o.items.forEach((i: CartItem) => { 
+        const p = this.store.products().find((x: Product) => x.id === i.productId); 
+        if (p) { 
+          const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
+          const rate = isVip ? 0.021 : 0.025;
+          cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
+        } 
+      }); 
+      const profit = o.finalTotal - cost; 
+      return [ 
+        `\t${o.id}`, 
+        new Date(o.createdAt).toLocaleDateString(), 
+        o.items.map((i: CartItem) => `${i.productName} x${i.quantity}`).join('\n'), 
+        o.finalTotal, 
+        cost.toFixed(0), 
+        profit.toFixed(0), 
+        (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) 
+      ]; 
+    }); 
+    this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }
 
   exportProductsCSV() { 
      const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
