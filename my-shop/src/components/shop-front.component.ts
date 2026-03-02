@@ -106,7 +106,7 @@ import { StoreService, Product } from '../services/store.service';
                    <div>
                       @if(getTierBadge(product)) { <span class="text-[9px] font-bold text-white bg-black px-1.5 py-0.5 rounded-full w-fit block mb-0.5">{{ getTierBadge(product) }}</span> }
                       <span class="text-sm sm:text-xl font-bold text-brand-900">NT$ {{ getPrice(product) }}</span>
-                      @if(product.options.some(opt => opt.includes('='))) { <span class="text-[10px] text-gray-400 ml-1">起</span> }
+                      @if(hasCustomPrice(product)) { <span class="text-[10px] text-gray-400 ml-1">起</span> }
                    </div>
                    @if(product.stock > 0) {
                      <button class="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors shrink-0">
@@ -152,7 +152,7 @@ import { StoreService, Product } from '../services/store.service';
                  <div class="flex items-end justify-between">
                     <div>
                        @if(getTierBadge(product)) { <div class="text-[9px] font-bold text-white bg-black px-1.5 py-0.5 rounded w-fit mb-0.5">{{ getTierBadge(product) }}</div> }
-                       <div class="font-black text-brand-900 text-base sm:text-xl">NT$ {{ getPrice(product) }} @if(product.options.some(opt => opt.includes('='))) { <span class="text-xs text-gray-400 font-normal">起</span> }</div>
+                       <div class="font-black text-brand-900 text-base sm:text-xl">NT$ {{ getPrice(product) }} @if(hasCustomPrice(product)) { <span class="text-xs text-gray-400 font-normal">起</span> }</div>
                     </div>
                     @if(product.stock > 0) {
                       <button class="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors shadow-sm text-lg">
@@ -372,12 +372,17 @@ export class ShopFrontComponent {
     });
   }
 
-  // 🔥 解析選項名稱 (去掉 = 跟價格)
+  // 🔥 修正：為了避開 Angular 模板對 arrow function 的限制，把判斷獨立成函數
+  hasCustomPrice(p: Product): boolean {
+    return p?.options?.some(opt => opt.includes('=')) || false;
+  }
+
+  // 解析選項名稱 (去掉 = 跟價格)
   getOptName(opt: string): string {
     return opt.includes('=') ? opt.split('=')[0].trim() : opt;
   }
 
-  // 🔥 解析選項獨立價格
+  // 解析選項獨立價格
   getOptPrice(opt: string): number {
     const p = this.selectedProduct();
     if (!p) return 0;
@@ -387,9 +392,10 @@ export class ShopFrontComponent {
     return this.getPrice(p);
   }
 
-  // 判斷該商品是否有設定獨立價格的規格
+  // 判斷當前選中商品是否有設定獨立價格的規格
   hasCustomPriceOptions = computed(() => {
-    return this.selectedProduct()?.options.some(opt => opt.includes('=')) || false;
+    const p = this.selectedProduct();
+    return p ? this.hasCustomPrice(p) : false;
   });
 
   // 目前畫面該顯示的總單價 (根據選擇的選項變動)
