@@ -20,7 +20,7 @@ export interface Product {
 
 export interface CartItem {
   productId: string; productName: string; productImage: string; option: string; price: number; quantity: number; isPreorder: boolean;
-  unitCost?: number; // 🔥 紀錄結帳當下的實際單位成本 (包含 0.021 或 0.025 的匯率計算)
+  unitCost?: number; // 🔥 紀錄結帳當下的實際單位成本
 }
 
 export interface User {
@@ -32,7 +32,9 @@ export interface User {
 export type OrderStatus = 'pending_payment' | 'paid_verifying' | 'unpaid_alert' | 'refund_needed' | 'refunded' | 'payment_confirmed' | 'pending_shipping' | 'arrived_notified' | 'shipped' | 'picked_up' | 'completed' | 'cancelled';
 
 export interface Order {
-  id: string; userId: string; userEmail?: string; userName: string; items: CartItem[]; subtotal: number;
+  id: string; userId: string; userEmail?: string; userName: string; 
+  userPhone?: string; shippingName?: string; shippingPhone?: string; shippingAddress?: string; // 🔥 補齊收件人欄位防呆
+  items: CartItem[]; subtotal: number;
   discount: number; shippingFee: number; usedCredits: number; finalTotal: number; depositPaid: number; balanceDue: number;
   status: OrderStatus; paymentMethod: 'cash' | 'bank_transfer' | 'cod'; shippingMethod: 'meetup' | 'myship' | 'family' | 'delivery'; 
   createdAt: number; shippingLink?: string;
@@ -130,31 +132,26 @@ export class StoreService {
   }
   generateNextProductCode(): string { return this.generateProductCode('P'); }
 
-  // 🔥 修改此處：支援解析 = 符號的自訂價格
   addToCart(product: Product, option: string, quantity: number) {
     const user = this.currentUser(); 
     let finalPrice = product.priceGeneral;
     let parsedOption = option;
 
-    // 解析專屬選項價格 (例如: "兩入組=1500")
     if (option.includes('=')) {
        const parts = option.split('=');
        parsedOption = parts[0].trim();
        finalPrice = parseInt(parts[1].trim(), 10) || finalPrice;
     } else {
-       // 如果沒有自訂價格，才套用批發/VIP價
        if (user?.tier === 'wholesale' && product.priceWholesale > 0) finalPrice = product.priceWholesale; 
        else if (user?.tier === 'vip' && product.priceVip > 0) finalPrice = product.priceVip;
     }
 
-    // 🔥 核心快照：計算當下這個客人專屬的成本 (0.021 或 0.025)
     const isVip = user?.tier === 'vip' || user?.tier === 'wholesale' || finalPrice === product.priceVip;
     const currentRate = isVip ? 0.021 : 0.025;
     const currentCost = (product.localPrice * currentRate) + product.costMaterial + (product.weight * product.shippingCostPerKg);
 
     this.cart.update(current => {
       const exist = current.find(i => i.productId === product.id && i.option === parsedOption);
-      // 把價格跟算好的成本 (unitCost) 一起存進購物車
       if (exist) return current.map(i => i === exist ? { ...i, quantity: i.quantity + quantity, price: finalPrice, unitCost: currentCost } : i);
       return [...current, { productId: product.id, productName: product.name, productImage: product.image, option: parsedOption, price: finalPrice, quantity, isPreorder: product.isPreorder, unitCost: currentCost }];
     });
@@ -175,10 +172,31 @@ export class StoreService {
     
     const orderId = this.generateOrderId();
 
+    // 🔥 確保把所有付款資訊(包含後五碼)、收件資訊完整寫入資料庫！
     const orderData: Order = {
       id: orderId,
-      userId: user.id, userEmail: user.email, userName: shippingInfo.name || user.name, items: checkoutItems, subtotal: originalTotal, discount: bulkDiscountAmount, shippingFee, usedCredits, finalTotal,
-      depositPaid: finalTotal - 20, balanceDue: 20, status: 'pending_payment', paymentMethod, shippingMethod, createdAt: Date.now()
+      userId: user.id, 
+      userEmail: user.email, 
+      userName: shippingInfo.name || user.name, 
+      userPhone: user.phone || '',
+      shippingName: shippingInfo.name || '',
+      shippingPhone: shippingInfo.phone || '',
+      shippingAddress: (shippingMethod === 'myship' || shippingMethod === 'family') ? shippingInfo.store : shippingInfo.address,
+      items: checkoutItems, 
+      subtotal: originalTotal, 
+      discount: bulkDiscountAmount, 
+      shippingFee, 
+      usedCredits, 
+      finalTotal, 
+      depositPaid: finalTotal - 20, 
+      balanceDue: 20, 
+      status: 'pending_payment', 
+      paymentMethod, 
+      shippingMethod, 
+      createdAt: Date.now(),
+      paymentLast5: paymentInfo.last5 || '', // 🔥 正式寫入後五碼
+      paymentName: paymentInfo.name || '',
+      paymentTime: paymentInfo.time || ''
     };
     
     await setDoc(doc(this.firestore, 'orders', orderId), orderData);

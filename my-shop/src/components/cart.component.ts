@@ -156,11 +156,20 @@ import { StoreService, CartItem } from '../services/store.service';
                      </label>
                   }
                </div>
+               
                @if(form.get('paymentMethod')?.value === 'bank_transfer') {
-                  <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 border border-blue-100 animate-fade-in">
-                     <div class="font-bold mb-1">匯款資訊 (凱基商業銀行 809)</div>
-                     <div class="font-mono text-lg">606-904-0006-7288</div>
-                     <div class="font-bold mt-1">戶名：蘇*婷</div>
+                  <div class="bg-blue-50 p-4 rounded-xl text-sm text-blue-800 border border-blue-100 animate-fade-in space-y-3">
+                     <div>
+                        <div class="font-bold mb-1">匯款資訊 (凱基商業銀行 809)</div>
+                        <div class="font-mono text-lg select-all">606-904-0006-7288</div>
+                        <div class="font-bold mt-1">戶名：蘇*婷</div>
+                     </div>
+                     <div class="pt-3 border-t border-blue-200/50">
+                        <label class="block text-xs font-bold text-blue-600 mb-1">您的匯款帳號後五碼 (必填)</label>
+                        <input formControlName="payLast5" type="text" maxlength="5" placeholder="請輸入後 5 碼" 
+                               class="w-full p-2 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-300 outline-none text-center font-mono font-bold tracking-widest text-brand-900">
+                        <p class="text-[10px] text-blue-400 mt-1">* 請於匯款後填寫，方便我們快速對帳出貨。</p>
+                     </div>
                   </div>
                }
             </div>
@@ -279,7 +288,7 @@ export class CartComponent {
      shipAddress: [''],
      shipStore: [''],
      payName: [''],
-     payLast5: [''],
+     payLast5: [''], // 表單有留給後五碼
      payDate: ['']
   });
 
@@ -308,6 +317,18 @@ export class CartComponent {
         }
         addr?.updateValueAndValidity();
         store?.updateValueAndValidity();
+     });
+
+     // 🔥 新增：監聽付款方式，如果選轉帳，後五碼必須填寫
+     this.form.get('paymentMethod')?.valueChanges.subscribe(m => {
+        const last5Control = this.form.get('payLast5');
+        if (m === 'bank_transfer') {
+           last5Control?.setValidators([Validators.required, Validators.minLength(5), Validators.maxLength(5)]);
+        } else {
+           last5Control?.clearValidators();
+           last5Control?.setValue('');
+        }
+        last5Control?.updateValueAndValidity();
      });
   }
 
@@ -395,25 +416,21 @@ export class CartComponent {
      if (this.form.valid) {
         const val = this.form.value;
         try {
-           // 1. 加上 await，等待訂單建立完成
            const orderResult = await this.storeService.createOrder(
-              { name: val.payName, time: val.payDate, last5: val.payLast5 },
+              { name: val.payName, time: val.payDate, last5: val.payLast5 }, // 將 payLast5 傳給 Service
               { name: val.shipName, phone: val.shipPhone, address: val.shipAddress, store: val.shipStore },
               this.calculatedCredits(), val.paymentMethod, val.shippingMethod, this.currentShippingFee(), this.checkoutList()
            );
 
-           // 2. 如果回傳 null，代表可能未登入或發生其他預期內的錯誤
            if (!orderResult) {
               alert('結帳失敗，請確認登入狀態後重試！');
               return;
            }
 
-           // 3. 確定成功後，才清空選擇並跳轉到成功畫面
            this.selectedIndices.set(new Set());
            this.step.set(3);
            
         } catch (error: any) {
-           // 4. 如果 Firebase 報錯，攔截它並顯示給用戶
            console.error('結帳發生錯誤:', error);
            alert('結帳過程中發生錯誤，請稍後再試！\n' + (error.message || ''));
         }
