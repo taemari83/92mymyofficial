@@ -977,13 +977,12 @@ export class AdminPanelComponent {
 
       o.items.forEach((i: CartItem) => {
           const p = this.store.products().find((x: Product) => x.id === i.productId);
-          if (p) {
-              const localPrice = p.localPrice || 0;
+          if (p && p.localPrice) {
               const costMat = p.costMaterial || 0;
               const weight = p.weight || 0;
               const shipKg = p.shippingCostPerKg || 200;
-              // 後台總覽統一使用「一般成本 (/40)」
-              cost += ((localPrice / 40) + costMat + (weight * shipKg)) * i.quantity;
+              // 總報表：統一用 /40 標準
+              cost += ((p.localPrice / 40) + costMat + (weight * shipKg)) * i.quantity;
           } else {
               cost += (i.unitCost || 0) * i.quantity;
           }
@@ -1007,7 +1006,7 @@ export class AdminPanelComponent {
             if(p) {
                productMap.set(item.productId, { product: p, sold: 0, revenue: 0, cost: 0, hasBulk: p.options.some(opt => opt.includes('=')) });
             } else {
-               // 防呆：即使商品被刪除，也能在排行榜顯示歷史銷量
+               // 防呆：商品已刪除
                productMap.set(item.productId, { product: { id: item.productId, name: item.productName + ' (已刪除)', image: item.productImage }, sold: 0, revenue: 0, cost: 0, hasBulk: false });
             }
           }
@@ -1017,14 +1016,16 @@ export class AdminPanelComponent {
               stats.sold += item.quantity;
               stats.revenue += item.price * item.quantity; 
 
-              if (stats.product.localPrice !== undefined) {
-                  const localPrice = stats.product.localPrice || 0;
+              // 計算成本
+              if (stats.product.localPrice) {
+                  const localPrice = stats.product.localPrice;
                   const costMat = stats.product.costMaterial || 0;
                   const weight = stats.product.weight || 0;
                   const shipKg = stats.product.shippingCostPerKg || 200;
-                  // 排行榜統一使用「一般成本 (/40)」來計算利潤
+                  // 統一用 /40 當作標準成本
                   stats.cost += ((localPrice / 40) + costMat + (weight * shipKg)) * item.quantity;
               } else {
+                  // 沒資料就用歷史紀錄
                   stats.cost += (item.unitCost || 0) * item.quantity;
               }
           }
@@ -1057,13 +1058,12 @@ export class AdminPanelComponent {
               monthSales += o.finalTotal; 
               o.items.forEach((i: CartItem) => { 
                 const p = this.store.products().find((x: Product) => x.id === i.productId); 
-                if(p) {
-                    const localPrice = p.localPrice || 0;
+                if(p && p.localPrice) {
                     const costMat = p.costMaterial || 0;
                     const weight = p.weight || 0;
                     const shipKg = p.shippingCostPerKg || 200;
-                    // 首頁儀表板統一使用「一般成本 (/40)」
-                    monthCost += ((localPrice / 40) + costMat + (weight * shipKg)) * i.quantity; 
+                    // 首頁：統一用 /40 標準
+                    monthCost += ((p.localPrice / 40) + costMat + (weight * shipKg)) * i.quantity; 
                 } else {
                     monthCost += (i.unitCost || 0) * i.quantity;
                 }
@@ -1080,7 +1080,7 @@ export class AdminPanelComponent {
         processing: orders.filter((o: Order) => o.status === 'refund_needed').length 
     }; 
   });
-  
+
   pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   topProducts = computed(() => [...this.store.products()].sort((a: any, b: any) => b.soldCount - a.soldCount).slice(0, 5));
 
@@ -1295,7 +1295,8 @@ export class AdminPanelComponent {
     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
     
     let list = this.accountingFilteredOrders(); 
-    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品成本(一般)', '商品成本(VIP)', '預估利潤', '毛利率%']; 
+    // 表頭：增加「商品成本(一般)」與「商品成本(VIP)」
+    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品成本(一般 /40)', '商品成本(VIP /43)', '預估利潤 (以一般成本計)', '毛利率%']; 
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
 
     const rows = list.map((o: Order) => { 
@@ -1310,22 +1311,30 @@ export class AdminPanelComponent {
         let costVip = 0;
 
         if (p) { 
+          // 確保就算有漏填欄位也不會變成 NaN
           const localPrice = p.localPrice || 0;
           const costMat = p.costMaterial || 0;
           const weight = p.weight || 0;
           const shipKg = p.shippingCostPerKg || 200;
-          
-          // 🔥 依照你的公式：一般成本 /40，VIP成本 /43
-          costGen = (localPrice / 40) + costMat + (weight * shipKg);
-          costVip = (localPrice / 43) + costMat + (weight * shipKg);
-          
-          // 明細中自動填入客人購買商品的售價與 VIP 價
-          detailString += ` [售價:$${p.priceGeneral || 0} / VIP價:$${p.priceVip || 0} / 實收:$${i.price}]`;
+          const rate = p.exchangeRate || 0.22; // 預設匯率
+
+          // 🔥 核心公式：一般成本 /40，VIP成本 /43
+          // 如果 localPrice 有值，優先用 /40 與 /43 計算；否則用匯率計算
+          if (localPrice > 0) {
+             costGen = (localPrice / 40) + costMat + (weight * shipKg);
+             costVip = (localPrice / 43) + costMat + (weight * shipKg);
+          } else {
+             // 沒填當地原價，改用 (售價 - 預期利潤) 或直接用 unitCost
+             costGen = i.unitCost || 0;
+             costVip = i.unitCost || 0;
+          }
+
+          detailString += ` [售價:$${p.priceGeneral || 0} / VIP:$${p.priceVip || 0} / 實收:$${i.price}]`;
         } else {
-          // 防呆：如果商品已刪除，成本拿當時結帳紀錄墊檔，避免變成 0
+          // 🔥 防呆：商品已刪除，用歷史紀錄的 unitCost 墊檔
           costGen = i.unitCost || 0;
           costVip = i.unitCost || 0;
-          detailString += ` [實收:$${i.price} (商品已下架)]`;
+          detailString += ` [實收:$${i.price} (已下架)]`;
         }
         
         costGeneralTotal += costGen * i.quantity;
@@ -1334,7 +1343,7 @@ export class AdminPanelComponent {
         return detailString;
       }).join('\n'); 
 
-      // 毛利與毛利率統一以「商品成本(一般)」計算
+      // 🔥 利潤 = 實收總額 - 一般成本總額
       const profit = o.finalTotal - costGeneralTotal; 
       const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
       
