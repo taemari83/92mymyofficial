@@ -83,7 +83,7 @@ import { StoreService, Product } from '../services/store.service';
                  <img [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                  
                  <div class="absolute top-2 left-2 right-2 flex gap-1 flex-wrap">
-                    @if(product.bulkDiscount?.count) { <div class="bg-red-500/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm animate-pulse">任選 {{ product.bulkDiscount!.count }} 件 $ {{ product.bulkDiscount!.total }}</div> }
+                    @if(product.bulkDiscount?.count) { <div class="bg-red-500/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm animate-pulse">任選 {{ product.bulkDiscount!.count }} 件優惠</div> }
                     @if(isNewProduct(product)) { <div class="bg-red-500/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm animate-pulse">NEW</div> }
                     <div class="bg-white/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-brand-900 uppercase shadow-sm">{{ product.category }}</div>
                     @if(product.isPreorder) { <div class="bg-blue-100/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-blue-600 shadow-sm">預購</div> }
@@ -106,6 +106,7 @@ import { StoreService, Product } from '../services/store.service';
                    <div>
                       @if(getTierBadge(product)) { <span class="text-[9px] font-bold text-white bg-black px-1.5 py-0.5 rounded-full w-fit block mb-0.5">{{ getTierBadge(product) }}</span> }
                       <span class="text-sm sm:text-xl font-bold text-brand-900">NT$ {{ getPrice(product) }}</span>
+                      @if(product.options.some(opt => opt.includes('='))) { <span class="text-[10px] text-gray-400 ml-1">起</span> }
                    </div>
                    @if(product.stock > 0) {
                      <button class="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors shrink-0">
@@ -144,14 +145,14 @@ import { StoreService, Product } from '../services/store.service';
                     </div>
                     <h3 class="font-bold text-brand-900 text-sm sm:text-lg leading-tight mb-1 line-clamp-2">{{ product.name }}</h3>
                     @if(product.bulkDiscount?.count) {
-                       <div class="text-[10px] sm:text-xs text-red-500 font-bold line-clamp-1">🔥 任選 {{ product.bulkDiscount!.count }} 件 $ {{ product.bulkDiscount!.total }}</div>
+                       <div class="text-[10px] sm:text-xs text-red-500 font-bold line-clamp-1">🔥 任選 {{ product.bulkDiscount!.count }} 件優惠</div>
                     }
                  </div>
                  
                  <div class="flex items-end justify-between">
                     <div>
                        @if(getTierBadge(product)) { <div class="text-[9px] font-bold text-white bg-black px-1.5 py-0.5 rounded w-fit mb-0.5">{{ getTierBadge(product) }}</div> }
-                       <div class="font-black text-brand-900 text-base sm:text-xl">NT$ {{ getPrice(product) }}</div>
+                       <div class="font-black text-brand-900 text-base sm:text-xl">NT$ {{ getPrice(product) }} @if(product.options.some(opt => opt.includes('='))) { <span class="text-xs text-gray-400 font-normal">起</span> }</div>
                     </div>
                     @if(product.stock > 0) {
                       <button class="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors shadow-sm text-lg">
@@ -180,9 +181,9 @@ import { StoreService, Product } from '../services/store.service';
       }
 
       @if (selectedProduct()) {
-        <div class="fixed top-0 left-0 right-0 bottom-0 z-[100] flex flex-col md:flex-row md:items-center justify-center p-0 md:p-6 bg-white md:bg-black/70 md:backdrop-blur-md" (click)="closeModal()">
+        <div class="fixed top-0 left-0 right-0 bottom-0 z-[100] flex flex-col md:flex-row md:items-center justify-center p-0 md:p-6 bg-white md:bg-black/70 md:backdrop-blur-md">
           
-          <div class="bg-white w-full h-full md:max-w-5xl md:rounded-[2.5rem] md:shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in md:h-auto md:max-h-[90vh] flex flex-col md:flex-row relative" (click)="$event.stopPropagation()">
+          <div class="bg-white w-full h-full md:max-w-5xl md:rounded-[2.5rem] md:shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in md:h-auto md:max-h-[90vh] flex flex-col md:flex-row relative">
             
             <div class="md:w-1/2 bg-white relative group flex flex-col h-[45%] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
                <div class="flex-1 relative overflow-hidden bg-gray-50 p-2 md:p-4">
@@ -207,7 +208,7 @@ import { StoreService, Product } from '../services/store.service';
                   <div class="mb-6">
                     <div class="flex justify-between items-start mb-2 pr-10">
                       <div class="flex flex-wrap gap-2">
-                         @if(selectedProduct()!.bulkDiscount?.count) { <div class="text-sm text-red-500 font-bold tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1 animate-pulse">🔥 任選 {{ selectedProduct()!.bulkDiscount!.count }} 件 $ {{ selectedProduct()!.bulkDiscount!.total }}</div> }
+                         @if(selectedProduct()!.bulkDiscount?.count) { <div class="text-sm text-red-500 font-bold tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1 animate-pulse">🔥 多件優惠</div> }
                          @if(isNewProduct(selectedProduct()!)) { <div class="text-sm text-red-500 font-bold uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1">✨ NEW</div> }
                          <div class="text-sm text-brand-400 font-bold uppercase tracking-widest bg-brand-50 px-2 py-1 rounded-lg">{{ selectedProduct()!.category }}</div>
                          @if(selectedProduct()!.isPreorder) { <div class="text-sm text-blue-500 font-bold tracking-widest bg-blue-50 px-2 py-1 rounded-lg">預購</div> }
@@ -216,8 +217,8 @@ import { StoreService, Product } from '../services/store.service';
                     </div>
                     <h2 class="text-2xl md:text-3xl font-black text-gray-800 leading-tight mb-2">{{ selectedProduct()!.name }}</h2>
                     
-                    <div class="flex items-end gap-3 mt-3 border-b border-gray-100 pb-4">
-                       <div class="text-3xl font-black text-brand-900 tracking-tight">NT$ {{ getPrice(selectedProduct()!) | number }}</div>
+                    <div class="flex items-end gap-3 mt-3 border-b border-gray-100 pb-4 transition-all">
+                       <div class="text-3xl font-black text-brand-900 tracking-tight">NT$ {{ currentDisplayPrice() | number }}</div>
                        @if(getTierBadge(selectedProduct()!)) { <div class="text-sm bg-black text-white px-3 py-1 rounded-full font-bold mb-1">{{ getTierBadge(selectedProduct()!) }}</div> }
                     </div>
                   </div>
@@ -226,22 +227,39 @@ import { StoreService, Product } from '../services/store.service';
                       @if (selectedProduct()!.options.length > 0) {
                         <div class="mb-6">
                           <div class="flex items-center justify-between mb-3">
-                             <label class="text-sm font-bold text-gray-800">選擇規格</label>
-                             @if(selectedOption()) { <span class="text-xs text-brand-600 font-bold bg-white px-2 py-1 rounded-md shadow-sm border border-brand-100 animate-fade-in">{{ selectedOption() }}</span> }
+                             <label class="text-sm font-bold text-gray-800">選擇規格或方案</label>
+                             @if(selectedOption()) { <span class="text-xs text-brand-600 font-bold bg-white px-2 py-1 rounded-md shadow-sm border border-brand-100 animate-fade-in">{{ getOptName(selectedOption()) }}</span> }
                           </div>
-                          <div class="flex flex-wrap gap-2.5">
-                            @for (opt of selectedProduct()!.options; track opt) {
-                              <button 
-                                (click)="selectedOption.set(opt)"
-                                class="px-4 py-2 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-bold transition-all shadow-sm active:scale-95 text-center relative overflow-hidden break-words whitespace-normal h-auto min-h-[48px] flex items-center justify-center"
-                                [class.bg-brand-900]="selectedOption() === opt" [class.text-white]="selectedOption() === opt" [class.ring-2]="selectedOption() === opt" [class.ring-brand-200]="selectedOption() === opt"
-                                [class.bg-white]="selectedOption() !== opt" [class.text-gray-600]="selectedOption() !== opt" [class.border]="selectedOption() !== opt" [class.border-gray-200]="selectedOption() !== opt" [class.hover:border-brand-300]="selectedOption() !== opt"
-                              >
-                                {{ opt }}
-                                @if(selectedOption() === opt) { <div class="absolute inset-0 bg-white/10"></div> }
-                              </button>
-                            }
-                          </div>
+                          
+                          @if (hasCustomPriceOptions()) {
+                            <div class="flex flex-col gap-2.5">
+                              @for (rawOpt of selectedProduct()!.options; track rawOpt) {
+                                <button 
+                                  (click)="selectedOption.set(rawOpt)"
+                                  class="w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between text-left relative overflow-hidden"
+                                  [class.border-brand-400]="selectedOption() === rawOpt" [class.bg-white]="selectedOption() === rawOpt" [class.shadow-md]="selectedOption() === rawOpt"
+                                  [class.border-gray-200]="selectedOption() !== rawOpt" [class.bg-white]="selectedOption() !== rawOpt" [class.hover:border-brand-300]="selectedOption() !== rawOpt"
+                                >
+                                  @if(selectedOption() === rawOpt) { <div class="absolute top-0 left-0 w-1 h-full bg-brand-400"></div> }
+                                  <span class="font-bold text-gray-800 pr-4 break-words whitespace-normal">{{ getOptName(rawOpt) }}</span>
+                                  <span class="font-black text-brand-900 text-lg shrink-0">NT$ {{ getOptPrice(rawOpt) | number }}</span>
+                                </button>
+                              }
+                            </div>
+                          } @else {
+                            <div class="flex flex-wrap gap-2.5">
+                              @for (rawOpt of selectedProduct()!.options; track rawOpt) {
+                                <button 
+                                  (click)="selectedOption.set(rawOpt)"
+                                  class="px-4 py-2 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-bold transition-all shadow-sm active:scale-95 text-center relative overflow-hidden break-words whitespace-normal h-auto min-h-[48px] flex items-center justify-center"
+                                  [class.bg-brand-900]="selectedOption() === rawOpt" [class.text-white]="selectedOption() === rawOpt" [class.ring-2]="selectedOption() === rawOpt" [class.ring-brand-200]="selectedOption() === rawOpt"
+                                  [class.bg-white]="selectedOption() !== rawOpt" [class.text-gray-600]="selectedOption() !== rawOpt" [class.border]="selectedOption() !== rawOpt" [class.border-gray-200]="selectedOption() !== rawOpt" [class.hover:border-brand-300]="selectedOption() !== rawOpt"
+                                >
+                                  {{ rawOpt }}
+                                </button>
+                              }
+                            </div>
+                          }
                         </div>
                       }
 
@@ -277,7 +295,7 @@ import { StoreService, Product } from '../services/store.service';
                      >
                        <div class="flex flex-col items-start">
                           <span class="text-[10px] text-white/60 font-medium uppercase tracking-wider">Total</span>
-                          <span class="text-xl font-mono">NT$ {{ getPrice(selectedProduct()!) * qty() | number }}</span>
+                          <span class="text-xl font-mono">NT$ {{ currentDisplayPrice() * qty() | number }}</span>
                        </div>
                        <div class="flex items-center gap-2">
                           <span>加入購物車</span>
@@ -343,7 +361,6 @@ export class ShopFrontComponent {
        }
     }, { allowSignalWrites: true });
 
-    // 🔥 當開啟商品視窗時，鎖定背景避免滑動
     effect(() => {
        if (typeof document !== 'undefined') {
           if (this.selectedProduct()) {
@@ -354,6 +371,35 @@ export class ShopFrontComponent {
        }
     });
   }
+
+  // 🔥 解析選項名稱 (去掉 = 跟價格)
+  getOptName(opt: string): string {
+    return opt.includes('=') ? opt.split('=')[0].trim() : opt;
+  }
+
+  // 🔥 解析選項獨立價格
+  getOptPrice(opt: string): number {
+    const p = this.selectedProduct();
+    if (!p) return 0;
+    if (opt.includes('=')) {
+      return parseInt(opt.split('=')[1].trim(), 10) || this.getPrice(p);
+    }
+    return this.getPrice(p);
+  }
+
+  // 判斷該商品是否有設定獨立價格的規格
+  hasCustomPriceOptions = computed(() => {
+    return this.selectedProduct()?.options.some(opt => opt.includes('=')) || false;
+  });
+
+  // 目前畫面該顯示的總單價 (根據選擇的選項變動)
+  currentDisplayPrice = computed(() => {
+    const p = this.selectedProduct();
+    if (!p) return 0;
+    const opt = this.selectedOption();
+    if (opt) return this.getOptPrice(opt);
+    return this.getPrice(p);
+  });
 
   productImages = computed(() => {
      const p = this.selectedProduct();

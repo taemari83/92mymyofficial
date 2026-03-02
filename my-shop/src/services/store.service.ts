@@ -109,7 +109,6 @@ export class StoreService {
   async toggleProductListing(id: string, current: boolean) { await updateDoc(doc(this.firestore, 'products', id), { isListed: !current }); }
   async deleteProduct(id: string) { await deleteDoc(doc(this.firestore, 'products', id)); }
 
-  // 🔥 升級：自動產生 YYMMDD + HHMMSS + 3位隨機防撞碼 (徹底解決撞號與權限問題)
   generateOrderId(): string {
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
@@ -118,11 +117,7 @@ export class StoreService {
     const hh = String(now.getHours()).padStart(2, '0');
     const min = String(now.getMinutes()).padStart(2, '0');
     const sec = String(now.getSeconds()).padStart(2, '0');
-    
-    // 產生 3 位數的隨機碼 (例如 042, 915)
     const randomStr = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    
-    // 最終格式例如：250227103542189 (看起來非常像專業電商的單號)
     return `${yy}${mm}${dd}${hh}${min}${sec}${randomStr}`;
   }
 
@@ -134,13 +129,27 @@ export class StoreService {
   }
   generateNextProductCode(): string { return this.generateProductCode('P'); }
 
+  // 🔥 修改此處：支援解析 = 符號的自訂價格
   addToCart(product: Product, option: string, quantity: number) {
-    const user = this.currentUser(); let finalPrice = product.priceGeneral;
-    if (user?.tier === 'wholesale' && product.priceWholesale > 0) finalPrice = product.priceWholesale; else if (user?.tier === 'vip' && product.priceVip > 0) finalPrice = product.priceVip;
+    const user = this.currentUser(); 
+    let finalPrice = product.priceGeneral;
+    let parsedOption = option;
+
+    // 解析專屬選項價格 (例如: "兩入組=1500")
+    if (option.includes('=')) {
+       const parts = option.split('=');
+       parsedOption = parts[0].trim();
+       finalPrice = parseInt(parts[1].trim(), 10) || finalPrice;
+    } else {
+       // 如果沒有自訂價格，才套用批發/VIP價
+       if (user?.tier === 'wholesale' && product.priceWholesale > 0) finalPrice = product.priceWholesale; 
+       else if (user?.tier === 'vip' && product.priceVip > 0) finalPrice = product.priceVip;
+    }
+
     this.cart.update(current => {
-      const exist = current.find(i => i.productId === product.id && i.option === option);
-      if (exist) return current.map(i => i === exist ? { ...i, quantity: i.quantity + quantity } : i);
-      return [...current, { productId: product.id, productName: product.name, productImage: product.image, option, price: finalPrice, quantity, isPreorder: product.isPreorder }];
+      const exist = current.find(i => i.productId === product.id && i.option === parsedOption);
+      if (exist) return current.map(i => i === exist ? { ...i, quantity: i.quantity + quantity, price: finalPrice } : i);
+      return [...current, { productId: product.id, productName: product.name, productImage: product.image, option: parsedOption, price: finalPrice, quantity, isPreorder: product.isPreorder }];
     });
   }
 
@@ -157,7 +166,6 @@ export class StoreService {
     });
     const bulkDiscountAmount = originalTotal - finalItemsTotal; const finalTotal = finalItemsTotal + shippingFee - usedCredits;
     
-    // 🔥 套用自訂流水號
     const orderId = this.generateOrderId();
 
     const orderData: Order = {
@@ -166,7 +174,6 @@ export class StoreService {
       depositPaid: finalTotal - 20, balanceDue: 20, status: 'pending_payment', paymentMethod, shippingMethod, createdAt: Date.now()
     };
     
-    // 🔥 儲存訂單
     await setDoc(doc(this.firestore, 'orders', orderId), orderData);
 
     fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'new_order', orderId: orderId, total: finalTotal, name: orderData.userName, email: user.email }) }).catch(e => console.error(e));

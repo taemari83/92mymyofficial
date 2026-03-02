@@ -570,7 +570,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                          <input type="number" formControlName="stock" class="w-full p-2 border rounded-lg"> 
                       }
                     </div> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (用逗號分隔)</label> <input formControlName="optionsStr" class="w-full p-2 border rounded-lg" placeholder="例如: 紅色, 藍色, 綠色"> </div> 
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (不同價位可用 = 標示)</label> <input formControlName="optionsStr" class="w-full p-2 border rounded-lg" placeholder="例如: 單件, 兩入組=1500"> </div>
                   </div> 
                   
                   <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動生成: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-2 border rounded-lg font-mono bg-gray-50 text-gray-500"> </div> 
