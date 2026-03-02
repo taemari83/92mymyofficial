@@ -684,22 +684,28 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </div> 
 
               <div class="p-6 border-b border-gray-100 bg-white shrink-0">
-                 <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">客戶資訊</div>
-                 <div class="text-xs text-gray-600 mb-4 grid grid-cols-2 gap-2 items-center">
-                    <div><span class="text-gray-400">姓名:</span> {{ o.userName }}</div>
-                    <div><span class="text-gray-400">Email:</span> {{ o.userEmail || '無' }}</div>
-                    <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
-                    <div><span class="text-gray-400">物流:</span> {{ getShippingLabel(o.shippingMethod) }}</div>
-                    @if(o.paymentMethod === 'bank_transfer') {
-                       <div class="col-span-2 flex items-center gap-2 mt-1 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
-                          <span class="text-blue-700 font-bold shrink-0">🏦 匯款後五碼:</span>
-                          <input type="text" [value]="o.paymentLast5 || ''" (change)="updatePaymentLast5(o, $event)" placeholder="可手動填寫對帳" class="w-32 px-2 py-1 rounded border border-blue-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 bg-white text-brand-900 font-mono font-bold">
-                          @if(o.paymentName) { <span class="text-[10px] text-gray-500 ml-2">客戶回報: {{ o.paymentName }}</span> }
-                       </div>
-                    } @else if(o.paymentName) {
-                       <div class="col-span-2 text-blue-600"><span class="text-blue-400">匯款回報:</span> {{ o.paymentName }} (後五碼: {{ o.paymentLast5 }})</div>
-                    }
-                 </div>
+                 <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">客戶與收件資訊</div>
+<div class="text-xs text-gray-600 mb-4 grid grid-cols-2 gap-2 items-start">
+   <div><span class="text-gray-400">訂購人:</span> {{ o.userName }}</div>
+   <div><span class="text-gray-400">電話:</span> {{ o.userPhone || '無' }}</div>
+   <div class="col-span-2"><span class="text-gray-400">Email:</span> {{ o.userEmail || '無' }}</div>
+
+   <div class="col-span-2 mt-2 pt-2 border-t border-gray-100"><span class="text-gray-400">收件人:</span> {{ o.shippingName || o.userName }}</div>
+   <div><span class="text-gray-400">收件電話:</span> {{ o.shippingPhone || o.userPhone || '無' }}</div>
+   <div class="col-span-2"><span class="text-gray-400">收件地址/門市:</span> {{ o.shippingAddress || '無' }}</div>
+
+   <div class="col-span-2 mt-2 pt-2 border-t border-gray-100"></div>
+   <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
+   <div><span class="text-gray-400">物流:</span> {{ getShippingLabel(o.shippingMethod) }}</div>
+
+   @if(o.paymentMethod === 'bank_transfer' || o.paymentLast5) {
+      <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 mt-2 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+         <span class="text-blue-700 font-bold shrink-0">🏦 匯款後五碼:</span>
+         <input type="text" [value]="o.paymentLast5 || ''" (change)="updatePaymentLast5(o, $event)" placeholder="可手動幫客人填寫" class="w-full sm:w-32 px-2 py-1.5 rounded border border-blue-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 bg-white text-brand-900 font-mono font-bold">
+         @if(o.paymentName) { <span class="text-[11px] text-gray-500 bg-white px-2 py-1 rounded border border-gray-100">戶名: {{ o.paymentName }}</span> }
+      </div>
+   }
+</div>
 
                  <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">商品明細</div>
                  <div class="space-y-2 mb-4 max-h-40 overflow-y-auto custom-scrollbar pr-2">
@@ -1223,21 +1229,38 @@ export class AdminPanelComponent {
   
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
   exportOrdersCSV() { 
-    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; 
+    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)']; 
     const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; 
     const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
-    const rows = this.filteredOrders().map((o: Order) => [ 
-      `\t${o.id}`, 
-      new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), 
-      this.getUserName(o.userId), 
-      payMap[o.paymentMethod] || o.paymentMethod, 
-      o.paymentLast5 ? `\t${o.paymentLast5}` : '', 
-      shipMap[o.shippingMethod] || o.shippingMethod, 
-      o.finalTotal, 
-      this.getPaymentStatusLabel(o.status, o.paymentMethod), 
-      o.shippingLink || '', 
-      o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') 
-    ]); 
+
+    const rows = this.filteredOrders().map((o: Order) => { 
+      const u = this.store.users().find((user: User) => user.id === o.userId);
+      
+      // 將商品明細組裝為包含 (一般/VIP/實收) 的詳細格式
+      const itemDetails = o.items.map((i: CartItem) => {
+        const p = this.store.products().find((x: Product) => x.id === i.productId);
+        let detailString = `• ${i.productName} (${i.option}) x${i.quantity}`;
+        if (p) {
+          detailString += ` [一般:$${p.priceGeneral} / VIP:$${p.priceVip} / 實收:$${i.price}]`;
+        } else {
+          detailString += ` [實收:$${i.price}]`;
+        }
+        return detailString;
+      }).join('\n');
+
+      return [ 
+        `\t${o.id}`, 
+        new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), 
+        this.getUserName(o.userId), 
+        payMap[o.paymentMethod] || o.paymentMethod, 
+        o.paymentLast5 ? `\t${o.paymentLast5}` : '', 
+        shipMap[o.shippingMethod] || o.shippingMethod, 
+        o.finalTotal, 
+        this.getPaymentStatusLabel(o.status, o.paymentMethod), 
+        o.shippingLink || '', 
+        itemDetails
+      ]; 
+    }); 
     this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }
   
