@@ -831,7 +831,7 @@ export class AdminPanelComponent {
     return rows;
   }
 
-  async handleBatchImport(event: any) {
+async handleBatchImport(event: any) {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -845,39 +845,45 @@ export class AdminPanelComponent {
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (row.length < 4 || !row[2] || !row[3]) continue;
-        if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; 
+        // 🔥 因為前面加了3個欄位，所以索引全部 +3。商品名稱變成 [5]，分類變成 [6]
+        if (row.length < 7 || !row[5] || !row[6]) continue;
+        if (row[5].includes('商品名稱') || row[5] === '秋季毛衣') continue; 
 
         try {
-          const name = String(row[2] || '').trim(); 
-          const category = String(row[3] || '').trim();
-          const priceGeneral = Number(row[4]) || 0; 
-          const priceVip = Number(row[5]) || 0;
-          const localPrice = Number(row[6]) || 0; 
-          const exchangeRate = Number(row[7]) || 0.22;
-          const weight = Number(row[8]) || 0; 
-          const shippingCostPerKg = Number(row[9]) || 200;
-          const costMaterial = Number(row[10]) || 0;
-          
-          const bulkCount = Number(row[11]) || 0;
-          const bulkTotal = Number(row[12]) || 0;
+          const name = String(row[5] || '').trim(); 
+          const category = String(row[6] || '').trim();
+          
+          // 🔥 加入除錯機制：自動去除數字裡的千分位逗號 (例如 8,500 -> 8500)
+          const parseNum = (val: any, fallback: number) => Number(String(val || fallback).replace(/,/g, '')) || fallback;
 
-          const imageRaw = String(row[13] || '');
+          const priceGeneral = parseNum(row[7], 0); 
+          const priceVip = parseNum(row[8], 0);
+          const localPrice = parseNum(row[9], 0); 
+          const exchangeRate = parseNum(row[10], 0.22);
+          const weight = parseNum(row[11], 0); 
+          const shippingCostPerKg = parseNum(row[12], 200);
+          const costMaterial = parseNum(row[13], 0);
+          
+          const bulkCount = parseNum(row[14], 0);
+          const bulkTotal = parseNum(row[15], 0);
+
+          const imageRaw = String(row[16] || '');
           const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
           const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
           const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-          const optionsStr = String(row[14] || '');
-          const stockInput = Number(row[15]) || 0;
+          const optionsStr = String(row[17] || '');
+          const stockInput = parseNum(row[18], 0);
           
-          const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
-          const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
-          const note = String(row[19] || '');
+          const isPreorder = String(row[19] || '').trim().toUpperCase() === 'TRUE';
+          const isListed = String(row[20] || '').trim().toUpperCase() !== 'FALSE'; 
+          
+          let code = String(row[21] || '').replace(/\t/g, '').trim(); 
+          const note = String(row[22] || '');
           
           const stock = isPreorder ? 99999 : stockInput;
           const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
           
-          let code = String(row[18] || '').replace(/\t/g, '').trim(); 
           if (!code) {
             const codeMap = this.store.settings().categoryCodes || {};
             const prefix = codeMap[category] || 'Z'; 
@@ -900,12 +906,11 @@ export class AdminPanelComponent {
             isPreorder, isListed
           };
 
-          // 🔥 這裡已經幫你加上清空判斷了
           if (bulkCount > 1 && bulkTotal > 0) {
             p.bulkDiscount = { count: bulkCount, total: bulkTotal };
           } else {
-            p.bulkDiscount = null; 
-          }
+            p.bulkDiscount = null; 
+          }
 
           this.store.addCategory(category);
           
@@ -1180,16 +1185,16 @@ export class AdminPanelComponent {
   exportInventoryCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '庫存數量', '狀態']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') ]); this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
   exportToCSV() { const range = this.accountingRange(); const now = new Date(); let startDate: Date | null = null; if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); let list = this.accountingFilteredOrders(); const headers = ['訂單編號', '日期', '商品內容', '總營收', '商品成本', '預估利潤', '毛利率%']; const rows = list.map((o: Order) => { let cost = 0; o.items.forEach((i: CartItem) => { const p = this.store.products().find((x: Product) => x.id === i.productId); if (p) cost += ((p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; }); const profit = o.finalTotal - cost; return [ `\t${o.id}`, new Date(o.createdAt).toLocaleDateString(), o.items.map((i: CartItem) => `${i.productName} x${i.quantity}`).join('\n'), o.finalTotal, cost.toFixed(0), profit.toFixed(0), (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) ]; }); this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); }
 
-  exportProductsCSV() { 
-     const headers = [ '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
-     const rows = this.store.products().map((p: Product) => { 
-        const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
-        const normalProfit = p.priceGeneral - cost; 
-        const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
-        return [ p.code, '', p.name, p.category, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', `\t${p.code}`, p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount ]; 
-     }); 
-     this.downloadCSV(`商品總表_統一格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
-  }
+  exportProductsCSV() { 
+     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
+     const rows = this.store.products().map((p: Product) => { 
+        const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
+        const normalProfit = p.priceGeneral - cost; 
+        const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
+        return [ '', '', '', p.code, '', p.name, p.category, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', `\t${p.code}`, p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount ]; 
+     }); 
+     this.downloadCSV(`商品總表_對齊格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }
 
   openProductForm() { this.editingProduct.set(null); this.productForm.reset(); this.productForm.patchValue({ exchangeRate: 0.22, shippingCostPerKg: 200, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0 }); this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
   editProduct(p: Product) { this.editingProduct.set(p); this.productForm.patchValue({ ...p, optionsStr: p.options.join(', '), exchangeRate: p.exchangeRate || 0.22, shippingCostPerKg: p.shippingCostPerKg || 200, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 }); this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
