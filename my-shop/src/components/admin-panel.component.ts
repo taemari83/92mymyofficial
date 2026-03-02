@@ -684,15 +684,15 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </div> 
 
               <div class="p-6 border-b border-gray-100 bg-white shrink-0">
-                 <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">客戶與收件資訊</div>
+                <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">客戶與收件資訊</div>
 <div class="text-xs text-gray-600 mb-4 grid grid-cols-2 gap-2 items-start">
    <div><span class="text-gray-400">訂購人:</span> {{ o.userName }}</div>
-   <div><span class="text-gray-400">電話:</span> {{ o.userPhone || '無' }}</div>
+   <div><span class="text-gray-400">電話:</span> {{ $any(o).userPhone || '無' }}</div>
    <div class="col-span-2"><span class="text-gray-400">Email:</span> {{ o.userEmail || '無' }}</div>
 
-   <div class="col-span-2 mt-2 pt-2 border-t border-gray-100"><span class="text-gray-400">收件人:</span> {{ o.shippingName || o.userName }}</div>
-   <div><span class="text-gray-400">收件電話:</span> {{ o.shippingPhone || o.userPhone || '無' }}</div>
-   <div class="col-span-2"><span class="text-gray-400">收件地址/門市:</span> {{ o.shippingAddress || '無' }}</div>
+   <div class="col-span-2 mt-2 pt-2 border-t border-gray-100"><span class="text-gray-400">收件人:</span> {{ $any(o).shippingName || o.userName }}</div>
+   <div><span class="text-gray-400">收件電話:</span> {{ $any(o).shippingPhone || $any(o).userPhone || '無' }}</div>
+   <div class="col-span-2"><span class="text-gray-400">收件地址/門市:</span> {{ $any(o).shippingAddress || '無' }}</div>
 
    <div class="col-span-2 mt-2 pt-2 border-t border-gray-100"></div>
    <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
