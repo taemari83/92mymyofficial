@@ -20,6 +20,7 @@ export interface Product {
 
 export interface CartItem {
   productId: string; productName: string; productImage: string; option: string; price: number; quantity: number; isPreorder: boolean;
+  unitCost?: number; // 🔥 紀錄結帳當下的實際單位成本 (包含 0.021 或 0.025 的匯率計算)
 }
 
 export interface User {
@@ -146,10 +147,16 @@ export class StoreService {
        else if (user?.tier === 'vip' && product.priceVip > 0) finalPrice = product.priceVip;
     }
 
+    // 🔥 核心快照：計算當下這個客人專屬的成本 (0.021 或 0.025)
+    const isVip = user?.tier === 'vip' || user?.tier === 'wholesale' || finalPrice === product.priceVip;
+    const currentRate = isVip ? 0.021 : 0.025;
+    const currentCost = (product.localPrice * currentRate) + product.costMaterial + (product.weight * product.shippingCostPerKg);
+
     this.cart.update(current => {
       const exist = current.find(i => i.productId === product.id && i.option === parsedOption);
-      if (exist) return current.map(i => i === exist ? { ...i, quantity: i.quantity + quantity, price: finalPrice } : i);
-      return [...current, { productId: product.id, productName: product.name, productImage: product.image, option: parsedOption, price: finalPrice, quantity, isPreorder: product.isPreorder }];
+      // 把價格跟算好的成本 (unitCost) 一起存進購物車
+      if (exist) return current.map(i => i === exist ? { ...i, quantity: i.quantity + quantity, price: finalPrice, unitCost: currentCost } : i);
+      return [...current, { productId: product.id, productName: product.name, productImage: product.image, option: parsedOption, price: finalPrice, quantity, isPreorder: product.isPreorder, unitCost: currentCost }];
     });
   }
 

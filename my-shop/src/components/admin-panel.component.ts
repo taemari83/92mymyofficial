@@ -686,12 +686,21 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
               <div class="p-6 border-b border-gray-100 bg-white shrink-0">
                  <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">客戶資訊</div>
-                 <div class="text-xs text-gray-600 mb-4 grid grid-cols-2 gap-2">
+                 <div class="text-xs text-gray-600 mb-4 grid grid-cols-2 gap-2 items-center">
                     <div><span class="text-gray-400">姓名:</span> {{ o.userName }}</div>
                     <div><span class="text-gray-400">Email:</span> {{ o.userEmail || '無' }}</div>
                     <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
                     <div><span class="text-gray-400">物流:</span> {{ getShippingLabel(o.shippingMethod) }}</div>
-                    @if(o.paymentName) { <div class="col-span-2 text-blue-600"><span class="text-blue-400">匯款回報:</span> {{ o.paymentName }} (後五碼: {{ o.paymentLast5 }})</div> }
+                    
+                    @if(o.paymentMethod === 'bank_transfer') {
+                       <div class="col-span-2 flex items-center gap-2 mt-1 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
+                          <span class="text-blue-700 font-bold shrink-0">🏦 匯款後五碼:</span>
+                          <input type="text" [value]="o.paymentLast5 || ''" (change)="updatePaymentLast5(o, $event)" placeholder="可手動填寫對帳" class="w-32 px-2 py-1 rounded border border-blue-200 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 bg-white text-brand-900 font-mono font-bold">
+                          @if(o.paymentName) { <span class="text-[10px] text-gray-500 ml-2">客戶回報: {{ o.paymentName }}</span> }
+                       </div>
+                    } @else if(o.paymentName) {
+                       <div class="col-span-2 text-blue-600"><span class="text-blue-400">匯款回報:</span> {{ o.paymentName }} (後五碼: {{ o.paymentLast5 }})</div>
+                    }
                  </div>
 
                  <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">商品明細</div>
@@ -950,7 +959,7 @@ async handleBatchImport(event: any) {
     });
   });
 
-  accountingStats = computed(() => {
+  aaccountingStats = computed(() => {
     const filteredOrders = this.accountingFilteredOrders();
     let revenue = 0; let cost = 0; let discounts = 0;
     let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
@@ -970,10 +979,14 @@ async handleBatchImport(event: any) {
       o.items.forEach((i: CartItem) => {
           const p = this.store.products().find((x: Product) => x.id === i.productId);
           if (p) {
-              // 🔥 依照 VIP 資格或購買價格，自動切換 0.021 還是 0.025
-              const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
-              const rate = isVip ? 0.021 : 0.025;
-              cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity;
+              // 🔥 優先使用結帳時的成本快照；舊訂單沒有快照則即時運算
+              if (i.unitCost !== undefined) {
+                  cost += i.unitCost * i.quantity;
+              } else {
+                  const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
+                  const rate = isVip ? 0.021 : 0.025;
+                  cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity;
+              }
           }
       });
       discounts += o.discount + o.usedCredits;
@@ -989,7 +1002,7 @@ async handleBatchImport(event: any) {
     const productMap = new Map<string, any>();
     
     orders.forEach(o => {
-      const u = this.store.users().find((user: User) => user.id === o.userId);
+      const u = this.store.users().find((user: User) => user.id === o.userId);
 
       o.items.forEach(item => {
           if (!productMap.has(item.productId)) {
@@ -998,20 +1011,24 @@ async handleBatchImport(event: any) {
           }
           const stats = productMap.get(item.productId);
           if (stats) {
-              // 🔥 同樣根據訂單身分套用不同匯率
-              const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || item.price === stats.product.priceVip;
-              const rate = isVip ? 0.021 : 0.025;
+              stats.sold += item.quantity;
+              stats.revenue += item.price * item.quantity; 
 
-              stats.sold += item.quantity;
-              stats.revenue += item.price * item.quantity; // 直接用真實結帳金額
-              stats.cost += ((stats.product.localPrice * rate) + stats.product.costMaterial + (stats.product.weight * stats.product.shippingCostPerKg)) * item.quantity;
-          }
+              // 🔥 優先使用結帳時的成本快照
+              if (item.unitCost !== undefined) {
+                  stats.cost += item.unitCost * item.quantity;
+              } else {
+                  const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || item.price === stats.product.priceVip;
+                  const rate = isVip ? 0.021 : 0.025;
+                  stats.cost += ((stats.product.localPrice * rate) + stats.product.costMaterial + (stats.product.weight * stats.product.shippingCostPerKg)) * item.quantity;
+              }
+          }
       });
     });
 
     return Array.from(productMap.values()).map(stats => {
-      stats.profit = stats.revenue - stats.cost; 
-      stats.margin = stats.revenue ? (stats.profit / stats.revenue) * 100 : 0; 
+      stats.profit = stats.revenue - stats.cost; 
+      stats.margin = stats.revenue ? (stats.profit / stats.revenue) * 100 : 0; 
       return stats;
     });
   });
@@ -1170,14 +1187,36 @@ async handleBatchImport(event: any) {
   doMyshipPickup(o: Order) { this.store.updateOrderStatus(o.id, 'picked_up' as any); this.closeActionModal(); } 
   doCancel(o: Order) { if(this.cancelConfirmState()) { this.store.updateOrderStatus(o.id, 'cancelled'); this.closeActionModal(); } else { this.cancelConfirmState.set(true); } } 
   doDeleteOrder(o: Order) { if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原，且系統會自動扣除該會員對應的累積消費金額！`)) { this.store.deleteOrder(o); this.closeActionModal(); } } 
+  updatePaymentLast5(o: Order, event: any) { 
+    const val = event.target.value.trim(); 
+    this.store.updateOrderStatus(o.id, o.status, { paymentLast5: val }); 
+    this.actionModalOrder.set({ ...o, paymentLast5: val }); // 即時更新畫面
+  }
   quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); } 
   quickShip(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'shipped'); } 
   quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); } 
   quickComplete(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'completed'); }
   
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
-  exportOrdersCSV() { const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; const rows = this.filteredOrders().map((o: Order) => [ `\t${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId), payMap[o.paymentMethod] || o.paymentMethod, shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod), o.shippingLink || '', o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') ]); this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
-  
+exportOrdersCSV() { 
+    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容']; 
+    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; 
+    const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
+    const rows = this.filteredOrders().map((o: Order) => [ 
+      `\t${o.id}`, 
+      new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), 
+      this.getUserName(o.userId), 
+      payMap[o.paymentMethod] || o.paymentMethod, 
+      o.paymentLast5 ? `\t${o.paymentLast5}` : '', // 🔥 新增後五碼欄位
+      shipMap[o.shippingMethod] || o.shippingMethod, 
+      o.finalTotal, 
+      this.getPaymentStatusLabel(o.status, o.paymentMethod), 
+      o.shippingLink || '', 
+      o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x ${i.quantity}`).join('\n') 
+    ]); 
+    this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }
+
   exportCustomersCSV() { 
      const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
      const rows = this.filteredUsers().map((u: User) => [ 
@@ -1194,40 +1233,57 @@ async handleBatchImport(event: any) {
   } 
 
   exportInventoryCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '庫存數量', '狀態']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') ]); this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
-  exportToCSV() { 
-    const range = this.accountingRange(); 
-    const now = new Date(); 
-    let startDate: Date | null = null; 
-    if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
-    else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
-    else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
-    
-    let list = this.accountingFilteredOrders(); 
-    const headers = ['訂單編號', '日期', '商品內容', '總營收', '商品成本', '預估利潤', '毛利率%']; 
-    const rows = list.map((o: Order) => { 
-      let cost = 0; 
-      const u = this.store.users().find((user: User) => user.id === o.userId);
-      o.items.forEach((i: CartItem) => { 
-        const p = this.store.products().find((x: Product) => x.id === i.productId); 
-        if (p) { 
-          const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
-          const rate = isVip ? 0.021 : 0.025;
-          cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
-        } 
-      }); 
-      const profit = o.finalTotal - cost; 
-      return [ 
-        `\t${o.id}`, 
-        new Date(o.createdAt).toLocaleDateString(), 
-        o.items.map((i: CartItem) => `${i.productName} x${i.quantity}`).join('\n'), 
-        o.finalTotal, 
-        cost.toFixed(0), 
-        profit.toFixed(0), 
-        (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) 
-      ]; 
-    }); 
-    this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); 
-  }
+  exportToCSV() { 
+    const range = this.accountingRange(); 
+    const now = new Date(); 
+    let startDate: Date | null = null; 
+    if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
+    else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+    else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+    
+    let list = this.accountingFilteredOrders(); 
+    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品成本', '預估利潤', '毛利率%']; 
+    const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
+
+    const rows = list.map((o: Order) => { 
+      let cost = 0; 
+      const u = this.store.users().find((user: User) => user.id === o.userId);
+
+      // 🔥 升級商品內容：自動附加上一般價、VIP價與當下結帳單價
+      const itemDetails = o.items.map((i: CartItem) => { 
+        const p = this.store.products().find((x: Product) => x.id === i.productId); 
+        let detailString = `• ${i.productName} (${i.option}) x${i.quantity}`;
+
+        if (p) { 
+          if (i.unitCost !== undefined) {
+              cost += i.unitCost * i.quantity;
+          } else {
+              const isVip = u?.tier === 'vip' || u?.tier === 'wholesale' || i.price === p.priceVip;
+              const rate = isVip ? 0.021 : 0.025;
+              cost += ((p.localPrice * rate) + p.costMaterial + (p.weight * p.shippingCostPerKg)) * i.quantity; 
+          }
+          detailString += ` [一般:$${p.priceGeneral} / VIP:$${p.priceVip} / 實收:$${i.price}]`;
+        } else {
+          detailString += ` [實收:$${i.price}]`;
+        }
+        return detailString;
+      }).join('\n'); 
+
+      const profit = o.finalTotal - cost; 
+      return [ 
+        `\t${o.id}`, 
+        new Date(o.createdAt).toLocaleDateString(), 
+        payMap[o.paymentMethod] || o.paymentMethod,
+        o.paymentLast5 ? `\t${o.paymentLast5}` : '',
+        itemDetails, 
+        o.finalTotal, 
+        cost.toFixed(0), 
+        profit.toFixed(0), 
+        (o.finalTotal ? (profit / o.finalTotal * 100) : 0).toFixed(1) 
+      ]; 
+    }); 
+    this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }
 
   exportProductsCSV() { 
      const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
