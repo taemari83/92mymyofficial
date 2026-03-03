@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { StoreService } from './services/store.service';
@@ -93,7 +93,7 @@ import { environment } from './environments/environment';
       </div>
   `
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   store = inject(StoreService);
   showKeyWarning = false;
 
@@ -101,6 +101,27 @@ export class AppComponent {
     // Safety check for Firebase Configuration
     if (environment.firebase.apiKey.includes('請在此填入')) {
        this.showKeyWarning = true;
+    }
+  }
+
+  ngOnInit() {
+    // 偵測是否在 LINE 的內建瀏覽器中
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    
+    // 如果是 LINE 瀏覽器
+    if (/Line/i.test(userAgent)) {
+      // 取得目前的網址
+      const currentUrl = window.location.href;
+      
+      // 如果網址裡還沒有加入強制跳轉的參數，就加上去並重新導向
+      if (!currentUrl.includes('openExternalBrowser=1')) {
+        // 判斷原本網址是否已經有問號 ?，來決定要用 ? 還是 & 連接參數
+        const separator = currentUrl.includes('?') ? '&' : '?';
+        const newUrl = currentUrl + separator + 'openExternalBrowser=1';
+        
+        // 強制跳轉，這會觸發 LINE 自動呼叫外部瀏覽器 (Safari/Chrome) 開啟
+        window.location.href = newUrl;
+      }
     }
   }
 }
