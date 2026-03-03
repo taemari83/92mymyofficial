@@ -842,7 +842,7 @@ export class AdminPanelComponent {
     return rows;
   }
 
-  async handleBatchImport(event: any) {
+async handleBatchImport(event: any) {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -854,51 +854,65 @@ export class AdminPanelComponent {
 
       let successCount = 0; let failCount = 0;
 
+      // 🌟 新增：在進入迴圈前，先統計今天各分類代碼「已經用到第幾號」
+      const now = new Date();
+      const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const currentMaxSeq: { [key: string]: number } = {};
+      
+      this.store.products().forEach(p => {
+         const match = p.code.match(new RegExp(`^([A-Za-z]+)${datePart}(\\d{3})$`));
+         if (match) {
+            const pref = match[1].toUpperCase();
+            const seq = parseInt(match[2], 10);
+            if (!currentMaxSeq[pref] || seq > currentMaxSeq[pref]) {
+               currentMaxSeq[pref] = seq;
+            }
+         }
+      });
+
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (row.length < 7 || !row[5] || !row[6]) continue;
-        if (row[5].includes('商品名稱') || row[5] === '秋季毛衣') continue; 
+        if (row.length < 4 || !row[2] || !row[3]) continue;
+        if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; 
 
         try {
-          const name = String(row[5] || '').trim(); 
-          const category = String(row[6] || '').trim();
+          const name = String(row[2] || '').trim(); 
+          const category = String(row[3] || '').trim();
+          const priceGeneral = Number(row[4]) || 0; 
+          const priceVip = Number(row[5]) || 0;
+          const localPrice = Number(row[6]) || 0; 
+          const exchangeRate = Number(row[7]) || 0.22;
+          const weight = Number(row[8]) || 0; 
+          const shippingCostPerKg = Number(row[9]) || 200;
+          const costMaterial = Number(row[10]) || 0;
           
-          const parseNum = (val: any, fallback: number) => Number(String(val || fallback).replace(/,/g, '')) || fallback;
+          const bulkCount = Number(row[11]) || 0;
+          const bulkTotal = Number(row[12]) || 0;
 
-          const priceGeneral = parseNum(row[7], 0); 
-          const priceVip = parseNum(row[8], 0);
-          const localPrice = parseNum(row[9], 0); 
-          const exchangeRate = parseNum(row[10], 0.22);
-          const weight = parseNum(row[11], 0); 
-          const shippingCostPerKg = parseNum(row[12], 200);
-          const costMaterial = parseNum(row[13], 0);
-          
-          const bulkCount = parseNum(row[14], 0);
-          const bulkTotal = parseNum(row[15], 0);
-
-          const imageRaw = String(row[16] || '');
+          const imageRaw = String(row[13] || '');
           const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
           const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
           const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-          const optionsStr = String(row[17] || '');
-          const stockInput = parseNum(row[18], 0);
+          const optionsStr = String(row[14] || '');
+          const stockInput = Number(row[15]) || 0;
           
-          const isPreorder = String(row[19] || '').trim().toUpperCase() === 'TRUE';
-          const isListed = String(row[20] || '').trim().toUpperCase() !== 'FALSE'; 
-          
-          let code = String(row[21] || '').replace(/\t/g, '').trim(); 
-          const note = String(row[22] || '');
+          const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
+          const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
+          const note = String(row[19] || '');
           
           const stock = isPreorder ? 99999 : stockInput;
           const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
           
+          let code = String(row[18] || '').replace(/\t/g, '').trim(); 
           if (!code) {
             const codeMap = this.store.settings().categoryCodes || {};
-            const prefix = codeMap[category] || 'Z'; 
-            const now = new Date();
-            const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-            code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
+            const prefix = (codeMap[category] || 'Z').toUpperCase(); 
+            
+            // 🔥 修正：不要再用行數(i)，而是使用真正的流水號自增邏輯
+            if (currentMaxSeq[prefix] === undefined) currentMaxSeq[prefix] = 0;
+            currentMaxSeq[prefix]++; // 該分類的流水號 + 1
+            code = `${prefix}${datePart}${String(currentMaxSeq[prefix]).padStart(3, '0')}`;
           }
 
           const existingProduct = this.store.products().find(p => p.code === code);
@@ -917,8 +931,6 @@ export class AdminPanelComponent {
 
           if (bulkCount > 1 && bulkTotal > 0) {
             p.bulkDiscount = { count: bulkCount, total: bulkTotal };
-          } else {
-            p.bulkDiscount = null; 
           }
 
           this.store.addCategory(category);
@@ -933,7 +945,6 @@ export class AdminPanelComponent {
     };
     reader.readAsText(file, 'UTF-8');
   }
-
   reportSortBy = signal<'sold' | 'profit'>('sold');
   accountingRange = signal('month'); 
   accountingCustomStart = signal(''); 
