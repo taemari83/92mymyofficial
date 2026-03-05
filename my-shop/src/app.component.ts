@@ -36,7 +36,7 @@ import { environment } from './environments/environment';
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             
             <a routerLink="/" class="flex items-center shrink-0">
-              <img src="https://www.flickr.com/photo_download.gne?id=55130020426&secret=082f93679c&size=c&source=photoPageEngagement" alt="92mymy Logo" class="h-10 sm:h-12 w-auto object-contain hover:opacity-80 transition-opacity">
+              <img src="https://www.flickr.com/photo_download.gne?id=55130020426&secret=082f93679c&size=l&source=photoPageEngagement" alt="92mymy Logo" class="h-16 sm:h-20 w-auto object-contain mix-blend-multiply hover:scale-105 transition-transform duration-300">
             </a>
 
             <div class="flex items-center gap-1 bg-white p-1.5 rounded-full border border-gray-100 shadow-sm">
@@ -98,28 +98,18 @@ export class AppComponent implements OnInit {
   showKeyWarning = false;
 
   constructor() {
-    // Safety check for Firebase Configuration
     if (environment.firebase.apiKey.includes('請在此填入')) {
        this.showKeyWarning = true;
     }
   }
 
   ngOnInit() {
-    // 偵測是否在 LINE 的內建瀏覽器中
     const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-    
-    // 如果是 LINE 瀏覽器
     if (/Line/i.test(userAgent)) {
-      // 取得目前的網址
       const currentUrl = window.location.href;
-      
-      // 如果網址裡還沒有加入強制跳轉的參數，就加上去並重新導向
       if (!currentUrl.includes('openExternalBrowser=1')) {
-        // 判斷原本網址是否已經有問號 ?，來決定要用 ? 還是 & 連接參數
         const separator = currentUrl.includes('?') ? '&' : '?';
         const newUrl = currentUrl + separator + 'openExternalBrowser=1';
-        
-        // 強制跳轉，這會觸發 LINE 自動呼叫外部瀏覽器 (Safari/Chrome) 開啟
         window.location.href = newUrl;
       }
     }
