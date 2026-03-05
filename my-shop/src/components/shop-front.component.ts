@@ -477,7 +477,7 @@ export class ShopFrontComponent {
 
   copyLink() {
      const url = window.location.href;
-     navigator.clipboard.writeText(url).then(() => alert('連結已複製！'));
+     navigator.clipboard.writeText(url);
   }
 
   addToCart() {
