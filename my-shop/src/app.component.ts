@@ -35,8 +35,8 @@ import { environment } from './environments/environment';
       <nav class="bg-cream-50/80 backdrop-blur-md sticky top-0 z-40 px-6 py-4 border-b border-brand-100/50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             
-            <a routerLink="/" class="text-left group cursor-pointer block">
-              <h1 class="text-xl font-black text-brand-900 tracking-tighter leading-none group-hover:opacity-70 transition-opacity">92mymy<br>就愛買買</h1>
+            <a routerLink="/" class="flex items-center shrink-0">
+              <img src="https://www.flickr.com/photo_download.gne?id=55130020426&secret=082f93679c&size=c&source=photoPageEngagement" alt="92mymy Logo" class="h-10 sm:h-12 w-auto object-contain hover:opacity-80 transition-opacity">
             </a>
 
             <div class="flex items-center gap-1 bg-white p-1.5 rounded-full border border-gray-100 shadow-sm">
