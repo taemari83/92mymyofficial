@@ -42,7 +42,7 @@ import { StoreService, Product } from '../services/store.service';
 
              <div class="flex items-center p-1 bg-white rounded-full border border-gray-100 shadow-sm shrink-0">
                 <button (click)="viewMode.set('grid')" [class.bg-gray-100]="viewMode() === 'grid'" [class.text-brand-900]="viewMode() === 'grid'" [class.text-gray-400]="viewMode() !== 'grid'" class="w-10 h-10 rounded-full flex items-center justify-center transition-colors" title="宮格檢視">
-                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 </button>
                 <button (click)="viewMode.set('list')" [class.bg-gray-100]="viewMode() === 'list'" [class.text-brand-900]="viewMode() === 'list'" [class.text-gray-400]="viewMode() !== 'list'" class="w-10 h-10 rounded-full flex items-center justify-center transition-colors" title="條列檢視">
                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -80,7 +80,7 @@ import { StoreService, Product } from '../services/store.service';
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.5rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer">
                <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
-                 <img [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                 <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                  
                  <div class="absolute top-2 left-2 right-2 flex gap-1 flex-wrap">
                     @if(product.bulkDiscount?.count) { <div class="bg-red-500/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm animate-pulse">任選 {{ product.bulkDiscount!.count }} 件優惠</div> }
@@ -128,7 +128,7 @@ import { StoreService, Product } from '../services/store.service';
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.2rem] sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-gray-50 flex p-2.5 sm:p-4 gap-3 sm:gap-5 cursor-pointer">
                <div class="relative w-24 sm:w-32 h-28 sm:h-36 shrink-0 rounded-xl overflow-hidden bg-gray-100">
-                 <img [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                 <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                  @if (product.stock <= 0) {
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
                        <span class="bg-white px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand-900">售完</span>
@@ -194,7 +194,7 @@ import { StoreService, Product } from '../services/store.service';
                   <div class="p-3 md:p-4 bg-white border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0">
                      @for(img of productImages(); track $index) {
                         <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-gray-50" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
-                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover">
+                           <img loading="lazy" [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover">
                         </button>
                      }
                   </div>
