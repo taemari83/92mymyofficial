@@ -850,10 +850,6 @@ async handleBatchImport(event: any) {
     reader.onload = async (e: any) => {
       const text = e.target.result;
       const rows = this.parseCSV(text);
-      
-      // 偵錯 1：看總共讀到幾行
-      console.log('CSV 總行數:', rows.length);
-      
       if (rows.length < 2) { 
         alert(`❌ CSV 檔案格式錯誤或沒有資料！(只讀到 ${rows.length} 行)`); 
         return; 
@@ -862,50 +858,55 @@ async handleBatchImport(event: any) {
       let successCount = 0; let failCount = 0; let skippedCount = 0;
       let lastError = '';
 
+      // 🔥 防呆神器：自動把 "69,000" 這種帶逗號的文字，洗乾淨變成純數字 69000
+      const toNumber = (val: any) => Number(String(val || '').replace(/,/g, '')) || 0;
+
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         
-        // 偵錯 2：檢查有沒有被無情跳過
-        if (row.length < 4 || !row[2] || !row[3]) {
-          console.log(`第 ${i} 行被跳過：長度不足或缺乏名稱/分類`, row);
+        // 🔥 對應您的新表格：商品名稱現在被擠到了第 6 格 (索引 5)，分類在第 7 格 (索引 6)
+        if (row.length < 6 || !row[5] || !row[6]) {
           skippedCount++;
           continue;
         }
-        if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') {
+        if (row[5].includes('商品名稱') || row[5] === '秋季毛衣') {
           skippedCount++;
           continue; 
         }
 
         try {
-          const name = String(row[2] || '').trim(); 
-          const category = String(row[3] || '').trim();
-          const priceGeneral = Number(row[4]) || 0; 
-          const priceVip = Number(row[5]) || 0;
-          const localPrice = Number(row[6]) || 0; 
-          const exchangeRate = Number(row[7]) || 0.22;
-          const weight = Number(row[8]) || 0; 
-          const shippingCostPerKg = Number(row[9]) || 200;
-          const costMaterial = Number(row[10]) || 0;
+          // 下方全面配合您的新表格向右平移，並套用自動去逗號功能
+          const name = String(row[5] || '').trim(); 
+          const category = String(row[6] || '').trim();
+          const priceGeneral = toNumber(row[7]); 
+          const priceVip = toNumber(row[8]);
+          const localPrice = toNumber(row[9]); 
+          const exchangeRate = Number(String(row[10]).replace(/,/g, '')) || 0.22;
+          const weight = toNumber(row[11]); 
+          const shippingCostPerKg = Number(String(row[12]).replace(/,/g, '')) || 200;
+          const costMaterial = toNumber(row[13]);
           
-          const bulkCount = Number(row[11]) || 0;
-          const bulkTotal = Number(row[12]) || 0;
+          const bulkCount = toNumber(row[14]);
+          const bulkTotal = toNumber(row[15]);
 
-          const imageRaw = String(row[13] || '');
+          const imageRaw = String(row[16] || '');
           const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
           const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
           const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-          const optionsStr = String(row[14] || '');
-          const stockInput = Number(row[15]) || 0;
+          const optionsStr = String(row[17] || '');
+          const stockInput = toNumber(row[18]);
           
-          const isPreorder = String(row[16] || '').trim().toUpperCase() === 'TRUE';
-          const isListed = String(row[17] || '').trim().toUpperCase() !== 'FALSE'; 
-          const note = String(row[19] || '');
+          const isPreorder = String(row[19] || '').trim().toUpperCase() === 'TRUE';
+          const isListed = String(row[20] || '').trim().toUpperCase() !== 'FALSE'; 
+          
+          let code = String(row[21] || '').replace(/\t/g, '').trim(); 
+          const note = String(row[22] || '');
           
           const stock = isPreorder ? 99999 : stockInput;
           const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
           
-          let code = String(row[18] || '').replace(/\t/g, '').trim(); 
+          // 自動生成貨號
           if (!code) {
             const codeMap = this.store.settings().categoryCodes || {};
             const prefix = codeMap[category] || 'Z'; 
@@ -940,11 +941,9 @@ async handleBatchImport(event: any) {
         } catch (err: any) { 
           failCount++; 
           lastError = err.message || String(err);
-          console.error(`寫入商品 ${row[2]} 時發生錯誤:`, err);
         }
       }
       
-      // 偵錯 3：詳細的結果報告
       alert(`✅ 讀取完畢！\n成功新增/更新：${successCount} 筆\n失敗報錯：${failCount} 筆\n格式不符跳過：${skippedCount} 筆\n\n${lastError ? '⚠️ 最後一個錯誤: ' + lastError : ''}`);
       event.target.value = ''; 
     };
