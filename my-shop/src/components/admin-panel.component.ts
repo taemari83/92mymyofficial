@@ -858,6 +858,9 @@ async handleBatchImport(event: any) {
       let successCount = 0; let failCount = 0; let skippedCount = 0;
       let lastError = '';
 
+      // 🔥 新增：獨立的流水號計數器，固定從 1 開始
+      let validProductCount = 1;
+
       // 🔥 防呆神器：自動把 "69,000" 這種帶逗號的文字，洗乾淨變成純數字 69000
       const toNumber = (val: any) => Number(String(val || '').replace(/,/g, '')) || 0;
 
@@ -912,7 +915,9 @@ async handleBatchImport(event: any) {
             const prefix = codeMap[category] || 'Z'; 
             const now = new Date();
             const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-            code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
+            
+            // 🔥 修改：改用 validProductCount 來補零，不再使用會被表頭影響的 i
+            code = `${prefix}${datePart}${String(validProductCount).padStart(3, '0')}`;
           }
 
           const existingProduct = this.store.products().find(p => p.code === code);
@@ -937,7 +942,11 @@ async handleBatchImport(event: any) {
           
           if (existingProduct) { await this.store.updateProduct(p); } 
           else { await this.store.addProduct(p); }
+          
           successCount++;
+          // 🔥 成功處理一個商品後，流水號才允許 +1
+          validProductCount++;
+
         } catch (err: any) { 
           failCount++; 
           lastError = err.message || String(err);
