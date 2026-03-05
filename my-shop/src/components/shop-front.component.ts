@@ -477,7 +477,22 @@ export class ShopFrontComponent {
 
   copyLink() {
      const url = window.location.href;
-     navigator.clipboard.writeText(url);
+     navigator.clipboard.writeText(url).then(() => {
+        // 確保在瀏覽器環境下才執行
+        if (typeof document !== 'undefined') {
+           // 動態產生一個優雅的浮動提示
+           const div = document.createElement('div');
+           // 注意這裡的 z-[120] 是為了確保它顯示在商品彈窗 (z-100) 的最上層
+           div.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl z-[120] text-sm font-bold animate-fade-in flex items-center gap-2';
+           div.innerHTML = '<span>✅</span> 連結已複製';
+           
+           // 把提示加進畫面中
+           document.body.appendChild(div);
+           
+           // 設定 2 秒 (2000毫秒) 後自動融化消失
+           setTimeout(() => div.remove(), 2000);
+        }
+     });
   }
 
   addToCart() {
