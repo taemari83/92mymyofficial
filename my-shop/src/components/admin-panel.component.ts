@@ -850,30 +850,31 @@ async handleBatchImport(event: any) {
     reader.onload = async (e: any) => {
       const text = e.target.result;
       const rows = this.parseCSV(text);
-      if (rows.length < 2) { alert('CSV 檔案格式錯誤或沒有資料！'); return; }
-
-      let successCount = 0; let failCount = 0;
-
-      // 🌟 新增：在進入迴圈前，先統計今天各分類代碼「已經用到第幾號」
-      const now = new Date();
-      const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      const currentMaxSeq: { [key: string]: number } = {};
       
-      this.store.products().forEach(p => {
-         const match = p.code.match(new RegExp(`^([A-Za-z]+)${datePart}(\\d{3})$`));
-         if (match) {
-            const pref = match[1].toUpperCase();
-            const seq = parseInt(match[2], 10);
-            if (!currentMaxSeq[pref] || seq > currentMaxSeq[pref]) {
-               currentMaxSeq[pref] = seq;
-            }
-         }
-      });
+      // 偵錯 1：看總共讀到幾行
+      console.log('CSV 總行數:', rows.length);
+      
+      if (rows.length < 2) { 
+        alert(`❌ CSV 檔案格式錯誤或沒有資料！(只讀到 ${rows.length} 行)`); 
+        return; 
+      }
+
+      let successCount = 0; let failCount = 0; let skippedCount = 0;
+      let lastError = '';
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (row.length < 4 || !row[2] || !row[3]) continue;
-        if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') continue; 
+        
+        // 偵錯 2：檢查有沒有被無情跳過
+        if (row.length < 4 || !row[2] || !row[3]) {
+          console.log(`第 ${i} 行被跳過：長度不足或缺乏名稱/分類`, row);
+          skippedCount++;
+          continue;
+        }
+        if (row[2].includes('商品名稱') || row[2] === '秋季毛衣') {
+          skippedCount++;
+          continue; 
+        }
 
         try {
           const name = String(row[2] || '').trim(); 
@@ -907,12 +908,10 @@ async handleBatchImport(event: any) {
           let code = String(row[18] || '').replace(/\t/g, '').trim(); 
           if (!code) {
             const codeMap = this.store.settings().categoryCodes || {};
-            const prefix = (codeMap[category] || 'Z').toUpperCase(); 
-            
-            // 🔥 修正：不要再用行數(i)，而是使用真正的流水號自增邏輯
-            if (currentMaxSeq[prefix] === undefined) currentMaxSeq[prefix] = 0;
-            currentMaxSeq[prefix]++; // 該分類的流水號 + 1
-            code = `${prefix}${datePart}${String(currentMaxSeq[prefix]).padStart(3, '0')}`;
+            const prefix = codeMap[category] || 'Z'; 
+            const now = new Date();
+            const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+            code = `${prefix}${datePart}${String(i).padStart(3, '0')}`;
           }
 
           const existingProduct = this.store.products().find(p => p.code === code);
@@ -938,9 +937,15 @@ async handleBatchImport(event: any) {
           if (existingProduct) { await this.store.updateProduct(p); } 
           else { await this.store.addProduct(p); }
           successCount++;
-        } catch (err) { failCount++; }
+        } catch (err: any) { 
+          failCount++; 
+          lastError = err.message || String(err);
+          console.error(`寫入商品 ${row[2]} 時發生錯誤:`, err);
+        }
       }
-      alert(`✅ 批量操作完成！\n成功新增/更新：${successCount} 筆\n失敗/略過：${failCount} 筆`);
+      
+      // 偵錯 3：詳細的結果報告
+      alert(`✅ 讀取完畢！\n成功新增/更新：${successCount} 筆\n失敗報錯：${failCount} 筆\n格式不符跳過：${skippedCount} 筆\n\n${lastError ? '⚠️ 最後一個錯誤: ' + lastError : ''}`);
       event.target.value = ''; 
     };
     reader.readAsText(file, 'UTF-8');
