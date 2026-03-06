@@ -307,12 +307,18 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                            <div class="flex-1 min-w-0"> 
                               <div class="flex items-center gap-2 mb-1 flex-wrap"> 
                                  <span class="text-xs text-brand-400 font-bold tracking-wider uppercase whitespace-nowrap">{{ p.category }}</span> 
+                                 
+                                 @if($any(p).subCategory) { <span class="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">{{ $any(p).subCategory }}</span> }
+                                 @if($any(p).tags) {
+                                   @for(tag of $any(p).tags; track tag) { <span class="bg-brand-50 text-brand-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">#{{ tag }}</span> }
+                                 }
+
                                  @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">預購</span> }
                                  @if(!p.isListed) { <span class="bg-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">未上架</span> }
                                  @if(p.priceType === 'event') { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">活動價</span> } 
                                  @if(p.priceType === 'clearance') { <span class="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">清倉價</span> } 
                                  @if(p.bulkDiscount?.count) { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">任選 {{ p.bulkDiscount?.count }} 件 $ {{ p.bulkDiscount?.total }}</span> }
-                              </div> 
+                              </div>
                               <h4 class="text-lg font-bold text-brand-900 truncate" [title]="p.name">{{ p.name }}</h4> 
                            </div> 
                            <div class="text-right shrink-0"> 
