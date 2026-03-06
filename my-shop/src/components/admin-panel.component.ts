@@ -221,12 +221,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
     <span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>
     
     @if(order.paymentLast5) { 
-      <div class="bg-blue-50 px-2.5 py-1.5 rounded-md border border-blue-100 flex flex-col gap-0.5 shadow-sm mt-0.5 relative">
-         @if(order.status === 'paid_verifying') {
-            <div class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-md animate-pulse">
-               🚨 請查帳
-            </div>
-         }
+      <div class="bg-blue-50 px-2.5 py-1.5 rounded-md border border-blue-100 flex flex-col gap-0.5 shadow-sm mt-0.5">
          <div class="text-[13px] text-blue-800 font-mono font-black flex items-center gap-1" title="匯款後五碼">
             <span>💳 {{ order.paymentLast5 }}</span>
          </div>
