@@ -1001,16 +1001,25 @@ async handleBatchImport(event: any) {
 
       o.items.forEach((i: CartItem) => {
           const p = this.store.products().find((x: Product) => x.id === i.productId);
-          if (p && p.localPrice) {
-              const costMat = p.costMaterial || 0;
-              const weight = p.weight || 0;
-              const shipKg = p.shippingCostPerKg || 200;
-              // 總報表：統一用 /40 標準
-              cost += ((p.localPrice / 40) + costMat + (weight * shipKg)) * i.quantity;
+if (p) {
+              let currentLocalPrice = p.localPrice || 0;
+              // 🔥 修正：從母商品找回原始規格字串
+              const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+              if (fullOption.includes('=')) {
+                  const parts = fullOption.split('=');
+                  if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+              }
+              if (currentLocalPrice > 0 || p.localPrice) {
+                  const costMat = p.costMaterial || 0;
+                  const weight = p.weight || 0;
+                  const shipKg = p.shippingCostPerKg || 200;
+                  cost += ((currentLocalPrice / 40) + costMat + (weight * shipKg)) * i.quantity;
+              } else {
+                  cost += (i.unitCost || 0) * i.quantity;
+              }
           } else {
               cost += (i.unitCost || 0) * i.quantity;
-          }
-      });
+          }      });
       discounts += o.discount + o.usedCredits;
     });
 
@@ -1040,16 +1049,20 @@ async handleBatchImport(event: any) {
               stats.sold += item.quantity;
               stats.revenue += item.price * item.quantity; 
 
-              // 計算成本
-              if (stats.product.localPrice) {
-                  const localPrice = stats.product.localPrice;
+// 計算成本
+              let currentLocalPrice = stats.product.localPrice || 0;
+              const fullOption = stats.product.options?.find((opt: string) => opt.split('=')[0].trim() === item.option) || '';
+              if (fullOption.includes('=')) {
+                  const parts = fullOption.split('=');
+                  if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+              }
+
+              if (currentLocalPrice > 0 || stats.product.localPrice) {
                   const costMat = stats.product.costMaterial || 0;
                   const weight = stats.product.weight || 0;
                   const shipKg = stats.product.shippingCostPerKg || 200;
-                  // 統一用 /40 當作標準成本
-                  stats.cost += ((localPrice / 40) + costMat + (weight * shipKg)) * item.quantity;
+                  stats.cost += ((currentLocalPrice / 40) + costMat + (weight * shipKg)) * item.quantity;
               } else {
-                  // 沒資料就用歷史紀錄
                   stats.cost += (item.unitCost || 0) * item.quantity;
               }
           }
@@ -1082,16 +1095,24 @@ async handleBatchImport(event: any) {
               monthSales += o.finalTotal; 
               o.items.forEach((i: CartItem) => { 
                 const p = this.store.products().find((x: Product) => x.id === i.productId); 
-                if(p && p.localPrice) {
-                    const costMat = p.costMaterial || 0;
-                    const weight = p.weight || 0;
-                    const shipKg = p.shippingCostPerKg || 200;
-                    // 首頁：統一用 /40 標準
-                    monthCost += ((p.localPrice / 40) + costMat + (weight * shipKg)) * i.quantity; 
+if(p) {
+                    let currentLocalPrice = p.localPrice || 0;
+                    const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+                    if (fullOption.includes('=')) {
+                        const parts = fullOption.split('=');
+                        if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+                    }
+                    if (currentLocalPrice > 0 || p.localPrice) {
+                        const costMat = p.costMaterial || 0;
+                        const weight = p.weight || 0;
+                        const shipKg = p.shippingCostPerKg || 200;
+                        monthCost += ((currentLocalPrice / 40) + costMat + (weight * shipKg)) * i.quantity; 
+                    } else {
+                        monthCost += (i.unitCost || 0) * i.quantity;
+                    }
                 } else {
                     monthCost += (i.unitCost || 0) * i.quantity;
-                }
-              }); 
+                }              }); 
           }
         } 
     }); 
@@ -1353,28 +1374,39 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
         let costGen = 0;
         let costVip = 0;
 
-        if (p) { 
-          // 確保就算有漏填欄位也不會變成 NaN
-          const localPrice = p.localPrice || 0;
+if (p) { 
+          let currentLocalPrice = p.localPrice || 0;
+          let currentPriceGeneral = p.priceGeneral || 0;
+          let currentPriceVip = p.priceVip || 0;
+
+          const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+          if (fullOption.includes('=')) {
+              const parts = fullOption.split('=');
+              if (parts.length >= 4) {
+                  currentPriceGeneral = Number(parts[1]) || currentPriceGeneral;
+                  currentPriceVip = Number(parts[2]) || currentPriceVip;
+                  currentLocalPrice = Number(parts[3]) || currentLocalPrice;
+              }
+          }
+
           const costMat = p.costMaterial || 0;
           const weight = p.weight || 0;
           const shipKg = p.shippingCostPerKg || 200;
-          const rate = p.exchangeRate || 0.22; // 預設匯率
+          const rate = p.exchangeRate || 0.22; 
 
-          // 🔥 核心公式：一般成本 /40，VIP成本 /43
-          // 如果 localPrice 有值，優先用 /40 與 /43 計算；否則用匯率計算
-          if (localPrice > 0) {
-             costGen = (localPrice / 40) + costMat + (weight * shipKg);
-             costVip = (localPrice / 43) + costMat + (weight * shipKg);
+          if (currentLocalPrice > 0) {
+             costGen = (currentLocalPrice / 40) + costMat + (weight * shipKg);
+             costVip = (currentLocalPrice / 43) + costMat + (weight * shipKg);
+          } else if (p.localPrice > 0) {
+             costGen = (p.localPrice / 40) + costMat + (weight * shipKg);
+             costVip = (p.localPrice / 43) + costMat + (weight * shipKg);
           } else {
-             // 沒填當地原價，改用 (售價 - 預期利潤) 或直接用 unitCost
              costGen = i.unitCost || 0;
              costVip = i.unitCost || 0;
           }
 
-          detailString += ` [售價:$${p.priceGeneral || 0} / VIP:$${p.priceVip || 0} / 實收:$${i.price}]`;
-        } else {
-          // 🔥 防呆：商品已刪除，用歷史紀錄的 unitCost 墊檔
+          detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
+        } else {          // 🔥 防呆：商品已刪除，用歷史紀錄的 unitCost 墊檔
           costGen = i.unitCost || 0;
           costVip = i.unitCost || 0;
           detailString += ` [實收:$${i.price} (已下架)]`;

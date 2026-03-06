@@ -9,6 +9,7 @@ import { map, switchMap, of, Observable } from 'rxjs';
 
 export interface Product {
   id: string; code: string; name: string; image: string; images?: string[]; category: string;
+  tags?: string[]; // 🔥 新增這行：讓資料庫知道商品可以有多個標籤
   options: string[]; country: string; localPrice: number; exchangeRate: number; costMaterial: number; 
   weight: number; shippingCostPerKg: number; priceGeneral: number; priceVip: number; priceWholesale: number; 
   priceType?: 'normal' | 'event' | 'clearance'; stock: number; note: string; soldCount: number;
@@ -16,6 +17,7 @@ export interface Product {
   bulkDiscount?: { count: number, total: number }; 
   allowPayment?: { cash: boolean; bankTransfer: boolean; cod: boolean; };
   allowShipping?: { meetup: boolean; myship: boolean; family: boolean; delivery: boolean; };
+  brand?: string; // 加上這個可選欄位，用來儲存品牌標籤
 }
 
 export interface CartItem {
@@ -132,15 +134,26 @@ export class StoreService {
   }
   generateNextProductCode(): string { return this.generateProductCode('P'); }
 
-  addToCart(product: Product, option: string, quantity: number) {
+addToCart(product: Product, option: string, quantity: number) {
     const user = this.currentUser(); 
     let finalPrice = product.priceGeneral;
     let parsedOption = option;
+    let localCostToUse = product.localPrice; // 🔥 新增：預設使用母體當地原價
 
     if (option.includes('=')) {
        const parts = option.split('=');
        parsedOption = parts[0].trim();
-       finalPrice = parseInt(parts[1].trim(), 10) || finalPrice;
+       
+       const optGenPrice = parseInt(parts[1]?.trim(), 10) || product.priceGeneral;
+       const optVipPrice = parseInt(parts[2]?.trim(), 10) || product.priceVip;
+       localCostToUse = parseInt(parts[3]?.trim(), 10) || product.localPrice;
+
+       // 🔥 正確判斷：如果是 VIP/批發會員，就套用 VIP 價
+       if (user?.tier === 'vip' || user?.tier === 'wholesale') {
+          finalPrice = optVipPrice > 0 ? optVipPrice : optGenPrice;
+       } else {
+          finalPrice = optGenPrice;
+       }
     } else {
        if (user?.tier === 'wholesale' && product.priceWholesale > 0) finalPrice = product.priceWholesale; 
        else if (user?.tier === 'vip' && product.priceVip > 0) finalPrice = product.priceVip;
@@ -148,15 +161,15 @@ export class StoreService {
 
     const isVip = user?.tier === 'vip' || user?.tier === 'wholesale' || finalPrice === product.priceVip;
     const currentRate = isVip ? 0.021 : 0.025;
-    const currentCost = (product.localPrice * currentRate) + product.costMaterial + (product.weight * product.shippingCostPerKg);
+    // 🔥 使用規格專屬的 localCostToUse 來計算這筆訂單的精準單位成本
+    const currentCost = (localCostToUse * currentRate) + product.costMaterial + (product.weight * product.shippingCostPerKg);
 
     this.cart.update(current => {
       const exist = current.find(i => i.productId === product.id && i.option === parsedOption);
       if (exist) return current.map(i => i === exist ? { ...i, quantity: i.quantity + quantity, price: finalPrice, unitCost: currentCost } : i);
       return [...current, { productId: product.id, productName: product.name, productImage: product.image, option: parsedOption, price: finalPrice, quantity, isPreorder: product.isPreorder, unitCost: currentCost }];
     });
-  }
-
+  }  
   async createOrder(paymentInfo: any, shippingInfo: any, usedCredits: number, paymentMethod: any, shippingMethod: any, shippingFee: number, checkoutItems: CartItem[]) {
     const user = this.currentUser(); if (!user) return null;
     let originalTotal = 0; let finalItemsTotal = 0; const grouped = new Map<string, number>();
