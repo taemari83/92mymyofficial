@@ -8,8 +8,10 @@ import { Auth, signInWithPopup, GoogleAuthProvider, signOut } from '@angular/fir
 import { map, switchMap, of, Observable } from 'rxjs';
 
 export interface Product {
-  id: string; code: string; name: string; image: string; images?: string[]; category: string;
-  tags?: string[]; // 🔥 新增這行：讓資料庫知道商品可以有多個標籤
+  id: string; code: string; name: string; image: string; images?: string[]; 
+  category: string;
+  subCategory?: string; // 🔥 新增：第二層分類
+  tags?: string[];      // 🔥 新增：多重標籤
   options: string[]; country: string; localPrice: number; exchangeRate: number; costMaterial: number; 
   weight: number; shippingCostPerKg: number; priceGeneral: number; priceVip: number; priceWholesale: number; 
   priceType?: 'normal' | 'event' | 'clearance'; stock: number; note: string; soldCount: number;
@@ -17,7 +19,7 @@ export interface Product {
   bulkDiscount?: { count: number, total: number }; 
   allowPayment?: { cash: boolean; bankTransfer: boolean; cod: boolean; };
   allowShipping?: { meetup: boolean; myship: boolean; family: boolean; delivery: boolean; };
-  brand?: string; // 加上這個可選欄位，用來儲存品牌標籤
+  brand?: string; 
 }
 
 export interface CartItem {

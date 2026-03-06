@@ -502,6 +502,10 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label> <input formControlName="name" class="w-full p-2 border rounded-lg"> </div> 
                     <div> 
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4"> 
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">次分類 (例如: 短袖)</label> <input formControlName="subCategory" class="w-full p-2 border rounded-lg"> </div> 
+                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">標籤 (逗號分隔，例如: NEW,現貨,熱銷)</label> <input formControlName="tagsStr" class="w-full p-2 border rounded-lg"> </div> 
+                  </div>
                       <label class="block text-xs font-bold text-gray-500 mb-1">分類</label> 
                       <div class="flex gap-2"> 
                         <div class="relative flex-1"> 
@@ -884,9 +888,9 @@ async handleBatchImport(event: any) {
           const priceGeneral = toNumber(row[7]); 
           const priceVip = toNumber(row[8]);
           const localPrice = toNumber(row[9]); 
-          const exchangeRate = Number(String(row[10]).replace(/,/g, '')) || 0.22;
+          const exchangeRate = Number(String(row[10]).replace(/,/g, '')) || 1;
           const weight = toNumber(row[11]); 
-          const shippingCostPerKg = Number(String(row[12]).replace(/,/g, '')) || 200;
+          const shippingCostPerKg = Number(String(row[12]).replace(/,/g, '')) || 0;
           const costMaterial = toNumber(row[13]);
           
           const bulkCount = toNumber(row[14]);
@@ -903,8 +907,12 @@ async handleBatchImport(event: any) {
           const isPreorder = String(row[19] || '').trim().toUpperCase() === 'TRUE';
           const isListed = String(row[20] || '').trim().toUpperCase() !== 'FALSE'; 
           
-          let code = String(row[21] || '').replace(/\t/g, '').trim(); 
-          const note = String(row[22] || '');
+          let code = String(row[21] || '').replace(/\t/g, '').trim(); 
+          const note = String(row[22] || '');
+          // 🔥 新增讀取次分類與標籤 (配合 CSV 的第24與25欄)
+          const subCategory = String(row[23] || '').trim();
+          const tagsStr = String(row[24] || '').trim();
+          const tags = tagsStr ? tagsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
           
           const stock = isPreorder ? 99999 : stockInput;
           const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
@@ -925,7 +933,7 @@ async handleBatchImport(event: any) {
 
           const p: any = {
             id: uniqueId, 
-            code, name, category, image: mainImage, images: allImages,
+            code, name, category, subCategory, tags, image: mainImage, images: allImages,
             priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
             weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
             soldCount: existingProduct?.soldCount || 0, country: 'Korea',
@@ -988,41 +996,52 @@ async handleBatchImport(event: any) {
     let revenue = 0; let cost = 0; let discounts = 0;
     let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
 
-    filteredOrders.forEach((o: Order) => {
-      if (o.status === 'refund_needed') payRefund += o.finalTotal;
-      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
-      else if (o.status === 'payment_confirmed' || o.status === 'shipped' || o.status === 'completed' || o.status === 'picked_up' as any) {
-          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
-      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
-          payUnpaid += o.finalTotal;
-      }
-      
-      revenue += o.finalTotal;
+ filteredOrders.forEach((o: Order) => {
+      if (o.status === 'refund_needed') payRefund += o.finalTotal;
+      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
+      else if (['payment_confirmed', 'shipped', 'completed', 'picked_up'].includes(o.status)) {
+          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
+      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
+          payUnpaid += o.finalTotal;
+      }
 
-      o.items.forEach((i: CartItem) => {
-          const p = this.store.products().find((x: Product) => x.id === i.productId);
-if (p) {
-              let currentLocalPrice = p.localPrice || 0;
-              // 🔥 修正：從母商品找回原始規格字串
-              const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
-              if (fullOption.includes('=')) {
-                  const parts = fullOption.split('=');
-                  if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
-              }
-              if (currentLocalPrice > 0 || p.localPrice) {
-                  const costMat = p.costMaterial || 0;
-                  const weight = p.weight || 0;
-                  const shipKg = p.shippingCostPerKg || 200;
-                  const rate = p.exchangeRate || 1; // 🔥 抓取動態匯率
-                  cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
-              } else {
-                  cost += (i.unitCost || 0) * i.quantity;
-              }
-          } else {
-              cost += (i.unitCost || 0) * i.quantity;
-          }      });
-      discounts += o.discount + o.usedCredits;
-    });
+      // 🔥 新增邏輯：判斷這筆訂單是否「已實收」(轉帳已確認，或貨到付款已完成)
+      let isReceived = false;
+      if (['payment_confirmed', 'shipped', 'completed', 'picked_up'].includes(o.status)) {
+          if (o.paymentMethod !== 'cod' || o.status === 'completed') {
+              isReceived = true;
+          }
+      }
+      
+      // 🔥 只有已實收的訂單，才算入上方的總營收、總成本與淨利潤
+      if (isReceived) {
+          revenue += o.finalTotal;
+
+          o.items.forEach((i: CartItem) => {
+              const p = this.store.products().find((x: Product) => x.id === i.productId);
+              if (p) {
+                  let currentLocalPrice = p.localPrice || 0;
+                  const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+                  if (fullOption.includes('=')) {
+                      const parts = fullOption.split('=');
+                      if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+                  }
+                  if (currentLocalPrice > 0 || p.localPrice) {
+                      const costMat = p.costMaterial || 0;
+                      const weight = p.weight || 0;
+                      const shipKg = p.shippingCostPerKg || 0; // 🔥 預設改為 0
+                      const rate = p.exchangeRate || 1;
+                      cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
+                  } else {
+                      cost += (i.unitCost || 0) * i.quantity;
+                  }
+              } else {
+                  cost += (i.unitCost || 0) * i.quantity;
+              } 
+          });
+          discounts += o.discount + o.usedCredits;
+      }
+    });
 
     return { 
         revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal } 
@@ -1237,8 +1256,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   }
   
   constructor() {
-    this.productForm = this.fb.group({ name: ['', Validators.required], category: [''], code: [''], priceGeneral: [0], priceVip: [0], localPrice: [0], exchangeRate: [0.22], weight: [0], shippingCostPerKg: [200], costMaterial: [0], stock: [0], optionsStr: [''], note: [''], isPreorder: [false], isListed: [true], bulkCount: [0], bulkTotal: [0] });
-    this.productForm.valueChanges.subscribe(v => this.formValues.set(v));
+    this.productForm = this.fb.group({ name: ['', Validators.required], category: [''], subCategory: [''], tagsStr: [''], code: [''], priceGeneral: [0], priceVip: [0], localPrice: [0], exchangeRate: [1], weight: [0], shippingCostPerKg: [0], costMaterial: [0], stock: [0], optionsStr: [''], note: [''], isPreorder: [false], isListed: [true], bulkCount: [0], bulkTotal: [0] });    this.productForm.valueChanges.subscribe(v => this.formValues.set(v));
     const s = this.store.settings();
     this.settingsForm = this.fb.group({ enableCash: [s.paymentMethods.cash], enableBank: [s.paymentMethods.bankTransfer], enableCod: [s.paymentMethods.cod], birthdayGiftGeneral: [s.birthdayGiftGeneral], birthdayGiftVip: [s.birthdayGiftVip], shipping: this.fb.group({ freeThreshold: [s.shipping.freeThreshold], methods: this.fb.group({ meetup: this.fb.group({ enabled: [s.shipping.methods.meetup.enabled], fee: [s.shipping.methods.meetup.fee] }), myship: this.fb.group({ enabled: [s.shipping.methods.myship.enabled], fee: [s.shipping.methods.myship.fee] }), family: this.fb.group({ enabled: [s.shipping.methods.family.enabled], fee: [s.shipping.methods.family.fee] }), delivery: this.fb.group({ enabled: [s.shipping.methods.delivery.enabled], fee: [s.shipping.methods.delivery.fee] }) }) }) });
     this.userForm = this.fb.group({ name: ['', Validators.required], phone: [''], birthday: [''], tier: ['general'], credits: [0], totalSpend: [0], note: [''] });
@@ -1446,8 +1464,8 @@ if (p) {
      this.downloadCSV(`商品總表_對齊格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }
 
-  openProductForm() { this.editingProduct.set(null); this.productForm.reset(); this.productForm.patchValue({ exchangeRate: 0.22, shippingCostPerKg: 200, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0 }); this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
-  editProduct(p: Product) { this.editingProduct.set(p); this.productForm.patchValue({ ...p, optionsStr: p.options.join(', '), exchangeRate: p.exchangeRate || 0.22, shippingCostPerKg: p.shippingCostPerKg || 200, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 }); this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
+  openProductForm() { this.editingProduct.set(null); this.productForm.reset(); this.productForm.patchValue({ exchangeRate: 1, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' }); this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
+  editProduct(p: Product) { this.editingProduct.set(p); this.productForm.patchValue({ ...p, optionsStr: (p.options || []).join(', '), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 });; this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
   closeProductModal() { this.showProductModal.set(false); } 
   onCategoryChange() { const cat = this.productForm.get('category')?.value; if (cat && !this.editingProduct()) { const codeMap = this.categoryCodes(); const foundCode = codeMap[cat] || ''; this.currentCategoryCode.set(foundCode); this.updateSkuPreview(foundCode); } } 
   onCodeInput(e: any) { const val = e.target.value.toUpperCase(); this.currentCategoryCode.set(val); if (!this.editingProduct()) { this.updateSkuPreview(val); } } 
@@ -1463,8 +1481,34 @@ if (p) {
      const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
      const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
      const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
-     const p: any = { id: this.editingProduct()?.id || Date.now().toString(), code: finalCode, name: val.name, category: val.category, image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed }; 
-     
+const p: any = { 
+         id: this.editingProduct()?.id || Date.now().toString(), 
+         code: finalCode, 
+         name: val.name, 
+         category: val.category, 
+         subCategory: val.subCategory || '', // 🔥 存入次分類
+         tags: val.tagsStr ? val.tagsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [], // 🔥 存入多重標籤
+         image: mainImage, 
+         images: finalImages, 
+         priceGeneral: val.priceGeneral, 
+         priceVip: val.priceVip, 
+         priceWholesale: 0, 
+         localPrice: val.localPrice, 
+         stock: val.isPreorder ? 99999 : val.stock, 
+         options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], 
+         note: val.note, 
+         exchangeRate: val.exchangeRate, 
+         costMaterial: val.costMaterial, 
+         weight: val.weight, 
+         shippingCostPerKg: val.shippingCostPerKg, 
+         priceType: 'normal', 
+         soldCount: this.editingProduct()?.soldCount || 0, 
+         country: 'Korea', 
+         allowPayment: { cash: true, bankTransfer: true, cod: true }, 
+         allowShipping: { meetup: true, myship: true, family: true, delivery: true }, 
+         isPreorder: val.isPreorder, 
+         isListed: val.isListed 
+     };        
      if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
      
      if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 

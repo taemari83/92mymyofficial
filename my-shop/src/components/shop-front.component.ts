@@ -53,12 +53,12 @@ import { StoreService, Product } from '../services/store.service';
          
          <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar px-2">
             <button 
-              (click)="selectedCategory.set('all')"
+              (click)="selectedCategory.set('all'); selectedSubCategory.set('全部')"
               [class.bg-brand-900]="selectedCategory() === 'all'" [class.text-white]="selectedCategory() === 'all'" [class.bg-white]="selectedCategory() !== 'all'" [class.text-gray-500]="selectedCategory() !== 'all'"
               class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0"
             >All</button>
             <button 
-              (click)="selectedCategory.set('新品')"
+              (click)="selectedCategory.set('新品'); selectedSubCategory.set('全部')"
               [class.bg-red-500]="selectedCategory() === '新品'" [class.text-white]="selectedCategory() === '新品'" [class.bg-white]="selectedCategory() !== '新品'" [class.text-red-500]="selectedCategory() !== '新品'"
               class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0 flex items-center gap-1"
             ><span>✨</span> 本月新品</button>
@@ -66,13 +66,25 @@ import { StoreService, Product } from '../services/store.service';
             @for (cat of store.categories(); track cat) {
               @if(cat !== '新品') {
                 <button 
-                  (click)="selectedCategory.set(cat)"
+                  (click)="selectedCategory.set(cat); selectedSubCategory.set('全部')"
                   [class.bg-brand-900]="selectedCategory() === cat" [class.text-white]="selectedCategory() === cat" [class.bg-white]="selectedCategory() !== cat" [class.text-gray-500]="selectedCategory() !== cat"
                   class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0"
                 >{{ cat }}</button>
               }
             }
          </div>
+
+         @if (currentSubCategories().length > 0) {
+            <div class="flex gap-2 overflow-x-auto pb-1 custom-scrollbar px-2 animate-fade-in">
+              @for (sub of currentSubCategories(); track sub) {
+                <button 
+                  (click)="selectedSubCategory.set(sub)"
+                  [class.bg-gray-800]="selectedSubCategory() === sub" [class.text-white]="selectedSubCategory() === sub" [class.bg-white]="selectedSubCategory() !== sub" [class.text-gray-500]="selectedSubCategory() !== sub"
+                  class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors border border-gray-100 shadow-sm shrink-0"
+                >{{ sub }}</button>
+              }
+            </div>
+         }
       </div>
 
       @if (viewMode() === 'grid') {
@@ -82,15 +94,20 @@ import { StoreService, Product } from '../services/store.service';
                <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
                  <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                  
-                 <div class="absolute top-2 left-2 right-2 flex gap-1 flex-wrap">
-                    @if(product.bulkDiscount?.count) { <div class="bg-red-500/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm animate-pulse">任選 {{ product.bulkDiscount!.count }} 件優惠</div> }
-                    @if(isNewProduct(product)) { <div class="bg-red-500/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-white shadow-sm animate-pulse">NEW</div> }
-                    <div class="bg-white/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-brand-900 uppercase shadow-sm">{{ product.category }}</div>
-                    @if(product.isPreorder) { <div class="bg-blue-100/90 backdrop-blur px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-[10px] font-bold text-blue-600 shadow-sm">預購</div> }
+                 <div class="absolute top-2 left-2 right-2 flex gap-1.5 flex-wrap z-10">
+                    @if(product.bulkDiscount?.count) { <div class="bg-gradient-to-r from-red-500 to-orange-400 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 animate-pulse">🔥 任 {{ product.bulkDiscount!.count }} 件優惠</div> }
+                    @if(isNewProduct(product)) { <div class="bg-black/80 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 tracking-wider">NEW</div> }
+                    <div class="bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-gray-800 uppercase shadow-sm border border-gray-100">{{ product.category }}</div>
+                    @if(product.isPreorder) { <div class="bg-blue-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-blue-600 shadow-sm border border-blue-100">✈️ 預購</div> }
+                    @if($any(product).tags) {
+                      @for(tag of $any(product).tags; track tag) {
+                        <div class="bg-brand-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-brand-700 shadow-sm border border-brand-100">#{{ tag }}</div>
+                      }
+                    }
                  </div>
 
                  @if (product.stock <= 0) {
-                   <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                   <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm z-20">
                       <div class="bg-white px-3 py-1 sm:px-6 py-2 rounded-full font-bold text-brand-900 text-xs sm:text-base">SOLD OUT</div>
                    </div>
                  }
@@ -138,14 +155,19 @@ import { StoreService, Product } from '../services/store.service';
                
                <div class="flex-1 min-w-0 flex flex-col py-0.5 sm:py-1 justify-between pr-1">
                  <div>
-                    <div class="flex gap-1.5 flex-wrap mb-1 sm:mb-1.5">
-                       @if(isNewProduct(product)) { <span class="text-[9px] sm:text-[10px] text-red-500 font-bold bg-red-50 px-1.5 py-0.5 rounded">NEW</span> }
-                       @if(product.isPreorder) { <span class="text-[9px] sm:text-[10px] text-blue-500 font-bold bg-blue-50 px-1.5 py-0.5 rounded">預購</span> }
-                       <span class="text-[9px] sm:text-[10px] text-gray-500 font-bold bg-gray-100 px-1.5 py-0.5 rounded uppercase">{{ product.category }}</span>
+                    <div class="flex gap-1.5 flex-wrap mb-1.5">
+                       @if(isNewProduct(product)) { <span class="text-[10px] bg-black/80 text-white font-black px-2 py-0.5 rounded-md tracking-wider border border-white/20">NEW</span> }
+                       @if(product.isPreorder) { <span class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-md border border-blue-100">預購</span> }
+                       <span class="text-[10px] bg-gray-50 text-gray-600 font-bold px-2 py-0.5 rounded-md uppercase border border-gray-100">{{ product.category }}</span>
+                       @if($any(product).tags) {
+                          @for(tag of $any(product).tags; track tag) {
+                            <span class="text-[10px] bg-brand-50 text-brand-700 font-bold px-2 py-0.5 rounded-md border border-brand-100">#{{ tag }}</span>
+                          }
+                       }
                     </div>
                     <h3 class="font-bold text-brand-900 text-sm sm:text-lg leading-tight mb-1 line-clamp-2">{{ product.name }}</h3>
                     @if(product.bulkDiscount?.count) {
-                       <div class="text-[10px] sm:text-xs text-red-500 font-bold line-clamp-1">🔥 任選 {{ product.bulkDiscount!.count }} 件優惠</div>
+                       <div class="text-[10px] sm:text-xs text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 font-bold line-clamp-1">🔥 任選 {{ product.bulkDiscount!.count }} 件優惠</div>
                     }
                  </div>
                  
@@ -208,10 +230,15 @@ import { StoreService, Product } from '../services/store.service';
                   <div class="mb-6">
                     <div class="flex justify-between items-start mb-2 pr-10">
                       <div class="flex flex-wrap gap-2">
-                         @if(selectedProduct()!.bulkDiscount?.count) { <div class="text-sm text-red-500 font-bold tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1 animate-pulse">🔥 多件優惠</div> }
-                         @if(isNewProduct(selectedProduct()!)) { <div class="text-sm text-red-500 font-bold uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg flex items-center gap-1">✨ NEW</div> }
-                         <div class="text-sm text-brand-400 font-bold uppercase tracking-widest bg-brand-50 px-2 py-1 rounded-lg">{{ selectedProduct()!.category }}</div>
-                         @if(selectedProduct()!.isPreorder) { <div class="text-sm text-blue-500 font-bold tracking-widest bg-blue-50 px-2 py-1 rounded-lg">預購</div> }
+                         @if(selectedProduct()!.bulkDiscount?.count) { <div class="text-xs bg-gradient-to-r from-red-500 to-orange-400 text-white font-black tracking-widest px-2.5 py-1 rounded-md shadow-sm border border-white/20 animate-pulse">🔥 任 {{ selectedProduct()!.bulkDiscount!.count }} 件優惠</div> }
+                         @if(isNewProduct(selectedProduct()!)) { <div class="text-xs bg-black/80 text-white font-black tracking-widest px-2.5 py-1 rounded-md shadow-sm border border-white/20">NEW</div> }
+                         <div class="text-xs bg-gray-50 text-gray-600 font-bold uppercase tracking-widest px-2.5 py-1 rounded-md border border-gray-200">{{ selectedProduct()!.category }}</div>
+                         @if(selectedProduct()!.isPreorder) { <div class="text-xs bg-blue-50 text-blue-600 font-bold tracking-widest px-2.5 py-1 rounded-md border border-blue-100">預購</div> }
+                         @if($any(selectedProduct()!).tags) {
+                           @for(tag of $any(selectedProduct()!).tags; track tag) {
+                             <div class="text-xs bg-brand-50 text-brand-700 font-bold tracking-widest px-2.5 py-1 rounded-md border border-brand-100">#{{ tag }}</div>
+                           }
+                         }
                       </div>
                       <button (click)="copyLink()" class="flex items-center gap-1 text-xs text-gray-400 hover:text-brand-900 transition-colors border border-gray-200 rounded-full px-3 py-1 bg-white shrink-0"><span>🔗</span> 複製</button>
                     </div>
@@ -332,6 +359,7 @@ export class ShopFrontComponent {
   
   searchQuery = signal('');
   selectedCategory = signal<string>('all');
+  selectedSubCategory = signal<string>('全部');
   sortOption = signal<'hot'|'price_asc'|'price_desc'|'newest'|'oldest'>('newest');
   viewMode = signal<'grid' | 'list'>('grid');
 
@@ -372,17 +400,39 @@ export class ShopFrontComponent {
     });
   }
 
-  // 🔥 修正：為了避開 Angular 模板對 arrow function 的限制，把判斷獨立成函數
+  // 🔥 真實動態抓取：根據當下選取的主分類，自動列出底下有的次分類
+  currentSubCategories = computed(() => {
+    const cat = this.selectedCategory();
+    
+    // 如果選的是 All 或是 新品，就不顯示次分類
+    if (cat === 'all' || cat === '新品') return [];
+
+    // 1. 從所有商品中，篩選出屬於「目前主分類」的商品
+    const productsInCurrentCat = this.store.visibleProducts().filter(p => p.category === cat);
+
+    // 2. 抓出這些商品身上帶有的 subCategory，並過濾掉空白或沒有填寫的
+    const existingSubs = productsInCurrentCat
+      .map(p => p.subCategory)
+      .filter((sub): sub is string => !!sub); 
+
+    // 3. 用 Set 去除重複的次分類名稱（例如有 10 件上衣，只會保留一個「上衣」選項）
+    const uniqueSubs = [...new Set(existingSubs)];
+
+    // 4. 如果這個主分類下的商品都還沒設定次分類，就不顯示按鈕
+    if (uniqueSubs.length === 0) return [];
+
+    // 5. 在最前面加上「全部」選項，回傳給畫面顯示
+    return ['全部', ...uniqueSubs];
+  });
+
   hasCustomPrice(p: Product): boolean {
     return p?.options?.some(opt => opt.includes('=')) || false;
   }
 
-  // 解析選項名稱 (去掉 = 跟價格)
   getOptName(opt: string): string {
     return opt.includes('=') ? opt.split('=')[0].trim() : opt;
   }
 
-  // 解析選項獨立價格
   getOptPrice(opt: string): number {
     const p = this.selectedProduct();
     if (!p) return 0;
@@ -392,13 +442,11 @@ export class ShopFrontComponent {
     return this.getPrice(p);
   }
 
-  // 判斷當前選中商品是否有設定獨立價格的規格
   hasCustomPriceOptions = computed(() => {
     const p = this.selectedProduct();
     return p ? this.hasCustomPrice(p) : false;
   });
 
-  // 目前畫面該顯示的總單價 (根據選擇的選項變動)
   currentDisplayPrice = computed(() => {
     const p = this.selectedProduct();
     if (!p) return 0;
@@ -427,13 +475,21 @@ export class ShopFrontComponent {
     let list = [...this.store.visibleProducts()]; 
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
+    const subCat = this.selectedSubCategory();
     const sort = this.sortOption();
 
     if (query) list = list.filter(p => p.name.toLowerCase().includes(query));
+    
     if (cat === '新品') {
        list = list.filter(p => this.isNewProduct(p));
     } else if (cat !== 'all') {
        list = list.filter(p => p.category === cat);
+       
+       // --- 新增：第二層分類的過濾邏輯 ---
+       if (subCat && subCat !== '全部') {
+         list = list.filter(p => (p as any).subCategory === subCat); 
+       }
+       // -----------------------------------
     }
     
     switch (sort) {
@@ -478,18 +534,13 @@ export class ShopFrontComponent {
   copyLink() {
      const url = window.location.href;
      navigator.clipboard.writeText(url).then(() => {
-        // 確保在瀏覽器環境下才執行
         if (typeof document !== 'undefined') {
-           // 動態產生一個優雅的浮動提示
            const div = document.createElement('div');
-           // 注意這裡的 z-[120] 是為了確保它顯示在商品彈窗 (z-100) 的最上層
            div.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl z-[120] text-sm font-bold animate-fade-in flex items-center gap-2';
            div.innerHTML = '<span>✅</span> 連結已複製';
            
-           // 把提示加進畫面中
            document.body.appendChild(div);
            
-           // 設定 2 秒 (2000毫秒) 後自動融化消失
            setTimeout(() => div.remove(), 2000);
         }
      });
