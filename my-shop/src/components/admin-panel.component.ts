@@ -1013,7 +1013,8 @@ if (p) {
                   const costMat = p.costMaterial || 0;
                   const weight = p.weight || 0;
                   const shipKg = p.shippingCostPerKg || 200;
-                  cost += ((currentLocalPrice / 40) + costMat + (weight * shipKg)) * i.quantity;
+                  const rate = p.exchangeRate || 1; // 🔥 抓取動態匯率
+                  cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
               } else {
                   cost += (i.unitCost || 0) * i.quantity;
               }
@@ -1060,8 +1061,9 @@ if (p) {
               if (currentLocalPrice > 0 || stats.product.localPrice) {
                   const costMat = stats.product.costMaterial || 0;
                   const weight = stats.product.weight || 0;
-                  const shipKg = stats.product.shippingCostPerKg || 200;
-                  stats.cost += ((currentLocalPrice / 40) + costMat + (weight * shipKg)) * item.quantity;
+                const shipKg = stats.product.shippingCostPerKg || 200;
+                  const rate = stats.product.exchangeRate || 1; // 🔥 抓取動態匯率
+                  stats.cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * item.quantity;
               } else {
                   stats.cost += (item.unitCost || 0) * item.quantity;
               }
@@ -1106,7 +1108,8 @@ if(p) {
                         const costMat = p.costMaterial || 0;
                         const weight = p.weight || 0;
                         const shipKg = p.shippingCostPerKg || 200;
-                        monthCost += ((currentLocalPrice / 40) + costMat + (weight * shipKg)) * i.quantity; 
+                        const rate = p.exchangeRate || 1; // 🔥 抓取動態匯率
+                        monthCost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity; 
                     } else {
                         monthCost += (i.unitCost || 0) * i.quantity;
                     }
@@ -1360,7 +1363,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     
     let list = this.accountingFilteredOrders(); 
     // 表頭：增加「商品成本(一般)」與「商品成本(VIP)」
-    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品成本(一般 /40)', '商品成本(VIP /43)', '預估利潤 (以一般成本計)', '毛利率%']; 
+    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%'];
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
 
     const rows = list.map((o: Order) => { 
@@ -1392,33 +1395,28 @@ if (p) {
           const costMat = p.costMaterial || 0;
           const weight = p.weight || 0;
           const shipKg = p.shippingCostPerKg || 200;
-          const rate = p.exchangeRate || 0.22; 
+          const rate = p.exchangeRate || 1; // 🔥 抓取動態匯率
 
+          // 🔥 核心公式：當地原價 × 匯率 + 額外成本 + 運費
           if (currentLocalPrice > 0) {
-             costGen = (currentLocalPrice / 40) + costMat + (weight * shipKg);
-             costVip = (currentLocalPrice / 43) + costMat + (weight * shipKg);
+             costGen = (currentLocalPrice * rate) + costMat + (weight * shipKg);
           } else if (p.localPrice > 0) {
-             costGen = (p.localPrice / 40) + costMat + (weight * shipKg);
-             costVip = (p.localPrice / 43) + costMat + (weight * shipKg);
+             costGen = (p.localPrice * rate) + costMat + (weight * shipKg);
           } else {
              costGen = i.unitCost || 0;
-             costVip = i.unitCost || 0;
           }
 
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
-        } else {          // 🔥 防呆：商品已刪除，用歷史紀錄的 unitCost 墊檔
+        } else {
           costGen = i.unitCost || 0;
-          costVip = i.unitCost || 0;
           detailString += ` [實收:$${i.price} (已下架)]`;
         }
         
         costGeneralTotal += costGen * i.quantity;
-        costVipTotal += costVip * i.quantity;
 
         return detailString;
       }).join('\n'); 
 
-      // 🔥 利潤 = 實收總額 - 一般成本總額
       const profit = o.finalTotal - costGeneralTotal; 
       const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
       
@@ -1430,10 +1428,9 @@ if (p) {
         itemDetails, 
         o.finalTotal, 
         costGeneralTotal.toFixed(0), 
-        costVipTotal.toFixed(0), 
         profit.toFixed(0), 
         margin.toFixed(1) 
-      ]; 
+      ];
     }); 
     this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }

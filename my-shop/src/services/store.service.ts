@@ -159,11 +159,11 @@ addToCart(product: Product, option: string, quantity: number) {
        else if (user?.tier === 'vip' && product.priceVip > 0) finalPrice = product.priceVip;
     }
 
-    const isVip = user?.tier === 'vip' || user?.tier === 'wholesale' || finalPrice === product.priceVip;
-    const currentRate = isVip ? 0.021 : 0.025;
-    // 🔥 使用規格專屬的 localCostToUse 來計算這筆訂單的精準單位成本
-    const currentCost = (localCostToUse * currentRate) + product.costMaterial + (product.weight * product.shippingCostPerKg);
-
+// 🔥 直接使用商品後台設定的匯率，沒填的話預設為 1 (台幣)
+    const currentRate = product.exchangeRate || 1;
+    // 🔥 成本 = (原價 × 匯率) + 額外加工費 + (重量 × 國際運費)
+    const currentCost = (localCostToUse * currentRate) + (product.costMaterial || 0) + ((product.weight || 0) * (product.shippingCostPerKg || 0));
+    
     this.cart.update(current => {
       const exist = current.find(i => i.productId === product.id && i.option === parsedOption);
       if (exist) return current.map(i => i === exist ? { ...i, quantity: i.quantity + quantity, price: finalPrice, unitCost: currentCost } : i);
