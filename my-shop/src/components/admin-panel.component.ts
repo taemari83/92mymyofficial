@@ -1367,17 +1367,22 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   
   openAction(e: Event, order: Order) { e.stopPropagation(); this.actionModalOrder.set(order); this.cancelConfirmState.set(false); } 
   closeActionModal() { this.actionModalOrder.set(null); } 
-  doConfirm(o: Order) { this.store.updateOrderStatus(o.id, 'payment_confirmed'); this.closeActionModal(); } 
-  doAlert(o: Order) { this.store.updateOrderStatus(o.id, 'unpaid_alert'); this.closeActionModal(); } 
-  doRefundNeeded(o: Order) { this.store.updateOrderStatus(o.id, 'refund_needed'); this.orderStatusTab.set('refund'); this.closeActionModal(); } 
-  doRefundDone(o: Order) { this.store.updateOrderStatus(o.id, 'refunded'); this.closeActionModal(); } 
-  doShip(o: Order) { const code = prompt('請輸入物流單號'); if (code !== null) { this.store.updateOrderStatus(o.id, 'shipped', { shippingLink: code }); this.closeActionModal(); } } 
+
+  // --- 彈窗內的詳細操作按鈕 (已加入自動發信) ---
+  doConfirm(o: Order) { this.store.updateOrderStatus(o.id, 'payment_confirmed'); this.store.sendOrderNotification(o, 'payment_confirmed'); this.closeActionModal(); } 
+  doAlert(o: Order) { this.store.updateOrderStatus(o.id, 'unpaid_alert'); this.store.sendOrderNotification(o, 'payment_reminder'); this.closeActionModal(); } 
+  doRefundNeeded(o: Order) { this.store.updateOrderStatus(o.id, 'refund_needed'); this.orderStatusTab.set('refund'); this.store.sendOrderNotification(o, 'refund_needed'); this.closeActionModal(); } 
+  doRefundDone(o: Order) { this.store.updateOrderStatus(o.id, 'refunded'); this.store.sendOrderNotification(o, 'refunded'); this.closeActionModal(); } 
+  doShip(o: Order) { const code = prompt('請輸入物流單號 / 追蹤連結 (若無可直接按確認)'); if (code !== null) { this.store.updateOrderStatus(o.id, 'shipped', { shippingLink: code }); this.store.sendOrderNotification(o, 'shipped', { shippingLink: code }); this.closeActionModal(); } } 
+  
   doMyshipPickup(o: Order) { this.store.updateOrderStatus(o.id, 'picked_up' as any); this.closeActionModal(); } 
   doCancel(o: Order) { if(this.cancelConfirmState()) { this.store.updateOrderStatus(o.id, 'cancelled'); this.closeActionModal(); } else { this.cancelConfirmState.set(true); } } 
   doDeleteOrder(o: Order) { if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原，且系統會自動扣除該會員對應的累積消費金額！`)) { this.store.deleteOrder(o); this.closeActionModal(); } } 
-  quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); } 
-  quickShip(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'shipped'); } 
-  quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); } 
+  
+  // --- 列表上的快捷操作按鈕 (也一併加入自動發信) ---
+  quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); this.store.sendOrderNotification(o, 'payment_confirmed'); } 
+  quickShip(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'shipped'); this.store.sendOrderNotification(o, 'shipped'); } 
+  quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); this.store.sendOrderNotification(o, 'refunded'); } 
   quickComplete(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'completed'); }
 
   updatePaymentLast5(o: Order, event: any) { 

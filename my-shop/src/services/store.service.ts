@@ -225,6 +225,24 @@ addToCart(product: Product, option: string, quantity: number) {
     fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'arrival_notice', orderId: order.id, name: order.userName, email: order.userEmail, shippingLink: this.myShipLink }) }).then(() => this.updateOrderStatus(order.id, 'arrived_notified'));
   }
 
+  // 🔥 新增：通用發信函數，用來觸發 Google Apps Script 的各種信件
+  async sendOrderNotification(order: Order, action: string, extraData: any = {}) {
+    const payload = {
+      action: action,
+      orderId: order.id,
+      name: order.userName,
+      email: order.userEmail,
+      total: order.finalTotal,
+      ...extraData // 包含 shippingLink 等額外資訊
+    };
+
+    fetch(this.gasUrl, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+      body: JSON.stringify(payload) 
+    }).catch(e => console.error('發送通知失敗:', e));
+  }
+  
   async loginWithGoogle() {
     try {
       const provider = new GoogleAuthProvider(); const credential = await signInWithPopup(this.auth, provider); const gUser = credential.user; const userRef = doc(this.firestore, 'users', gUser.uid); const docSnap = await getDoc(userRef);
