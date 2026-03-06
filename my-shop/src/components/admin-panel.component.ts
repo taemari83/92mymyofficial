@@ -913,39 +913,40 @@ async handleBatchImport(event: any) {
           continue; 
         }
 
-        try {
-          // 下方全面配合您的新表格向右平移，並套用自動去逗號功能
-          const name = String(row[5] || '').trim(); 
-          const category = String(row[6] || '').trim();
-          const priceGeneral = toNumber(row[7]); 
-          const priceVip = toNumber(row[8]);
-          const localPrice = toNumber(row[9]); 
-          const exchangeRate = Number(String(row[10]).replace(/,/g, '')) || 1;
-          const weight = toNumber(row[11]); 
-          const shippingCostPerKg = Number(String(row[12]).replace(/,/g, '')) || 0;
-          const costMaterial = toNumber(row[13]);
-          
-          const bulkCount = toNumber(row[14]);
-          const bulkTotal = toNumber(row[15]);
+try {
+           const name = String(row[5] || '').trim(); 
+           const category = String(row[6] || '').trim();
+           
+           // 🔥 1. 將次分類與標籤移動到分類與售價之間 (對應表格的 H, I 欄)
+           const subCategory = String(row[7] || '').trim();
+           const tagsStr = String(row[8] || '').trim();
+           const tags = tagsStr ? tagsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+           
+           // 🔥 2. 原本的售價與後續欄位，全部順延兩格
+           const priceGeneral = toNumber(row[9]); 
+           const priceVip = toNumber(row[10]);
+           const localPrice = toNumber(row[11]); 
+           const exchangeRate = Number(String(row[12]).replace(/,/g, '')) || 1;
+           const weight = toNumber(row[13]); 
+           const shippingCostPerKg = Number(String(row[14]).replace(/,/g, '')) || 0;
+           const costMaterial = toNumber(row[15]);
+           
+           const bulkCount = toNumber(row[16]);
+           const bulkTotal = toNumber(row[17]);
 
-          const imageRaw = String(row[16] || '');
-          const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
-          const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
-          const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
+           const imageRaw = String(row[18] || '');
+           const imagesArray = imageRaw.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s.startsWith('http')); 
+           const mainImage = imagesArray.length > 0 ? imagesArray[0] : 'https://placehold.co/300x300?text=No+Image';
+           const allImages = imagesArray.length > 0 ? imagesArray : [mainImage];
 
-          const optionsStr = String(row[17] || '');
-          const stockInput = toNumber(row[18]);
-          
-          const isPreorder = String(row[19] || '').trim().toUpperCase() === 'TRUE';
-          const isListed = String(row[20] || '').trim().toUpperCase() !== 'FALSE'; 
-          
-          let code = String(row[21] || '').replace(/\t/g, '').trim(); 
-          const note = String(row[22] || '');
-          // 🔥 新增讀取次分類與標籤 (配合 CSV 的第24與25欄)
-          const subCategory = String(row[23] || '').trim();
-          const tagsStr = String(row[24] || '').trim();
-          const tags = tagsStr ? tagsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
-          
+           const optionsStr = String(row[19] || '');
+           const stockInput = toNumber(row[20]);
+           
+           const isPreorder = String(row[21] || '').trim().toUpperCase() === 'TRUE';
+           const isListed = String(row[22] || '').trim().toUpperCase() !== 'FALSE'; 
+           
+           let code = String(row[23] || '').replace(/\t/g, '').trim(); 
+           const note = String(row[24] || '');          
           const stock = isPreorder ? 99999 : stockInput;
           const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
           
@@ -1453,8 +1454,19 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
      this.downloadCSV(`會員名單_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   } 
 
-  exportInventoryCSV() { const headers = ['SKU貨號', '商品名稱', '分類', '庫存數量', '狀態']; const rows = this.store.products().map((p: Product) => [ `\t${p.code}`, p.name, p.category, p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') ]); this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); } 
-  
+exportInventoryCSV() { 
+      // 🔥 庫存表也加入次分類，方便倉儲管理
+      const headers = ['SKU貨號', '商品名稱', '分類', '次分類', '庫存數量', '狀態']; 
+      const rows = this.store.products().map((p: Product) => [ 
+        `\t${p.code}`, 
+        p.name, 
+        p.category, 
+        p.subCategory || '', 
+        p.stock, 
+        p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') 
+      ]); 
+      this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); 
+  }  
   exportToCSV() { 
     const range = this.accountingRange(); 
     const now = new Date(); 
@@ -1538,12 +1550,16 @@ if (p) {
   }
 
   exportProductsCSV() { 
-     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
+     // 🔥 表頭更新：把「次分類」與「標籤」移到「分類(C)」後面
+     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
+     
      const rows = this.store.products().map((p: Product) => { 
         const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
         const normalProfit = p.priceGeneral - cost; 
         const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
-        return [ '', '', '', p.code, '', p.name, p.category, p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', `\t${p.code}`, p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount ]; 
+        
+        // 🔥 寫入順序同步調整
+        return [ '', '', '', p.code, '', p.name, p.category, p.subCategory || '', (p.tags || []).join(','), p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', `\t${p.code}`, p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount ]; 
      }); 
      this.downloadCSV(`商品總表_對齊格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }
