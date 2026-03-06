@@ -263,6 +263,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
         @if (activeTab() === 'products') { 
           <div class="space-y-6 w-full"> 
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
+              
               <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                 <div>
                    <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">商品管理</h3>
@@ -276,6 +277,38 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   </label> 
                   <button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button> 
                 </div> 
+              </div>
+
+              <div class="flex flex-col sm:flex-row items-center gap-3 w-full mt-2 pt-4 border-t border-gray-100">
+                
+                <select 
+                  [ngModel]="productCategoryFilter()" 
+                  (ngModelChange)="productCategoryFilter.set($event); productSubCategoryFilter.set('all')"
+                  class="w-full sm:w-auto bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-gray-700 cursor-pointer appearance-none"
+                >
+                  <option value="all">📁 全部主分類</option>
+                  @for(c of store.categories(); track c) {
+                    <option [value]="c">{{ c }}</option>
+                  }
+                </select>
+
+                @if(productCategoryFilter() !== 'all' && adminSubCategories().length > 0) {
+                  <select 
+                    [ngModel]="productSubCategoryFilter()" 
+                    (ngModelChange)="productSubCategoryFilter.set($event)"
+                    class="w-full sm:w-auto bg-brand-50 px-4 py-2.5 rounded-xl border border-brand-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-brand-800 cursor-pointer appearance-none animate-fade-in"
+                  >
+                    <option value="all">📂 全部次分類</option>
+                    @for(sub of adminSubCategories(); track sub) {
+                      <option [value]="sub">{{ sub }}</option>
+                    }
+                  </select>
+                }
+
+                <div class="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 flex items-center shadow-sm w-full sm:flex-1 transition-colors focus-within:border-brand-300 focus-within:bg-white">
+                  <span class="text-gray-400 mr-2 text-lg">🔍</span>
+                  <input type="text" [(ngModel)]="productSearch" placeholder="搜名稱、貨號或 #標籤..." class="w-full outline-none bg-transparent text-sm font-medium text-gray-700 placeholder-gray-400">
+                </div>
               </div>
 
               <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-100">
@@ -848,15 +881,47 @@ export class AdminPanelComponent {
   now = new Date();
   activeTab = signal('dashboard');
   productSearch = signal('');
+  productCategoryFilter = signal<string>('all'); // 記錄選中的主分類
+  productSubCategoryFilter = signal<string>('all'); // 記錄選中的次分類
+
+  // 自動抓取：當前選中主分類底下的所有次分類
+  adminSubCategories = computed(() => {
+    const cat = this.productCategoryFilter();
+    if (cat === 'all') return [];
+    
+    // 篩選出該主分類的商品，並收集所有不重複的次分類
+    const productsInCat = this.store.products().filter((p: Product) => p.category === cat);
+    const subs = productsInCat.map((p: any) => p.subCategory).filter((sub): sub is string => !!sub);
+    return [...new Set(subs)];
+  });
   productViewMode = signal<'list' | 'grid'>('list');
   isSidebarOpen = signal(false);
 
   filteredAdminProducts = computed(() => {
-    const q = this.productSearch().toLowerCase();
     let list = [...this.store.products()];
-    if (q) {
-      list = list.filter(p => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+    const q = this.productSearch().toLowerCase();
+    const cat = this.productCategoryFilter();
+    const subCat = this.productSubCategoryFilter();
+
+    // 🔥 1. 依照「下拉選單」的主分類與次分類篩選
+    if (cat !== 'all') {
+      list = list.filter(p => p.category === cat);
+      if (subCat !== 'all') {
+        list = list.filter((p: any) => p.subCategory === subCat);
+      }
     }
+
+    // 🔥 2. 依照「搜尋框」的關鍵字篩選 (保留你原本的條件，並加上標籤搜尋)
+    if (q) {
+      list = list.filter((p: any) => 
+        p.name.toLowerCase().includes(q) || 
+        p.code.toLowerCase().includes(q) || 
+        p.category.toLowerCase().includes(q) ||
+        (p.tags && p.tags.some((t: string) => t.toLowerCase().includes(q))) // 新增標籤搜尋
+      );
+    }
+
+    // 🔥 3. 完美保留你原本的排序邏輯 (依 ID 降冪排列)
     return list.sort((a, b) => b.id.localeCompare(a.id));
   });
 
