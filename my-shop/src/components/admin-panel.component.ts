@@ -140,10 +140,23 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   </div>
                   
                   <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm w-full xl:w-auto flex-1 flex-wrap">
-                    @for(tab of orderTabs; track tab.id) { 
-                      <button (click)="orderStatusTab.set(tab.id)" [class.bg-brand-900]="orderStatusTab() === tab.id" [class.text-white]="orderStatusTab() === tab.id" [class.text-gray-600]="orderStatusTab() !== tab.id" class="flex-1 px-2 py-2 sm:px-4 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-all text-center">{{ tab.label }}</button> 
-                    }
-                  </div>
+  @for(tab of orderTabs; track tab.id) { 
+    <button (click)="orderStatusTab.set(tab.id)" 
+            [class.bg-brand-900]="orderStatusTab() === tab.id" 
+            [class.text-white]="orderStatusTab() === tab.id" 
+            [class.text-gray-600]="orderStatusTab() !== tab.id" 
+            class="flex-1 px-2 py-2 sm:px-4 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex items-center justify-center gap-1.5">
+       {{ tab.label }}
+       <span [class.bg-white]="orderStatusTab() === tab.id" 
+             [class.text-brand-900]="orderStatusTab() === tab.id" 
+             [class.bg-gray-100]="orderStatusTab() !== tab.id" 
+             [class.text-gray-500]="orderStatusTab() !== tab.id" 
+             class="text-[10px] px-1.5 py-0.5 rounded-full font-bold shadow-sm">
+          {{ $any(orderCounts())[tab.id] || 0 }}
+       </span>
+    </button> 
+  }
+</div>
                </div>
                
                <div class="overflow-x-auto w-full custom-scrollbar pb-4 max-h-[65vh] overflow-y-auto relative">
@@ -1186,28 +1199,49 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   actionModalOrder = signal<Order | null>(null); cancelConfirmState = signal(false);
   
   orderTabs = [ 
-    { id: 'all', label: '全部' }, { id: 'pending', label: '待付款' }, { id: 'verifying', label: '待對帳' }, 
+    { id: 'all', label: '全部' }, { id: 'pending', label: '待對帳' }, { id: 'verifying', label: '已對帳' }, 
     { id: 'shipping', label: '待出貨' }, { id: 'completed', label: '已完成' }, { id: 'refund', label: '退款/取消' } 
   ];
   
   setOrderRange(range: string) { this.statsRange.set(range); this.orderStart.set(''); this.orderEnd.set(''); }
 
-  filteredOrders = computed(() => { 
+  // 1. 先過濾出符合「時間區間」與「搜尋關鍵字」的訂單母體
+  baseFilteredOrders = computed(() => {
     let list = [...this.store.orders()]; 
-    const q = this.orderSearch().toLowerCase(); const tab = this.orderStatusTab(); const range = this.statsRange(); const now = new Date(); 
+    const q = this.orderSearch().toLowerCase(); const range = this.statsRange(); const now = new Date(); 
     if (range === '今日') list = list.filter((o: Order) => new Date(o.createdAt).toDateString() === now.toDateString()); 
     else if (range === '本週') { const s = new Date(now); s.setDate(now.getDate() - now.getDay()); s.setHours(0,0,0,0); list = list.filter((o: Order) => o.createdAt >= s.getTime()); } 
     else if (range === '本月') list = list.filter((o: Order) => new Date(o.createdAt).getMonth() === now.getMonth() && new Date(o.createdAt).getFullYear() === now.getFullYear()); 
     const os = this.orderStart(); const oe = this.orderEnd(); 
     if (os) list = list.filter((o: Order) => o.createdAt >= new Date(os).setHours(0,0,0,0)); 
     if (oe) list = list.filter((o: Order) => o.createdAt <= new Date(oe).setHours(23,59,59,999)); 
+    if (q) list = list.filter((o: Order) => o.id.includes(q) || o.items.some((i: CartItem) => i.productName.toLowerCase().includes(q)) || this.getUserName(o.userId).toLowerCase().includes(q)); 
+    return list.sort((a: any, b: any) => b.createdAt - a.createdAt); 
+  });
+
+  // 2. 自動計算各狀態的數量 (讓上方表頭可以顯示數字)
+  orderCounts = computed(() => {
+     const list = this.baseFilteredOrders();
+     return {
+        all: list.length,
+        pending: list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)).length,
+        verifying: list.filter((o: Order) => o.status === 'paid_verifying').length,
+        shipping: list.filter((o: Order) => o.status === 'payment_confirmed').length,
+        completed: list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any)).length,
+        refund: list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status)).length
+     };
+  });
+
+  // 3. 最終畫面顯示的訂單 (加上標籤狀態過濾)
+  filteredOrders = computed(() => { 
+    let list = this.baseFilteredOrders(); 
+    const tab = this.orderStatusTab();
     if (tab === 'pending') list = list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)); 
     else if (tab === 'verifying') list = list.filter((o: Order) => o.status === 'paid_verifying'); 
     else if (tab === 'shipping') list = list.filter((o: Order) => o.status === 'payment_confirmed'); 
     else if (tab === 'completed') list = list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any)); 
     else if (tab === 'refund') list = list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status)); 
-    if (q) list = list.filter((o: Order) => o.id.includes(q) || o.items.some((i: CartItem) => i.productName.toLowerCase().includes(q)) || this.getUserName(o.userId).toLowerCase().includes(q)); 
-    return list.sort((a: any, b: any) => b.createdAt - a.createdAt); 
+    return list; 
   });
   
   paginatedOrders = computed(() => { 
