@@ -499,14 +499,14 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </div> 
               <div class="p-6 overflow-y-auto flex-1 custom-scrollbar"> 
                 <form [formGroup]="productForm" class="space-y-4"> 
+                  <div> 
+                    <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label> 
+                    <input formControlName="name" class="w-full p-2 border rounded-lg"> 
+                  </div> 
+
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label> <input formControlName="name" class="w-full p-2 border rounded-lg"> </div> 
                     <div> 
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4"> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">次分類 (例如: 短袖)</label> <input formControlName="subCategory" class="w-full p-2 border rounded-lg"> </div> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">標籤 (逗號分隔，例如: NEW,現貨,熱銷)</label> <input formControlName="tagsStr" class="w-full p-2 border rounded-lg"> </div> 
-                  </div>
-                      <label class="block text-xs font-bold text-gray-500 mb-1">分類</label> 
+                      <label class="block text-xs font-bold text-gray-500 mb-1">主分類與代碼</label> 
                       <div class="flex gap-2"> 
                         <div class="relative flex-1"> 
                           <input formControlName="category" (change)="onCategoryChange()" class="w-full p-2 border rounded-lg" list="catList" placeholder="選擇或輸入分類..."> 
@@ -514,11 +514,22 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                             @for(c of store.categories(); track c) { <option [value]="c"></option> } 
                           </datalist> 
                         </div> 
-                        <div class="w-20"> <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-2 border rounded-lg text-center font-mono font-bold uppercase bg-gray-50" placeholder="代碼" maxlength="3" title="分類代碼 (例如 TS)"> </div> 
+                        <div class="w-20"> 
+                          <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-2 border rounded-lg text-center font-mono font-bold uppercase bg-gray-50" placeholder="代碼" maxlength="3" title="分類代碼"> 
+                        </div> 
                       </div> 
                     </div> 
+                    <div> 
+                      <label class="block text-xs font-bold text-gray-500 mb-1">次分類 (例如: 短袖)</label> 
+                      <input formControlName="subCategory" class="w-full p-2 border rounded-lg"> 
+                    </div> 
                   </div> 
-                  
+
+                  <div> 
+                    <label class="block text-xs font-bold text-gray-500 mb-1">標籤 (逗號分隔，例如: NEW,現貨,熱銷)</label> 
+                    <input formControlName="tagsStr" class="w-full p-2 border rounded-lg"> 
+                  </div> 
+
                   <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4"> 
                      <h4 class="font-bold text-gray-700 text-sm border-b border-gray-200 pb-2">💰 成本結構與獲利分析</h4> 
                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4"> 
@@ -618,7 +629,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                       </div> 
                     </div> 
                   </div> 
-                  <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註</label> <textarea formControlName="note" class="w-full p-2 border rounded-lg" rows="3"></textarea> </div> 
+                  <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註</label> <textarea formControlName="note" class="w-full p-2 border rounded-lg" rows="8"></textarea> </div> 
                 </form> 
               </div> 
               <div class="p-6 border-t border-gray-100 flex justify-end gap-3"> 

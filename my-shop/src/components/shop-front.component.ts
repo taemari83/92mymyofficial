@@ -101,7 +101,7 @@ import { StoreService, Product } from '../services/store.service';
                     @if(product.isPreorder) { <div class="bg-blue-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-blue-600 shadow-sm border border-blue-100">✈️ 預購</div> }
                     @if($any(product).tags) {
                       @for(tag of $any(product).tags; track tag) {
-                        <div class="bg-brand-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-brand-700 shadow-sm border border-brand-100">#{{ tag }}</div>
+                        <div (click)="clickTag(tag, $event)" class="bg-brand-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-brand-700 shadow-sm border border-brand-100 cursor-pointer hover:bg-brand-200 transition-colors z-20 relative">#{{ tag }}</div>
                       }
                     }
                  </div>
@@ -161,7 +161,7 @@ import { StoreService, Product } from '../services/store.service';
                        <span class="text-[10px] bg-gray-50 text-gray-600 font-bold px-2 py-0.5 rounded-md uppercase border border-gray-100">{{ product.category }}</span>
                        @if($any(product).tags) {
                           @for(tag of $any(product).tags; track tag) {
-                            <span class="text-[10px] bg-brand-50 text-brand-700 font-bold px-2 py-0.5 rounded-md border border-brand-100">#{{ tag }}</span>
+                            <span (click)="clickTag(tag, $event)" class="text-[10px] bg-brand-50 text-brand-700 font-bold px-2 py-0.5 rounded-md border border-brand-100 cursor-pointer hover:bg-brand-200 transition-colors z-20 relative">#{{ tag }}</span>
                           }
                        }
                     </div>
@@ -236,7 +236,7 @@ import { StoreService, Product } from '../services/store.service';
                          @if(selectedProduct()!.isPreorder) { <div class="text-xs bg-blue-50 text-blue-600 font-bold tracking-widest px-2.5 py-1 rounded-md border border-blue-100">預購</div> }
                          @if($any(selectedProduct()!).tags) {
                            @for(tag of $any(selectedProduct()!).tags; track tag) {
-                             <div class="text-xs bg-brand-50 text-brand-700 font-bold tracking-widest px-2.5 py-1 rounded-md border border-brand-100">#{{ tag }}</div>
+                             <div (click)="clickTag(tag, $event)" class="text-xs bg-brand-50 text-brand-700 font-bold tracking-widest px-2.5 py-1 rounded-md border border-brand-100 cursor-pointer hover:bg-brand-200 transition-colors z-20 relative">#{{ tag }}</div>
                            }
                          }
                       </div>
@@ -400,28 +400,34 @@ export class ShopFrontComponent {
     });
   }
 
-  // 🔥 真實動態抓取：根據當下選取的主分類，自動列出底下有的次分類
+  // 🔥 處理標籤點擊事件：自動帶入搜尋框並過濾
+  clickTag(tag: string, event: Event) {
+    event.stopPropagation(); // 防止點擊標籤時誤觸發外層的「打開商品彈窗」事件
+    this.searchQuery.set(tag); 
+    this.selectedCategory.set('all'); 
+    this.selectedSubCategory.set('全部');
+    this.closeModal(); 
+    
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
   currentSubCategories = computed(() => {
     const cat = this.selectedCategory();
     
-    // 如果選的是 All 或是 新品，就不顯示次分類
     if (cat === 'all' || cat === '新品') return [];
 
-    // 1. 從所有商品中，篩選出屬於「目前主分類」的商品
     const productsInCurrentCat = this.store.visibleProducts().filter(p => p.category === cat);
 
-    // 2. 抓出這些商品身上帶有的 subCategory，並過濾掉空白或沒有填寫的
     const existingSubs = productsInCurrentCat
       .map(p => p.subCategory)
       .filter((sub): sub is string => !!sub); 
 
-    // 3. 用 Set 去除重複的次分類名稱（例如有 10 件上衣，只會保留一個「上衣」選項）
     const uniqueSubs = [...new Set(existingSubs)];
 
-    // 4. 如果這個主分類下的商品都還沒設定次分類，就不顯示按鈕
     if (uniqueSubs.length === 0) return [];
 
-    // 5. 在最前面加上「全部」選項，回傳給畫面顯示
     return ['全部', ...uniqueSubs];
   });
 
@@ -478,18 +484,23 @@ export class ShopFrontComponent {
     const subCat = this.selectedSubCategory();
     const sort = this.sortOption();
 
-    if (query) list = list.filter(p => p.name.toLowerCase().includes(query));
+    // 🔥 強化搜尋邏輯：不僅搜商品名稱，也搜次分類與標籤
+    if (query) {
+       list = list.filter(p => 
+         p.name.toLowerCase().includes(query) || 
+         ((p as any).subCategory && (p as any).subCategory.toLowerCase().includes(query)) ||
+         ((p as any).tags && (p as any).tags.some((t: string) => t.toLowerCase().includes(query)))
+       );
+    }
     
     if (cat === '新品') {
        list = list.filter(p => this.isNewProduct(p));
     } else if (cat !== 'all') {
        list = list.filter(p => p.category === cat);
        
-       // --- 新增：第二層分類的過濾邏輯 ---
        if (subCat && subCat !== '全部') {
          list = list.filter(p => (p as any).subCategory === subCat); 
        }
-       // -----------------------------------
     }
     
     switch (sort) {
