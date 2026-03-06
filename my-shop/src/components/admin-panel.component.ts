@@ -1105,11 +1105,30 @@ async handleBatchImport(event: any) {
     }; 
   });
 
-  pendingCount = computed(() => this.dashboardMetrics().toConfirm);
-  topProducts = computed(() => [...this.store.products()].sort((a: any, b: any) => b.soldCount - a.soldCount).slice(0, 5));
+pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
-  statsRange = signal('今日'); orderStart = signal(''); orderEnd = signal(''); orderSearch = signal(''); 
-  orderPageSize = signal<number | 'all'>(50); orderPage = signal(1); orderStatusTab = signal('all'); 
+  // 🔥 修正：主控台熱銷排行改為抓取真實訂單加總，不再只看初始設定值
+  topProducts = computed(() => {
+    const allOrders = this.store.orders().filter(o => o.status !== 'cancelled' && o.status !== 'refunded');
+    const salesCount: Record<string, number> = {};
+
+    allOrders.forEach(order => {
+      order.items.forEach((item: any) => {
+        if (!salesCount[item.productId]) salesCount[item.productId] = 0;
+        salesCount[item.productId] += item.quantity;
+      });
+    });
+
+    return [...this.store.products()]
+      .map(p => ({
+        ...p,
+        soldCount: salesCount[p.id] || 0 // 將算出的真實銷量覆蓋原本的 soldCount 讓畫面直接顯示
+      }))
+      .sort((a: any, b: any) => b.soldCount - a.soldCount)
+      .slice(0, 5);
+  });
+
+  statsRange = signal('今日'); orderStart = signal(''); orderEnd = signal(''); orderSearch = signal('');  orderPageSize = signal<number | 'all'>(50); orderPage = signal(1); orderStatusTab = signal('all'); 
   actionModalOrder = signal<Order | null>(null); cancelConfirmState = signal(false);
   
   orderTabs = [ 
