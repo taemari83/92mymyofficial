@@ -11,8 +11,7 @@ import { StoreService, Product } from '../services/store.service';
   imports: [CommonModule, FormsModule, RouterModule], 
   template: `
     <div class="space-y-8 pb-20">
-      <div class="sticky top-20 z-10 bg-cream-50/90 backdrop-blur-md pb-4 pt-2 space-y-3">
-         
+<div class="sticky top-20 z-[60] bg-[#FDFBF9] pb-4 pt-2 space-y-3 border-b border-gray-100 shadow-sm">         
          <div class="flex flex-col sm:flex-row gap-3 px-2">
            <div class="bg-white p-2 rounded-full shadow-sm border border-gray-100 flex items-center flex-1">
               <span class="pl-4 text-gray-400">🔍</span>
@@ -94,7 +93,7 @@ import { StoreService, Product } from '../services/store.service';
                <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
                  <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                  
-                 <div class="absolute top-2 left-2 right-2 flex gap-1.5 flex-wrap z-10">
+                 <div class="absolute top-2 left-2 right-2 flex gap-1.5 flex-wrap z-[1]">
                     @if(product.bulkDiscount?.count) { <div class="bg-gradient-to-r from-red-500 to-orange-400 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 animate-pulse">🔥 任 {{ product.bulkDiscount!.count }} 件優惠</div> }
                     @if(isNewProduct(product)) { <div class="bg-black/80 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 tracking-wider">NEW</div> }
                     <div class="bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-gray-800 uppercase shadow-sm border border-gray-100">{{ product.category }}</div>
