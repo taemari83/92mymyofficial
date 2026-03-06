@@ -221,7 +221,12 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
     <span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>
     
     @if(order.paymentLast5) { 
-      <div class="bg-blue-50 px-2.5 py-1.5 rounded-md border border-blue-100 flex flex-col gap-0.5 shadow-sm mt-0.5">
+      <div class="bg-blue-50 px-2.5 py-1.5 rounded-md border border-blue-100 flex flex-col gap-0.5 shadow-sm mt-0.5 relative">
+         @if(order.status === 'paid_verifying') {
+            <div class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-md animate-pulse">
+               🚨 請查帳
+            </div>
+         }
          <div class="text-[13px] text-blue-800 font-mono font-black flex items-center gap-1" title="匯款後五碼">
             <span>💳 {{ order.paymentLast5 }}</span>
          </div>
@@ -1207,8 +1212,12 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   actionModalOrder = signal<Order | null>(null); cancelConfirmState = signal(false);
   
   orderTabs = [ 
-    { id: 'all', label: '全部' }, { id: 'pending', label: '待對帳' }, { id: 'verifying', label: '已對帳' }, 
-    { id: 'shipping', label: '待出貨' }, { id: 'completed', label: '已完成' }, { id: 'refund', label: '退款/取消' } 
+    { id: 'all', label: '全部' }, 
+    { id: 'pending', label: '待付款' },   // 客人還沒匯款
+    { id: 'verifying', label: '待對帳' }, // 客人給了後五碼，等老闆確認
+    { id: 'shipping', label: '待出貨' },  // 老闆確認收到了，等待商品到貨寄出
+    { id: 'completed', label: '已完成' }, 
+    { id: 'refund', label: '退款/取消' } 
   ];
   
   setOrderRange(range: string) { this.statsRange.set(range); this.orderStart.set(''); this.orderEnd.set(''); }
@@ -1227,16 +1236,16 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     return list.sort((a: any, b: any) => b.createdAt - a.createdAt); 
   });
 
-  // 修正後的數量計算邏輯
+  // 自動計算各狀態的數量 (讓上方表頭可以顯示數字)
   orderCounts = computed(() => {
      const list = this.baseFilteredOrders();
      return {
         all: list.length,
-        // 待對帳：包含尚未付款的訂單 (對應標籤：待對帳)
+        // 待付款：包含尚未付款、逾期的訂單
         pending: list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)).length,
-        // 已對帳：包含客人已匯款、等管理員確認的訂單 (對應標籤：已對帳)
+        // 待對帳：客人已回報後五碼，等你確認
         verifying: list.filter((o: Order) => o.status === 'paid_verifying').length,
-        // 待出貨：已確認收款或貨到付款已下單
+        // 待出貨：你已確認收款 (也就是已對帳完畢)，或是貨到付款
         shipping: list.filter((o: Order) => o.status === 'payment_confirmed').length,
         // 已完成
         completed: list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any)).length,
@@ -1245,7 +1254,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
      };
   });
 
-  // 修正後的點擊過濾邏輯
+  // 最終畫面顯示的訂單 (加上標籤狀態過濾)
   filteredOrders = computed(() => { 
     let list = this.baseFilteredOrders(); 
     const tab = this.orderStatusTab();
@@ -1378,8 +1387,18 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
   updatePaymentLast5(o: Order, event: any) { 
     const val = event.target.value.trim(); 
-    this.store.updateOrderStatus(o.id, o.status, { paymentLast5: val }); 
-    this.actionModalOrder.set({ ...o, paymentLast5: val }); 
+    
+    // 🔥 智慧邏輯：如果有填後五碼，且原本是「待付款」，就自動幫你切換到「待對帳 (paid_verifying)」！
+    let newStatus = o.status;
+    if (val && (o.status === 'pending_payment' || o.status === 'unpaid_alert')) {
+      newStatus = 'paid_verifying';
+    } else if (!val && o.status === 'paid_verifying') {
+      // 如果你把後五碼清空，就自動退回待付款
+      newStatus = 'pending_payment';
+    }
+
+    this.store.updateOrderStatus(o.id, newStatus, { paymentLast5: val }); 
+    this.actionModalOrder.set({ ...o, status: newStatus, paymentLast5: val }); 
   }
   
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
