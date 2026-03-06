@@ -216,12 +216,20 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                          </td>
                          
                          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 whitespace-nowrap">
-                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">匯款狀態</span>
-                           <div class="flex flex-col gap-1 items-end md:items-start">
-                             <span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>
-                             @if(order.status === 'paid_verifying' && order.paymentLast5) { <div class="text-[10px] text-gray-500 font-mono">後五碼: <span class="font-bold text-brand-900">{{ order.paymentLast5 }}</span></div> }
-                           </div>
-                         </td>
+  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">匯款狀態</span>
+  <div class="flex flex-col gap-1.5 items-end md:items-start">
+    <span [class]="getPaymentStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit">{{ getPaymentStatusLabel(order.status, order.paymentMethod) }}</span>
+    
+    @if(order.paymentLast5) { 
+      <div class="bg-blue-50 px-2.5 py-1.5 rounded-md border border-blue-100 flex flex-col gap-0.5 shadow-sm mt-0.5">
+         <div class="text-[13px] text-blue-800 font-mono font-black flex items-center gap-1" title="匯款後五碼">
+            <span>💳 {{ order.paymentLast5 }}</span>
+         </div>
+         @if(order.paymentName) { <div class="text-[10px] text-blue-600 font-bold">👤 {{ order.paymentName }}</div> }
+      </div>
+    }
+  </div>
+</td>
                          
                          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 whitespace-nowrap">
                            <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">物流狀態</span>
@@ -1219,28 +1227,40 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     return list.sort((a: any, b: any) => b.createdAt - a.createdAt); 
   });
 
-  // 2. 自動計算各狀態的數量 (讓上方表頭可以顯示數字)
+  // 修正後的數量計算邏輯
   orderCounts = computed(() => {
      const list = this.baseFilteredOrders();
      return {
         all: list.length,
+        // 待對帳：包含尚未付款的訂單 (對應標籤：待對帳)
         pending: list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)).length,
+        // 已對帳：包含客人已匯款、等管理員確認的訂單 (對應標籤：已對帳)
         verifying: list.filter((o: Order) => o.status === 'paid_verifying').length,
+        // 待出貨：已確認收款或貨到付款已下單
         shipping: list.filter((o: Order) => o.status === 'payment_confirmed').length,
+        // 已完成
         completed: list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any)).length,
+        // 退款/取消
         refund: list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status)).length
      };
   });
 
-  // 3. 最終畫面顯示的訂單 (加上標籤狀態過濾)
+  // 修正後的點擊過濾邏輯
   filteredOrders = computed(() => { 
     let list = this.baseFilteredOrders(); 
     const tab = this.orderStatusTab();
-    if (tab === 'pending') list = list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status)); 
-    else if (tab === 'verifying') list = list.filter((o: Order) => o.status === 'paid_verifying'); 
-    else if (tab === 'shipping') list = list.filter((o: Order) => o.status === 'payment_confirmed'); 
-    else if (tab === 'completed') list = list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any)); 
-    else if (tab === 'refund') list = list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status)); 
+    
+    if (tab === 'pending') {
+      list = list.filter((o: Order) => ['pending_payment', 'unpaid_alert'].includes(o.status));
+    } else if (tab === 'verifying') {
+      list = list.filter((o: Order) => o.status === 'paid_verifying');
+    } else if (tab === 'shipping') {
+      list = list.filter((o: Order) => o.status === 'payment_confirmed');
+    } else if (tab === 'completed') {
+      list = list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any));
+    } else if (tab === 'refund') {
+      list = list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status));
+    }
     return list; 
   });
   
