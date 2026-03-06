@@ -187,7 +187,6 @@ addToCart(product: Product, option: string, quantity: number) {
     
     const orderId = this.generateOrderId();
 
-    // 🔥 確保把所有付款資訊(包含後五碼)、收件資訊完整寫入資料庫！
     const orderData: Order = {
       id: orderId,
       userId: user.id, 
@@ -205,11 +204,12 @@ addToCart(product: Product, option: string, quantity: number) {
       finalTotal, 
       depositPaid: finalTotal - 20, 
       balanceDue: 20, 
-      status: 'pending_payment', 
+      // 🔥 修正：結帳當下如果有填後五碼，就直接判定為「待對帳」，否則才是「待付款」
+      status: (paymentInfo.last5 && paymentInfo.last5.trim() !== '') ? 'paid_verifying' : 'pending_payment', 
       paymentMethod, 
       shippingMethod, 
       createdAt: Date.now(),
-      paymentLast5: paymentInfo.last5 || '', // 🔥 正式寫入後五碼
+      paymentLast5: paymentInfo.last5 || '', 
       paymentName: paymentInfo.name || '',
       paymentTime: paymentInfo.time || ''
     };
