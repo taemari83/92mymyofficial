@@ -192,6 +192,28 @@ import { StoreService, Product } from '../services/store.service';
          </div>
       }
 
+      <div class="mt-8 pt-8 pb-12 border-t border-gray-100 flex flex-col items-center justify-center text-center px-4 animate-fade-in">
+         <h3 class="text-brand-900 font-black text-lg tracking-widest">92mymy</h3>
+         <p class="text-xs text-gray-400 font-bold mt-1 mb-4">Follow Us / 聯絡我們</p>
+         
+         <div class="flex flex-wrap items-center justify-center gap-3">
+            <a href="https://www.instagram.com/92mymy_official/" target="_blank" class="flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 border border-gray-100 rounded-full font-bold text-xs hover:text-white hover:border-transparent hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-500 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 text-decoration-none">
+               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+               Instagram
+            </a>
+            
+            <a href="https://lin.ee/PvW97g8" target="_blank" class="flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 border border-gray-100 rounded-full font-bold text-xs hover:text-white hover:border-[#00B900] hover:bg-[#00B900] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 text-decoration-none">
+               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-4.333 2.572-5.992zm-15.011 2.37h-2.583v-4.102h-.995v5.097h3.578v-.995zm2.844 0h-.995v-5.097h.995v5.097zm3.179-3.21l-2.074 3.21h-1.002v-5.097h.995v3.132l2.029-3.132h1.047v5.097h-.995v-3.21zm4.492-1.887h-2.348v1.36h2.348v.994h-2.348v1.451h2.348v.995h-3.343v-5.097h3.343v.297z"/></svg>
+               官方 LINE
+            </a>
+            
+            <a href="https://line.me/ti/g2/FbYCiTXfg4WRRxyDJDwZPg3M2G3eaW65phITdw?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 border border-gray-100 rounded-full font-bold text-xs hover:text-white hover:border-[#00B900] hover:bg-[#00B900] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 text-decoration-none">
+               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.036 9.608.391.084.922.258 1.057.592.122.303.079.778.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.647 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.572-4.333 2.572-5.992zm-15.011 2.37h-2.583v-4.102h-.995v5.097h3.578v-.995zm2.844 0h-.995v-5.097h.995v5.097zm3.179-3.21l-2.074 3.21h-1.002v-5.097h.995v3.132l2.029-3.132h1.047v5.097h-.995v-3.21zm4.492-1.887h-2.348v1.36h2.348v.994h-2.348v1.451h2.348v.995h-3.343v-5.097h3.343v.297z"/></svg>
+               LINE 社群
+            </a>
+         </div>
+      </div>
+
       @if (store.cartCount() > 0) {
         <a routerLink="/checkout" class="fixed bottom-6 right-6 z-40 bg-brand-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform cursor-pointer animate-bounce-in border-none outline-none text-decoration-none">
           <div class="relative pointer-events-none">
