@@ -46,11 +46,11 @@ import { StoreService, Product } from '../services/store.service';
                  (ngModelChange)="sortOption.set($event)"
                  class="w-full h-full appearance-none bg-white border border-gray-100 text-brand-900 text-sm rounded-full pl-4 pr-8 py-3 outline-none focus:border-brand-300 shadow-sm font-bold cursor-pointer"
                >
-                 <option value="newest">上架：新到舊</option>
-                 <option value="oldest">上架：舊到新</option>
-                 <option value="hot">熱銷排行</option>
-                 <option value="price_asc">價格：低到高</option>
-                 <option value="price_desc">價格：高到低</option>
+                 <option value="newest">  上架：新到舊</option>
+                 <option value="oldest">  上架：舊到新</option>
+                 <option value="hot">  熱銷排行</option>
+                 <option value="price_asc">  價格：低到高</option>
+                 <option value="price_desc">  價格：高到低</option>
                </select>
                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-gray-400">▼</div>
              </div>
