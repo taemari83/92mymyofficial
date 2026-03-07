@@ -262,60 +262,23 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
         @if (activeTab() === 'products') { 
           <div class="space-y-6 w-full"> 
-            <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
               
-              <div>
-                 <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap flex items-end gap-2">
-                    商品管理 
-                    <span class="text-sm font-bold text-gray-400 mb-0.5">{{ store.products().length }} 件商品</span>
-                 </h3>
-                 <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">管理商品、庫存與定價</p>
-              </div> 
-
-              <div class="flex flex-wrap items-center gap-3 w-full">
-                
-                <div class="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 flex items-center shadow-sm w-full sm:w-[260px] shrink-0 transition-colors focus-within:border-brand-300 focus-within:bg-white">
-                  <span class="text-gray-400 mr-2 text-lg">🔍</span>
-                  <input type="text" [(ngModel)]="productSearch" placeholder="搜名稱、貨號或 #標籤..." class="w-full outline-none bg-transparent text-sm font-medium text-gray-700 placeholder-gray-400">
-                </div>
-
-                <select 
-                  [ngModel]="productCategoryFilter()" 
-                  (ngModelChange)="productCategoryFilter.set($event); productSubCategoryFilter.set('all')"
-                  class="w-full sm:w-auto bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-gray-700 cursor-pointer appearance-none shrink-0"
-                >
-                  <option value="all">📁 全部主分類</option>
-                  @for(c of store.categories(); track c) {
-                    <option [value]="c">{{ c }}</option>
-                  }
-                </select>
-
-                @if(productCategoryFilter() !== 'all' && adminSubCategories().length > 0) {
-                  <select 
-                    [ngModel]="productSubCategoryFilter()" 
-                    (ngModelChange)="productSubCategoryFilter.set($event)"
-                    class="w-full sm:w-auto bg-brand-50 px-4 py-2.5 rounded-xl border border-brand-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-brand-800 cursor-pointer appearance-none animate-fade-in shrink-0"
-                  >
-                    <option value="all">📂 全部次分類</option>
-                    @for(sub of adminSubCategories(); track sub) {
-                      <option [value]="sub">{{ sub }}</option>
-                    }
-                  </select>
-                }
-
-                <button (click)="exportProductsCSV()" class="w-full sm:w-auto px-4 py-2.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap transition-colors shrink-0">
-                  <span>📥</span> 匯出
-                </button>
-                <label class="w-full sm:w-auto px-4 py-2.5 bg-white border border-gray-200 text-brand-900 rounded-xl font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md flex items-center justify-center gap-2 whitespace-nowrap shrink-0"> 
-                  <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> 
-                  <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
-                </label> 
-                <button (click)="openProductForm()" class="w-full sm:w-12 h-11 sm:h-11 bg-brand-900 text-white rounded-xl flex items-center justify-center text-xl font-bold shadow-lg hover:bg-brand-800 transition-colors shrink-0"> 
-                  <span class="sm:hidden mr-2">新增商品</span>+ 
-                </button> 
-
+              <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                <div>
+                   <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">商品管理</h3>
+                   <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">管理商品、庫存與定價</p>
+                </div> 
+                <div class="flex flex-wrap gap-3 w-full md:w-auto">
+                  <button (click)="exportProductsCSV()" class="px-4 py-3 bg-brand-50 text-brand-700 border border-brand-200 rounded-full font-bold hover:bg-brand-100 shadow-sm flex items-center gap-2 whitespace-nowrap"><span>📥</span> 匯出</button>
+                  <label class="flex-1 md:flex-none justify-center flex items-center gap-2 px-5 py-3 bg-white border border-gray-200 text-brand-900 rounded-full font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md whitespace-nowrap"> 
+                    <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> 
+                    <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
+                  </label> 
+                  <button (click)="openProductForm()" class="w-12 h-12 bg-brand-900 text-white rounded-full flex items-center justify-center text-2xl shadow-lg hover:scale-105 transition-transform shrink-0"> + </button> 
+                </div> 
               </div>
-            </div>
+
               <div class="flex flex-col sm:flex-row items-center gap-3 w-full mt-2 pt-4 border-t border-gray-100">
                 
                 <select 
