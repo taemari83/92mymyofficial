@@ -260,77 +260,69 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
           </div>
         }
 
-       @if (activeTab() === 'products') { 
-      <div class="space-y-6 w-full"> 
-        
-        <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
-          
-          <div>
-             <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap flex items-end gap-2">
-                商品管理 
-                <span class="text-sm font-bold text-gray-400 mb-0.5">{{ store.products().length }} 件商品</span>
-             </h3>
-             <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">管理商品、庫存與定價</p>
-          </div> 
+      @if (activeTab() === 'products') { 
+          <div class="space-y-6 w-full"> 
+            
+            <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
+              
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                 <div>
+                    <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap flex items-end gap-2">
+                       商品管理 
+                       <span class="text-sm font-bold text-gray-400 mb-0.5">{{ store.products().length }} 件商品</span>
+                    </h3>
+                    <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">管理商品、庫存與定價</p>
+                 </div> 
+                 <div class="hidden sm:flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner">
+                    <button (click)="productViewMode.set('list')" title="條列" [class.bg-white]="productViewMode() === 'list'" [class.shadow-sm]="productViewMode() === 'list'" [class.text-brand-900]="productViewMode() === 'list'" [class.text-gray-400]="productViewMode() !== 'list'" class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center"><span class="text-lg">≣</span></button>
+                    <button (click)="productViewMode.set('grid')" title="宮格" [class.bg-white]="productViewMode() === 'grid'" [class.shadow-sm]="productViewMode() === 'grid'" [class.text-brand-900]="productViewMode() === 'grid'" [class.text-gray-400]="productViewMode() !== 'grid'" class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center"><span class="text-lg">⊞</span></button>
+                 </div>
+              </div> 
 
-          <div class="flex flex-wrap items-center gap-3 w-full mt-2">
-            <div class="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 flex items-center shadow-sm w-full sm:w-[260px] shrink-0 transition-colors focus-within:border-brand-300 focus-within:bg-white">
-              <span class="text-gray-400 mr-2 text-lg">🔍</span>
-              <input type="text" [(ngModel)]="productSearch" placeholder="搜名稱、貨號或 #標籤..." class="w-full outline-none bg-transparent text-sm font-medium text-gray-700 placeholder-gray-400">
-            </div>
-
-            <select 
-              [ngModel]="productCategoryFilter()" 
-              (ngModelChange)="productCategoryFilter.set($event); productSubCategoryFilter.set('all')"
-              class="w-full sm:w-auto min-w-[150px] bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-gray-700 cursor-pointer appearance-none shrink-0"
-            >
-              <option value="all">📁 全部主分類</option>
-              @for(c of store.categories(); track c) {
-                <option [value]="c">{{ c }}</option>
-              }
-            </select>
-
-            @if(productCategoryFilter() !== 'all' && adminSubCategories().length > 0) {
-              <select 
-                [ngModel]="productSubCategoryFilter()" 
-                (ngModelChange)="productSubCategoryFilter.set($event)"
-                class="w-full sm:w-auto min-w-[150px] bg-brand-50 px-4 py-2.5 rounded-xl border border-brand-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-brand-800 cursor-pointer appearance-none animate-fade-in shrink-0"
-              >
-                <option value="all">📂 全部次分類</option>
-                @for(sub of adminSubCategories(); track sub) {
-                  <option [value]="sub">{{ sub }}</option>
-                }
-              </select>
-            }
-          </div>
-
-          <div class="flex flex-wrap items-center gap-3 w-full pt-4 border-t border-gray-100">
-            <button (click)="exportProductsCSV()" class="w-full sm:w-auto px-5 py-2.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap transition-colors shrink-0">
-              <span>📥</span> 匯出報表
-            </button>
-            <label class="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-200 text-brand-900 rounded-xl font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md flex items-center justify-center gap-2 whitespace-nowrap shrink-0"> 
-              <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> 
-              <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
-            </label> 
-            <button (click)="openProductForm()" class="w-full sm:w-auto px-6 py-2.5 bg-brand-900 text-white rounded-xl flex items-center justify-center font-bold shadow-lg hover:bg-brand-800 transition-colors shrink-0 gap-2"> 
-              <span class="text-lg">+</span> 新增商品
-            </button> 
-          </div>
-
-        </div> 
-      
-              <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-gray-100">
-                <div class="relative w-full sm:max-w-md">
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-                    <input type="text" [(ngModel)]="productSearch" placeholder="搜尋商品名稱、SKU 貨號或分類..." class="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200 transition-all">
+              <div class="flex flex-wrap items-center gap-3 w-full mt-2">
+                <div class="bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 flex items-center shadow-sm w-full sm:w-[260px] shrink-0 transition-colors focus-within:border-brand-300 focus-within:bg-white">
+                  <span class="text-gray-400 mr-2 text-lg">🔍</span>
+                  <input type="text" [(ngModel)]="productSearch" placeholder="搜名稱、貨號或 #標籤..." class="w-full outline-none bg-transparent text-sm font-medium text-gray-700 placeholder-gray-400">
                 </div>
-                <div class="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner w-full sm:w-auto justify-center">
-                    <button (click)="productViewMode.set('list')" title="條列" [class.bg-white]="productViewMode() === 'list'" [class.shadow-sm]="productViewMode() === 'list'" [class.text-brand-900]="productViewMode() === 'list'" [class.text-gray-400]="productViewMode() !== 'list'" class="flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2">
-                      <span class="text-lg">≣</span>
-                    </button>
-                    <button (click)="productViewMode.set('grid')" title="宮格" [class.bg-white]="productViewMode() === 'grid'" [class.shadow-sm]="productViewMode() === 'grid'" [class.text-brand-900]="productViewMode() === 'grid'" [class.text-gray-400]="productViewMode() !== 'grid'" class="flex-1 sm:flex-none px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2">
-                      <span class="text-lg">⊞</span>
-                    </button>
+
+                <select 
+                  [ngModel]="productCategoryFilter()" 
+                  (ngModelChange)="productCategoryFilter.set($event); productSubCategoryFilter.set('all')"
+                  class="w-full sm:w-auto min-w-[150px] bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-gray-700 cursor-pointer appearance-none shrink-0"
+                >
+                  <option value="all">📁 全部主分類</option>
+                  @for(c of store.categories(); track c) { <option [value]="c">{{ c }}</option> }
+                </select>
+
+                @if(productCategoryFilter() !== 'all' && adminSubCategories().length > 0) {
+                  <select 
+                    [ngModel]="productSubCategoryFilter()" 
+                    (ngModelChange)="productSubCategoryFilter.set($event)"
+                    class="w-full sm:w-auto min-w-[150px] bg-brand-50 px-4 py-2.5 rounded-xl border border-brand-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-brand-800 cursor-pointer appearance-none animate-fade-in shrink-0"
+                  >
+                    <option value="all">📂 全部次分類</option>
+                    @for(sub of adminSubCategories(); track sub) { <option [value]="sub">{{ sub }}</option> }
+                  </select>
+                }
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-3 w-full pt-4 border-t border-gray-100">
+                <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                  <button (click)="exportProductsCSV()" class="w-full sm:w-auto px-5 py-2.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 shadow-sm flex items-center justify-center gap-2 whitespace-nowrap transition-colors shrink-0">
+                    <span>📥</span> 匯出報表
+                  </button>
+                  <label class="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-200 text-brand-900 rounded-xl font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md flex items-center justify-center gap-2 whitespace-nowrap shrink-0"> 
+                    <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> 
+                    <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
+                  </label> 
+                  <button (click)="openProductForm()" class="w-full sm:w-auto px-6 py-2.5 bg-brand-900 text-white rounded-xl flex items-center justify-center font-bold shadow-lg hover:bg-brand-800 transition-colors shrink-0 gap-2"> 
+                    <span class="text-lg">+</span> 新增商品
+                  </button> 
+                </div>
+                
+                <div class="flex sm:hidden items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner w-full mt-2">
+                    <button (click)="productViewMode.set('list')" [class.bg-white]="productViewMode() === 'list'" [class.shadow-sm]="productViewMode() === 'list'" [class.text-brand-900]="productViewMode() === 'list'" [class.text-gray-400]="productViewMode() !== 'list'" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all"><span class="text-lg">≣</span> 條列</button>
+                    <button (click)="productViewMode.set('grid')" [class.bg-white]="productViewMode() === 'grid'" [class.shadow-sm]="productViewMode() === 'grid'" [class.text-brand-900]="productViewMode() === 'grid'" [class.text-gray-400]="productViewMode() !== 'grid'" class="flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all"><span class="text-lg">⊞</span> 宮格</button>
                 </div>
               </div>
             </div> 
@@ -348,18 +340,16 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                            <div class="flex-1 min-w-0"> 
                               <div class="flex items-center gap-2 mb-1 flex-wrap"> 
                                  <span class="text-xs text-brand-400 font-bold tracking-wider uppercase whitespace-nowrap">{{ p.category }}</span> 
-                                 
                                  @if($any(p).subCategory) { <span class="bg-gray-100 text-gray-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">{{ $any(p).subCategory }}</span> }
                                  @if($any(p).tags) {
                                    @for(tag of $any(p).tags; track tag) { <span class="bg-brand-50 text-brand-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">#{{ tag }}</span> }
                                  }
-
                                  @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">預購</span> }
                                  @if(!p.isListed) { <span class="bg-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">未上架</span> }
                                  @if(p.priceType === 'event') { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">活動價</span> } 
                                  @if(p.priceType === 'clearance') { <span class="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">清倉價</span> } 
                                  @if(p.bulkDiscount?.count) { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">任選 {{ p.bulkDiscount?.count }} 件 $ {{ p.bulkDiscount?.total }}</span> }
-                              </div>
+                              </div> 
                               <h4 class="text-lg font-bold text-brand-900 truncate" [title]="p.name">{{ p.name }}</h4> 
                            </div> 
                            <div class="text-right shrink-0"> 
