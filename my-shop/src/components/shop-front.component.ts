@@ -46,11 +46,11 @@ import { StoreService, Product } from '../services/store.service';
                  (ngModelChange)="sortOption.set($event)"
                  class="w-full h-full appearance-none bg-white border border-gray-100 text-brand-900 text-sm rounded-full pl-4 pr-8 py-3 outline-none focus:border-brand-300 shadow-sm font-bold cursor-pointer"
                >
-                 <option value="newest">📅 上架：新到舊</option>
-                 <option value="oldest">📅 上架：舊到新</option>
-                 <option value="hot">🔥 熱銷排行</option>
-                 <option value="price_asc">💰 價格：低到高</option>
-                 <option value="price_desc">💰 價格：高到低</option>
+                 <option value="newest">上架：新到舊</option>
+                 <option value="oldest">上架：舊到新</option>
+                 <option value="hot">熱銷排行</option>
+                 <option value="price_asc">價格：低到高</option>
+                 <option value="price_desc">價格：高到低</option>
                </select>
                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-gray-400">▼</div>
              </div>
@@ -113,7 +113,7 @@ import { StoreService, Product } from '../services/store.service';
                     @if(product.bulkDiscount?.count) { <div class="bg-gradient-to-r from-red-500 to-orange-400 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 animate-pulse">🔥 任 {{ product.bulkDiscount!.count }} 件優惠</div> }
                     @if(isNewProduct(product)) { <div class="bg-black/80 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 tracking-wider">NEW</div> }
                     <div class="bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-gray-800 uppercase shadow-sm border border-gray-100">{{ product.category }}</div>
-                    @if(product.isPreorder) { <div class="bg-blue-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-blue-600 shadow-sm border border-blue-100">✈️ 預購</div> }
+                    @if(product.isPreorder) { <div class="bg-blue-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-blue-600 shadow-sm border border-blue-100">預購</div> }
                     @if($any(product).tags) {
                       @for(tag of $any(product).tags; track tag) {
                         <div (click)="clickTag(tag, $event)" class="bg-brand-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-brand-700 shadow-sm border border-brand-100 cursor-pointer hover:bg-brand-200 transition-colors z-20 relative">#{{ tag }}</div>
