@@ -1640,8 +1640,35 @@ if (p) {
   onCodeInput(e: any) { const val = e.target.value.toUpperCase(); this.currentCategoryCode.set(val); if (!this.editingProduct()) { this.updateSkuPreview(val); } } 
   updateSkuPreview(prefix: string) { if (prefix) { const sku = this.store.generateProductCode(prefix); this.generatedSkuPreview.set(sku); this.productForm.patchValue({ code: sku }); } } 
   handleImageError(event: any) { event.target.src = 'https://placehold.co/100x100?text=Broken+Link'; } 
-  addImageUrl(url: string) { if(!url || !url.trim()) return; const u = url.trim(); if (u.includes('flickr.com/photos/') && !u.match(/\.(jpg|jpeg|png|gif)$/i) && !u.includes('live.staticflickr.com')) { alert('⚠️ 注意：您貼上的是 Flickr「網頁」網址，不是「圖片」連結！\n\n請在圖片上按右鍵 -> 選擇「複製圖片位址」(Copy Image Address)。'); return; } this.tempImages.update(l => [...l, u]); } 
-  handleFileSelect(event: any) { const files = event.target.files; if (files) { for (let i = 0; i < files.length; i++) { const file = files[i]; const reader = new FileReader(); reader.onload = (e: any) => { this.tempImages.update(l => [...l, e.target.result]); }; reader.readAsDataURL(file); } } } 
+addImageUrl(url: string) { 
+    if(!url || !url.trim()) return; 
+
+    // 🔥 核心升級：使用正則表達式，自動以「逗號」或「換行符號」切割字串，並清理空白
+    const urls = url.split(/[,\n]+/).map(s => s.trim()).filter(s => s);
+
+    let hasFlickrWarning = false;
+    const validUrls: string[] = [];
+
+    // 逐一檢查每一條網址
+    urls.forEach(u => {
+      // Flickr 防呆檢查
+      if (u.includes('flickr.com/photos/') && !u.match(/\.(jpg|jpeg|png|gif|webp)$/i) && !u.includes('live.staticflickr.com')) { 
+        hasFlickrWarning = true;
+      } else if (u.startsWith('http')) {
+        // 只要是 http 開頭的有效網址就加入
+        validUrls.push(u);
+      }
+    });
+
+    if (hasFlickrWarning) {
+      alert('⚠️ 注意：您貼上的部分連結是 Flickr「網頁」網址，不是「圖片」連結，系統已自動為您過濾。\n\n請在圖片上按右鍵 -> 選擇「複製圖片位址」(Copy Image Address)。'); 
+    }
+
+    // 將所有合法網址一次性加入圖片陣列中
+    if (validUrls.length > 0) {
+      this.tempImages.update(l => [...l, ...validUrls]); 
+    }
+  }  handleFileSelect(event: any) { const files = event.target.files; if (files) { for (let i = 0; i < files.length; i++) { const file = files[i]; const reader = new FileReader(); reader.onload = (e: any) => { this.tempImages.update(l => [...l, e.target.result]); }; reader.readAsDataURL(file); } } } 
   removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); } 
 
   submitProduct() { 
