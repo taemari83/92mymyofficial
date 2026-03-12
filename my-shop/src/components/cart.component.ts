@@ -288,7 +288,7 @@ export class CartComponent {
      shipAddress: [''],
      shipStore: [''],
      payName: [''],
-     payLast5: [''], // 表單有留給後五碼
+     payLast5: [''], 
      payDate: ['']
   });
 
@@ -319,7 +319,6 @@ export class CartComponent {
         store?.updateValueAndValidity();
      });
 
-     // 🔥 新增：監聽付款方式，如果選轉帳，後五碼必須填寫
      this.form.get('paymentMethod')?.valueChanges.subscribe(m => {
         const last5Control = this.form.get('payLast5');
         if (m === 'bank_transfer') {
@@ -414,12 +413,38 @@ export class CartComponent {
 
   async submit() {
      if (this.form.valid) {
+        // 🛑 第一重防護：結帳前瞬間檢查庫存
+        const itemsToCheck = this.checkoutList();
+        const allProducts = this.storeService.products();
+        let outOfStockItems: string[] = [];
+
+        for (const item of itemsToCheck) {
+           const productInDb = allProducts.find(p => p.id === item.productId);
+           if (productInDb) {
+              if (!productInDb.isPreorder && productInDb.stock <= 0) {
+                 outOfStockItems.push(`${item.productName} (${item.option})`);
+              }
+              if (!productInDb.isListed) {
+                 outOfStockItems.push(`${item.productName} (已下架)`);
+              }
+           } else {
+              outOfStockItems.push(`${item.productName} (已失效)`);
+           }
+        }
+
+        // 🚨 如果有任何商品缺貨，立刻彈出警告並中斷結帳！
+        if (outOfStockItems.length > 0) {
+           alert('⚠️ 結帳失敗！\n以下商品剛剛被搶光或已下架：\n\n' + outOfStockItems.join('\n') + '\n\n請將它們從購物車移除後再結帳。');
+           return; // 中斷流程，不建立訂單！
+        }
+
+        // ✅ 庫存檢查通過，繼續建立訂單
         const val = this.form.value;
         try {
            const orderResult = await this.storeService.createOrder(
-              { name: val.payName, time: val.payDate, last5: val.payLast5 }, // 將 payLast5 傳給 Service
+              { name: val.payName, time: val.payDate, last5: val.payLast5 }, 
               { name: val.shipName, phone: val.shipPhone, address: val.shipAddress, store: val.shipStore },
-              this.calculatedCredits(), val.paymentMethod, val.shippingMethod, this.currentShippingFee(), this.checkoutList()
+              this.calculatedCredits(), val.paymentMethod, val.shippingMethod, this.currentShippingFee(), itemsToCheck
            );
 
            if (!orderResult) {
@@ -436,7 +461,7 @@ export class CartComponent {
         }
      }
   }
-  
+
   goToShop() { this.router.navigate(['/']); }
   goToMemberOrder() { this.router.navigate(['/member']); }
 
