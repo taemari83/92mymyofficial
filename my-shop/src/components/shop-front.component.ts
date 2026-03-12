@@ -121,7 +121,7 @@ import { StoreService, Product } from '../services/store.service';
                     }
                  </div>
 
-                 @if (product.stock <= 0) {
+                 @if (!product.isPreorder && product.stock <= 0) {
                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm z-20">
                       <div class="bg-white px-3 py-1 sm:px-6 py-2 rounded-full font-bold text-brand-900 text-xs sm:text-base">SOLD OUT</div>
                    </div>
@@ -140,7 +140,7 @@ import { StoreService, Product } from '../services/store.service';
                       <span class="text-sm sm:text-xl font-bold text-brand-900">NT$ {{ getPrice(product) }}</span>
                       @if(hasCustomPrice(product)) { <span class="text-[10px] text-gray-400 ml-1">起</span> }
                    </div>
-                   @if(product.stock > 0) {
+                   @if(product.isPreorder || product.stock > 0) {
                      <button class="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors shrink-0">
                        +
                      </button>
@@ -161,7 +161,7 @@ import { StoreService, Product } from '../services/store.service';
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.2rem] sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-gray-50 flex p-2.5 sm:p-4 gap-3 sm:gap-5 cursor-pointer">
                <div class="relative w-24 sm:w-32 h-28 sm:h-36 shrink-0 rounded-xl overflow-hidden bg-gray-100">
                  <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                 @if (product.stock <= 0) {
+                 @if (!product.isPreorder && product.stock <= 0) {
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
                        <span class="bg-white px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand-900">售完</span>
                     </div>
@@ -191,7 +191,7 @@ import { StoreService, Product } from '../services/store.service';
                        @if(getTierBadge(product)) { <div class="text-[9px] font-bold text-white bg-black px-1.5 py-0.5 rounded w-fit mb-0.5">{{ getTierBadge(product) }}</div> }
                        <div class="font-black text-brand-900 text-base sm:text-xl">NT$ {{ getPrice(product) }} @if(hasCustomPrice(product)) { <span class="text-xs text-gray-400 font-normal">起</span> }</div>
                     </div>
-                    @if(product.stock > 0) {
+                    @if(product.isPreorder || product.stock > 0) {
                       <button class="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 text-brand-900 rounded-full flex items-center justify-center group-hover:bg-brand-900 group-hover:text-white transition-colors shadow-sm text-lg">
                         +
                       </button>
@@ -277,14 +277,21 @@ import { StoreService, Product } from '../services/store.service';
                             <div class="flex flex-col gap-2.5">
                               @for (rawOpt of selectedProduct()!.options; track rawOpt) {
                                 <button 
-                                  (click)="selectedOption.set(rawOpt)"
+                                  (click)="!isOptSoldOut(rawOpt) && selectedOption.set(rawOpt)"
                                   class="w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between text-left relative overflow-hidden"
-                                  [class.border-brand-400]="selectedOption() === rawOpt" [class.bg-white]="selectedOption() === rawOpt" [class.shadow-md]="selectedOption() === rawOpt"
-                                  [class.border-gray-200]="selectedOption() !== rawOpt" [class.bg-white]="selectedOption() !== rawOpt" [class.hover:border-brand-300]="selectedOption() !== rawOpt"
+                                  [class.opacity-60]="isOptSoldOut(rawOpt)"
+                                  [class.cursor-not-allowed]="isOptSoldOut(rawOpt)"
+                                  [class.bg-gray-50]="isOptSoldOut(rawOpt)"
+                                  [class.border-gray-200]="isOptSoldOut(rawOpt)"
+                                  [class.border-brand-400]="!isOptSoldOut(rawOpt) && selectedOption() === rawOpt" [class.bg-white]="!isOptSoldOut(rawOpt) && selectedOption() === rawOpt" [class.shadow-md]="!isOptSoldOut(rawOpt) && selectedOption() === rawOpt"
+                                  [class.border-gray-200]="!isOptSoldOut(rawOpt) && selectedOption() !== rawOpt" [class.bg-white]="!isOptSoldOut(rawOpt) && selectedOption() !== rawOpt" [class.hover:border-brand-300]="!isOptSoldOut(rawOpt) && selectedOption() !== rawOpt"
                                 >
-                                  @if(selectedOption() === rawOpt) { <div class="absolute top-0 left-0 w-1 h-full bg-brand-400"></div> }
-                                  <span class="font-bold text-gray-800 pr-4 break-words whitespace-normal">{{ getOptName(rawOpt) }}</span>
-                                  <span class="font-black text-brand-900 text-lg shrink-0">NT$ {{ getOptPrice(rawOpt) | number }}</span>
+                                  @if(!isOptSoldOut(rawOpt) && selectedOption() === rawOpt) { <div class="absolute top-0 left-0 w-1 h-full bg-brand-400"></div> }
+                                  <div class="flex items-center gap-2 pr-4 break-words whitespace-normal">
+                                    <span class="font-bold" [class.text-gray-800]="!isOptSoldOut(rawOpt)" [class.text-gray-500]="isOptSoldOut(rawOpt)" [class.line-through]="isOptSoldOut(rawOpt)">{{ getOptName(rawOpt) }}</span>
+                                    @if(isOptSoldOut(rawOpt)) { <span class="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded font-bold shrink-0">已售完</span> }
+                                  </div>
+                                  <span class="font-black text-lg shrink-0" [class.text-brand-900]="!isOptSoldOut(rawOpt)" [class.text-gray-400]="isOptSoldOut(rawOpt)">NT$ {{ getOptPrice(rawOpt) | number }}</span>
                                 </button>
                               }
                             </div>
@@ -292,12 +299,16 @@ import { StoreService, Product } from '../services/store.service';
                             <div class="flex flex-wrap gap-2.5">
                               @for (rawOpt of selectedProduct()!.options; track rawOpt) {
                                 <button 
-                                  (click)="selectedOption.set(rawOpt)"
-                                  class="px-4 py-2 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-bold transition-all shadow-sm active:scale-95 text-center relative overflow-hidden break-words whitespace-normal h-auto min-h-[48px] flex items-center justify-center"
-                                  [class.bg-brand-900]="selectedOption() === rawOpt" [class.text-white]="selectedOption() === rawOpt" [class.ring-2]="selectedOption() === rawOpt" [class.ring-brand-200]="selectedOption() === rawOpt"
-                                  [class.bg-white]="selectedOption() !== rawOpt" [class.text-gray-600]="selectedOption() !== rawOpt" [class.border]="selectedOption() !== rawOpt" [class.border-gray-200]="selectedOption() !== rawOpt" [class.hover:border-brand-300]="selectedOption() !== rawOpt"
+                                  (click)="!isOptSoldOut(rawOpt) && selectedOption.set(rawOpt)"
+                                  class="px-4 py-2 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-bold transition-all shadow-sm active:scale-95 text-center relative overflow-hidden break-words whitespace-normal h-auto min-h-[48px] flex items-center justify-center gap-1.5"
+                                  [class.opacity-60]="isOptSoldOut(rawOpt)"
+                                  [class.cursor-not-allowed]="isOptSoldOut(rawOpt)"
+                                  [class.bg-gray-100]="isOptSoldOut(rawOpt)" [class.text-gray-400]="isOptSoldOut(rawOpt)" [class.border-gray-200]="isOptSoldOut(rawOpt)" [class.border]="isOptSoldOut(rawOpt)"
+                                  [class.bg-brand-900]="!isOptSoldOut(rawOpt) && selectedOption() === rawOpt" [class.text-white]="!isOptSoldOut(rawOpt) && selectedOption() === rawOpt" [class.ring-2]="!isOptSoldOut(rawOpt) && selectedOption() === rawOpt" [class.ring-brand-200]="!isOptSoldOut(rawOpt) && selectedOption() === rawOpt"
+                                  [class.bg-white]="!isOptSoldOut(rawOpt) && selectedOption() !== rawOpt" [class.text-gray-600]="!isOptSoldOut(rawOpt) && selectedOption() !== rawOpt" [class.border]="!isOptSoldOut(rawOpt) && selectedOption() !== rawOpt" [class.border-gray-200]="!isOptSoldOut(rawOpt) && selectedOption() !== rawOpt" [class.hover:border-brand-300]="!isOptSoldOut(rawOpt) && selectedOption() !== rawOpt"
                                 >
-                                  {{ rawOpt }}
+                                  <span [class.line-through]="isOptSoldOut(rawOpt)">{{ getOptName(rawOpt) }}</span>
+                                  @if(isOptSoldOut(rawOpt)) { <span class="text-[10px] text-red-500 font-bold shrink-0">售完</span> }
                                 </button>
                               }
                             </div>
@@ -352,7 +363,8 @@ import { StoreService, Product } from '../services/store.service';
                        </div>
                      </button>
                   }
-               </div>            </div>
+               </div>            
+            </div>
           </div>
         </div>
       }
@@ -421,9 +433,9 @@ export class ShopFrontComponent {
     });
   }
 
-  // 🔥 處理標籤點擊事件：自動帶入搜尋框並過濾
+  // 🔥 處理標籤點擊事件
   clickTag(tag: string, event: Event) {
-    event.stopPropagation(); // 防止點擊標籤時誤觸發外層的「打開商品彈窗」事件
+    event.stopPropagation(); 
     this.searchQuery.set(tag); 
     this.selectedCategory.set('all'); 
     this.selectedSubCategory.set('全部');
@@ -436,19 +448,11 @@ export class ShopFrontComponent {
 
   currentSubCategories = computed(() => {
     const cat = this.selectedCategory();
-    
     if (cat === 'all' || cat === '新品') return [];
-
     const productsInCurrentCat = this.store.visibleProducts().filter(p => p.category === cat);
-
-    const existingSubs = productsInCurrentCat
-      .map(p => p.subCategory)
-      .filter((sub): sub is string => !!sub); 
-
+    const existingSubs = productsInCurrentCat.map(p => p.subCategory).filter((sub): sub is string => !!sub); 
     const uniqueSubs = [...new Set(existingSubs)];
-
     if (uniqueSubs.length === 0) return [];
-
     return ['全部', ...uniqueSubs];
   });
 
@@ -456,8 +460,15 @@ export class ShopFrontComponent {
     return p?.options?.some(opt => opt.includes('=')) || false;
   }
 
+  // 🪄 魔法功能：把帶有(售完)的字眼過濾乾淨，顯示在畫面上比較好看
   getOptName(opt: string): string {
-    return opt.includes('=') ? opt.split('=')[0].trim() : opt;
+    let name = opt.includes('=') ? opt.split('=')[0].trim() : opt;
+    return name.replace(/\(售完\)|\[售完\]|【售完】|售完|斷貨|停產/g, '').trim();
+  }
+
+  // 🪄 魔法功能：判斷這個選項是不是帶有售完的關鍵字
+  isOptSoldOut(opt: string): boolean {
+    return opt.includes('售完') || opt.includes('斷貨') || opt.includes('停產');
   }
 
   getOptPrice(opt: string): number {
@@ -505,7 +516,6 @@ export class ShopFrontComponent {
     const subCat = this.selectedSubCategory();
     const sort = this.sortOption();
 
-    // 🔥 強化搜尋邏輯：不僅搜商品名稱，也搜次分類與標籤
     if (query) {
        list = list.filter(p => 
          p.name.toLowerCase().includes(query) || 
@@ -578,20 +588,28 @@ export class ShopFrontComponent {
      });
   }
 
-addToCart() {
+  addToCart() {
     const p = this.selectedProduct();
     if (!p) return;
 
-    // 🛑 終極防護：防駭客硬點按鈕
+    // 🛑 終極防護一：商品整包賣光了
     if (!p.isPreorder && p.stock <= 0) {
       alert('抱歉，此商品已售完！');
-      return; // 強制中斷，不給加購物車
+      return; 
     }
 
     const opt = p.options.length > 0 ? this.selectedOption() : '單一規格';
+    
+    // 🛑 防呆檢查：必須選擇規格
     if (p.options.length > 0 && !opt) {
-      alert('請先選擇商品規格！'); // 順便加個防呆提示
+      alert('請先選擇商品規格！'); 
       return; 
+    }
+
+    // 🛑 終極防護二：如果這個規格被標記為售完，不准加！
+    if (this.isOptSoldOut(opt)) {
+      alert('抱歉，此規格已售完！');
+      return;
     }
 
     this.store.addToCart(p, opt, this.qty());
