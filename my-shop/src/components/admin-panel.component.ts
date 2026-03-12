@@ -1668,8 +1668,58 @@ addImageUrl(url: string) {
     if (validUrls.length > 0) {
       this.tempImages.update(l => [...l, ...validUrls]); 
     }
-  }  handleFileSelect(event: any) { const files = event.target.files; if (files) { for (let i = 0; i < files.length; i++) { const file = files[i]; const reader = new FileReader(); reader.onload = (e: any) => { this.tempImages.update(l => [...l, e.target.result]); }; reader.readAsDataURL(file); } } } 
-  removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); } 
+  }  
+async handleFileSelect(event: any) { 
+    const files = event.target.files; 
+    if (!files || files.length === 0) return; 
+
+    // 如果一次選了多張，跳出溫馨小提示讓使用者知道正在處理
+    if (files.length > 2) {
+      alert(`⏳ 準備上傳 ${files.length} 張圖片到雲端，請稍候幾秒鐘...`);
+    }
+
+    // 🔥 升級：你的金鑰軍火庫！把所有帳號的 API Key 都放進這個陣列裡
+    // (記得用單引號包起來，並且用逗號隔開)
+    const apiKeys = [
+      '352891ac855d54d93112ddfefcc2477b', // 這是你剛剛申請的第一把
+      '5c25d90eba9c6f4f1f0569a904e09fb2', // '請在這裡貼上第二把',
+      '620a85a5745a8a56115f1c2ac9e302c2', // '請在這裡貼上第三把',
+      // ...你有幾把就可以放幾把！
+    ];
+
+    for (let i = 0; i < files.length; i++) { 
+      const file = files[i]; 
+      
+      const formData = new FormData();
+      formData.append('image', file);
+
+      // 🔥 系統自動抽籤：隨機選取一把金鑰來上傳這張圖片 (完美分散流量)
+      const randomKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+
+      try {
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${randomKey}`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // 成功取得雲端短網址！直接塞進預覽圖庫裡
+          const imageUrl = result.data.url;
+          this.tempImages.update(l => [...l, imageUrl]); 
+        } else {
+          alert(`❌ 圖片 ${file.name} 上傳失敗：${result.error?.message || '未知錯誤'}`);
+        }
+      } catch (error) {
+        console.error('上傳錯誤:', error);
+        alert(`❌ 圖片 ${file.name} 上傳發生網路錯誤！`);
+      }
+    } 
+    
+    // 清空 input，這樣下次就算選同一張照片也能正常觸發上傳
+    event.target.value = '';
+  }  removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); } 
 
   submitProduct() { 
      const val = this.productForm.value; 
