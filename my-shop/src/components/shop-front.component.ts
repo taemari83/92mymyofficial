@@ -322,7 +322,14 @@ import { StoreService, Product } from '../services/store.service';
                </div>
 
                <div class="p-4 md:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-gray-100 bg-white z-20 relative shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
-                  @if (!store.currentUser()) {
+                  @if (!selectedProduct()!.isPreorder && selectedProduct()!.stock <= 0) {
+                     <button 
+                       disabled
+                       class="w-full py-4 bg-gray-200 text-gray-500 rounded-2xl font-black text-xl shadow-inner cursor-not-allowed flex items-center justify-center gap-2"
+                     >
+                       <span>❌</span> 商品已售完
+                     </button>
+                  } @else if (!store.currentUser()) {
                      <button 
                        (click)="store.loginWithGoogle()"
                        class="w-full py-4 bg-gray-800 text-white rounded-2xl font-bold text-lg shadow-xl shadow-gray-800/20 hover:bg-black hover:scale-[1.01] transition-all active:scale-[0.98] flex items-center justify-center gap-2"
@@ -345,8 +352,7 @@ import { StoreService, Product } from '../services/store.service';
                        </div>
                      </button>
                   }
-               </div>
-            </div>
+               </div>            </div>
           </div>
         </div>
       }
@@ -572,13 +578,25 @@ export class ShopFrontComponent {
      });
   }
 
-  addToCart() {
+addToCart() {
     const p = this.selectedProduct();
     if (!p) return;
+
+    // 🛑 終極防護：防駭客硬點按鈕
+    if (!p.isPreorder && p.stock <= 0) {
+      alert('抱歉，此商品已售完！');
+      return; // 強制中斷，不給加購物車
+    }
+
     const opt = p.options.length > 0 ? this.selectedOption() : '單一規格';
-    if (p.options.length > 0 && !opt) return;
+    if (p.options.length > 0 && !opt) {
+      alert('請先選擇商品規格！'); // 順便加個防呆提示
+      return; 
+    }
+
     this.store.addToCart(p, opt, this.qty());
     this.closeModal();
+    
     const div = document.createElement('div');
     div.className = 'fixed top-6 left-1/2 -translate-x-1/2 bg-brand-900 text-white px-6 py-3 rounded-full shadow-2xl z-[60] text-sm font-bold animate-fade-in flex items-center gap-2';
     div.innerHTML = '<span>👜</span> 已加入購物車';
