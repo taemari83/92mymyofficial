@@ -66,7 +66,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
              </button>
              <button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button>
            </div>
-
+         </div>
+         
         @if (activeTab() === 'dashboard') {
           <div class="space-y-8 w-full overflow-x-hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
