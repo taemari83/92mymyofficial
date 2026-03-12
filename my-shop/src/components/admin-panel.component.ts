@@ -700,7 +700,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
             </div> 
           </div> 
         }
-          
+
         @if (showUserModal()) { 
           <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
@@ -1685,7 +1685,7 @@ async handleFileSelect(event: any) {
     // 🔥 升級：你的金鑰軍火庫！把所有帳號的 API Key 都放進這個陣列裡
     // (記得用單引號包起來，並且用逗號隔開)
     const apiKeys = [
-      '352891ac855d54d93112ddfefcc2477b', // 這是你剛剛申請的第一把
+      '6929e9be7309132abb8e9e074f2f954d', // 這是你剛剛申請的第一把
       '5c25d90eba9c6f4f1f0569a904e09fb2', // '請在這裡貼上第二把',
       '620a85a5745a8a56115f1c2ac9e302c2', // '請在這裡貼上第三把',
       '71511b2b29eff40266767564de64d3d1', // 請在這裡貼上第四把！
