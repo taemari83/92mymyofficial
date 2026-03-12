@@ -607,11 +607,13 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> 
                       <label class="block text-xs font-bold text-gray-500 mb-1">主分類</label> 
-                      <div class="relative w-full"> 
-                        <input formControlName="category" (change)="onCategoryChange()" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400" list="catList" placeholder="選擇分類..."> 
-                        <datalist id="catList"> @for(c of store.categories(); track c) { <option [value]="c"></option> } </datalist> 
-                      </div> 
-                    </div> 
+                      <select formControlName="category" (change)="onCategoryChange()" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 cursor-pointer">
+                        <option value="" disabled selected>請選擇分類...</option>
+                        @for(c of store.categories(); track c) { 
+                          <option [value]="c">{{ c }}</option> 
+                        } 
+                      </select>
+                    </div>
                     <div> 
                       <label class="block text-xs font-bold text-gray-500 mb-1">標籤 (逗號分隔)</label> 
                       <input formControlName="tagsStr" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400" placeholder="例如: NEW,現貨,熱銷"> 
