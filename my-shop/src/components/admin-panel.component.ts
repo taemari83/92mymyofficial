@@ -60,8 +60,12 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </button>
               <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
            </div>
-           <div class="flex gap-2"><button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button></div>
-        </div>
+          <div class="flex gap-2 items-center">
+             <button (click)="showProcurementModal.set(true)" class="px-3 md:px-4 py-1.5 md:py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl font-bold hover:bg-yellow-200 flex items-center gap-1.5 shadow-sm transition-colors whitespace-nowrap">
+               <span class="text-lg">📦</span> <span class="hidden sm:inline">叫貨總表</span>
+             </button>
+             <button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button>
+           </div>
 
         @if (activeTab() === 'dashboard') {
           <div class="space-y-8 w-full overflow-x-hidden">
@@ -860,6 +864,61 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
             </div> 
           </div> 
         }
+      @if (showProcurementModal()) {
+          <div class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-md flex flex-col justify-end animate-slide-up" (click)="showProcurementModal.set(false)">
+            <div class="bg-gray-50 w-full h-[85vh] md:h-[90vh] rounded-t-[2rem] flex flex-col overflow-hidden shadow-2xl relative" (click)="$event.stopPropagation()">
+              
+              <div class="p-4 sm:p-6 border-b border-gray-200 bg-white flex justify-between items-center sticky top-0 z-10 shadow-sm">
+                <h2 class="text-xl font-bold text-brand-900 flex items-center gap-2">
+                  <span>📦</span> 即時叫貨總表
+                </h2>
+                <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors">✕</button>
+              </div>
+
+              <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar pb-24">
+                @for(item of procurementList(); track item.productId + item.option) {
+                  <div class="flex items-center gap-3 p-3 sm:p-4 rounded-2xl border transition-all" 
+                       [class.bg-white]="item.procured < item.needed" [class.border-gray-200]="item.procured < item.needed" [class.shadow-sm]="item.procured < item.needed"
+                       [class.bg-green-50]="item.procured >= item.needed" [class.border-green-200]="item.procured >= item.needed" [class.opacity-60]="item.procured >= item.needed">
+                    
+                    <img [src]="item.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0">
+                    
+                    <div class="flex-1 min-w-0">
+                      <h4 class="font-bold text-gray-800 text-sm sm:text-base truncate">{{ item.name }}</h4>
+                      <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                        規格: <span class="font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{{ item.option }}</span>
+                      </div>
+                      <div class="text-xs text-gray-400 mt-1 font-mono">
+                        已買 {{ item.procured }} / 總需 {{ item.needed }}
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                      @if(item.procured >= item.needed) {
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full text-xl sm:text-2xl font-bold">✅</div>
+                        <button (click)="updateProcured(item, -1)" class="text-[10px] text-gray-400 underline ml-1">退回</button>
+                      } @else {
+                        <button (click)="updateProcured(item, -1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200 text-lg">-</button>
+                        <div class="flex flex-col items-center min-w-[2.5rem]">
+                          <span class="text-[10px] text-red-500 font-bold">還缺</span>
+                          <span class="text-xl font-black text-red-600 leading-none">{{ item.needed - item.procured }}</span>
+                        </div>
+                        <button (click)="updateProcured(item, 1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-brand-900 text-white font-bold text-2xl active:scale-90 transition-transform shadow-md">+</button>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if(procurementList().length === 0) {
+                  <div class="text-center py-20 flex flex-col items-center justify-center opacity-50">
+                    <span class="text-6xl mb-4">🎉</span>
+                    <p class="text-gray-500 font-bold">目前沒有需要叫貨的商品！<br>訂單都買齊啦！</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }    
       </main>
     </div>
   `,
@@ -899,6 +958,68 @@ export class AdminPanelComponent {
   });
   productViewMode = signal<'list' | 'grid'>('list');
   isSidebarOpen = signal(false);
+
+  // ===== 📦 連線叫貨神器專用變數與邏輯 =====
+  showProcurementModal = signal(false);
+
+  procurementList = computed(() => {
+    // 抓出「客人已付款 / 待對帳」需要叫貨的訂單
+    const activeOrders = this.store.orders().filter((o: Order) => 
+      ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status)
+    );
+
+    const listMap = new Map();
+
+    activeOrders.forEach((order: Order) => {
+      (order.items || []).forEach((item: CartItem) => {
+        const optionName = item.option || '單一規格';
+        const key = `${item.productId}_${optionName}`;
+
+        if (!listMap.has(key)) {
+          // 去商品庫找這件商品，取得圖片跟目前「已買到」的數量
+          const product = this.store.products().find((p: Product) => p.id === item.productId);
+          listMap.set(key, {
+            productId: item.productId,
+            name: item.productName,
+            option: optionName,
+            image: product?.image || item.productImage || '',
+            needed: 0,
+            procured: (product as any)?.procured?.[optionName] || 0 // 讀取已買數量
+          });
+        }
+        // 累加客人下單的需求量
+        listMap.get(key).needed += (item.quantity || 1);
+      });
+    });
+
+    // 聰明排序：還沒買齊的排在上面，買齊(打勾)的沉到下面
+    return Array.from(listMap.values()).sort((a, b) => {
+      const aDone = a.procured >= a.needed;
+      const bDone = b.procured >= b.needed;
+      if (aDone && !bDone) return 1;
+      if (!aDone && bDone) return -1;
+      return 0;
+    });
+  });
+
+  // 點擊 +1 或 -1 的更新按鈕
+  async updateProcured(item: any, change: number) {
+    const product = this.store.products().find((p: Product) => p.id === item.productId);
+    if (!product) return;
+
+    const currentMap = (product as any).procured || {};
+    const currentQty = currentMap[item.option] || 0;
+    let newQty = currentQty + change;
+    if (newQty < 0) newQty = 0; // 最低就是 0
+
+    // 更新商品資料庫
+    const updatedProduct = {
+      ...product,
+      procured: { ...currentMap, [item.option]: newQty }
+    };
+    await this.store.updateProduct(updatedProduct);
+  }
+  // =====================================
 
   filteredAdminProducts = computed(() => {
     let list = [...this.store.products()];
