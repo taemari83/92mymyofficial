@@ -548,156 +548,159 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
           </div> 
         }
 
-        @if (showProductModal()) { 
-          <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"> 
-            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
-              <div class="p-6 border-b border-gray-100 flex justify-between items-center"> 
-                <h3 class="text-xl font-bold text-brand-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3> 
-                <button (click)="closeProductModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200">✕</button> 
+@if (showProductModal()) { 
+          <div class="fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm"> 
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()"> 
+              
+              <div class="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50"> 
+                <div class="flex items-center gap-3">
+                  <h3 class="text-xl font-bold text-brand-900">{{ editingProduct() ? '編輯商品' : '新增商品' }}</h3> 
+                  <button type="button" (click)="isQuickMode.set(!isQuickMode())" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors flex items-center gap-1 shadow-sm" [class.bg-brand-900]="isQuickMode()" [class.text-white]="isQuickMode()" [class.bg-white]="!isQuickMode()" [class.text-gray-500]="!isQuickMode()" [class.border]="!isQuickMode()" [class.border-gray-200]="!isQuickMode()">
+                    <span class="text-sm">⚡️</span> {{ isQuickMode() ? '快閃模式' : '完整模式' }}
+                  </button>
+                </div>
+                <button (click)="closeProductModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 font-bold transition-colors">✕</button> 
               </div> 
-              <div class="p-6 overflow-y-auto flex-1 custom-scrollbar"> 
-                <form [formGroup]="productForm" class="space-y-4"> 
-                  <div> 
-                    <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label> 
-                    <input formControlName="name" class="w-full p-2 border rounded-lg"> 
-                  </div> 
 
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
-                    <div> 
-                      <label class="block text-xs font-bold text-gray-500 mb-1">主分類與代碼</label> 
-                      <div class="flex gap-2"> 
-                        <div class="relative flex-1"> 
-                          <input formControlName="category" (change)="onCategoryChange()" class="w-full p-2 border rounded-lg" list="catList" placeholder="選擇或輸入分類..."> 
-                          <datalist id="catList"> 
-                            @for(c of store.categories(); track c) { <option [value]="c"></option> } 
-                          </datalist> 
-                        </div> 
-                        <div class="w-20"> 
-                          <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-2 border rounded-lg text-center font-mono font-bold uppercase bg-gray-50" placeholder="代碼" maxlength="3" title="分類代碼"> 
-                        </div> 
-                      </div> 
-                    </div> 
-                    <div> 
-                      <label class="block text-xs font-bold text-gray-500 mb-1">次分類 (例如: 短袖)</label> 
-                      <input formControlName="subCategory" class="w-full p-2 border rounded-lg"> 
-                    </div> 
-                  </div> 
-
-                  <div> 
-                    <label class="block text-xs font-bold text-gray-500 mb-1">標籤 (逗號分隔，例如: NEW,現貨,熱銷)</label> 
-                    <input formControlName="tagsStr" class="w-full p-2 border rounded-lg"> 
-                  </div> 
-
-                  <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4"> 
-                     <h4 class="font-bold text-gray-700 text-sm border-b border-gray-200 pb-2">💰 成本結構與獲利分析</h4> 
-                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4"> 
-                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">當地幣原價 (Local)</label> <input type="number" formControlName="localPrice" class="w-full p-2 border rounded-lg bg-white"> </div> 
-                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">匯率 (Rate)</label> <input type="number" formControlName="exchangeRate" step="0.001" class="w-full p-2 border rounded-lg bg-white"> </div> 
-                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">重量 kg</label> <input type="number" formControlName="weight" step="0.1" class="w-full p-2 border rounded-lg bg-white"> </div> 
-                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">國際運費/kg</label> <input type="number" formControlName="shippingCostPerKg" class="w-full p-2 border rounded-lg bg-white"> </div> 
-                     </div> 
-                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
-                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本 (包材/加工)</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> 
-                        <div class="flex flex-col justify-end"> <div class="text-xs text-gray-500 mb-1">預估總成本 (NT$)</div> <div class="text-xl font-bold text-gray-800 bg-white px-3 py-1.5 rounded border border-gray-200"> {{ estimatedCost() | number:'1.0-0' }} </div> </div> 
-                     </div> 
-                     <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> 
-                        <div class="text-xs text-gray-500"> 定價: <span class="font-bold text-gray-800">$ {{ formValues().priceGeneral }}</span> </div> 
-                        <div class="text-right"> 
-                           <div class="text-xs text-gray-400">預估毛利 / 毛利率</div> 
-                           <div class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> $ {{ estimatedProfit() | number:'1.0-0' }} <span class="text-xs ml-1 bg-gray-100 px-1 rounded text-gray-600"> {{ estimatedMargin() | number:'1.1-1' }}% </span> </div> 
-                        </div> 
-                     </div> 
-                  </div> 
-
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">售價 (NT$)</label> <input type="number" formControlName="priceGeneral" class="w-full p-2 border rounded-lg"> </div> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-2 border rounded-lg"> </div> 
-                  </div> 
-
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-200 mt-4">
-                     <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-red-200 pb-2">
-                       <h4 class="font-bold text-red-600 text-sm flex items-center gap-1"><span>🔥</span> 多入組優惠設定 (選填)</h4>
-                       <span class="text-[10px] text-red-400">例如: 任選 3 件 $1000</span>
-                     </div>
-                     <div> <label class="block text-xs font-bold text-red-500 mb-1">任選數量 (件)</label> <input type="number" formControlName="bulkCount" class="w-full p-2 border border-red-200 rounded-lg focus:outline-none focus:border-red-400" placeholder="例如: 3"> </div>
-                     <div> <label class="block text-xs font-bold text-red-500 mb-1">優惠總價 (NT$)</label> <input type="number" formControlName="bulkTotal" class="w-full p-2 border border-red-200 rounded-lg focus:outline-none focus:border-red-400" placeholder="例如: 1000"> </div>
-                  </div>
+              <div class="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar"> 
+                <form [formGroup]="productForm" class="space-y-5"> 
                   
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                     <label class="flex items-center gap-3 cursor-pointer select-none">
-                        <input type="checkbox" formControlName="isPreorder" class="w-5 h-5 rounded text-blue-600">
-                        <span class="font-bold text-gray-700">這是一個「預購」商品</span>
-                     </label>
-                     <label class="flex items-center gap-3 cursor-pointer select-none">
-                        <input type="checkbox" formControlName="isListed" class="w-5 h-5 rounded text-green-600">
-                        <span class="font-bold text-gray-700">確認上架 (前台可見)</span>
-                     </label>
-                  </div>
-
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
-                    <div> 
-                      <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> 
-                      @if(formValues().isPreorder) {
-                         <input type="text" value="無限 (99999)" disabled class="w-full p-2 border rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
-                      } @else {
-                         <input type="number" formControlName="stock" class="w-full p-2 border rounded-lg"> 
-                      }
-                    </div> 
-                    <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (進階可填 名稱=售價=VIP價=當地原價)</label> <input formControlName="optionsStr" class="w-full p-2 border rounded-lg" placeholder="例如: 單件, 兩入組=1500=1400=16000"> </div> 
-                  </div> 
-                  
-                  <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動生成: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-2 border rounded-lg font-mono bg-gray-50 text-gray-500"> </div> 
-                  <div> 
-                    <label class="block text-xs font-bold text-gray-500 mb-2">商品圖片 (可拖曳排序，第一張為主圖)</label> 
+                  <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100"> 
+                    <label class="block text-xs font-bold text-gray-500 mb-2">商品圖片 (第一張為主圖)</label> 
                     <div class="flex flex-wrap gap-2 mb-3"> 
                       @for(img of tempImages(); track $index) { 
-                        <div 
-                          draggable="true"
-                          (dragstart)="onImageDragStart($index)"
-                          (dragover)="onImageDragOver($event)"
-                          (drop)="onImageDrop($event, $index)"
-                          [class.opacity-40]="draggedImageIndex() === $index"
-                          [class.ring-2]="draggedImageIndex() === $index"
-                          [class.ring-brand-400]="draggedImageIndex() === $index"
-                          class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"
-                        > 
+                        <div draggable="true" (dragstart)="onImageDragStart($index)" (dragover)="onImageDragOver($event)" (drop)="onImageDrop($event, $index)" [class.opacity-40]="draggedImageIndex() === $index" [class.ring-2]="draggedImageIndex() === $index" [class.ring-brand-400]="draggedImageIndex() === $index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"> 
                           <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover pointer-events-none"> 
                           <button type="button" (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/50 hover:bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">✕</button> 
-                          @if($index === 0) { 
-                            <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold pointer-events-none z-10">主圖</div> 
-                          } 
+                          @if($index === 0) { <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold pointer-events-none z-10">主圖</div> } 
                         </div> 
                       } 
                     </div> 
-                    <div class="flex flex-col gap-2 p-4 bg-gray-50 rounded-xl border border-gray-200"> 
-                      <div class="flex gap-2"> 
-                        <input #urlInput type="text" placeholder="請貼上「圖片連結」 (以 .jpg .png 結尾)" class="flex-1 p-2 text-sm border rounded-lg"> 
-                        <button type="button" (click)="addImageUrl(urlInput.value); urlInput.value=''" class="px-3 py-2 bg-gray-200 rounded-lg text-xs font-bold hover:bg-gray-300 whitespace-nowrap">加入網址</button> 
-                      </div> 
-                      <div class="flex items-center gap-2 flex-wrap mt-2"> 
-                        <span class="text-xs font-bold text-gray-400">或</span> 
-                        <label class="cursor-pointer px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-bold hover:bg-gray-50 flex items-center gap-1 whitespace-nowrap"> 
-                          <span>📂 選擇電腦檔案</span> 
-                          <input type="file" multiple accept="image/*" class="hidden" (change)="handleFileSelect($event)"> 
-                        </label> 
-                        <span class="text-xs font-bold text-gray-400">或</span> 
-                        <a href="https://www.flickr.com/photos/upload" target="_blank" class="px-3 py-2 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 whitespace-nowrap" title="前往 Flickr 上傳"> 
-                          <span>☁️ Flickr 上傳</span> 
-                        </a> 
+                    <div class="flex flex-col sm:flex-row gap-2"> 
+                      <label class="flex-1 cursor-pointer px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-brand-200 flex items-center justify-center gap-2 transition-colors shadow-sm"> 
+                        <span class="text-lg">📷</span> 手機拍照 / 選照片 
+                        <input type="file" multiple accept="image/*" class="hidden" (change)="handleFileSelect($event)"> 
+                      </label> 
+                      <div class="flex-1 flex gap-1"> 
+                        <input #urlInput type="text" placeholder="或貼上網址..." class="flex-1 p-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
+                        <button type="button" (click)="addImageUrl(urlInput.value); urlInput.value=''" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-300 whitespace-nowrap">加入</button> 
                       </div> 
                     </div> 
+                  </div>
+
+                  <div> 
+                    <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label> 
+                    <input formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 transition-colors" placeholder="例如: 韓國東大門羊毛大衣"> 
                   </div> 
-                  <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註</label> <textarea formControlName="note" class="w-full p-2 border rounded-lg" rows="8"></textarea> </div> 
+
+                  <div class="grid grid-cols-2 gap-4"> 
+                    <div class="bg-brand-50 p-3 rounded-xl border border-brand-100"> 
+                      <label class="block text-xs font-bold text-brand-700 mb-1">售價 (NT$)</label> 
+                      <input type="number" formControlName="priceGeneral" class="w-full p-2 border border-brand-200 rounded-lg focus:outline-none focus:border-brand-500 font-bold text-brand-900 text-lg"> 
+                    </div> 
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200"> 
+                      <label class="block text-xs font-bold text-gray-600 mb-1">當地原價/成本</label> 
+                      <input type="number" formControlName="localPrice" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-gray-700 text-lg"> 
+                    </div> 
+                  </div> 
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
+                    <div> 
+                      <label class="block text-xs font-bold text-gray-500 mb-1">主分類</label> 
+                      <div class="relative w-full"> 
+                        <input formControlName="category" (change)="onCategoryChange()" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400" list="catList" placeholder="選擇分類..."> 
+                        <datalist id="catList"> @for(c of store.categories(); track c) { <option [value]="c"></option> } </datalist> 
+                      </div> 
+                    </div> 
+                    <div> 
+                      <label class="block text-xs font-bold text-gray-500 mb-1">標籤 (逗號分隔)</label> 
+                      <input formControlName="tagsStr" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400" placeholder="例如: NEW,現貨,熱銷"> 
+                    </div> 
+                  </div>
+
+                  @if(!isQuickMode()) {
+                    <div class="pt-6 mt-6 border-t border-gray-100 space-y-5 animate-slide-up">
+                      
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div> 
+                          <label class="block text-xs font-bold text-gray-500 mb-1">分類代碼 (用於自動貨號)</label> 
+                          <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-3 border border-gray-200 rounded-xl text-center font-mono font-bold uppercase bg-gray-50 focus:outline-none focus:border-brand-300" placeholder="代碼" maxlength="3"> 
+                        </div>
+                        <div> 
+                          <label class="block text-xs font-bold text-gray-500 mb-1">次分類</label> 
+                          <input formControlName="subCategory" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
+                        </div> 
+                      </div>
+
+                      <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4"> 
+                        <h4 class="font-bold text-gray-700 text-sm border-b border-gray-200 pb-2">💰 進階成本與獲利分析</h4> 
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4"> 
+                          <div> <label class="block text-xs font-bold text-gray-500 mb-1">匯率</label> <input type="number" formControlName="exchangeRate" step="0.001" class="w-full p-2 border rounded-lg bg-white"> </div> 
+                          <div> <label class="block text-xs font-bold text-gray-500 mb-1">重量 kg</label> <input type="number" formControlName="weight" step="0.1" class="w-full p-2 border rounded-lg bg-white"> </div> 
+                          <div> <label class="block text-xs font-bold text-gray-500 mb-1">國際運費/kg</label> <input type="number" formControlName="shippingCostPerKg" class="w-full p-2 border rounded-lg bg-white"> </div> 
+                          <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> 
+                        </div> 
+                        <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> 
+                          <div class="text-xs text-gray-500"> 預估總成本: <span class="font-bold text-gray-800">$ {{ estimatedCost() | number:'1.0-0' }}</span> </div> 
+                          <div class="text-right"> 
+                            <div class="text-xs text-gray-400">預估毛利 / 毛利率</div> 
+                            <div class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> $ {{ estimatedProfit() | number:'1.0-0' }} <span class="text-xs ml-1 bg-gray-200 px-1 rounded text-gray-600"> {{ estimatedMargin() | number:'1.1-1' }}% </span> </div> 
+                          </div> 
+                        </div> 
+                      </div> 
+
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
+                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> </div> 
+                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl font-mono bg-gray-50 text-gray-500"> </div> 
+                      </div> 
+
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-200">
+                        <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-red-200 pb-2">
+                          <h4 class="font-bold text-red-600 text-sm flex items-center gap-1"><span>🔥</span> 多入組優惠設定</h4>
+                        </div>
+                        <div> <label class="block text-xs font-bold text-red-500 mb-1">任選數量 (件)</label> <input type="number" formControlName="bulkCount" class="w-full p-2 border border-red-200 rounded-lg focus:outline-none focus:border-red-400"> </div>
+                        <div> <label class="block text-xs font-bold text-red-500 mb-1">優惠總價 (NT$)</label> <input type="number" formControlName="bulkTotal" class="w-full p-2 border border-red-200 rounded-lg focus:outline-none focus:border-red-400"> </div>
+                      </div>
+                      
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                        <label class="flex items-center gap-3 cursor-pointer select-none">
+                          <input type="checkbox" formControlName="isPreorder" class="w-5 h-5 rounded text-blue-600">
+                          <span class="font-bold text-gray-700">這是「預購」商品</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer select-none">
+                          <input type="checkbox" formControlName="isListed" class="w-5 h-5 rounded text-green-600">
+                          <span class="font-bold text-gray-700">確認上架 (前台可見)</span>
+                        </label>
+                      </div>
+
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
+                        <div> 
+                          <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> 
+                          @if(formValues().isPreorder) {
+                            <input type="text" value="無限 (99999)" disabled class="w-full p-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed">
+                          } @else {
+                            <input type="number" formControlName="stock" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
+                          }
+                        </div> 
+                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (名稱=售價=VIP=當地)</label> <input formControlName="optionsStr" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300" placeholder="例如: 白色,黑色"> </div> 
+                      </div> 
+                      
+                      <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註/商品文案</label> <textarea formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 custom-scrollbar" rows="4"></textarea> </div> 
+                    </div>
+                  }
                 </form> 
               </div> 
-              <div class="p-6 border-t border-gray-100 flex justify-end gap-3"> 
-                <button (click)="closeProductModal()" class="px-6 py-2 rounded-xl border border-gray-200 font-bold text-gray-500">取消</button> 
-                <button (click)="submitProduct()" class="px-6 py-2 rounded-xl bg-brand-900 text-white font-bold hover:bg-black">確認儲存</button> 
+              
+              <div class="p-4 sm:p-6 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0"> 
+                <button (click)="closeProductModal()" class="px-5 sm:px-6 py-2.5 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-colors">取消</button> 
+                <button (click)="submitProduct()" class="px-5 sm:px-6 py-2.5 rounded-xl bg-brand-900 text-white font-bold hover:bg-black transition-transform active:scale-95 flex items-center gap-2">
+                  <span class="text-lg">💾</span> 確認儲存
+                </button> 
               </div> 
             </div> 
           </div> 
         }
-
+          
         @if (showUserModal()) { 
           <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
@@ -1365,7 +1368,8 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     return list.slice(start, start + size); 
   });
 
-  showProductModal = signal(false); editingProduct = signal<Product | null>(null); productForm: FormGroup; 
+  showProductModal = signal(false); editingProduct = signal<Product | null>(null); productForm: FormGroup;
+  isQuickMode = signal(true); // ⚡️ 控制連線快閃模式的開關 
   tempImages = signal<string[]>([]); formValues = signal<any>({}); categoryCodes = computed(() => this.store.settings().categoryCodes); 
   currentCategoryCode = signal(''); generatedSkuPreview = signal(''); settingsForm: FormGroup;
 
