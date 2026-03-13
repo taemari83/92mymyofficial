@@ -586,11 +586,11 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                         <span class="text-lg">📷</span> 手機拍照 / 選照片 
                         <input type="file" multiple accept="image/*" class="hidden" (change)="handleFileSelect($event)"> 
                       </label> 
-                      <div class="flex-1 flex gap-1"> 
-                        <input #urlInput type="text" placeholder="或貼上網址..." class="flex-1 p-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
-                        <button type="button" (click)="addImageUrl(urlInput.value); urlInput.value=''" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-300 whitespace-nowrap">加入</button> 
-                      </div> 
-                    </div> 
+                      <div class="flex-1 flex gap-2 items-start"> 
+                        <textarea #urlInput rows="2" placeholder="貼上圖片網址 (支援換行/多張一起貼)..." class="flex-1 p-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 custom-scrollbar resize-none"></textarea> 
+                        <button type="button" (click)="addImageUrl(urlInput.value); urlInput.value=''" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-300 whitespace-nowrap mt-1 shadow-sm transition-colors active:scale-95">加入</button> 
+                      </div>
+                     </div> 
                   </div>
 
                   <div> 
