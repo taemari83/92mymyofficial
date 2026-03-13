@@ -1582,8 +1582,15 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   doShip(o: Order) { const code = prompt('請輸入物流單號 / 追蹤連結 (若無可直接按確認)'); if (code !== null) { this.store.updateOrderStatus(o.id, 'shipped', { shippingLink: code }); this.store.sendOrderNotification(o, 'shipped', { shippingLink: code }); this.closeActionModal(); } } 
   
   doMyshipPickup(o: Order) { this.store.updateOrderStatus(o.id, 'picked_up' as any); this.closeActionModal(); } 
-  doCancel(o: Order) { if(this.cancelConfirmState()) { this.store.updateOrderStatus(o.id, 'cancelled'); this.closeActionModal(); } else { this.cancelConfirmState.set(true); } } 
-  doDeleteOrder(o: Order) { if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原，且系統會自動扣除該會員對應的累積消費金額！`)) { this.store.deleteOrder(o); this.closeActionModal(); } } 
+  doCancel(o: Order) { 
+    if(this.cancelConfirmState()) { 
+      this.store.updateOrderStatus(o.id, 'cancelled'); 
+      this.store.sendOrderNotification(o, 'cancelled'); // 🔥 觸發 GAS 發送信件與推播
+      this.closeActionModal(); 
+    } else { 
+      this.cancelConfirmState.set(true); 
+    } 
+  }  doDeleteOrder(o: Order) { if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原，且系統會自動扣除該會員對應的累積消費金額！`)) { this.store.deleteOrder(o); this.closeActionModal(); } } 
   
   // --- 列表上的快捷操作按鈕 (也一併加入自動發信) ---
   quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); this.store.sendOrderNotification(o, 'payment_confirmed'); } 
