@@ -1767,7 +1767,7 @@ if (p) {
   }
 
   openProductForm() { this.editingProduct.set(null); this.productForm.reset(); this.productForm.patchValue({ exchangeRate: 1, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' }); this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
-  editProduct(p: Product) { this.editingProduct.set(p); this.productForm.patchValue({ ...p, optionsStr: (p.options || []).join(', '), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 });; this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
+  editProduct(p: Product) { this.editingProduct.set(p); this.productForm.patchValue({ ...p, optionsStr: (p.options || []).join('\n'), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 }); this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); }
   closeProductModal() { this.showProductModal.set(false); } 
   onCategoryChange() { const cat = this.productForm.get('category')?.value; if (cat && !this.editingProduct()) { const codeMap = this.categoryCodes(); const foundCode = codeMap[cat] || ''; this.currentCategoryCode.set(foundCode); this.updateSkuPreview(foundCode); } } 
   onCodeInput(e: any) { const val = e.target.value.toUpperCase(); this.currentCategoryCode.set(val); if (!this.editingProduct()) { this.updateSkuPreview(val); } } 
@@ -1868,19 +1868,21 @@ async handleFileSelect(event: any) {
     event.target.value = '';
   }
   removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); }
-  submitProduct() { 
+  
+submitProduct() { 
      const val = this.productForm.value; 
      if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
      const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
      const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
      const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
-const p: any = { 
+     
+     const p: any = { 
          id: this.editingProduct()?.id || Date.now().toString(), 
          code: finalCode, 
          name: val.name, 
          category: val.category, 
-         subCategory: val.subCategory || '', // 🔥 存入次分類
-         tags: val.tagsStr ? val.tagsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [], // 🔥 存入多重標籤
+         subCategory: val.subCategory || '', 
+         tags: val.tagsStr ? val.tagsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [], 
          image: mainImage, 
          images: finalImages, 
          priceGeneral: val.priceGeneral, 
@@ -1888,7 +1890,8 @@ const p: any = {
          priceWholesale: 0, 
          localPrice: val.localPrice, 
          stock: val.isPreorder ? 99999 : val.stock, 
-         options: val.optionsStr ? val.optionsStr.split(',').map((s: string) => s.trim()) : [], 
+         // 🔥 魔法在這裡：使用正則表達式 /[,\n]+/，同時把「換行」跟「逗號」都當作切割點！
+         options: val.optionsStr ? val.optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [], 
          note: val.note, 
          exchangeRate: val.exchangeRate, 
          costMaterial: val.costMaterial, 
@@ -1907,7 +1910,7 @@ const p: any = {
      if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
      this.closeProductModal(); 
   }
-
+  
   editUser(u: User) { this.openUserModal(u); } 
   
   openUserModal(u: User) { 
