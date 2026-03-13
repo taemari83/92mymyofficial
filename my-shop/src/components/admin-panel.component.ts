@@ -1121,7 +1121,8 @@ try {
            // 🔥 1. 將次分類與標籤移動到分類與售價之間 (對應表格的 H, I 欄)
            const subCategory = String(row[7] || '').trim();
            const tagsStr = String(row[8] || '').trim();
-           const tags = tagsStr ? tagsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+           // ✨ 升級：標籤現在同時支援 Excel 裡的換行或逗號
+           const tags = tagsStr ? tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [];
            
            // 🔥 2. 原本的售價與後續欄位，全部順延兩格
            const priceGeneral = toNumber(row[9]); 
@@ -1148,51 +1149,53 @@ try {
            
            let code = String(row[23] || '').replace(/\t/g, '').trim(); 
            const note = String(row[24] || '');          
-          const stock = isPreorder ? 99999 : stockInput;
-          const options = optionsStr ? optionsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s) : [];
+           const stock = isPreorder ? 99999 : stockInput;
           
-          // 自動生成貨號
-          if (!code) {
-            const codeMap = this.store.settings().categoryCodes || {};
-            const prefix = codeMap[category] || 'Z'; 
-            const now = new Date();
-            const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-            
-            // 🔥 修改：改用 validProductCount 來補零，不再使用會被表頭影響的 i
-            code = `${prefix}${datePart}${String(validProductCount).padStart(3, '0')}`;
-          }
-
-          const existingProduct = this.store.products().find(p => p.code === code);
-          const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
-
-          const p: any = {
-            id: uniqueId, 
-            code, name, category, subCategory, tags, image: mainImage, images: allImages,
-            priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
-            weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
-            soldCount: existingProduct?.soldCount || 0, country: 'Korea',
-            allowPayment: { cash: true, bankTransfer: true, cod: true },
-            allowShipping: { meetup: true, myship: true, family: true, delivery: true },
-            isPreorder, isListed
-          };
-
-          if (bulkCount > 1 && bulkTotal > 0) {
-            p.bulkDiscount = { count: bulkCount, total: bulkTotal };
-          }
-
-          this.store.addCategory(category);
+           // ✨ 升級：規格現在同時支援 Excel 裡的換行或逗號
+           const options = optionsStr ? optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [];
           
-          if (existingProduct) { await this.store.updateProduct(p); } 
-          else { await this.store.addProduct(p); }
-          
-          successCount++;
-          // 🔥 成功處理一個商品後，流水號才允許 +1
-          validProductCount++;
+           // 自動生成貨號
+           if (!code) {
+             const codeMap = this.store.settings().categoryCodes || {};
+             const prefix = codeMap[category] || 'Z'; 
+             const now = new Date();
+             const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+             
+             // 🔥 修改：改用 validProductCount 來補零，不再使用會被表頭影響的 i
+             code = `${prefix}${datePart}${String(validProductCount).padStart(3, '0')}`;
+           }
+
+           const existingProduct = this.store.products().find(p => p.code === code);
+           const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
+
+           const p: any = {
+             id: uniqueId, 
+             code, name, category, subCategory, tags, image: mainImage, images: allImages,
+             priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
+             weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
+             soldCount: existingProduct?.soldCount || 0, country: 'Korea',
+             allowPayment: { cash: true, bankTransfer: true, cod: true },
+             allowShipping: { meetup: true, myship: true, family: true, delivery: true },
+             isPreorder, isListed
+           };
+
+           if (bulkCount > 1 && bulkTotal > 0) {
+             p.bulkDiscount = { count: bulkCount, total: bulkTotal };
+           }
+
+           this.store.addCategory(category);
+           
+           if (existingProduct) { await this.store.updateProduct(p); } 
+           else { await this.store.addProduct(p); }
+           
+           successCount++;
+           // 🔥 成功處理一個商品後，流水號才允許 +1
+           validProductCount++;
 
         } catch (err: any) { 
-          failCount++; 
-          lastError = err.message || String(err);
-        }
+           failCount++; 
+           lastError = err.message || String(err);
+        }    
       }
       
       alert(`✅ 讀取完畢！\n成功新增/更新：${successCount} 筆\n失敗報錯：${failCount} 筆\n格式不符跳過：${skippedCount} 筆\n\n${lastError ? '⚠️ 最後一個錯誤: ' + lastError : ''}`);
