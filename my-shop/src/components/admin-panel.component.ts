@@ -568,7 +568,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
               </div> 
 
               <div class="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar"> 
-                <form [formGroup]="productForm" class="space-y-5"> 
+<form [formGroup]="productForm" class="space-y-5"> 
                   
                   <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100"> 
                     <label class="block text-xs font-bold text-gray-500 mb-2">商品圖片 (第一張為主圖)</label> 
@@ -598,16 +598,25 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     <input formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 transition-colors" placeholder="例如: 韓國東大門羊毛大衣"> 
                   </div> 
 
-                  <div class="grid grid-cols-2 gap-4"> 
-                    <div class="bg-brand-50 p-3 rounded-xl border border-brand-100"> 
-                      <label class="block text-xs font-bold text-brand-700 mb-1">售價 (NT$)</label> 
-                      <input type="number" formControlName="priceGeneral" class="w-full p-2 border border-brand-200 rounded-lg focus:outline-none focus:border-brand-500 font-bold text-brand-900 text-lg"> 
+                  <div class="grid grid-cols-3 gap-2 sm:gap-4"> 
+                    <div class="bg-brand-50 p-2 sm:p-3 rounded-xl border border-brand-100"> 
+                      <label class="block text-[10px] sm:text-xs font-bold text-brand-700 mb-1">售價 (NT$)</label> 
+                      <input type="number" formControlName="priceGeneral" class="w-full p-1.5 sm:p-2 border border-brand-200 rounded-lg focus:outline-none focus:border-brand-500 font-bold text-brand-900 text-sm sm:text-lg"> 
                     </div> 
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200"> 
-                      <label class="block text-xs font-bold text-gray-600 mb-1">當地原價/成本</label> 
-                      <input type="number" formControlName="localPrice" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-gray-700 text-lg"> 
+                    <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200"> 
+                      <label class="block text-[10px] sm:text-xs font-bold text-gray-600 mb-1">當地原價</label> 
+                      <input type="number" formControlName="localPrice" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-gray-700 text-sm sm:text-lg"> 
+                    </div> 
+                    <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200"> 
+                      <label class="block text-[10px] sm:text-xs font-bold text-gray-600 mb-1">當前匯率</label> 
+                      <input type="number" formControlName="exchangeRate" step="0.001" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-gray-700 text-sm sm:text-lg"> 
                     </div> 
                   </div> 
+
+                  <div> 
+                    <label class="block text-xs font-bold text-gray-500 mb-1">商品規格 <span class="text-[10px] text-gray-400 font-normal">格式：名稱=售價=VIP=當地 (可換行或用逗號分隔)</span></label> 
+                    <textarea formControlName="optionsStr" rows="4" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar leading-relaxed" placeholder="例如：&#10;森林系毛毯=2750=2700=80000&#10;造型隨行杯(售完)=1780=1750=50000"></textarea> 
+                  </div>
 
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> 
@@ -641,8 +650,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 
                       <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4"> 
                         <h4 class="font-bold text-gray-700 text-sm border-b border-gray-200 pb-2">💰 進階成本與獲利分析</h4> 
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4"> 
-                          <div> <label class="block text-xs font-bold text-gray-500 mb-1">匯率</label> <input type="number" formControlName="exchangeRate" step="0.001" class="w-full p-2 border rounded-lg bg-white"> </div> 
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4"> 
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">重量 kg</label> <input type="number" formControlName="weight" step="0.1" class="w-full p-2 border rounded-lg bg-white"> </div> 
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">國際運費/kg</label> <input type="number" formControlName="shippingCostPerKg" class="w-full p-2 border rounded-lg bg-white"> </div> 
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> 
@@ -680,23 +688,20 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                         </label>
                       </div>
 
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
-                        <div> 
-                          <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> 
-                          @if(formValues().isPreorder) {
-                            <input type="text" value="無限 (99999)" disabled class="w-full p-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed">
-                          } @else {
-                            <input type="number" formControlName="stock" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
-                          }
-                        </div> 
-                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">規格 (名稱=售價=VIP=當地)</label> <input formControlName="optionsStr" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300" placeholder="例如: 白色,黑色"> </div> 
+                      <div> 
+                        <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> 
+                        @if(formValues().isPreorder) {
+                          <input type="text" value="無限 (99999)" disabled class="w-full p-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed">
+                        } @else {
+                          <input type="number" formControlName="stock" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
+                        }
                       </div> 
                       
                       <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註/商品文案</label> <textarea formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 custom-scrollbar" rows="4"></textarea> </div> 
                     </div>
                   }
-                </form> 
-              </div> 
+                </form>
+               </div> 
               
               <div class="p-4 sm:p-6 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0"> 
                 <button (click)="closeProductModal()" class="px-5 sm:px-6 py-2.5 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-colors">取消</button> 
