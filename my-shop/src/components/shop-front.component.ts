@@ -265,7 +265,7 @@ import { StoreService, Product } from '../services/store.service';
                     </div>
                   </div>
 
-                  <div class="bg-brand-50/60 rounded-[1.5rem] p-5 md:p-6 mb-6 border border-brand-100/50">
+<div class="bg-brand-50/60 rounded-[1.5rem] p-5 md:p-6 mb-6 border border-brand-100/50">
                       @if (selectedProduct()!.options.length > 0) {
                         <div class="mb-6">
                           <div class="flex items-center justify-between mb-3">
@@ -275,9 +275,9 @@ import { StoreService, Product } from '../services/store.service';
                           
                           @if (hasCustomPriceOptions()) {
                             <div class="flex flex-col gap-2.5">
-                              @for (rawOpt of selectedProduct()!.options; track rawOpt) {
+                              @for (rawOpt of selectedProduct()!.options; track rawOpt; let i = $index) {
                                 <button 
-                                  (click)="!isOptSoldOut(rawOpt) && selectedOption.set(rawOpt)"
+                                  (click)="!isOptSoldOut(rawOpt) && onOptionSelect(rawOpt, i)"
                                   class="w-full p-4 rounded-xl border-2 transition-all flex items-center justify-between text-left relative overflow-hidden"
                                   [class.opacity-60]="isOptSoldOut(rawOpt)"
                                   [class.cursor-not-allowed]="isOptSoldOut(rawOpt)"
@@ -297,9 +297,9 @@ import { StoreService, Product } from '../services/store.service';
                             </div>
                           } @else {
                             <div class="flex flex-wrap gap-2.5">
-                              @for (rawOpt of selectedProduct()!.options; track rawOpt) {
+                              @for (rawOpt of selectedProduct()!.options; track rawOpt; let i = $index) {
                                 <button 
-                                  (click)="!isOptSoldOut(rawOpt) && selectedOption.set(rawOpt)"
+                                  (click)="!isOptSoldOut(rawOpt) && onOptionSelect(rawOpt, i)"
                                   class="px-4 py-2 md:px-5 md:py-2.5 rounded-xl text-sm md:text-base font-bold transition-all shadow-sm active:scale-95 text-center relative overflow-hidden break-words whitespace-normal h-auto min-h-[48px] flex items-center justify-center gap-1.5"
                                   [class.opacity-60]="isOptSoldOut(rawOpt)"
                                   [class.cursor-not-allowed]="isOptSoldOut(rawOpt)"
@@ -325,6 +325,7 @@ import { StoreService, Product } from '../services/store.service';
                          </div>
                       </div>
                   </div>
+
 
                   <div class="text-gray-500 leading-relaxed text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <h4 class="font-bold text-gray-800 mb-2 text-xs uppercase tracking-wide">商品介紹</h4>
@@ -460,12 +461,37 @@ export class ShopFrontComponent {
     return p?.options?.some(opt => opt.includes('=')) || false;
   }
 
-  // 🪄 魔法功能：把帶有(售完)的字眼過濾乾淨，顯示在畫面上比較好看
+// 🪄 魔法功能：隱藏 (售完) 以及 [圖X] 的字眼，讓客人畫面保持乾淨
   getOptName(opt: string): string {
     let name = opt.includes('=') ? opt.split('=')[0].trim() : opt;
-    return name.replace(/\(售完\)|\[售完\]|【售完】|售完|斷貨|停產/g, '').trim();
+    return name.replace(/\(售完\)|\[售完\]|【售完】|售完|斷貨|停產/g, '')
+               .replace(/\[圖\d+\]/g, '') // 🔥 新增：把 [圖2] 這種標記從客人畫面上隱藏
+               .trim();
   }
 
+  // 📸 全新加入：點擊規格連動切換圖片 (精準指定版)
+  onOptionSelect(opt: string, index: number) {
+    this.selectedOption.set(opt); // 設定選中的規格
+    
+    const p = this.selectedProduct();
+    if (!p) return;
+    
+    const imgs = this.productImages();
+    if (imgs.length <= 1) return; 
+
+    // 🎯 精準模式：找尋你設定的 [圖X] 標記 (例如 [圖2])
+    const match = opt.match(/\[圖(\d+)\]/);
+    
+    if (match) {
+       const imgNum = parseInt(match[1], 10);
+       const targetIndex = imgNum - 1; // 因為陣列是從 0 開始，所以 [圖2] 會對應到 imgs[1]
+       
+       if (imgs[targetIndex]) {
+          this.activeImage.set(imgs[targetIndex]);
+       }
+    }
+  }
+  
   // 🪄 魔法功能：判斷這個選項是不是帶有售完的關鍵字
   isOptSoldOut(opt: string): boolean {
     return opt.includes('售完') || opt.includes('斷貨') || opt.includes('停產');
