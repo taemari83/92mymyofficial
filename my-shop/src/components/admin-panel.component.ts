@@ -1867,6 +1867,7 @@ async handleFileSelect(event: any) {
     // 清空 input，這樣下次就算選同一張照片也能正常觸發上傳
     event.target.value = '';
   }
+  removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); }
   submitProduct() { 
      const val = this.productForm.value; 
      if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
