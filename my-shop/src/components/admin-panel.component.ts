@@ -67,7 +67,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
              <button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button>
            </div>
          </div>
-         
+
         @if (activeTab() === 'dashboard') {
           <div class="space-y-8 w-full overflow-x-hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
@@ -1806,14 +1806,13 @@ async handleFileSelect(event: any) {
       alert(`⏳ 準備上傳 ${files.length} 張圖片到雲端，請稍候幾秒鐘...`);
     }
 
-    // 🔥 升級：你的金鑰軍火庫！把所有帳號的 API Key 都放進這個陣列裡
-    // (記得用單引號包起來，並且用逗號隔開)
+    // 🛡️ 升級：你的專屬金鑰軍火庫！(已更新為最新的 5 把金鑰)
     const apiKeys = [
-      '6929e9be7309132abb8e9e074f2f954d', // 這是你剛剛申請的第一把
-      '5c25d90eba9c6f4f1f0569a904e09fb2', // '請在這裡貼上第二把',
-      '620a85a5745a8a56115f1c2ac9e302c2', // '請在這裡貼上第三把',
-      '71511b2b29eff40266767564de64d3d1', // 請在這裡貼上第四把！
-      'b66708e3427c58626bd31491b41e2c29', // ...你有幾把就可以放幾把！
+      '6929e9be7309132abb8e9e074f2f954d', 
+      '5c25d90eba9c6f4f1f0569a904e09fb2', 
+      '620a85a5745a8a56115f1c2ac9e302c2', 
+      '71511b2b29eff40266767564de64d3d1', 
+      'b66708e3427c58626bd31491b41e2c29'
     ];
 
     for (let i = 0; i < files.length; i++) { 
@@ -1822,7 +1821,7 @@ async handleFileSelect(event: any) {
       const formData = new FormData();
       formData.append('image', file);
 
-      // 🔥 系統自動抽籤：隨機選取一把金鑰來上傳這張圖片 (完美分散流量)
+      // 🎲 系統自動抽籤：隨機選取一把金鑰來上傳這張圖片 (完美分散流量)
       const randomKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
 
       try {
@@ -1838,7 +1837,21 @@ async handleFileSelect(event: any) {
           const imageUrl = result.data.url;
           this.tempImages.update(l => [...l, imageUrl]); 
         } else {
-          alert(`❌ 圖片 ${file.name} 上傳失敗：${result.error?.message || '未知錯誤'}`);
+          // 🔄 備援機制：如果這把鑰匙剛好撞到限制報錯，自動抓下一把鑰匙「再試一次」！
+          console.warn(`⚠️ 金鑰 ${randomKey.substring(0,5)}... 失敗，自動切換備用金鑰！`);
+          
+          const backupKey = apiKeys[(apiKeys.indexOf(randomKey) + 1) % apiKeys.length];
+          const res2 = await fetch(`https://api.imgbb.com/1/upload?key=${backupKey}`, {
+            method: 'POST',
+            body: formData
+          });
+          const res2Json = await res2.json();
+          
+          if(res2Json.success) {
+            this.tempImages.update(l => [...l, res2Json.data.url]);
+          } else {
+            alert(`❌ 圖片 ${file.name} 備用上傳也失敗了，可能額度已滿或圖片格式不符！`);
+          }
         }
       } catch (error) {
         console.error('上傳錯誤:', error);
@@ -1848,8 +1861,7 @@ async handleFileSelect(event: any) {
     
     // 清空 input，這樣下次就算選同一張照片也能正常觸發上傳
     event.target.value = '';
-  }  removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); } 
-
+  }
   submitProduct() { 
      const val = this.productForm.value; 
      if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
