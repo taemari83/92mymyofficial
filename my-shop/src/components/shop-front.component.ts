@@ -107,16 +107,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6 px-2">
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.5rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer">
-               <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
-                 
+              <div class="relative aspect-[4/5] overflow-hidden bg-white border-b border-gray-50">
                  @if(isEmbedVideo(product.image)) {
-                    <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
-                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(product.image) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
-                    </div>
+                    <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(product.image) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></video>
                  } @else {
-                    <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                    <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2 group-hover:scale-105 transition-transform duration-700">
                  }
                  
                  <div class="absolute top-2 left-2 right-2 flex gap-1.5 flex-wrap z-[1]">
@@ -169,18 +166,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          <div class="flex flex-col gap-3 px-2">
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.2rem] sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-gray-50 flex p-2.5 sm:p-4 gap-3 sm:gap-5 cursor-pointer">
-               <div class="relative w-24 sm:w-32 h-28 sm:h-36 shrink-0 rounded-xl overflow-hidden bg-gray-100">
+               <div class="relative w-24 sm:w-32 h-28 sm:h-36 shrink-0 rounded-xl overflow-hidden bg-white border border-gray-100">
                  
                  @if(isEmbedVideo(product.image)) {
-                    <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
-                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(product.image) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
-                    </div>
+                    <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(product.image) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></video>
                  } @else {
-                    <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                    <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-1 group-hover:scale-105 transition-transform duration-700">
                  }
-
                  @if (!product.isPreorder && product.stock <= 0) {
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
                        <span class="bg-white px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand-900">售完</span>
