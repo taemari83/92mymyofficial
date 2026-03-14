@@ -108,8 +108,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.5rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer">
                <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
+                 
                  @if(isEmbedVideo(product.image)) {
-                    <iframe [src]="getSafeEmbedUrl(product.image)" class="absolute inset-0 w-full h-full pointer-events-none object-cover" frameborder="0" allowfullscreen></iframe>
+                    <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
+                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(product.image) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                    </div>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></video>
                  } @else {
@@ -167,13 +170,17 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.2rem] sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-gray-50 flex p-2.5 sm:p-4 gap-3 sm:gap-5 cursor-pointer">
                <div class="relative w-24 sm:w-32 h-28 sm:h-36 shrink-0 rounded-xl overflow-hidden bg-gray-100">
+                 
                  @if(isEmbedVideo(product.image)) {
-                    <iframe [src]="getSafeEmbedUrl(product.image)" class="absolute inset-0 w-full h-full pointer-events-none object-cover" frameborder="0" allowfullscreen></iframe>
+                    <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
+                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(product.image) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                    </div>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></video>
                  } @else {
                     <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                  }
+
                  @if (!product.isPreorder && product.stock <= 0) {
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
                        <span class="bg-white px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand-900">售完</span>
@@ -236,9 +243,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="bg-white w-full h-full md:max-w-5xl md:rounded-[2.5rem] md:shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in md:h-auto md:max-h-[90vh] flex flex-col md:flex-row relative">
             
             <div class="md:w-1/2 bg-white relative group flex flex-col h-[45%] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
+               
                <div class="flex-1 relative overflow-hidden bg-gray-50 p-2 md:p-4">
                   @if(isEmbedVideo(activeImage())) {
-                     <iframe [src]="getSafeEmbedUrl(activeImage())" class="absolute inset-0 w-full h-full" frameborder="0" allow="autoplay; fullscreen"></iframe>
+                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
+                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(activeImage()) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                     </div>
                   } @else if(isVideo(activeImage())) {
                      <video [src]="activeImage()" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-contain"></video>
                   } @else {
@@ -246,6 +256,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   }
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm border border-gray-100">✕</button>
                </div>
+
                @if(productImages().length > 1) {
                   <div class="p-3 md:p-4 bg-white border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0">
                      @for(img of productImages(); track $index) {
@@ -291,7 +302,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     </div>
                   </div>
 
-<div class="bg-brand-50/60 rounded-[1.5rem] p-5 md:p-6 mb-6 border border-brand-100/50">
+                  <div class="bg-brand-50/60 rounded-[1.5rem] p-5 md:p-6 mb-6 border border-brand-100/50">
                       @if (selectedProduct()!.options.length > 0) {
                         <div class="mb-6">
                           <div class="flex items-center justify-between mb-3">
@@ -488,7 +499,7 @@ export class ShopFrontComponent {
     return p?.options?.some(opt => opt.includes('=')) || false;
   }
 
-// 🪄 魔法功能：隱藏 (售完) 以及 [圖X] 的字眼，讓客人畫面保持乾淨
+  // 🪄 魔法功能：隱藏 (售完) 以及 [圖X] 的字眼，讓客人畫面保持乾淨
   getOptName(opt: string): string {
     let name = opt.includes('=') ? opt.split('=')[0].trim() : opt;
     return name.replace(/\(售完\)|\[售完\]|【售完】|售完|斷貨|停產/g, '')
@@ -689,24 +700,43 @@ export class ShopFrontComponent {
     return l.includes('youtube.com') || l.includes('youtu.be') || l.includes('instagram.com') || l.includes('facebook.com') || l.includes('fb.watch');
   }
 
-  // 🛡️ 轉換社群網址為安全的可播放嵌入碼
+  isIG(url: string | undefined): boolean {
+    if (!url) return false;
+    return url.toLowerCase().includes('instagram.com');
+  }
+
+  isYT(url: string | undefined): boolean {
+    if (!url) return false;
+    const l = url.toLowerCase();
+    return l.includes('youtube.com') || l.includes('youtu.be');
+  }
+
+  // 🛡️ 轉換社群網址為安全的可播放嵌入碼 (全面隱藏 UI 與清洗 FB 網址版)
   getSafeEmbedUrl(url: string): SafeResourceUrl {
     let embedUrl = url;
     try {
-      if (url.includes('youtube.com/watch?v=')) {
-         const videoId = url.split('v=')[1]?.split('&')[0];
-         embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
-      } else if (url.includes('youtu.be/')) {
-         const videoId = url.split('youtu.be/')[1]?.split('?')[0];
-         embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
-      } else if (url.includes('youtube.com/shorts/')) {
-         const videoId = url.split('shorts/')[1]?.split('?')[0];
-         embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
-      } else if (url.includes('instagram.com')) {
+      if (this.isYT(url)) {
+         let videoId = '';
+         if (url.includes('watch?v=')) videoId = url.split('v=')[1]?.split('&')[0];
+         else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
+         else if (url.includes('shorts/')) videoId = url.split('shorts/')[1]?.split('?')[0];
+
+         // YT終極隱藏大法：controls=0(無控制列), modestbranding=1(無Logo), rel=0(無推薦), disablekb=1(禁用鍵盤), loop=1(自動重播)
+         if (videoId) {
+            embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${videoId}&disablekb=1&fs=0`;
+         }
+      } else if (this.isIG(url)) {
          const cleanUrl = url.split('?')[0].replace(/\/$/, "");
          embedUrl = `${cleanUrl}/embed`;
       } else if (url.includes('facebook.com') || url.includes('fb.watch')) {
-         embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=auto`;
+         // FB 常因為帶有 fbclid 等追蹤碼導致無法播放，這裡自動清除乾淨
+         let cleanFbUrl = url.split('?')[0];
+         if (url.includes('v=')) {
+            const params = new URLSearchParams(url.split('?')[1]);
+            const v = params.get('v');
+            if (v) cleanFbUrl = `${cleanFbUrl}?v=${v}`;
+         }
+         embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanFbUrl)}&show_text=false&width=auto&autoplay=1&mute=1`;
       }
     } catch(e) {}
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
