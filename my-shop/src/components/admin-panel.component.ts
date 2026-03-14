@@ -576,7 +576,10 @@ import { DomSanitizer } from '@angular/platform-browser';
                     <div class="flex flex-wrap gap-2 mb-3"> 
                       @for(img of tempImages(); track $index) { 
                         <div draggable="true" (dragstart)="onImageDragStart($index)" (dragover)="onImageDragOver($event)" (drop)="onImageDrop($event, $index)" [class.opacity-40]="draggedImageIndex() === $index" [class.ring-2]="draggedImageIndex() === $index" [class.ring-brand-400]="draggedImageIndex() === $index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"> 
-                          @if(isEmbedVideo(img)) {
+                          @if(isYT(img)) {
+                             <img [src]="getYTThumbnail(img)" class="w-full h-full object-cover pointer-events-none">
+                             <div class="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none"><span class="text-white text-xl drop-shadow-md">▶</span></div>
+                          } @else if(isEmbedVideo(img)) {
                              <div class="w-full h-full bg-gray-800 flex flex-col items-center justify-center pointer-events-none"><span class="text-white text-xl mb-1">🌐</span><span class="text-[10px] text-gray-300 font-bold">社群影片</span></div>
                           } @else if(isVideo(img)) {
                              <video [src]="img" autoplay muted loop playsinline class="w-full h-full object-cover pointer-events-none"></video>
@@ -2000,5 +2003,24 @@ submitProduct() {
     if (!url) return false;
     const l = url.toLowerCase();
     return l.includes('youtube.com') || l.includes('youtu.be') || l.includes('instagram.com') || l.includes('facebook.com') || l.includes('fb.watch');
+  }
+
+  isYT(url: string | undefined): boolean {
+    if (!url) return false;
+    const l = url.toLowerCase();
+    return l.includes('youtube.com') || l.includes('youtu.be');
+  }
+
+  getYTVideoId(url: string): string {
+    if (!url) return '';
+    if (url.includes('watch?v=')) return url.split('v=')[1]?.split('&')[0] || '';
+    if (url.includes('youtu.be/')) return url.split('youtu.be/')[1]?.split('?')[0] || '';
+    if (url.includes('shorts/')) return url.split('shorts/')[1]?.split('?')[0] || '';
+    return '';
+  }
+
+  getYTThumbnail(url: string): string {
+    const vid = this.getYTVideoId(url);
+    return vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : '';
   }
 }

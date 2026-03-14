@@ -246,8 +246,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                
                <div class="flex-1 relative overflow-hidden bg-gray-50 p-2 md:p-4">
                   @if(isEmbedVideo(activeImage())) {
-                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
-                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(activeImage()) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black" [class.pointer-events-none]="isYT(activeImage())">
+                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0 pointer-events-auto' : (isYT(activeImage()) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full pointer-events-auto')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                      </div>
                   } @else if(isVideo(activeImage())) {
                      <video [src]="activeImage()" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-contain"></video>
@@ -261,8 +261,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="p-3 md:p-4 bg-white border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0">
                      @for(img of productImages(); track $index) {
                         <button (click)="activeImage.set(img)" class="relative w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-gray-50" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
-                           @if(isEmbedVideo(img)) {
-                              <div class="w-full h-full bg-gray-900 flex flex-col items-center justify-center pointer-events-none"><span class="text-white text-[10px] mb-0.5">🌐</span><span class="text-[8px] text-gray-300 font-bold">影片</span></div>
+                           @if(isYT(img)) {
+                              <img loading="lazy" [src]="getYTThumbnail(img)" class="w-full h-full object-cover pointer-events-none">
+                              <div class="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none"><span class="text-white text-xs drop-shadow-md">▶</span></div>
+                           } @else if(isEmbedVideo(img)) {
+                              <div class="w-full h-full bg-gray-900 flex flex-col items-center justify-center pointer-events-none"><span class="text-white text-[10px] mb-0.5">🌐</span><span class="text-[8px] text-gray-300 font-bold">社群</span></div>
                            } @else if(isVideo(img)) {
                               <video [src]="img" class="w-full h-full object-cover pointer-events-none"></video>
                               <div class="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none"><span class="text-white text-xs">▶</span></div>
@@ -709,6 +712,20 @@ export class ShopFrontComponent {
     if (!url) return false;
     const l = url.toLowerCase();
     return l.includes('youtube.com') || l.includes('youtu.be');
+  }
+  // 📸 取得 YT 影片 ID
+  getYTVideoId(url: string): string {
+    if (!url) return '';
+    if (url.includes('watch?v=')) return url.split('v=')[1]?.split('&')[0] || '';
+    if (url.includes('youtu.be/')) return url.split('youtu.be/')[1]?.split('?')[0] || '';
+    if (url.includes('shorts/')) return url.split('shorts/')[1]?.split('?')[0] || '';
+    return '';
+  }
+
+  // 🖼️ 取得 YT 影片高畫質封面
+  getYTThumbnail(url: string): string {
+    const vid = this.getYTVideoId(url);
+    return vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : '';
   }
 
   // 🛡️ 轉換社群網址為安全的可播放嵌入碼 (全面隱藏 UI 與清洗 FB 網址版)
