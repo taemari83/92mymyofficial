@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../services/store.service';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-admin-panel',
@@ -575,12 +576,19 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     <div class="flex flex-wrap gap-2 mb-3"> 
                       @for(img of tempImages(); track $index) { 
                         <div draggable="true" (dragstart)="onImageDragStart($index)" (dragover)="onImageDragOver($event)" (drop)="onImageDrop($event, $index)" [class.opacity-40]="draggedImageIndex() === $index" [class.ring-2]="draggedImageIndex() === $index" [class.ring-brand-400]="draggedImageIndex() === $index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"> 
-                          <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover pointer-events-none"> 
+                          @if(isEmbedVideo(img)) {
+                             <div class="w-full h-full bg-gray-800 flex flex-col items-center justify-center pointer-events-none"><span class="text-white text-xl mb-1">🌐</span><span class="text-[10px] text-gray-300 font-bold">社群影片</span></div>
+                          } @else if(isVideo(img)) {
+                             <video [src]="img" autoplay muted loop playsinline class="w-full h-full object-cover pointer-events-none"></video>
+                             <div class="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1 rounded z-10">短影音</div>
+                          } @else {
+                             <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover pointer-events-none"> 
+                          }
                           <button type="button" (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/50 hover:bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">✕</button> 
                           @if($index === 0) { <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold pointer-events-none z-10">主圖</div> } 
                         </div> 
                       } 
-                    </div> 
+                    </div>
                     <div class="flex flex-col sm:flex-row gap-2"> 
                       <label class="flex-1 cursor-pointer px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-brand-200 flex items-center justify-center gap-2 transition-colors shadow-sm"> 
                         <span class="text-lg">📷</span> 手機拍照 / 選照片 
@@ -945,6 +953,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
 })
 export class AdminPanelComponent {
   store = inject(StoreService);
+  sanitizer = inject(DomSanitizer);
   fb: FormBuilder = inject(FormBuilder);
   now = new Date();
   activeTab = signal('dashboard');
@@ -1977,5 +1986,19 @@ submitProduct() {
     }; 
     this.store.updateSettings(settings); 
     alert('設定已儲存'); 
+  }
+
+  // 🎥 魔法功能：判斷網址是不是直連影片
+  isVideo(url: string | undefined): boolean {
+    if (!url) return false;
+    const lowerUrl = url.toLowerCase();
+    return lowerUrl.includes('.mp4') || lowerUrl.includes('.mov') || lowerUrl.includes('.webm');
+  }
+
+  // 🌐 判斷是否為外連平台影片 (YT, IG, FB)
+  isEmbedVideo(url: string | undefined): boolean {
+    if (!url) return false;
+    const l = url.toLowerCase();
+    return l.includes('youtube.com') || l.includes('youtu.be') || l.includes('instagram.com') || l.includes('facebook.com') || l.includes('fb.watch');
   }
 }

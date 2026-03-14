@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, Params, RouterModule } from '@angular/router'; 
 import { toSignal } from '@angular/core/rxjs-interop';
 import { StoreService, Product } from '../services/store.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-shop-front',
@@ -107,7 +108,13 @@ import { StoreService, Product } from '../services/store.service';
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.5rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer">
                <div class="relative aspect-[4/5] overflow-hidden bg-gray-100">
-                 <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                 @if(isEmbedVideo(product.image)) {
+                    <iframe [src]="getSafeEmbedUrl(product.image)" class="absolute inset-0 w-full h-full pointer-events-none object-cover" frameborder="0" allowfullscreen></iframe>
+                 } @else if(isVideo(product.image)) {
+                    <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></video>
+                 } @else {
+                    <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                 }
                  
                  <div class="absolute top-2 left-2 right-2 flex gap-1.5 flex-wrap z-[1]">
                     @if(product.bulkDiscount?.count) { <div class="bg-gradient-to-r from-red-500 to-orange-400 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 animate-pulse">🔥 任 {{ product.bulkDiscount!.count }} 件優惠</div> }
@@ -160,7 +167,13 @@ import { StoreService, Product } from '../services/store.service';
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.2rem] sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-gray-50 flex p-2.5 sm:p-4 gap-3 sm:gap-5 cursor-pointer">
                <div class="relative w-24 sm:w-32 h-28 sm:h-36 shrink-0 rounded-xl overflow-hidden bg-gray-100">
-                 <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                 @if(isEmbedVideo(product.image)) {
+                    <iframe [src]="getSafeEmbedUrl(product.image)" class="absolute inset-0 w-full h-full pointer-events-none object-cover" frameborder="0" allowfullscreen></iframe>
+                 } @else if(isVideo(product.image)) {
+                    <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></video>
+                 } @else {
+                    <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                 }
                  @if (!product.isPreorder && product.stock <= 0) {
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
                        <span class="bg-white px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand-900">售完</span>
@@ -224,14 +237,27 @@ import { StoreService, Product } from '../services/store.service';
             
             <div class="md:w-1/2 bg-white relative group flex flex-col h-[45%] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
                <div class="flex-1 relative overflow-hidden bg-gray-50 p-2 md:p-4">
-                  <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply">
+                  @if(isEmbedVideo(activeImage())) {
+                     <iframe [src]="getSafeEmbedUrl(activeImage())" class="absolute inset-0 w-full h-full" frameborder="0" allow="autoplay; fullscreen"></iframe>
+                  } @else if(isVideo(activeImage())) {
+                     <video [src]="activeImage()" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-contain"></video>
+                  } @else {
+                     <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply">
+                  }
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm border border-gray-100">✕</button>
                </div>
                @if(productImages().length > 1) {
                   <div class="p-3 md:p-4 bg-white border-t border-gray-100 flex gap-2 overflow-x-auto custom-scrollbar shrink-0">
                      @for(img of productImages(); track $index) {
-                        <button (click)="activeImage.set(img)" class="w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-gray-50" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
-                           <img loading="lazy" [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover">
+                        <button (click)="activeImage.set(img)" class="relative w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border-2 shrink-0 transition-all shadow-sm bg-gray-50" [class.border-brand-900]="activeImage() === img" [class.border-transparent]="activeImage() !== img">
+                           @if(isEmbedVideo(img)) {
+                              <div class="w-full h-full bg-gray-900 flex flex-col items-center justify-center pointer-events-none"><span class="text-white text-[10px] mb-0.5">🌐</span><span class="text-[8px] text-gray-300 font-bold">影片</span></div>
+                           } @else if(isVideo(img)) {
+                              <video [src]="img" class="w-full h-full object-cover pointer-events-none"></video>
+                              <div class="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none"><span class="text-white text-xs">▶</span></div>
+                           } @else {
+                              <img loading="lazy" [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover pointer-events-none">
+                           }
                         </button>
                      }
                   </div>
@@ -388,6 +414,7 @@ import { StoreService, Product } from '../services/store.service';
 })
 export class ShopFrontComponent {
   store = inject(StoreService);
+  sanitizer = inject(DomSanitizer);
   router: Router = inject(Router);
   route: ActivatedRoute = inject(ActivatedRoute);
   
@@ -646,5 +673,42 @@ export class ShopFrontComponent {
     div.innerHTML = '<span>👜</span> 已加入購物車';
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 2000);
+  }
+
+  // 🎥 魔法功能：判斷網址是不是直連影片
+  isVideo(url: string | undefined): boolean {
+    if (!url) return false;
+    const lowerUrl = url.toLowerCase();
+    return lowerUrl.includes('.mp4') || lowerUrl.includes('.mov') || lowerUrl.includes('.webm');
+  }
+
+  // 🌐 判斷是否為社群平台外連影片 (YT, IG, FB)
+  isEmbedVideo(url: string | undefined): boolean {
+    if (!url) return false;
+    const l = url.toLowerCase();
+    return l.includes('youtube.com') || l.includes('youtu.be') || l.includes('instagram.com') || l.includes('facebook.com') || l.includes('fb.watch');
+  }
+
+  // 🛡️ 轉換社群網址為安全的可播放嵌入碼
+  getSafeEmbedUrl(url: string): SafeResourceUrl {
+    let embedUrl = url;
+    try {
+      if (url.includes('youtube.com/watch?v=')) {
+         const videoId = url.split('v=')[1]?.split('&')[0];
+         embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+      } else if (url.includes('youtu.be/')) {
+         const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+         embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+      } else if (url.includes('youtube.com/shorts/')) {
+         const videoId = url.split('shorts/')[1]?.split('?')[0];
+         embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+      } else if (url.includes('instagram.com')) {
+         const cleanUrl = url.split('?')[0].replace(/\/$/, "");
+         embedUrl = `${cleanUrl}/embed`;
+      } else if (url.includes('facebook.com') || url.includes('fb.watch')) {
+         embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=auto`;
+      }
+    } catch(e) {}
+    return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }
 }
