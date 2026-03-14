@@ -614,8 +614,8 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                   </div> 
 
                   <div> 
-                    <label class="block text-xs font-bold text-gray-500 mb-1">商品規格 <span class="text-[10px] text-gray-400 font-normal">格式：名稱=售價=VIP=當地 (可換行或用逗號分隔)</span></label> 
-                    <textarea formControlName="optionsStr" rows="4" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar leading-relaxed" placeholder="例如：&#10;森林系毛毯=2750=2700=80000&#10;造型隨行杯(售完)=1780=1750=50000"></textarea> 
+                    <label class="block text-xs font-bold text-gray-500 mb-1">商品規格 <span class="text-[10px] text-gray-400 font-normal">格式：名稱[圖X]=售價=VIP=當地 (可換行或逗號分隔)</span></label> 
+                    <textarea formControlName="optionsStr" rows="4" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar leading-relaxed" placeholder="例如：&#10;燕麥色[圖2]=2580=2500=85000&#10;海軍藍[圖3]=2580=2500=85000&#10;單一顏色不換圖=2580"></textarea> 
                   </div>
 
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
@@ -629,9 +629,9 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                       </select>
                     </div>
                     <div> 
-                     <label class="block text-xs font-bold text-gray-500 mb-1">標籤 <span class="text-[10px] text-gray-400 font-normal">(可換行或逗號分隔)</span></label> 
-                      <textarea formControlName="tagsStr" rows="2" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar resize-none" placeholder="例如：&#10;品牌&#10;團體"></textarea>
-                    </div> 
+                      <label class="block text-xs font-bold text-gray-500 mb-1">標籤 <span class="text-[10px] text-gray-400 font-normal">(可換行或逗號分隔)</span></label> 
+                      <textarea formControlName="tagsStr" rows="2" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar resize-none" placeholder="例如：品牌, 團體"></textarea>
+                    </div>
                   </div>
 
                   @if(!isQuickMode()) {
