@@ -630,7 +630,7 @@ import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../
                     </div>
                     <div> 
                      <label class="block text-xs font-bold text-gray-500 mb-1">標籤 <span class="text-[10px] text-gray-400 font-normal">(可換行或逗號分隔)</span></label> 
-                      <textarea formControlName="tagsStr" rows="2" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar resize-none" placeholder="例如：&#10;NEW&#10;現貨&#10;熱銷"></textarea>
+                      <textarea formControlName="tagsStr" rows="2" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar resize-none" placeholder="例如：&#10;品牌&#10;團體"></textarea>
                     </div> 
                   </div>
 
