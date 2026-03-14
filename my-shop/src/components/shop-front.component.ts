@@ -107,11 +107,17 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6 px-2">
            @for (product of filteredProducts(); track product.id) {
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.5rem] shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-50 flex flex-col cursor-pointer">
-              <div class="relative aspect-[4/5] overflow-hidden bg-white border-b border-gray-50">
-                 @if(isEmbedVideo(product.image)) {
-                    <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(product.image) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+               <div class="relative aspect-[4/5] overflow-hidden bg-white border-b border-gray-50">
+                 
+                 @if(isYT(product.image)) {
+                    <img loading="lazy" [src]="getYTThumbnail(product.image)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-black/20 flex items-center justify-center"><span class="text-white text-3xl drop-shadow-md">▶</span></div>
+                 } @else if(isEmbedVideo(product.image)) {
+                    <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
+                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+180px)] -top-[90px] left-0 scale-[1.1]' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                    </div>
                  } @else if(isVideo(product.image)) {
-                    <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></video>
+                    <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700"></video>
                  } @else {
                     <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" [alt]="product.name" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-2 group-hover:scale-105 transition-transform duration-700">
                  }
@@ -168,13 +174,19 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
              <div (click)="openProductModal(product)" class="bg-white rounded-[1.2rem] sm:rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden group border border-gray-50 flex p-2.5 sm:p-4 gap-3 sm:gap-5 cursor-pointer">
                <div class="relative w-24 sm:w-32 h-28 sm:h-36 shrink-0 rounded-xl overflow-hidden bg-white border border-gray-100">
                  
-                 @if(isEmbedVideo(product.image)) {
-                    <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : (isYT(product.image) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                 @if(isYT(product.image)) {
+                    <img loading="lazy" [src]="getYTThumbnail(product.image)" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-black/20 flex items-center justify-center"><span class="text-white text-2xl drop-shadow-md">▶</span></div>
+                 } @else if(isEmbedVideo(product.image)) {
+                    <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
+                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+180px)] -top-[90px] left-0 scale-[1.1]' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                    </div>
                  } @else if(isVideo(product.image)) {
-                    <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></video>
+                    <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700"></video>
                  } @else {
                     <img loading="lazy" [src]="product.image" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply p-1 group-hover:scale-105 transition-transform duration-700">
                  }
+
                  @if (!product.isPreorder && product.stock <= 0) {
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm">
                        <span class="bg-white px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold text-brand-900">售完</span>
@@ -240,8 +252,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                
                <div class="flex-1 relative overflow-hidden bg-gray-50 p-2 md:p-4">
                   @if(isEmbedVideo(activeImage())) {
-                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black" [class.pointer-events-none]="isYT(activeImage())">
-                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0 pointer-events-auto' : (isYT(activeImage()) ? 'absolute inset-0 w-full h-full scale-[1.35]' : 'absolute inset-0 w-full h-full pointer-events-auto')" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black">
+                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-[calc(100%+180px)] -top-[90px] left-0 scale-[1.1]' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                      </div>
                   } @else if(isVideo(activeImage())) {
                      <video [src]="activeImage()" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-contain"></video>
@@ -707,20 +719,6 @@ export class ShopFrontComponent {
     const l = url.toLowerCase();
     return l.includes('youtube.com') || l.includes('youtu.be');
   }
-  // 📸 取得 YT 影片 ID
-  getYTVideoId(url: string): string {
-    if (!url) return '';
-    if (url.includes('watch?v=')) return url.split('v=')[1]?.split('&')[0] || '';
-    if (url.includes('youtu.be/')) return url.split('youtu.be/')[1]?.split('?')[0] || '';
-    if (url.includes('shorts/')) return url.split('shorts/')[1]?.split('?')[0] || '';
-    return '';
-  }
-
-  // 🖼️ 取得 YT 影片高畫質封面
-  getYTThumbnail(url: string): string {
-    const vid = this.getYTVideoId(url);
-    return vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : '';
-  }
 
   // 🛡️ 轉換社群網址為安全的可播放嵌入碼 (全面隱藏 UI 與清洗 FB 網址版)
   getSafeEmbedUrl(url: string): SafeResourceUrl {
@@ -732,9 +730,9 @@ export class ShopFrontComponent {
          else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
          else if (url.includes('shorts/')) videoId = url.split('shorts/')[1]?.split('?')[0];
 
-         // YT終極隱藏大法：controls=0(無控制列), modestbranding=1(無Logo), rel=0(無推薦), disablekb=1(禁用鍵盤), loop=1(自動重播)
+         // 🔥 YT 聲音解禁版：拿掉 autoplay=1 和 mute=1，讓客人自己按播放！
          if (videoId) {
-            embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&loop=1&playlist=${videoId}&disablekb=1&fs=0`;
+            embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`;
          }
       } else if (this.isIG(url)) {
          const cleanUrl = url.split('?')[0].replace(/\/$/, "");

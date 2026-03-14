@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../services/store.service';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-admin-panel',
@@ -337,10 +337,10 @@ import { DomSanitizer } from '@angular/platform-browser';
               <div class="grid grid-cols-1 gap-4 w-full"> 
                 @for (p of filteredAdminProducts(); track p.id) { 
                   <div class="bg-white rounded-[1.5rem] p-4 flex items-center gap-5 hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full"> 
-                     <div class="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative"> 
-                        <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover"> 
+                     <div class="w-20 h-20 rounded-xl overflow-hidden bg-white flex-shrink-0 relative border border-gray-100"> 
+                        <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-contain mix-blend-multiply p-1"> 
                         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-0.5"> {{ p.code }} </div> 
-                     </div> 
+                     </div>
                      <div class="flex-1 min-w-0"> 
                         <div class="flex justify-between items-start gap-4"> 
                            <div class="flex-1 min-w-0"> 
@@ -380,8 +380,8 @@ import { DomSanitizer } from '@angular/platform-browser';
               <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
                 @for (p of filteredAdminProducts(); track p.id) {
                   <div class="bg-white rounded-[1.5rem] p-3 flex flex-col hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full">
-                     <div class="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 relative mb-3">
-                        <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover">
+                     <div class="w-full aspect-square rounded-xl overflow-hidden bg-white relative mb-3 border border-gray-100">
+                        <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-contain mix-blend-multiply p-2">
                         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-1"> {{ p.code }} </div>
                         <div class="absolute top-2 left-2 flex flex-col gap-1">
                            @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm w-fit">預購</span> }
@@ -2005,6 +2005,11 @@ submitProduct() {
     return l.includes('youtube.com') || l.includes('youtu.be') || l.includes('instagram.com') || l.includes('facebook.com') || l.includes('fb.watch');
   }
 
+  isIG(url: string | undefined): boolean {
+    if (!url) return false;
+    return url.toLowerCase().includes('instagram.com');
+  }
+
   isYT(url: string | undefined): boolean {
     if (!url) return false;
     const l = url.toLowerCase();
@@ -2022,5 +2027,36 @@ submitProduct() {
   getYTThumbnail(url: string): string {
     const vid = this.getYTVideoId(url);
     return vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : '';
+  }
+
+  // 🛡️ 轉換社群網址為安全的可播放嵌入碼
+  getSafeEmbedUrl(url: string): SafeResourceUrl {
+    let embedUrl = url;
+    try {
+      if (this.isYT(url)) {
+         let videoId = '';
+         if (url.includes('watch?v=')) videoId = url.split('v=')[1]?.split('&')[0];
+         else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
+         else if (url.includes('shorts/')) videoId = url.split('shorts/')[1]?.split('?')[0];
+
+         // 🔥 YT 聲音解禁版：拿掉 autoplay 和 mute，讓客人自己按播放，且有聲音！
+         if (videoId) {
+            embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`;
+         }
+      } else if (this.isIG(url)) {
+         const cleanUrl = url.split('?')[0].replace(/\/$/, "");
+         embedUrl = `${cleanUrl}/embed`;
+      } else if (url.includes('facebook.com') || url.includes('fb.watch')) {
+         let cleanFbUrl = url.split('?')[0];
+         if (url.includes('v=')) {
+            const params = new URLSearchParams(url.split('?')[1]);
+            const v = params.get('v');
+            if (v) cleanFbUrl = `${cleanFbUrl}?v=${v}`;
+         }
+         // FB 影片也移除 autoplay 和 mute
+         embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanFbUrl)}&show_text=false&width=auto`;
+      }
+    } catch(e) {}
+    return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }
 }
