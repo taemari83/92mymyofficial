@@ -114,7 +114,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="absolute inset-0 bg-black/20 flex items-center justify-center"><span class="text-white text-3xl drop-shadow-md">▶</span></div>
                  } @else if(isEmbedVideo(product.image)) {
                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
-                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+180px)] -top-[90px] left-0 scale-[1.1]' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+240px)] -top-[120px] left-0 scale-[1.55] origin-center' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                     </div>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700"></video>
@@ -179,7 +179,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="absolute inset-0 bg-black/20 flex items-center justify-center"><span class="text-white text-2xl drop-shadow-md">▶</span></div>
                  } @else if(isEmbedVideo(product.image)) {
                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
-                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+180px)] -top-[90px] left-0 scale-[1.1]' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+240px)] -top-[120px] left-0 scale-[1.55] origin-center' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                     </div>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700"></video>
@@ -251,14 +251,18 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <div class="md:w-1/2 bg-white relative group flex flex-col h-[45%] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
                
                <div class="flex-1 relative overflow-hidden bg-gray-50 p-2 md:p-4">
-                  @if(isEmbedVideo(activeImage())) {
+                  @if(isYT(activeImage())) {
+                     <div class="absolute inset-0 w-full h-full bg-black">
+                        <iframe [src]="getSafeEmbedUrl(activeImage())" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                     </div>
+                  } @else if(isEmbedVideo(activeImage())) {
                      <div class="absolute inset-0 w-full h-full overflow-hidden bg-black">
-                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-[calc(100%+180px)] -top-[90px] left-0 scale-[1.1]' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-[calc(100%+240px)] -top-[120px] left-0 scale-[1.55] origin-center pointer-events-auto' : 'absolute inset-0 w-full h-full pointer-events-auto'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                      </div>
                   } @else if(isVideo(activeImage())) {
                      <video [src]="activeImage()" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-contain"></video>
                   } @else {
-                     <img [src]="activeImage()" (error)="handleImageError($event)" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply">
+                     <img [src]="activeImage()" (error)="handleImageError($event)" (click)="isFullscreen.set(true)" class="absolute inset-0 w-full h-full object-contain mix-blend-multiply cursor-zoom-in" title="點擊放大">
                   }
                   <button (click)="closeModal()" class="md:hidden absolute top-4 right-4 w-10 h-10 bg-white/90 backdrop-blur rounded-full text-gray-800 flex items-center justify-center font-bold hover:bg-gray-200 transition-colors z-20 shadow-sm border border-gray-100">✕</button>
                </div>
@@ -271,7 +275,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                               <img loading="lazy" [src]="getYTThumbnail(img)" class="w-full h-full object-cover pointer-events-none">
                               <div class="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none"><span class="text-white text-xs drop-shadow-md">▶</span></div>
                            } @else if(isEmbedVideo(img)) {
-                              <div class="w-full h-full bg-gray-900 flex flex-col items-center justify-center pointer-events-none"><span class="text-white text-[10px] mb-0.5">🌐</span><span class="text-[8px] text-gray-300 font-bold">社群</span></div>
+                              <div class="w-full h-full bg-gray-900 flex flex-col items-center justify-center pointer-events-none"><span class="text-white text-[12px] mb-0.5">🎬</span><span class="text-[8px] text-gray-300 font-bold tracking-widest">影片</span></div>
                            } @else if(isVideo(img)) {
                               <video [src]="img" class="w-full h-full object-cover pointer-events-none"></video>
                               <div class="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none"><span class="text-white text-xs">▶</span></div>
@@ -415,6 +419,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           </div>
         </div>
       }
+
+      @if (isFullscreen()) {
+        <div class="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-2 sm:p-4 animate-fade-in" (click)="isFullscreen.set(false)">
+          <button class="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 sm:w-12 sm:h-12 text-white bg-white/10 hover:bg-white/25 rounded-full flex items-center justify-center text-xl transition-colors backdrop-blur z-10">✕</button>
+          <img [src]="activeImage()" class="max-w-full max-h-full object-contain cursor-zoom-out select-none" (click)="$event.stopPropagation()">
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -448,6 +459,7 @@ export class ShopFrontComponent {
   selectedOption = signal<string>('');
   qty = signal(1);
   activeImage = signal(''); 
+  isFullscreen = signal(false);
 
   queryParams = toSignal(this.route.queryParams, { initialValue: {} as Params });
 
@@ -639,6 +651,7 @@ export class ShopFrontComponent {
 
   closeModal() {
     this.router.navigate([], { queryParams: { p: null } });
+    this.isFullscreen.set(false);
   }
 
   handleImageError(event: any) {
@@ -695,7 +708,7 @@ export class ShopFrontComponent {
     setTimeout(() => div.remove(), 2000);
   }
 
- // 🎥 魔法功能：判斷網址是不是直連影片
+  // 🎥 魔法功能：判斷網址是不是直連影片
   isVideo(url: string | undefined): boolean {
     if (!url) return false;
     const lowerUrl = url.toLowerCase();
@@ -720,7 +733,7 @@ export class ShopFrontComponent {
     return l.includes('youtube.com') || l.includes('youtu.be');
   }
 
-  // 📸 取得 YT 影片 ID (剛剛漏掉的關鍵！)
+  // 📸 取得 YT 影片 ID
   getYTVideoId(url: string): string {
     if (!url) return '';
     if (url.includes('watch?v=')) return url.split('v=')[1]?.split('&')[0] || '';
@@ -729,7 +742,7 @@ export class ShopFrontComponent {
     return '';
   }
 
-  // 🖼️ 取得 YT 影片高畫質封面 (剛剛漏掉的關鍵！)
+  // 🖼️ 取得 YT 影片高畫質封面
   getYTThumbnail(url: string): string {
     const vid = this.getYTVideoId(url);
     return vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : '';
