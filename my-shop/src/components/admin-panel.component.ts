@@ -890,13 +890,32 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-md flex flex-col justify-end animate-slide-up" (click)="showProcurementModal.set(false)">
             <div class="bg-gray-50 w-full h-[85vh] md:h-[90vh] rounded-t-[2rem] flex flex-col overflow-hidden shadow-2xl relative" (click)="$event.stopPropagation()">
               
-              <div class="p-4 sm:p-6 border-b border-gray-200 bg-white flex justify-between items-center sticky top-0 z-10 shadow-sm">
-                <h2 class="text-xl font-bold text-brand-900 flex items-center gap-2">
-                  <span>📦</span> 即時叫貨總表
-                </h2>
-                <div class="flex items-center gap-3">
-                  <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-sm font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span> 匯出</button>
-                  <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors">✕</button>
+              <div class="p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                   <h2 class="text-xl font-bold text-brand-900 flex items-center gap-2">
+                     <span>📦</span> 即時叫貨總表
+                   </h2>
+                   <div class="flex items-center gap-2 sm:gap-3">
+                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-sm font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span> 匯出</button>
+                     <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors">✕</button>
+                   </div>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                   <div class="flex gap-1 overflow-x-auto custom-scrollbar">
+                     @for(r of [{id:'all', label:'全部未買'}, {id:'today', label:'今日'}, {id:'yesterday', label:'昨日'}, {id:'custom', label:'自訂'}]; track r.id) {
+                        <button (click)="procureRange.set(r.id)" [class.bg-brand-900]="procureRange() === r.id" [class.text-white]="procureRange() === r.id" [class.text-gray-500]="procureRange() !== r.id" [class.hover:bg-gray-200]="procureRange() !== r.id" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">
+                           {{ r.label }}
+                        </button>
+                     }
+                   </div>
+                   @if(procureRange() === 'custom') {
+                      <div class="flex items-center gap-2 animate-fade-in ml-auto w-full sm:w-auto mt-2 sm:mt-0">
+                         <input type="date" [ngModel]="procureStart()" (ngModelChange)="procureStart.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                         <span class="text-gray-400">-</span>
+                         <input type="date" [ngModel]="procureEnd()" (ngModelChange)="procureEnd.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                      </div>
+                   }
                 </div>
               </div>
 
@@ -915,6 +934,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       </div>
                       <div class="text-xs text-gray-400 mt-1 font-mono">
                         已買 {{ item.procured }} / 總需 {{ item.needed }}
+                        <span class="ml-2 text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded inline-block" title="包含的訂單日期">📅 {{ item.orderDatesStr }}</span>
                       </div>
                     </div>
 
@@ -987,6 +1007,9 @@ export class AdminPanelComponent {
 
   // ===== 📦 連線叫貨神器專用變數與邏輯 =====
   showProcurementModal = signal(false);
+  procureRange = signal('all'); 
+  procureStart = signal('');
+  procureEnd = signal('');
 
   procurementList = computed(() => {
     // 抓出「客人已付款 / 待對帳」需要叫貨的訂單
@@ -994,9 +1017,28 @@ export class AdminPanelComponent {
       ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status)
     );
 
+    // 📅 新增：日期區間篩選邏輯
+    let filteredOrders = activeOrders;
+    const range = this.procureRange();
+    const now = new Date();
+    if (range === 'today') {
+       const todayStr = now.toDateString();
+       filteredOrders = filteredOrders.filter((o: Order) => new Date(o.createdAt).toDateString() === todayStr);
+    } else if (range === 'yesterday') {
+       const yest = new Date(now);
+       yest.setDate(yest.getDate() - 1);
+       const yestStr = yest.toDateString();
+       filteredOrders = filteredOrders.filter((o: Order) => new Date(o.createdAt).toDateString() === yestStr);
+    } else if (range === 'custom') {
+       const start = this.procureStart();
+       const end = this.procureEnd();
+       if (start) filteredOrders = filteredOrders.filter((o: Order) => o.createdAt >= new Date(start).setHours(0,0,0,0));
+       if (end) filteredOrders = filteredOrders.filter((o: Order) => o.createdAt <= new Date(end).setHours(23,59,59,999));
+    }
+
     const listMap = new Map();
 
-    activeOrders.forEach((order: Order) => {
+    filteredOrders.forEach((order: Order) => {
       (order.items || []).forEach((item: CartItem) => {
         const optionName = item.option || '單一規格';
         const key = `${item.productId}_${optionName}`;
@@ -1010,11 +1052,16 @@ export class AdminPanelComponent {
             option: optionName,
             image: product?.image || item.productImage || '',
             needed: 0,
-            procured: (product as any)?.procured?.[optionName] || 0 // 讀取已買數量
+            procured: (product as any)?.procured?.[optionName] || 0, // 讀取已買數量
+            orderDatesSet: new Set<string>(),
+            orderDatesStr: ''
           });
         }
         // 累加客人下單的需求量
         listMap.get(key).needed += (item.quantity || 1);
+        // 記錄包含的訂單日期
+        listMap.get(key).orderDatesSet.add(new Date(order.createdAt).toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }));
+        listMap.get(key).orderDatesStr = Array.from(listMap.get(key).orderDatesSet).join(', ');
       });
     });
 
@@ -2047,20 +2094,22 @@ submitProduct() {
     return [...new Set(subs)];
   });
 
-  // 📥 匯出叫貨總表
+  // 📥 匯出叫貨總表 (支援日期過濾與顯示)
   exportProcurementCSV() {
-     const headers = ['商品名稱', '規格', '需叫貨數量', '已買到數量', '狀態']; 
+     const headers = ['商品名稱', '規格', '訂單包含日期', '需叫貨數量', '已買到數量', '狀態']; 
      const rows = this.procurementList().map(item => {
         const status = item.procured >= item.needed ? '✅ 已買齊' : '⚠️ 還缺 ' + (item.needed - item.procured);
         return [
            item.name,
            item.option,
+           `\t${item.orderDatesStr}`, // 加 \t 防止 Excel 把 03/15 變成日期格式
            item.needed,
            item.procured,
            status
         ];
      });
-     this.downloadCSV(`即時叫貨總表_${new Date().toISOString().slice(0,10)}`, headers, rows);
+     const rangeLabel = this.procureRange() === 'all' ? '全部' : (this.procureRange() === 'today' ? '今日' : (this.procureRange() === 'yesterday' ? '昨日' : '自訂區間'));
+     this.downloadCSV(`即時叫貨總表_${rangeLabel}_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
 
   // 🛡️ 轉換社群網址為安全的可播放嵌入碼
