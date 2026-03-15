@@ -695,7 +695,7 @@ export class ShopFrontComponent {
     setTimeout(() => div.remove(), 2000);
   }
 
-  // 🎥 魔法功能：判斷網址是不是直連影片
+ // 🎥 魔法功能：判斷網址是不是直連影片
   isVideo(url: string | undefined): boolean {
     if (!url) return false;
     const lowerUrl = url.toLowerCase();
@@ -720,6 +720,21 @@ export class ShopFrontComponent {
     return l.includes('youtube.com') || l.includes('youtu.be');
   }
 
+  // 📸 取得 YT 影片 ID (剛剛漏掉的關鍵！)
+  getYTVideoId(url: string): string {
+    if (!url) return '';
+    if (url.includes('watch?v=')) return url.split('v=')[1]?.split('&')[0] || '';
+    if (url.includes('youtu.be/')) return url.split('youtu.be/')[1]?.split('?')[0] || '';
+    if (url.includes('shorts/')) return url.split('shorts/')[1]?.split('?')[0] || '';
+    return '';
+  }
+
+  // 🖼️ 取得 YT 影片高畫質封面 (剛剛漏掉的關鍵！)
+  getYTThumbnail(url: string): string {
+    const vid = this.getYTVideoId(url);
+    return vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : '';
+  }
+
   // 🛡️ 轉換社群網址為安全的可播放嵌入碼 (全面隱藏 UI 與清洗 FB 網址版)
   getSafeEmbedUrl(url: string): SafeResourceUrl {
     let embedUrl = url;
@@ -730,7 +745,7 @@ export class ShopFrontComponent {
          else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
          else if (url.includes('shorts/')) videoId = url.split('shorts/')[1]?.split('?')[0];
 
-         // 🔥 YT 聲音解禁版：拿掉 autoplay=1 和 mute=1，讓客人自己按播放！
+         // 🔥 YT 聲音解禁版：拿掉 autoplay 和 mute，讓客人自己按播放，且有聲音！
          if (videoId) {
             embedUrl = `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`;
          }
@@ -745,7 +760,7 @@ export class ShopFrontComponent {
             const v = params.get('v');
             if (v) cleanFbUrl = `${cleanFbUrl}?v=${v}`;
          }
-         embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanFbUrl)}&show_text=false&width=auto&autoplay=1&mute=1`;
+         embedUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(cleanFbUrl)}&show_text=false&width=auto`;
       }
     } catch(e) {}
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
