@@ -640,9 +640,17 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       </select>
                     </div>
                     <div> 
-                      <label class="block text-xs font-bold text-gray-500 mb-1">標籤 <span class="text-[10px] text-gray-400 font-normal">(可換行或逗號分隔)</span></label> 
-                      <textarea formControlName="tagsStr" rows="2" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar resize-none" placeholder="例如：品牌, 團體"></textarea>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">次分類 <span class="text-[10px] text-gray-400 font-normal">(選單點選或手填新增)</span></label> 
+                      <input type="text" list="formSubCatList" formControlName="subCategory" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 transition-colors" placeholder="選擇或輸入新次分類">
+                      <datalist id="formSubCatList">
+                         @for(sub of formSubCategories(); track sub) { <option [value]="sub">{{ sub }}</option> }
+                      </datalist>
                     </div>
+                  </div>
+
+                  <div> 
+                     <label class="block text-xs font-bold text-gray-500 mb-1">標籤 <span class="text-[10px] text-gray-400 font-normal">(可換行或逗號分隔)</span></label> 
+                     <textarea formControlName="tagsStr" rows="2" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar resize-none" placeholder="例如：品牌, 團體"></textarea>
                   </div>
 
                   @if(!isQuickMode()) {
@@ -653,10 +661,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                           <label class="block text-xs font-bold text-gray-500 mb-1">分類代碼 (用於自動貨號)</label> 
                           <input [value]="currentCategoryCode()" (input)="onCodeInput($event)" class="w-full p-3 border border-gray-200 rounded-xl text-center font-mono font-bold uppercase bg-gray-50 focus:outline-none focus:border-brand-300" placeholder="代碼" maxlength="3"> 
                         </div>
-                        <div> 
-                          <label class="block text-xs font-bold text-gray-500 mb-1">次分類</label> 
-                          <input formControlName="subCategory" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
-                        </div> 
+                        <div class="hidden sm:block"></div>
                       </div>
 
                       <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4"> 
@@ -889,7 +894,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 <h2 class="text-xl font-bold text-brand-900 flex items-center gap-2">
                   <span>📦</span> 即時叫貨總表
                 </h2>
-                <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors">✕</button>
+                <div class="flex items-center gap-3">
+                  <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-sm font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span> 匯出</button>
+                  <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors">✕</button>
+                </div>
               </div>
 
               <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar pb-24">
@@ -2027,6 +2035,32 @@ submitProduct() {
   getYTThumbnail(url: string): string {
     const vid = this.getYTVideoId(url);
     return vid ? `https://img.youtube.com/vi/${vid}/hqdefault.jpg` : '';
+  }
+
+  // 💡 自動抓取「目前表單選中的主分類」底下的所有次分類
+  formSubCategories = computed(() => {
+    const cat = this.formValues().category;
+    if (!cat) return [];
+    
+    const productsInCat = this.store.products().filter((p: Product) => p.category === cat);
+    const subs = productsInCat.map((p: any) => p.subCategory).filter((sub): sub is string => !!sub);
+    return [...new Set(subs)];
+  });
+
+  // 📥 匯出叫貨總表
+  exportProcurementCSV() {
+     const headers = ['商品名稱', '規格', '需叫貨數量', '已買到數量', '狀態']; 
+     const rows = this.procurementList().map(item => {
+        const status = item.procured >= item.needed ? '✅ 已買齊' : '⚠️ 還缺 ' + (item.needed - item.procured);
+        return [
+           item.name,
+           item.option,
+           item.needed,
+           item.procured,
+           status
+        ];
+     });
+     this.downloadCSV(`即時叫貨總表_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
 
   // 🛡️ 轉換社群網址為安全的可播放嵌入碼
