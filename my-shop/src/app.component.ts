@@ -39,7 +39,7 @@ import { environment } from './environments/environment';
               <img src="https://www.flickr.com/photo_download.gne?id=55130020426&secret=082f93679c&size=l&source=photoPageEngagement" alt="92mymy Logo" class="h-16 sm:h-20 w-auto object-contain mix-blend-multiply hover:scale-105 transition-transform duration-300">
             </a>
 
-            <<div class="flex items-center gap-1 bg-white p-1.5 rounded-full border border-gray-100 shadow-sm">
+            <div class="flex items-center gap-1 bg-white p-1.5 rounded-full border border-gray-100 shadow-sm">
   <a routerLink="/" routerLinkActive="bg-brand-900 text-white" [routerLinkActiveOptions]="{exact: true}" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
     首頁
   </a>

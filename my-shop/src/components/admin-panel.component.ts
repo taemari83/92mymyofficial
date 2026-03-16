@@ -137,8 +137,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  <div class="flex flex-wrap items-center ml-auto gap-2 mt-2 md:mt-0 w-full md:w-auto justify-end">
                     <span class="hidden lg:flex text-xs text-gray-400 items-center whitespace-nowrap mr-2">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                     <div class="flex gap-2 w-full md:w-auto">
-                       <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-2 whitespace-nowrap"><span>📥</span> 匯出</button>
-                       <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-lg font-bold shadow-sm hover:bg-black flex items-center justify-center gap-2 whitespace-nowrap"><span>☁️</span> 同步</button>
+                       <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-2 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
+                       <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-lg font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-2 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
                     </div>
                  </div>
                </div>
@@ -319,8 +319,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <div class="flex flex-wrap items-center justify-between gap-3 w-full pt-4 border-t border-gray-100">
                 <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                   <div class="flex w-full sm:w-auto gap-2">
-                    <button (click)="exportProductsCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span></span> 匯出</button>
-                    <button (click)="syncProductsToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-900 text-white rounded-xl font-bold hover:bg-black shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
+                    <button (click)="exportProductsCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white border border-transparent rounded-xl font-bold hover:bg-[#7a9180] shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
+                    <button (click)="syncProductsToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white border border-transparent rounded-xl font-bold hover:bg-[#D4A0A0] shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
                   </div>
                   <label class="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-200 text-brand-900 rounded-xl font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md flex items-center justify-center gap-2 whitespace-nowrap shrink-0"> 
                     <span class="text-lg"></span> <span class="text-sm">批量新增</span> 
@@ -427,8 +427,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="flex flex-wrap items-center justify-start lg:justify-end gap-3 w-full">
                        <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span><input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"><span class="text-gray-300">-</span><input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"></div>
                        <div class="flex gap-2 w-full sm:w-auto">
-                         <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm flex items-center justify-center">匯出</button>
-                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap shadow-sm flex items-center justify-center">☁️同步</button>
+                         <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">📥 匯出</button>
+                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">☁️ 同步</button>
                        </div>
                     </div>
                     <div class="relative w-full lg:w-80"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
@@ -487,8 +487,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
                    </div> 
                  }
-                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold hover:bg-green-100 whitespace-nowrap flex items-center justify-center gap-1"><span></span>匯出報表</button>
-                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span>同步</button>
+                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap flex items-center justify-center gap-1 transition-colors"><span>📊</span> 匯出報表</button>
+                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span> 同步至 Sheets</button>
                </div>
             </div>
 
@@ -538,7 +538,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'inventory') {
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full custom-scrollbar">
-             <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><h3 class="font-bold text-lg text-gray-800">庫存總覽</h3><div class="flex gap-2 w-full sm:w-auto"><button (click)="exportInventoryCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm flex justify-center items-center gap-1">匯出</button><button (click)="syncInventoryToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap shadow-sm flex justify-center items-center gap-1">☁️同步</button></div></div>
+             <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><h3 class="font-bold text-lg text-gray-800">庫存總覽</h3>
+              <div class="flex gap-2 w-full sm:w-auto">
+                   <button (click)="exportInventoryCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex justify-center items-center gap-1 transition-colors">📥 匯出</button>
+                   <button (click)="syncInventoryToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex justify-center items-center gap-1 transition-colors">☁️ 同步</button>
+                </div>
+              </div>
              <div class="overflow-x-auto w-full"><table class="w-full text-sm text-left whitespace-nowrap"><thead class="bg-gray-50 text-gray-500"><tr><th class="p-4">貨號</th><th class="p-4">商品名稱</th><th class="p-4">規格</th><th class="p-4 text-right">剩餘庫存</th><th class="p-4 text-right">已售出</th><th class="p-4">狀態</th></tr></thead><tbody class="divide-y divide-gray-100">@for (p of store.products(); track p.id) {<tr class="hover:bg-gray-50"><td class="p-4 font-mono text-gray-400 text-xs">{{ p.code }}</td><td class="p-4 font-bold text-gray-800">{{ p.name }}</td><td class="p-4 text-gray-500">{{ (p.options || []).join(', ') || '單一規格' }}</td><td class="p-4 text-right font-mono font-bold" [class.text-red-500]="p.stock < 5">{{ p.stock >= 9999 ? '無限' : p.stock }}</td><td class="p-4 text-right text-gray-500">{{ p.soldCount }}</td><td class="p-4">@if(p.stock <= 0) { <span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs font-bold">缺貨</span> }@else if(p.stock < 5) { <span class="bg-red-100 text-red-500 px-2 py-1 rounded text-xs font-bold">低庫存</span> }@else { <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-bold">充足</span> }</td></tr>}</tbody></table></div>
           </div>
         }
@@ -551,8 +556,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">審核買手回報的單據與實際支出</p>
                  </div>
                  <div class="flex items-center gap-2">
-                    <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 transition-colors shadow-sm flex items-center gap-1"><span></span>匯出CSV</button>
-                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black transition-colors shadow-sm flex items-center gap-1"><span>☁️</span>同步</button>
+                    <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出 CSV</button>
+                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步至 Sheets</button>
                  </div>
               </div>
 
@@ -1037,8 +1042,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <span>📦</span> 即時叫貨總表
                    </h2>
                    <div class="flex items-center gap-2 sm:gap-3">
-                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-xs sm:text-sm font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span> <span class="hidden sm:inline">匯出</span></button>
-                     <button (click)="syncProcurementToGoogleSheets()" class="px-3 py-1.5 bg-brand-900 text-white rounded-lg text-xs sm:text-sm font-bold hover:bg-black shadow-sm flex items-center gap-1 transition-colors"><span>☁️</span> <span class="hidden sm:inline">同步</span></button>
+                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-xs sm:text-sm font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span></span> <span class="hidden sm:inline">匯出</span></button>
+                     <button (click)="syncProcurementToGoogleSheets()" class="px-3 py-1.5 bg-brand-900 text-white rounded-lg text-xs sm:text-sm font-bold hover:bg-black shadow-sm flex items-center gap-1 transition-colors"><span></span> <span class="hidden sm:inline">同步</span></button>
                      <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors shrink-0">✕</button>
                    </div>
                 </div>
