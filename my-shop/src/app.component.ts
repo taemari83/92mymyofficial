@@ -40,20 +40,27 @@ import { environment } from './environments/environment';
             </a>
 
             <div class="flex items-center gap-1 bg-white p-1.5 rounded-full border border-gray-100 shadow-sm">
-              <a 
-                routerLink="/" 
-                routerLinkActive="bg-brand-900 text-white"
-                [routerLinkActiveOptions]="{exact: true}"
-                class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900"
-              >
-                首頁
-              </a>
-              
-              <a 
-                routerLink="/member" 
-                routerLinkActive="bg-brand-900 text-white"
-                class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 relative"
-              >
+  <a 
+    routerLink="/" 
+    routerLinkActive="bg-brand-900 text-white"
+    [routerLinkActiveOptions]="{exact: true}"
+    class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900"
+  >
+    首頁
+  </a>
+  
+  <a 
+    routerLink="/buyer" 
+    routerLinkActive="bg-brand-900 text-white"
+    class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900"
+  >
+    買手建檔
+  </a>
+  <a 
+    routerLink="/member" 
+    routerLinkActive="bg-brand-900 text-white"
+    class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 relative"
+  >
                 會員
                 @if(store.currentUser()) {
                   <span class="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full border border-white"></span>
