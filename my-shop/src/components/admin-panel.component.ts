@@ -488,7 +488,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    </div> 
                  }
                  <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold hover:bg-green-100 whitespace-nowrap flex items-center justify-center gap-1"><span>📊</span> 匯出報表</button>
-                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span> 同步至 Sheets</button>
+                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span> 同步</button>
                </div>
             </div>
 
@@ -552,14 +552,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  </div>
                  <div class="flex items-center gap-2">
                     <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出 CSV</button>
-                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步至 Sheets</button>
+                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步</button>
                  </div>
               </div>
 
-              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
-                 <div class="overflow-x-auto w-full custom-scrollbar">
-                   <table class="w-full text-sm text-left whitespace-nowrap">
-                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar relative">
+                 <div class="overflow-x-auto w-full custom-scrollbar max-h-[65vh]">
+                   <table class="w-full text-sm text-left whitespace-nowrap block md:table">
+                      <thead class="bg-[#F9FAFB] text-gray-500 font-bold border-b border-gray-200 hidden md:table-header-group sticky top-0 z-[40] shadow-sm">
                         <tr>
                           <th class="p-4">回報時間 / 購買日</th>
                           <th class="p-4">地點/網址</th>
@@ -572,38 +572,52 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                           <th class="p-4 text-right">操作</th>
                         </tr>
                       </thead>
-                      <tbody class="divide-y divide-gray-100">
+                      <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-200">
                          @for(p of purchaseList(); track p.id) {
-                            <tr class="hover:bg-gray-50 transition-colors group">
-                               <td class="p-4">
+                            <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden relative">
+                               <td class="p-4 bg-gray-50/50 md:bg-transparent block md:table-cell border-b md:border-none border-gray-200">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">回報時間 / 購買日</span>
                                   <div class="font-bold text-gray-800">{{ p.date }}</div>
                                   <div class="text-[10px] text-gray-400">回報: {{ p.createdAt | date:'MM/dd HH:mm' }}</div>
                                </td>
-                               <td class="p-4">
+                               <td class="p-4 block md:table-cell border-b md:border-none border-gray-100">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">地點/網址</span>
                                   <div class="font-bold text-gray-700 flex items-center gap-1"><span class="text-[10px] bg-gray-200 px-1 rounded">{{ p.country }}</span> {{ p.location }}</div>
                                </td>
-                               <td class="p-4">
+                               <td class="p-4 block md:table-cell border-b md:border-none border-gray-100">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">購買品項</span>
                                   <div class="text-xs text-gray-600 font-bold mb-1">{{ p.items?.length || 0 }} 項商品 (預估值: NT$ {{ p.estimatedLocalCost | number }})</div>
                                   <div class="flex flex-col gap-0.5">
                                     @for(item of p.items; track item.productId) {
-                                      <div class="text-[10px] text-gray-500 truncate max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
+                                      <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
                                     }
                                   </div>
                                </td>
-                               <td class="p-4 text-right font-mono text-gray-500">NT$ {{ p.localShipping | number }}</td>
-                               <td class="p-4 text-right font-black text-red-600 text-base">NT$ {{ p.totalLocalCost | number }}</td>
-                               <td class="p-4 text-center">
-                                  <div class="font-bold text-gray-800">{{ p.payer }}</div>
-                                  <div class="text-[10px] text-gray-400">{{ p.shareMode }}</div>
+                               <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">單據運費</span>
+                                  <div class="font-mono text-gray-500">NT$ {{ p.localShipping | number }}</div>
                                </td>
-                               <td class="p-4 text-center">
-                                  <button (click)="openReceipts(p.receiptImages)" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center justify-center gap-1 mx-auto transition-transform active:scale-95 shadow-sm border border-blue-100"><span>📸</span> 查看 ({{ p.receiptImages?.length || 0 }})</button>
+                               <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實際刷卡總額</span>
+                                  <div class="font-black text-red-600 text-base">NT$ {{ p.totalLocalCost | number }}</div>
                                </td>
-                               <td class="p-4 text-center">
-                                  @if(p.status === 'pending_sync') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold border border-yellow-200">待核銷</span> }
-                                  @else { <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold border border-green-200">已核銷入帳</span> }
+                               <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">付款人 / 分潤</span>
+                                  <div class="text-right md:text-center">
+                                     <div class="font-bold text-gray-800">{{ p.payer }}</div>
+                                     <div class="text-[10px] text-gray-400">{{ p.shareMode }}</div>
+                                  </div>
                                </td>
-                               <td class="p-4 text-right">
+                               <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實拍收據</span>
+                                  <button (click)="openReceipts(p.receiptImages)" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 mx-auto transition-transform active:scale-95 shadow-sm border border-blue-100"><span>📸</span> 查看 ({{ p.receiptImages?.length || 0 }})</button>
+                               </td>
+                               <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">狀態</span>
+                                  @if(p.status === 'pending_sync') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold border border-yellow-200 w-fit">待核銷</span> }
+                                  @else { <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold border border-green-200 w-fit">已入帳</span> }
+                               </td>
+                               <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none">
                                   @if(p.status === 'pending_sync') { 
                                     <button (click)="approvePurchase(p)" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors shadow-sm active:scale-95">✅ 核准入帳</button> 
                                   } @else {
@@ -1970,9 +1984,10 @@ exportInventoryCSV() {
   private async pushToGoogleSheets(sheetName: string, rows: any[]) {
     // 扣除表頭，如果長度 <= 1 代表沒有真實資料
     if (rows.length <= 1) return alert('目前沒有資料可以同步！');
-    if (!confirm(`⏳ 準備將資料同步至 Google Sheets 的「${sheetName}」分頁\n(建議同步前，先在 Google Sheets 將舊資料清空以免重複)\n\n按下「確定」開始傳送。`)) return;
+    if (!confirm(`⏳ 準備將資料同步至 Google Sheets 的「${sheetName}」分頁\n(系統將會自動清空舊資料再寫入最新資料)\n\n按下「確定」開始傳送。`)) return;
     try {
-      const res = await fetch(this.SHEETS_GAS_URL, { method: 'POST', body: JSON.stringify({ sheetName, rows }) });
+      // 🔥 加入 clearSheet: true，通知 GAS 覆蓋舊資料
+      const res = await fetch(this.SHEETS_GAS_URL, { method: 'POST', body: JSON.stringify({ sheetName, rows, clearSheet: true }) });
       const result = await res.json();
       if (result.success) alert(`✅ 同步成功！\n已更新至「${sheetName}」分頁。`);
       else alert('❌ 同步失敗: ' + result.error);
