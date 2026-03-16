@@ -36,6 +36,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">數據分析</div>
           <button (click)="activeTab.set('accounting'); isSidebarOpen.set(false)" [class]="navClass('accounting')"><span class="text-xl md:text-lg">📊</span> <span class="inline">銷售報表</span></button>
           <button (click)="activeTab.set('inventory'); isSidebarOpen.set(false)" [class]="navClass('inventory')"><span class="text-xl md:text-lg">🏭</span> <span class="inline">庫存管理</span></button>
+          <button (click)="activeTab.set('purchases'); isSidebarOpen.set(false)" [class]="navClass('purchases')"><span class="text-xl md:text-lg">🧾</span> <span class="inline">採購總帳</span></button>
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">設定</div>
            <button (click)="activeTab.set('settings'); isSidebarOpen.set(false)" [class]="navClass('settings')"><span class="text-xl md:text-lg">⚙️</span> <span class="inline">商店設定</span></button>
         </div>
@@ -535,6 +536,83 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           </div>
         }
 
+        @if (activeTab() === 'purchases') {
+          <div class="space-y-6 w-full animate-fade-in">
+              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4 w-full">
+                 <div class="min-w-[150px]">
+                    <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">🧾 採購總帳</h3>
+                    <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">審核買手回報的單據與實際支出</p>
+                 </div>
+                 <div class="flex items-center gap-2">
+                    <button class="px-4 py-2 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出總帳</button>
+                 </div>
+              </div>
+
+              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
+                 <div class="overflow-x-auto w-full custom-scrollbar">
+                   <table class="w-full text-sm text-left whitespace-nowrap">
+                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
+                        <tr>
+                          <th class="p-4">回報時間 / 購買日</th>
+                          <th class="p-4">地點/網址</th>
+                          <th class="p-4">購買品項 (預估商品總額)</th>
+                          <th class="p-4 text-right">單據運費</th>
+                          <th class="p-4 text-right">實際刷卡總額</th>
+                          <th class="p-4 text-center">付款人 / 分潤</th>
+                          <th class="p-4 text-center">實拍收據</th>
+                          <th class="p-4 text-center">狀態</th>
+                          <th class="p-4 text-right">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-gray-100">
+                         @for(p of purchaseList(); track p.id) {
+                            <tr class="hover:bg-gray-50 transition-colors group">
+                               <td class="p-4">
+                                  <div class="font-bold text-gray-800">{{ p.date }}</div>
+                                  <div class="text-[10px] text-gray-400">回報: {{ p.createdAt | date:'MM/dd HH:mm' }}</div>
+                               </td>
+                               <td class="p-4">
+                                  <div class="font-bold text-gray-700 flex items-center gap-1"><span class="text-[10px] bg-gray-200 px-1 rounded">{{ p.country }}</span> {{ p.location }}</div>
+                               </td>
+                               <td class="p-4">
+                                  <div class="text-xs text-gray-600 font-bold mb-1">{{ p.items?.length || 0 }} 項商品 (預估值: NT$ {{ p.estimatedLocalCost | number }})</div>
+                                  <div class="flex flex-col gap-0.5">
+                                    @for(item of p.items; track item.productId) {
+                                      <div class="text-[10px] text-gray-500 truncate max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
+                                    }
+                                  </div>
+                               </td>
+                               <td class="p-4 text-right font-mono text-gray-500">NT$ {{ p.localShipping | number }}</td>
+                               <td class="p-4 text-right font-black text-red-600 text-base">NT$ {{ p.totalLocalCost | number }}</td>
+                               <td class="p-4 text-center">
+                                  <div class="font-bold text-gray-800">{{ p.payer }}</div>
+                                  <div class="text-[10px] text-gray-400">{{ p.shareMode }}</div>
+                               </td>
+                               <td class="p-4 text-center">
+                                  <button (click)="openReceipts(p.receiptImages)" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center justify-center gap-1 mx-auto transition-transform active:scale-95 shadow-sm border border-blue-100"><span>📸</span> 查看 ({{ p.receiptImages?.length || 0 }})</button>
+                               </td>
+                               <td class="p-4 text-center">
+                                  @if(p.status === 'pending_sync') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold border border-yellow-200">待核銷</span> }
+                                  @else { <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold border border-green-200">已核銷入帳</span> }
+                               </td>
+                               <td class="p-4 text-right">
+                                  @if(p.status === 'pending_sync') { 
+                                    <button (click)="approvePurchase(p)" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors shadow-sm active:scale-95">✅ 核准入帳</button> 
+                                  } @else {
+                                    <button class="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold cursor-not-allowed border border-gray-200">已完成</button>
+                                  }
+                               </td>
+                            </tr>
+                         } @empty {
+                            <tr><td colspan="9" class="p-8 text-center text-gray-400 font-bold">目前沒有待處理的採購單據</td></tr>
+                         }
+                      </tbody>
+                   </table>
+                 </div>
+              </div>
+          </div>
+        }
+
         @if (activeTab() === 'settings') { 
           <div class="w-full py-6"> 
             <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-12 w-full"> 
@@ -795,6 +873,25 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               </div> 
             </div> 
           </div> 
+        }
+
+        @if (showReceiptModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" (click)="showReceiptModal.set(false)">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-bounce-in" (click)="$event.stopPropagation()">
+               <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50">
+                 <h3 class="font-bold text-gray-800 flex items-center gap-2"><span>📸</span> 實拍收據</h3>
+                 <button (click)="showReceiptModal.set(false)" class="text-gray-500 hover:bg-gray-200 bg-white border border-gray-200 w-8 h-8 rounded-full flex items-center justify-center font-bold">✕</button>
+               </div>
+               <div class="p-4 overflow-y-auto max-h-[70vh] flex flex-col gap-4 bg-gray-100/50 custom-scrollbar">
+                 @for(img of viewReceiptImages(); track $index) {
+                   <img [src]="img" class="w-full rounded-xl border border-gray-200 shadow-sm bg-white p-1">
+                 }
+                 @if(viewReceiptImages().length === 0) {
+                   <div class="text-center text-gray-400 py-10 font-bold bg-white rounded-xl border border-dashed border-gray-200">買手未附上收據照片</div>
+                 }
+               </div>
+            </div>
+          </div>
         }
 
         @if (actionModalOrder(); as o) { 
@@ -1664,7 +1761,46 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   estimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.estimatedProfit() / this.formValues().priceGeneral) * 100 : 0);
   
   navClass(tab: string) { return `w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all mb-1 ${this.activeTab() === tab ? 'bg-brand-900 text-white font-bold shadow-md' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`; } 
-  getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '訂單管理 Orders', products: '商品管理 Products', customers: '客戶管理 Customers', accounting: '銷售報表 Accounting', inventory: '庫存盤點 Inventory', settings: '商店設定 Settings' }; return map[this.activeTab()] || ''; } 
+getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '訂單管理 Orders', products: '商品管理 Products', customers: '客戶管理 Customers', accounting: '銷售報表 Accounting', inventory: '庫存盤點 Inventory', purchases: '採購總帳 Purchases', settings: '商店設定 Settings' }; return map[this.activeTab()] || ''; } 
+  
+  // === 🧾 採購總帳專用邏輯 ===
+  showReceiptModal = signal(false);
+  viewReceiptImages = signal<string[]>([]);
+  
+  // 💡 這裡放一筆假資料讓你直接看到畫面長怎樣，未來這裡會串接 Firebase
+  purchaseList = signal<any[]>([
+    {
+      id: 'P123456789',
+      date: new Date().toISOString().split('T')[0],
+      createdAt: Date.now() - 3600000, // 1小時前
+      country: '韓國',
+      location: '明洞 Olive Young',
+      localShipping: 0,
+      estimatedLocalCost: 45000,
+      totalLocalCost: 45000,
+      payer: '藝辰',
+      shareMode: '親帶',
+      status: 'pending_sync',
+      receiptImages: ['https://placehold.co/400x600?text=Receipt+Demo'],
+      items: [
+        { productId: '1', productName: '示範商品A', quantity: 2, price: 15000 },
+        { productId: '2', productName: '示範商品B', quantity: 1, price: 15000 }
+      ]
+    }
+  ]);
+
+  openReceipts(images: string[]) {
+    this.viewReceiptImages.set(images || []);
+    this.showReceiptModal.set(true);
+  }
+
+  approvePurchase(p: any) {
+    if(confirm(`⚠️ 確定核准這筆支出 (實際刷卡總額: NT$ ${p.totalLocalCost}) 並入帳嗎？`)) {
+      this.purchaseList.update(list => list.map(item => item.id === p.id ? { ...item, status: 'completed' } : item));
+      alert('✅ 已成功核准並記入帳本！(目前為畫面測試)');
+    }
+  }  
+  
   goToOrders(filter: string) { this.activeTab.set('orders'); this.orderStatusTab.set(filter); } 
   toNumber(val: any) { return Number(val); } 
   getUserName(id: string) { return this.store.users().find((u: User) => u.id === id)?.name || id; } 
