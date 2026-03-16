@@ -209,10 +209,22 @@ export class BuyerFormComponent {
     
     reader.onload = async (e: any) => {
       const base64Data = e.target.result.split(',')[1];
+      
+      // 📝 產生 YYMMDD
+      const now = new Date();
+      const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      
+      // 📝 產生隨機流水號 (例如: 042)
+      const randomSerial = String(Math.floor(Math.random() * 999)).padStart(3, '0');
+      
+      // 📝 組合完美檔名 (如果有填商品名稱就用，沒有就用"未命名")
+      const safeProductName = this.formData.productName ? this.formData.productName.replace(/[\/\\:*?"<>|]/g, '') : '未命名商品';
+      const finalFileName = `${safeProductName}_${datePart}_${randomSerial}.jpg`;
+
       const payload = new URLSearchParams();
       payload.append('fileData', base64Data);
       payload.append('mimeType', file.type);
-      payload.append('fileName', `採購單據_${this.formData.sku || '未命名'}_${Date.now()}.jpg`);
+      payload.append('fileName', finalFileName); // 👈 這裡套用新檔名
 
       try {
         const response = await fetch(this.GAS_URL, { method: 'POST', body: payload });

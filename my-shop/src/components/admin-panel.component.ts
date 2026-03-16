@@ -609,11 +609,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <input formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 transition-colors" placeholder="例如: 韓國東大門羊毛大衣"> 
                   </div> 
 
+                  <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100"> 
+                    <label class="block text-xs font-bold text-blue-600 mb-1 flex items-center gap-1"><span>🔗</span> 購買網址 (內部採購用)</label> 
+                    <input type="text" formControlName="purchaseUrl" class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm outline-none focus:border-brand-400" placeholder="貼上韓國官網或店家網址..."> 
+                  </div>
                   <div class="grid grid-cols-3 gap-2 sm:gap-4"> 
                     <div class="bg-brand-50 p-2 sm:p-3 rounded-xl border border-brand-100"> 
                       <label class="block text-[10px] sm:text-xs font-bold text-brand-700 mb-1">售價 (NT$)</label> 
                       <input type="number" formControlName="priceGeneral" class="w-full p-1.5 sm:p-2 border border-brand-200 rounded-lg focus:outline-none focus:border-brand-500 font-bold text-brand-900 text-sm sm:text-lg"> 
-                    </div> 
+                    </div>
                     <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200"> 
                       <label class="block text-[10px] sm:text-xs font-bold text-gray-600 mb-1">當地原價</label> 
                       <input type="number" formControlName="localPrice" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-gray-700 text-sm sm:text-lg"> 
@@ -1598,7 +1602,28 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   }
   
   constructor() {
-    this.productForm = this.fb.group({ name: ['', Validators.required], category: [''], subCategory: [''], tagsStr: [''], code: [''], priceGeneral: [0], priceVip: [0], localPrice: [0], exchangeRate: [1], weight: [0], shippingCostPerKg: [0], costMaterial: [0], stock: [0], optionsStr: [''], note: [''], isPreorder: [false], isListed: [true], bulkCount: [0], bulkTotal: [0] });    this.productForm.valueChanges.subscribe(v => this.formValues.set(v));
+    this.productForm = this.fb.group({ 
+      name: ['', Validators.required], 
+      purchaseUrl: [''], // 👈 這裡新增了購買網址欄位
+      category: [''], 
+      subCategory: [''], 
+      tagsStr: [''], 
+      code: [''], 
+      priceGeneral: [0], 
+      priceVip: [0], 
+      localPrice: [0], 
+      exchangeRate: [1], 
+      weight: [0], 
+      shippingCostPerKg: [0], 
+      costMaterial: [0], 
+      stock: [0], 
+      optionsStr: [''], 
+      note: [''], 
+      isPreorder: [false], 
+      isListed: [true], 
+      bulkCount: [0], 
+      bulkTotal: [0] 
+    });
     const s = this.store.settings();
     this.settingsForm = this.fb.group({ enableCash: [s.paymentMethods.cash], enableBank: [s.paymentMethods.bankTransfer], enableCod: [s.paymentMethods.cod], birthdayGiftGeneral: [s.birthdayGiftGeneral], birthdayGiftVip: [s.birthdayGiftVip], shipping: this.fb.group({ freeThreshold: [s.shipping.freeThreshold], methods: this.fb.group({ meetup: this.fb.group({ enabled: [s.shipping.methods.meetup.enabled], fee: [s.shipping.methods.meetup.fee] }), myship: this.fb.group({ enabled: [s.shipping.methods.myship.enabled], fee: [s.shipping.methods.myship.fee] }), family: this.fb.group({ enabled: [s.shipping.methods.family.enabled], fee: [s.shipping.methods.family.fee] }), delivery: this.fb.group({ enabled: [s.shipping.methods.delivery.enabled], fee: [s.shipping.methods.delivery.fee] }) }) }) });
     this.userForm = this.fb.group({ name: ['', Validators.required], phone: [''], birthday: [''], tier: ['general'], credits: [0], totalSpend: [0], note: [''] });
@@ -1843,8 +1868,51 @@ if (p) {
      this.downloadCSV(`商品總表_對齊格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }
 
-  openProductForm() { this.editingProduct.set(null); this.productForm.reset(); this.productForm.patchValue({ exchangeRate: 1, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' }); this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); } 
-  editProduct(p: Product) { this.editingProduct.set(p); this.productForm.patchValue({ ...p, optionsStr: (p.options || []).join('\n'), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 }); this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); }
+openProductForm() { 
+    this.editingProduct.set(null); 
+    this.productForm.reset(); 
+    this.productForm.patchValue({ 
+      purchaseUrl: '', // 👈 清空網址
+      exchangeRate: 1, 
+      shippingCostPerKg: 0, 
+      weight: 0, 
+      costMaterial: 0, 
+      isPreorder: false, 
+      isListed: true, 
+      bulkCount: 0, 
+      bulkTotal: 0, 
+      subCategory: '', 
+      tagsStr: '' 
+    }); 
+    this.tempImages.set([]); 
+    this.currentCategoryCode.set(''); 
+    this.generatedSkuPreview.set(''); 
+    this.formValues.set(this.productForm.getRawValue()); 
+    this.showProductModal.set(true); 
+  } 
+
+  editProduct(p: Product) { 
+    this.editingProduct.set(p); 
+    this.productForm.patchValue({ 
+      ...p, 
+      purchaseUrl: (p as any).purchaseUrl || '', // 👈 帶入舊有的網址
+      optionsStr: (p.options || []).join('\n'), 
+      tagsStr: (p.tags || []).join(', '), 
+      subCategory: p.subCategory || '', 
+      exchangeRate: p.exchangeRate || 1, 
+      shippingCostPerKg: p.shippingCostPerKg || 0, 
+      weight: p.weight || 0, 
+      costMaterial: p.costMaterial || 0, 
+      isPreorder: p.isPreorder ?? false, 
+      isListed: p.isListed ?? true, 
+      bulkCount: p.bulkDiscount?.count || 0, 
+      bulkTotal: p.bulkDiscount?.total || 0 
+    }); 
+    this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); 
+    this.generatedSkuPreview.set(p.code); 
+    this.formValues.set(this.productForm.getRawValue()); 
+    this.showProductModal.set(true); 
+  }  
   closeProductModal() { this.showProductModal.set(false); } 
   onCategoryChange() { const cat = this.productForm.get('category')?.value; if (cat && !this.editingProduct()) { const codeMap = this.categoryCodes(); const foundCode = codeMap[cat] || ''; this.currentCategoryCode.set(foundCode); this.updateSkuPreview(foundCode); } } 
   onCodeInput(e: any) { const val = e.target.value.toUpperCase(); this.currentCategoryCode.set(val); if (!this.editingProduct()) { this.updateSkuPreview(val); } } 
@@ -1947,46 +2015,56 @@ async handleFileSelect(event: any) {
   removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); }
   
 submitProduct() { 
-     const val = this.productForm.value; 
-     if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
-     const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
-     const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
-     const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
-     
-     const p: any = { 
-         id: this.editingProduct()?.id || Date.now().toString(), 
-         code: finalCode, 
-         name: val.name, 
-         category: val.category, 
-         subCategory: val.subCategory || '',
-         // 🔥 魔法升級：標籤現在也支援換行或逗號切割了！
-         tags: val.tagsStr ? val.tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [],
-         image: mainImage, 
-         images: finalImages, 
-         priceGeneral: val.priceGeneral, 
-         priceVip: val.priceVip, 
-         priceWholesale: 0, 
-         localPrice: val.localPrice, 
-         stock: val.isPreorder ? 99999 : val.stock, 
-         // 🔥 魔法在這裡：使用正則表達式 /[,\n]+/，同時把「換行」跟「逗號」都當作切割點！
-         options: val.optionsStr ? val.optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [], 
-         note: val.note, 
-         exchangeRate: val.exchangeRate, 
-         costMaterial: val.costMaterial, 
-         weight: val.weight, 
-         shippingCostPerKg: val.shippingCostPerKg, 
-         priceType: 'normal', 
-         soldCount: this.editingProduct()?.soldCount || 0, 
-         country: 'Korea', 
-         allowPayment: { cash: true, bankTransfer: true, cod: true }, 
-         allowShipping: { meetup: true, myship: true, family: true, delivery: true }, 
-         isPreorder: val.isPreorder, 
-         isListed: val.isListed 
-     };        
-     if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
-     
-     if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
-     this.closeProductModal(); 
+    const val = this.productForm.value; 
+    if (val.category) { 
+      const catName = val.category.trim(); 
+      this.store.addCategory(catName); 
+      if (this.currentCategoryCode()) { 
+        const newSettings = { ...this.store.settings() }; 
+        if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; 
+        newSettings.categoryCodes[catName] = this.currentCategoryCode(); 
+        this.store.updateSettings(newSettings); 
+      } 
+    } 
+    const finalImages = this.tempImages(); 
+    const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
+    const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
+    const bulkCount = Number(val.bulkCount) || 0; 
+    const bulkTotal = Number(val.bulkTotal) || 0; 
+    
+    const p: any = { 
+        id: this.editingProduct()?.id || Date.now().toString(), 
+        code: finalCode, 
+        name: val.name, 
+        purchaseUrl: val.purchaseUrl || '', // 👈 將網址寫入資料庫
+        category: val.category, 
+        subCategory: val.subCategory || '',
+        tags: val.tagsStr ? val.tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [],
+        image: mainImage, 
+        images: finalImages, 
+        priceGeneral: val.priceGeneral, 
+        priceVip: val.priceVip, 
+        priceWholesale: 0, 
+        localPrice: val.localPrice, 
+        stock: val.isPreorder ? 99999 : val.stock, 
+        options: val.optionsStr ? val.optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [], 
+        note: val.note, 
+        exchangeRate: val.exchangeRate, 
+        costMaterial: val.costMaterial, 
+        weight: val.weight, 
+        shippingCostPerKg: val.shippingCostPerKg, 
+        priceType: 'normal', 
+        soldCount: this.editingProduct()?.soldCount || 0, 
+        country: 'Korea', 
+        allowPayment: { cash: true, bankTransfer: true, cod: true }, 
+        allowShipping: { meetup: true, myship: true, family: true, delivery: true }, 
+        isPreorder: val.isPreorder, 
+        isListed: val.isListed 
+    };        
+    if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
+    
+    if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
+    this.closeProductModal(); 
   }
   
   editUser(u: User) { this.openUserModal(u); } 
