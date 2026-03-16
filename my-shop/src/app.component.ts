@@ -50,46 +50,47 @@ import { environment } from './environments/environment';
   </a>
   
   <a 
-    routerLink="/buyer" 
-    routerLinkActive="bg-brand-900 text-white"
-    class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900"
-  >
-    買手建檔
-  </a>
-  <a 
     routerLink="/member" 
     routerLinkActive="bg-brand-900 text-white"
     class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 relative"
   >
-                會員
-                @if(store.currentUser()) {
-                  <span class="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full border border-white"></span>
-                }
-              </a>
+    會員
+    @if(store.currentUser()) {
+      <span class="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full border border-white"></span>
+    }
+  </a>
 
-              @if (!store.currentUser()?.isAdmin) {
-                 <a 
-                  routerLink="/cart" 
-                  routerLinkActive="bg-brand-900 text-white"
-                  class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 flex items-center gap-2"
-                >
-                  購物車
-                  @if (store.cartCount() > 0) {
-                    <span class="bg-brand-900 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ store.cartCount() }}</span>
-                  }
-                </a>
-              }
+  @if (!store.currentUser()?.isAdmin) {
+     <a 
+      routerLink="/cart" 
+      routerLinkActive="bg-brand-900 text-white"
+      class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 flex items-center gap-2"
+    >
+      購物車
+      @if (store.cartCount() > 0) {
+        <span class="bg-brand-900 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ store.cartCount() }}</span>
+      }
+    </a>
+  }
 
-              @if (store.currentUser()?.isAdmin) {
-                 <a 
-                  routerLink="/admin" 
-                  routerLinkActive="bg-brand-900 text-white"
-                  class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900"
-                >
-                  後台
-                </a>
-              }
-            </div>
+  @if (store.currentUser()?.isAdmin) {
+     <a 
+      routerLink="/admin" 
+      routerLinkActive="bg-brand-900 text-white"
+      class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900"
+    >
+      後台
+    </a>
+  }
+
+  <a 
+    routerLink="/buyer" 
+    routerLinkActive="bg-brand-900 text-white"
+    class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900"
+  >
+    採購回報
+  </a>
+</div>
         </div>
       </nav>
 
