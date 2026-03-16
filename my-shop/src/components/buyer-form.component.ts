@@ -10,7 +10,6 @@ import { StoreService, Product } from '../services/store.service';
   template: `
     <div class="min-h-screen bg-gray-50 pb-20 font-sans selection:bg-brand-200">
       <nav class="bg-white sticky top-0 z-40 px-4 py-3 border-b border-gray-200 shadow-sm flex items-center justify-between">
-        <h1 class="text-xl font-black text-brand-900 tracking-wide">📦 採購回報</h1>
         <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">✕</button>
       </nav>
 
@@ -115,7 +114,7 @@ import { StoreService, Product } from '../services/store.service';
             <div>
               <label class="block text-xs font-bold text-gray-500 mb-1">套用分潤模式</label>
               <select [(ngModel)]="formData.shareMode" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-brand-700 outline-none focus:border-brand-400">
-                <option value="親帶">親帶 (30/30/15/25)</option>
+                <option value="親帶">親帶 (25/25/25/25)</option>
                 <option value="買手">買手 (0/40/40/20)</option>
               </select>
             </div>
