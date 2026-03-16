@@ -64,7 +64,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
            </div>
           <div class="flex gap-2 items-center">
              <button (click)="showProcurementModal.set(true)" class="px-3 md:px-4 py-1.5 md:py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl font-bold hover:bg-yellow-200 flex items-center gap-1.5 shadow-sm transition-colors whitespace-nowrap">
-               <span class="text-lg">📦</span> <span class="hidden sm:inline">叫貨總表</span>
+               <span class="text-lg"></span> <span class="hidden sm:inline">叫貨</span>
              </button>
              <button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button>
            </div>
@@ -86,7 +86,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
                <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-50 w-full">
                  <div class="flex items-center justify-between mb-6">
-                    <h3 class="font-bold text-xl text-gray-800 whitespace-nowrap">🔥 熱銷商品排行</h3>
+                    <h3 class="font-bold text-xl text-gray-800 whitespace-nowrap">熱銷商品排行</h3>
                     <button (click)="activeTab.set('accounting')" class="text-xs text-brand-600 hover:underline whitespace-nowrap">查看完整報表</button>
                  </div>
                  <div class="space-y-4">
@@ -216,7 +216,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100">
                            <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">付款方式</span>
                            <div class="text-right md:text-left">
-                             @if(order.paymentMethod === 'bank_transfer') { <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">🏦 轉帳</span> }@else if(order.paymentMethod === 'cod') { <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">🚚 貨到付款</span> }@else { <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">💵 現金</span> }
+                             @if(order.paymentMethod === 'bank_transfer') { <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">轉帳</span> }@else if(order.paymentMethod === 'cod') { <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-bold">🚚 貨到付款</span> }@else { <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-bold">💵 現金</span> }
                            </div>
                          </td>
                          
@@ -233,9 +233,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
     @if(order.paymentLast5) { 
       <div class="bg-blue-50 px-2.5 py-1.5 rounded-md border border-blue-100 flex flex-col gap-0.5 shadow-sm mt-0.5">
          <div class="text-[13px] text-blue-800 font-mono font-black flex items-center gap-1" title="匯款後五碼">
-            <span>💳 {{ order.paymentLast5 }}</span>
+            <span>{{ order.paymentLast5 }}</span>
          </div>
-         @if(order.paymentName) { <div class="text-[10px] text-blue-600 font-bold">👤 {{ order.paymentName }}</div> }
+         @if(order.paymentName) { <div class="text-[10px] text-blue-600 font-bold">{{ order.paymentName }}</div> }
       </div>
     }
   </div>
@@ -300,7 +300,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   (ngModelChange)="productCategoryFilter.set($event); productSubCategoryFilter.set('all')"
                   class="w-full sm:w-auto min-w-[150px] bg-gray-50 px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-gray-700 cursor-pointer appearance-none shrink-0"
                 >
-                  <option value="all">📁 全部主分類</option>
+                  <option value="all">全部主分類</option>
                   @for(c of store.categories(); track c) { <option [value]="c">{{ c }}</option> }
                 </select>
 
@@ -310,7 +310,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     (ngModelChange)="productSubCategoryFilter.set($event)"
                     class="w-full sm:w-auto min-w-[150px] bg-brand-50 px-4 py-2.5 rounded-xl border border-brand-200 shadow-sm outline-none focus:border-brand-300 text-sm font-bold text-brand-800 cursor-pointer appearance-none animate-fade-in shrink-0"
                   >
-                    <option value="all">📂 全部次分類</option>
+                    <option value="all">全部次分類</option>
                     @for(sub of adminSubCategories(); track sub) { <option [value]="sub">{{ sub }}</option> }
                   </select>
                 }
@@ -319,11 +319,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <div class="flex flex-wrap items-center justify-between gap-3 w-full pt-4 border-t border-gray-100">
                 <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                   <div class="flex w-full sm:w-auto gap-2">
-                    <button (click)="exportProductsCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
+                    <button (click)="exportProductsCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span></span> 匯出</button>
                     <button (click)="syncProductsToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-brand-900 text-white rounded-xl font-bold hover:bg-black shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
                   </div>
                   <label class="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-200 text-brand-900 rounded-xl font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md flex items-center justify-center gap-2 whitespace-nowrap shrink-0"> 
-                    <span class="text-lg">📂</span> <span class="text-sm">批量新增</span> 
+                    <span class="text-lg"></span> <span class="text-sm">批量新增</span> 
                     <input type="file" (change)="handleBatchImport($event)" class="hidden" accept=".csv"> 
                   </label> 
                   <button (click)="openProductForm()" class="w-full sm:w-auto px-6 py-2.5 bg-brand-900 text-white rounded-xl flex items-center justify-center font-bold shadow-lg hover:bg-brand-800 transition-colors shrink-0 gap-2"> 
@@ -427,8 +427,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="flex flex-wrap items-center justify-start lg:justify-end gap-3 w-full">
                        <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span><input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"><span class="text-gray-300">-</span><input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"></div>
                        <div class="flex gap-2 w-full sm:w-auto">
-                         <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm flex items-center justify-center">📥 匯出</button>
-                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap shadow-sm flex items-center justify-center">☁️ 同步</button>
+                         <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm flex items-center justify-center">匯出</button>
+                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap shadow-sm flex items-center justify-center">☁️同步</button>
                        </div>
                     </div>
                     <div class="relative w-full lg:w-80"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
@@ -487,8 +487,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
                    </div> 
                  }
-                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold hover:bg-green-100 whitespace-nowrap flex items-center justify-center gap-1"><span>📊</span> 匯出報表</button>
-                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span> 同步</button>
+                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold hover:bg-green-100 whitespace-nowrap flex items-center justify-center gap-1"><span></span>匯出報表</button>
+                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span>同步</button>
                </div>
             </div>
 
@@ -498,7 +498,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             
             <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📈 期間商品銷售分析</span></h4>
+                  <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>期間商品銷售分析</span></h4>
                   <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit">
                      <button (click)="reportSortBy.set('sold')" [class.bg-white]="reportSortBy() === 'sold'" [class.text-brand-900]="reportSortBy() === 'sold'" [class.shadow-sm]="reportSortBy() === 'sold'" class="px-4 py-1.5 rounded-lg text-sm font-bold text-gray-500 transition-all">🔥 熱銷排行</button>
                      <button (click)="reportSortBy.set('profit')" [class.bg-white]="reportSortBy() === 'profit'" [class.text-brand-900]="reportSortBy() === 'profit'" [class.shadow-sm]="reportSortBy() === 'profit'" class="px-4 py-1.5 rounded-lg text-sm font-bold text-gray-500 transition-all">💰 毛利排行</button>
@@ -538,7 +538,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'inventory') {
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full custom-scrollbar">
-             <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><h3 class="font-bold text-lg text-gray-800">庫存總覽</h3><div class="flex gap-2 w-full sm:w-auto"><button (click)="exportInventoryCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm flex justify-center items-center gap-1">📥 匯出</button><button (click)="syncInventoryToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap shadow-sm flex justify-center items-center gap-1">☁️ 同步</button></div></div>
+             <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><h3 class="font-bold text-lg text-gray-800">庫存總覽</h3><div class="flex gap-2 w-full sm:w-auto"><button (click)="exportInventoryCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl font-bold hover:bg-gray-50 whitespace-nowrap shadow-sm flex justify-center items-center gap-1">匯出</button><button (click)="syncInventoryToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap shadow-sm flex justify-center items-center gap-1">☁️同步</button></div></div>
              <div class="overflow-x-auto w-full"><table class="w-full text-sm text-left whitespace-nowrap"><thead class="bg-gray-50 text-gray-500"><tr><th class="p-4">貨號</th><th class="p-4">商品名稱</th><th class="p-4">規格</th><th class="p-4 text-right">剩餘庫存</th><th class="p-4 text-right">已售出</th><th class="p-4">狀態</th></tr></thead><tbody class="divide-y divide-gray-100">@for (p of store.products(); track p.id) {<tr class="hover:bg-gray-50"><td class="p-4 font-mono text-gray-400 text-xs">{{ p.code }}</td><td class="p-4 font-bold text-gray-800">{{ p.name }}</td><td class="p-4 text-gray-500">{{ (p.options || []).join(', ') || '單一規格' }}</td><td class="p-4 text-right font-mono font-bold" [class.text-red-500]="p.stock < 5">{{ p.stock >= 9999 ? '無限' : p.stock }}</td><td class="p-4 text-right text-gray-500">{{ p.soldCount }}</td><td class="p-4">@if(p.stock <= 0) { <span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs font-bold">缺貨</span> }@else if(p.stock < 5) { <span class="bg-red-100 text-red-500 px-2 py-1 rounded text-xs font-bold">低庫存</span> }@else { <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-bold">充足</span> }</td></tr>}</tbody></table></div>
           </div>
         }
@@ -551,8 +551,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">審核買手回報的單據與實際支出</p>
                  </div>
                  <div class="flex items-center gap-2">
-                    <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出 CSV</button>
-                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步</button>
+                    <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-brand-50 text-brand-700 border border-brand-200 rounded-xl font-bold hover:bg-brand-100 transition-colors shadow-sm flex items-center gap-1"><span></span>匯出CSV</button>
+                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black transition-colors shadow-sm flex items-center gap-1"><span>☁️</span>同步</button>
                  </div>
               </div>
 
@@ -844,7 +844,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <div class="p-4 sm:p-6 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0"> 
                 <button (click)="closeProductModal()" class="px-5 sm:px-6 py-2.5 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-colors">取消</button> 
                 <button (click)="submitProduct()" class="px-5 sm:px-6 py-2.5 rounded-xl bg-brand-900 text-white font-bold hover:bg-black transition-transform active:scale-95 flex items-center gap-2">
-                  <span class="text-lg">💾</span> 確認儲存
+                  <span class="text-lg"></span> 確認儲存
                 </button> 
               </div> 
             </div> 
@@ -946,7 +946,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
                     @if(o.paymentMethod === 'bank_transfer' || o.paymentLast5) {
                        <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 mt-2 p-3 bg-blue-100/50 rounded-lg border border-blue-200">
-                          <span class="text-blue-700 font-bold shrink-0">🏦 匯款後五碼:</span>
+                          <span class="text-blue-700 font-bold shrink-0">匯款後五碼:</span>
                           <input type="text" [value]="o.paymentLast5 || ''" (change)="updatePaymentLast5(o, $event)" placeholder="可手動幫客人填寫" class="w-full sm:w-32 px-2 py-1.5 rounded border border-blue-300 text-sm focus:outline-none focus:border-blue-500 bg-white text-brand-900 font-mono font-bold">
                           @if(o.paymentName) { <span class="text-[10px] text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">戶名: {{ o.paymentName }}</span> }
                        </div>

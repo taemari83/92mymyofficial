@@ -46,6 +46,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  [ngModel]="sortOption()" 
                  (ngModelChange)="sortOption.set($event)"
                  class="w-full h-full appearance-none bg-white border border-gray-100 text-brand-900 text-sm rounded-full pl-4 pr-8 py-3 outline-none focus:border-brand-300 shadow-sm font-bold cursor-pointer"
+               >  
                  <option value="newest">  上架：新到舊</option>
                  <option value="oldest">  上架：舊到新</option>
                  <option value="hot">  熱銷排行</option>
