@@ -95,9 +95,13 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                 </div>
 
                 @if(p.purchaseUrl) {
-                  <a [href]="p.purchaseUrl" target="_blank" class="block w-full py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-bold text-center border border-blue-100 transition-colors">
-                    🔗 點我前往網址購買
-                  </a>
+                  <div class="space-y-2">
+                    @for(url of parseUrls(p.purchaseUrl); track $index) {
+                      <a [href]="url" target="_blank" class="block w-full py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg text-xs font-bold text-center border border-blue-100 transition-colors shadow-sm">
+                        🔗 前往網址購買 {{ parseUrls(p.purchaseUrl).length > 1 ? ($index + 1) : '' }}
+                      </a>
+                    }
+                  </div>
                 }
 
                 <div class="flex gap-2">
@@ -339,6 +343,12 @@ export class BuyerFormComponent {
     event.target.src = 'https://placehold.co/150x150?text=No+Image';
   }
 
+  // 解析多個網址 (自動過濾掉空白或不合法的行)
+  parseUrls(urlsStr: string | undefined | null): string[] {
+    if (!urlsStr) return [];
+    return urlsStr.split(/[\n, ]+/).filter(u => u.trim().startsWith('http'));
+  }
+  
   getCalculatedTotal(): number {
     const itemsTotal = this.purchaseItems().reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const shipping = Number(this.formData.localShipping) || 0;

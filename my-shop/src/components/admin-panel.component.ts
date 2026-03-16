@@ -627,8 +627,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   </div> 
 
                   <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100 mt-4"> 
-                    <label class="block text-xs font-bold text-blue-600 mb-1 flex items-center gap-1"><span>🔗</span> 購買網址 (內部採購用)</label> 
-                    <input type="text" formControlName="purchaseUrl" class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm outline-none focus:border-brand-400" placeholder="貼上韓國官網或店家網址..."> 
+                    <label class="block text-xs font-bold text-blue-600 mb-1 flex items-center gap-1"><span>🔗</span> 購買網址 (支援多個，請按 Enter 換行)</label> 
+                    <textarea formControlName="purchaseUrl" rows="3" class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm outline-none focus:border-brand-400 custom-scrollbar resize-y" placeholder="貼上韓國官網或店家網址...&#10;如果有多個網址，請換行貼上"></textarea> 
                   </div>
 
                   <div class="grid grid-cols-3 gap-2 sm:gap-4 mt-4"> 
