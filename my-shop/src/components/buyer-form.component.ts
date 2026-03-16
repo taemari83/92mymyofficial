@@ -9,7 +9,6 @@ import { StoreService, Product } from '../services/store.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="min-h-screen bg-gray-50 pb-20 font-sans selection:bg-brand-200">
-      <nav class="bg-white sticky top-0 z-40 px-4 py-3 border-b border-gray-200 shadow-sm flex items-center justify-between">
         <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">✕</button>
       </nav>
 
