@@ -42,16 +42,13 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                 @for(task of pendingTasks(); track task.productId + task.option) {
                   <div (click)="selectTask(task)" class="flex items-center gap-3 p-3 bg-gray-50 hover:bg-brand-50 rounded-xl border border-gray-100 hover:border-brand-200 cursor-pointer transition-colors group relative overflow-hidden">
                     <div class="absolute inset-0 bg-brand-900/5 opacity-0 group-active:opacity-100 transition-opacity"></div>
-                    
                     <img [src]="task.image" (error)="handleImageError($event)" class="w-12 h-12 rounded-lg object-cover border border-gray-200 shrink-0 bg-white mix-blend-multiply" />
-                    
                     <div class="flex-1 min-w-0">
                       <div class="text-xs font-bold text-gray-800 line-clamp-1 group-hover:text-brand-900">{{ task.productName }}</div>
                       <div class="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
                         <span class="bg-white border border-gray-200 px-1 rounded">{{ task.option }}</span>
                       </div>
                     </div>
-                    
                     <div class="text-right shrink-0 bg-white p-1.5 rounded-lg border border-red-100 shadow-sm">
                       <div class="text-[9px] text-red-400 font-bold mb-0.5 tracking-widest text-center">還缺</div>
                       <div class="text-lg font-black text-red-600 leading-none text-center">{{ task.needed - task.procured }}</div>
@@ -105,11 +102,14 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
 
                 <div class="flex gap-2">
                   <div class="flex-1">
-                    <label class="block text-[10px] font-bold text-gray-400 mb-1">當地單價</label>
-                    <input type="number" [(ngModel)]="tempPrice" placeholder="0" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-black outline-none focus:border-brand-400" />
+                    <label class="flex justify-between items-end mb-1">
+                      <span class="text-[10px] font-bold text-red-500">實際單價 (必填)</span>
+                      @if(referencePrice()) { <span class="text-[9px] font-bold text-gray-400 bg-gray-100 px-1 rounded">參考價: {{ referencePrice() | number }}</span> }
+                    </label>
+                    <input type="number" [(ngModel)]="tempPrice" placeholder="請看收據填寫..." class="w-full p-2.5 bg-red-50/30 border border-red-200 rounded-lg text-sm font-black outline-none focus:border-red-400 focus:bg-red-50 transition-colors placeholder:text-gray-300 placeholder:font-normal" />
                   </div>
                   <div class="w-24 shrink-0">
-                    <label class="block text-[10px] font-bold text-gray-400 mb-1">本次採購數量</label>
+                    <label class="block text-[10px] font-bold text-gray-400 mb-1">本次購買數量</label>
                     <input type="number" [(ngModel)]="tempQty" class="w-full p-2.5 bg-brand-50 border border-brand-200 text-brand-900 rounded-xl text-sm font-black outline-none focus:border-brand-500 text-center" />
                   </div>
                 </div>
@@ -286,6 +286,9 @@ export class BuyerFormComponent {
   
   searchProductText = ''; 
   selectedProduct = signal<any>(null); 
+  
+  // 🔥 新增：儲存參考價，並將實際單價設為 null (強制手填)
+  referencePrice = signal<number | null>(null);
   tempPrice = signal<number | null>(null); 
   tempQty = signal<number>(1); 
   purchaseItems = signal<any[]>([]); 
@@ -299,9 +302,7 @@ export class BuyerFormComponent {
     shareMode: '親帶',
   };
 
-  // 🚀 核心邏輯：自動抓取後台的「即時叫貨總表」
   pendingTasks = computed(() => {
-    // 找出所有需要處理的訂單 (已付款待出貨)
     const activeOrders = this.store.orders().filter((o: Order) => 
       ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status)
     );
@@ -321,17 +322,16 @@ export class BuyerFormComponent {
             option: optionName,
             image: product?.image || item.productImage || 'https://placehold.co/150x150?text=No+Image',
             sku: product?.code || '',
-            purchaseUrl: (product as any)?.purchaseUrl || '', // 抓取購買網址
+            purchaseUrl: (product as any)?.purchaseUrl || '',
             localPrice: product?.localPrice || null,
             needed: 0,
-            procured: (product as any)?.procured?.[optionName] || 0 // 目前已採購數量
+            procured: (product as any)?.procured?.[optionName] || 0
           });
         }
         listMap.get(key).needed += (item.quantity || 1);
       });
     });
 
-    // 只回傳「還沒買齊」的項目 (需要 > 已買)
     return Array.from(listMap.values()).filter(task => task.needed > task.procured);
   });
 
@@ -345,7 +345,6 @@ export class BuyerFormComponent {
     return itemsTotal + shipping;
   }
 
-  // 點擊「任務清單」時自動帶入資料
   selectTask(task: any) {
     this.selectedProduct.set({
       productId: task.productId,
@@ -356,21 +355,23 @@ export class BuyerFormComponent {
       purchaseUrl: task.purchaseUrl,
       option: task.option 
     });
-    // 自動填入預設單價
-    this.tempPrice.set(task.localPrice || null);
-    // 自動填入「還缺」的數量，超貼心！
+    
+    // 🔥 儲存參考價，但將實際輸入框清空，強迫買手填寫
+    this.referencePrice.set(task.localPrice || null);
+    this.tempPrice.set(null); 
     this.tempQty.set(task.needed - task.procured); 
     this.searchProductText = '';
   }
 
   clearSelection() {
     this.selectedProduct.set(null);
+    this.referencePrice.set(null);
   }
 
   onProductSearchChange() {
     const searchText = this.searchProductText.trim();
     if (!searchText) {
-      this.selectedProduct.set(null);
+      this.clearSelection();
       return;
     }
 
@@ -397,10 +398,13 @@ export class BuyerFormComponent {
         productImage: img,
         purchaseUrl: (found as any).purchaseUrl || '' 
       });
-      this.tempPrice.set(found.localPrice || null);
+      
+      // 🔥 儲存參考價，強制手動填寫
+      this.referencePrice.set(found.localPrice || null);
+      this.tempPrice.set(null);
       this.tempQty.set(1);
     } else {
-      this.selectedProduct.set(null);
+      this.clearSelection();
     }
   }
 
@@ -409,8 +413,8 @@ export class BuyerFormComponent {
     const price = this.tempPrice();
     const qty = this.tempQty();
 
-    if (!product || price === null || price < 0 || qty <= 0) {
-      alert('請確認單價與數量是否正確填寫！');
+    if (!product || price === null || price <= 0 || qty <= 0) {
+      alert('⚠️ 帳務防呆：請確實輸入您「實際購買的單價」與「數量」！\n(單價不可為 0 或空白)');
       return;
     }
 
@@ -420,7 +424,7 @@ export class BuyerFormComponent {
     ]);
 
     this.searchProductText = '';
-    this.selectedProduct.set(null);
+    this.clearSelection();
     this.tempPrice.set(null);
     this.tempQty.set(1);
   }
@@ -505,12 +509,10 @@ export class BuyerFormComponent {
       status: 'pending_sync'
     };
     
-    // 這裡未來會接 store.addPurchaseBatch(finalData) 將整批資料寫入 Firebase 並自動扣減任務數量
-    
     alert(`✅ 整筆單據回報成功！\n共包含 ${this.purchaseItems().length} 項商品\n總花費: ${finalData.totalLocalCost}`);
     
     this.searchProductText = '';
-    this.selectedProduct.set(null);
+    this.clearSelection();
     this.purchaseItems.set([]);
     this.uploadedImages.set([]);
     this.formData.location = '';
