@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Product } from '../services/store.service';
@@ -17,7 +17,7 @@ import { StoreService, Product } from '../services/store.service';
       <main class="max-w-md mx-auto p-4 space-y-5 animate-fade-in">
         
         <div class="flex bg-gray-200/50 p-1 rounded-xl w-full">
-          <button (click)="isNewProduct.set(false); clearForm()" [class.bg-white]="!isNewProduct()" [class.shadow-sm]="!isNewProduct()" [class.text-brand-900]="!isNewProduct()" [class.text-gray-500]="isNewProduct()" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">📦 買現有缺貨商品</button>
+          <button (click)="isNewProduct.set(false); clearForm()" [class.bg-white]="!isNewProduct()" [class.shadow-sm]="!isNewProduct()" [class.text-brand-900]="!isNewProduct()" [class.text-gray-500]="isNewProduct()" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">📦 買現有商品</button>
           <button (click)="isNewProduct.set(true); clearForm()" [class.bg-white]="isNewProduct()" [class.shadow-sm]="isNewProduct()" [class.text-brand-900]="isNewProduct()" [class.text-gray-500]="!isNewProduct()" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">✨ 現場開發新品</button>
         </div>
 
@@ -184,12 +184,12 @@ import { StoreService, Product } from '../services/store.service';
 export class BuyerFormComponent {
   store = inject(StoreService);
   
-  // ⚠️ 這裡請換回你最新部署的 GAS 網址！
   readonly GAS_URL = 'https://script.google.com/macros/s/AKfycbzSqZFXKWlmeI4WLkE8iBYrbGWfeWxVJigl-zOLMhUQVlVv5_qW9OpLJZenLElZqhNZxA/exec';
 
+  isNewProduct = signal(false);
   isUploading = signal(false);
   uploadedImages = signal<string[]>([]);
-  searchProductText = ''; // 用於綁定搜尋框
+  searchProductText = '';
 
   formData = {
     date: new Date().toISOString().split('T')[0],
@@ -213,11 +213,17 @@ export class BuyerFormComponent {
     return (price * qty) + shipping;
   }
 
-  // 🚀 智慧搜尋邏輯：反查商品名稱
+  clearForm() {
+    this.formData.selectedProductId = '';
+    this.formData.productName = '';
+    this.formData.category = '';
+    this.formData.sku = '';
+    this.formData.localPrice = null;
+    this.formData.quantity = 1;
+  }
+
   onProductSearchChange() {
-    // 從輸入的字串 "[貨號] 商品名稱" 中去資料庫反查真正的商品
     const found = this.store.products().find((p: Product) => `[${p.code}] ${p.name}` === this.searchProductText);
-    
     if (found) {
       this.formData.selectedProductId = found.id;
       this.formData.productName = found.name;
@@ -231,6 +237,16 @@ export class BuyerFormComponent {
     }
   }
 
+  generateSku() {
+    if (!this.isNewProduct() || !this.formData.category) return;
+    const codeMap = this.store.settings().categoryCodes || {};
+    const prefix = codeMap[this.formData.category] || 'Z'; 
+    const now = new Date();
+    const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const randomNum = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
+    this.formData.sku = `${prefix}${datePart}${randomNum}`;
+  }
+
   async uploadToDrive(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -241,21 +257,16 @@ export class BuyerFormComponent {
     reader.onload = async (e: any) => {
       const base64Data = e.target.result.split(',')[1];
       
-      // 📝 產生 YYMMDD
       const now = new Date();
       const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-      
-      // 📝 產生隨機流水號 (例如: 042)
       const randomSerial = String(Math.floor(Math.random() * 999)).padStart(3, '0');
-      
-      // 📝 組合完美檔名 (如果有填商品名稱就用，沒有就用"未命名")
       const safeProductName = this.formData.productName ? this.formData.productName.replace(/[\/\\:*?"<>|]/g, '') : '未命名商品';
       const finalFileName = `${safeProductName}_${datePart}_${randomSerial}.jpg`;
 
       const payload = new URLSearchParams();
       payload.append('fileData', base64Data);
       payload.append('mimeType', file.type);
-      payload.append('fileName', finalFileName); // 👈 這裡套用新檔名
+      payload.append('fileName', finalFileName);
 
       try {
         const response = await fetch(this.GAS_URL, { method: 'POST', body: payload });
@@ -282,7 +293,7 @@ export class BuyerFormComponent {
   }
 
   async submitPurchase() {
-    if (!this.formData.location || !this.formData.selectedProductId || !this.formData.localPrice) {
+    if (!this.formData.location || (!this.formData.productName && !this.formData.selectedProductId) || !this.formData.localPrice) {
       alert('請先搜尋選擇商品，並填寫必填欄位！');
       return;
     }
@@ -297,14 +308,8 @@ export class BuyerFormComponent {
 
     alert(`✅ 採購紀錄送出成功！\n貨號: ${this.formData.sku}\n總花費: ${finalData.totalLocalCost}`);
     
-    // 清空表單，準備填寫下一筆
     this.searchProductText = '';
-    this.formData.selectedProductId = '';
-    this.formData.productName = '';
-    this.formData.sku = '';
-    this.formData.localPrice = null;
-    this.formData.quantity = 1;
-    this.formData.localShipping = 0;
+    this.clearForm();
     this.uploadedImages.set([]);
   }
 }

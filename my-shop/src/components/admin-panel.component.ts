@@ -994,6 +994,11 @@ export class AdminPanelComponent {
   sanitizer = inject(DomSanitizer);
   fb: FormBuilder = inject(FormBuilder);
   now = new Date();
+
+  // 👇 補上這段防破圖的函式 👇
+  handleImageError(event: any) { 
+    event.target.src = 'https://placehold.co/100x100?text=No+Image'; 
+  }
   activeTab = signal('dashboard');
   productSearch = signal('');
   productCategoryFilter = signal<string>('all'); // 記錄選中的主分類
