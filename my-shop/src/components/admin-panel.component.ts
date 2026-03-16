@@ -487,7 +487,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
                    </div> 
                  }
-                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap flex items-center justify-center gap-1 transition-colors"><span>📥 匯出</button>
+                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap flex items-center justify-center gap-1 transition-colors"><span>📥</span> 匯出</button>
                  <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span> 同步</button>
                </div>
             </div>
