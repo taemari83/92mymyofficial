@@ -1856,7 +1856,7 @@ exportInventoryCSV() {
 
   async syncToGoogleSheets() {
     // ⚠️ 貼上你剛剛新部署的 Google Sheets GAS 網址 (階段一產生的那串)
-    const SHEETS_GAS_URL = '1DsudieK5BrXLBeYa3otpxHSh3yJUAweGlNSbVvMlpx8';
+    const SHEETS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwCBQjv_aHhgRQhyAnSkddhapYHiwgzkEBDxnxTgItJZsmku5uPRC0IYscHfo7mdCs2/exec';
     
     const range = this.accountingRange(); 
     const now = new Date(); 
