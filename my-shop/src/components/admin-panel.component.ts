@@ -464,7 +464,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
            <div class="space-y-6 pt-2 w-full">
             <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 w-full">
                <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1 custom-scrollbar">@for(r of ['today', 'week', 'month', 'custom']; track r) { <button (click)="accountingRange.set(r)" class="px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap" [class.bg-brand-900]="accountingRange() === r" [class.text-white]="accountingRange() === r" [class.bg-gray-100]="accountingRange() !== r" [class.text-gray-500]="accountingRange() !== r"> @switch(r) { @case('today') { 今日 } @case('week') { 本週 } @case('month') { 本月 } @case('custom') { 自訂 } } </button> }</div>
-               <div class="flex items-center gap-2">@if(accountingRange() === 'custom') { <div class="flex items-center gap-2 animate-fade-in"> <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> <span class="text-gray-400">~</span> <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> </div> }<button (click)="exportToCSV()" class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold hover:bg-green-100 whitespace-nowrap flex items-center gap-1"><span>📊</span> 匯出報表</button></div>
+               <div class="flex items-center gap-2">@if(accountingRange() === 'custom') { <div class="flex items-center gap-2 animate-fade-in"> <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> <span class="text-gray-400">~</span> <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> </div> }
+               <button (click)="exportToCSV()" class="px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl font-bold hover:bg-green-100 whitespace-nowrap flex items-center gap-1"><span>📊</span> 匯出報表</button>
+               <button (click)="syncToGoogleSheets()" class="px-4 py-2 bg-brand-900 text-white rounded-xl font-bold hover:bg-black whitespace-nowrap flex items-center gap-1 shadow-md transition-transform active:scale-95 ml-2"><span>☁️</span> 雲端同步至 Sheets</button></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full"><div class="bg-brand-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div><div class="relative z-10"><div class="text-brand-200 text-xs font-bold uppercase tracking-widest mb-1">總營收 (已扣除折扣)</div><div class="text-3xl font-black">NT$ {{ accountingStats().revenue | number }}</div></div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">淨利潤</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().profit | number:'1.0-0' }}</div><div class="mt-2 inline-block px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">淨利率 {{ accountingStats().margin | number:'1.1-1' }}%</div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">總成本 (商品+物流)</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().cost | number:'1.0-0' }}</div></div><div class="lg:col-span-3 bg-blue-50/50 p-4 rounded-[2rem] border border-blue-50 flex items-center text-blue-800/70 text-xs leading-relaxed">💡 報表說明：<br>• 只要有下單(包含未付款)，皆會計入上方「總營收/淨利」方便追蹤。<br>• 僅排除「已退款」與「已取消」的訂單。<br>• 下方「收款狀態分析」方便對帳實際入帳的現金流。</div></div>
@@ -609,11 +611,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <input formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 transition-colors" placeholder="例如: 韓國東大門羊毛大衣"> 
                   </div> 
 
-                  <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100"> 
+                  <div class="bg-blue-50/50 p-3 rounded-xl border border-blue-100 mt-4"> 
                     <label class="block text-xs font-bold text-blue-600 mb-1 flex items-center gap-1"><span>🔗</span> 購買網址 (內部採購用)</label> 
                     <input type="text" formControlName="purchaseUrl" class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm outline-none focus:border-brand-400" placeholder="貼上韓國官網或店家網址..."> 
                   </div>
-                  <div class="grid grid-cols-3 gap-2 sm:gap-4"> 
+
+                  <div class="grid grid-cols-3 gap-2 sm:gap-4 mt-4">> 
                     <div class="bg-brand-50 p-2 sm:p-3 rounded-xl border border-brand-100"> 
                       <label class="block text-[10px] sm:text-xs font-bold text-brand-700 mb-1">售價 (NT$)</label> 
                       <input type="number" formControlName="priceGeneral" class="w-full p-1.5 sm:p-2 border border-brand-200 rounded-lg focus:outline-none focus:border-brand-500 font-bold text-brand-900 text-sm sm:text-lg"> 
@@ -1780,7 +1783,6 @@ exportInventoryCSV() {
     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
     
     let list = this.accountingFilteredOrders(); 
-    // 表頭：增加「商品成本(一般)」與「商品成本(VIP)」
     const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%'];
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
 
@@ -1795,7 +1797,7 @@ exportInventoryCSV() {
         let costGen = 0;
         let costVip = 0;
 
-if (p) { 
+        if (p) { 
           let currentLocalPrice = p.localPrice || 0;
           let currentPriceGeneral = p.priceGeneral || 0;
           let currentPriceVip = p.priceVip || 0;
@@ -1813,9 +1815,8 @@ if (p) {
           const costMat = p.costMaterial || 0;
           const weight = p.weight || 0;
           const shipKg = p.shippingCostPerKg || 200;
-          const rate = p.exchangeRate || 1; // 🔥 抓取動態匯率
+          const rate = p.exchangeRate || 1; 
 
-          // 🔥 核心公式：當地原價 × 匯率 + 額外成本 + 運費
           if (currentLocalPrice > 0) {
              costGen = (currentLocalPrice * rate) + costMat + (weight * shipKg);
           } else if (p.localPrice > 0) {
@@ -1853,6 +1854,106 @@ if (p) {
     this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }
 
+  async syncToGoogleSheets() {
+    // ⚠️ 貼上你剛剛新部署的 Google Sheets GAS 網址 (階段一產生的那串)
+    const SHEETS_GAS_URL = '1DsudieK5BrXLBeYa3otpxHSh3yJUAweGlNSbVvMlpx8';
+    
+    const range = this.accountingRange(); 
+    const now = new Date(); 
+    let startDate: Date | null = null; 
+    let endDate: Date | null = null;
+    if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
+    else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+    else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+    else if (range === 'custom') {
+      if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart());
+      if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd());
+    }
+    
+    let list = this.accountingFilteredOrders(); 
+    const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
+
+    const payloadRows = list.map((o: Order) => { 
+      let costGeneralTotal = 0; 
+      
+      const itemDetails = o.items.map((i: CartItem) => { 
+        const p = this.store.products().find((x: Product) => x.id === i.productId); 
+        let detailString = `• ${i.productName} (${i.option}) x${i.quantity}`;
+
+        if (p) { 
+          let currentLocalPrice = p.localPrice || 0;
+          let currentPriceGeneral = p.priceGeneral || 0;
+          let currentPriceVip = p.priceVip || 0;
+
+          const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+          if (fullOption.includes('=')) {
+              const parts = fullOption.split('=');
+              if (parts.length >= 4) {
+                  currentPriceGeneral = Number(parts[1]) || currentPriceGeneral;
+                  currentPriceVip = Number(parts[2]) || currentPriceVip;
+                  currentLocalPrice = Number(parts[3]) || currentLocalPrice;
+              }
+          }
+
+          const rate = p.exchangeRate || 1; 
+          const shipKg = p.shippingCostPerKg || 0; 
+          
+          let costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+          costGeneralTotal += costGen * i.quantity;
+          detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
+        } else {
+          costGeneralTotal += (i.unitCost || 0) * i.quantity;
+          detailString += ` [實收:$${i.price} (已下架)]`;
+        }
+        return detailString;
+      }).join('\n'); 
+
+      const profit = o.finalTotal - costGeneralTotal; 
+      const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
+      
+      return [ 
+        o.id, 
+        new Date(o.createdAt).toLocaleDateString('zh-TW'), 
+        payMap[o.paymentMethod] || o.paymentMethod,
+        o.paymentLast5 ? `'${o.paymentLast5}` : '', 
+        itemDetails, 
+        o.finalTotal, 
+        Math.round(costGeneralTotal), 
+        Math.round(profit), 
+        `${margin.toFixed(1)}%`,
+        this.getPaymentStatusLabel(o.status, o.paymentMethod)
+      ];
+    }); 
+
+    if (payloadRows.length === 0) {
+      alert('目前區間沒有資料可以同步！');
+      return;
+    }
+
+    try {
+      const btnText = confirm(`⏳ 準備將 ${payloadRows.length} 筆報表同步至 Google Sheets\\n\\n按下「確定」開始傳送。`);
+      if (!btnText) return;
+      
+      const response = await fetch(SHEETS_GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          sheetName: '營利報表',
+          rows: payloadRows 
+        })
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        alert('✅ ' + result.message + '\\n您可以直接打開 Google Sheets 查看了！');
+      } else {
+        alert('❌ 同步失敗: ' + result.error);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('❌ 發生網路錯誤，無法連線至 Google Sheets API。請確定 GAS 有設定為「所有人」。');
+    }
+  }
+
   exportProductsCSV() { 
      // 🔥 表頭更新：把「次分類」與「標籤」移到「分類(C)」後面
      const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
@@ -1872,52 +1973,26 @@ openProductForm() {
     this.editingProduct.set(null); 
     this.productForm.reset(); 
     this.productForm.patchValue({ 
-      purchaseUrl: '', // 👈 清空網址
-      exchangeRate: 1, 
-      shippingCostPerKg: 0, 
-      weight: 0, 
-      costMaterial: 0, 
-      isPreorder: false, 
-      isListed: true, 
-      bulkCount: 0, 
-      bulkTotal: 0, 
-      subCategory: '', 
-      tagsStr: '' 
+      purchaseUrl: '', 
+      exchangeRate: 1, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' 
     }); 
-    this.tempImages.set([]); 
-    this.currentCategoryCode.set(''); 
-    this.generatedSkuPreview.set(''); 
-    this.formValues.set(this.productForm.getRawValue()); 
-    this.showProductModal.set(true); 
+    this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
   } 
 
   editProduct(p: Product) { 
     this.editingProduct.set(p); 
     this.productForm.patchValue({ 
       ...p, 
-      purchaseUrl: (p as any).purchaseUrl || '', // 👈 帶入舊有的網址
-      optionsStr: (p.options || []).join('\n'), 
-      tagsStr: (p.tags || []).join(', '), 
-      subCategory: p.subCategory || '', 
-      exchangeRate: p.exchangeRate || 1, 
-      shippingCostPerKg: p.shippingCostPerKg || 0, 
-      weight: p.weight || 0, 
-      costMaterial: p.costMaterial || 0, 
-      isPreorder: p.isPreorder ?? false, 
-      isListed: p.isListed ?? true, 
-      bulkCount: p.bulkDiscount?.count || 0, 
-      bulkTotal: p.bulkDiscount?.total || 0 
+      purchaseUrl: (p as any).purchaseUrl || '', 
+      optionsStr: (p.options || []).join('\n'), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 
     }); 
-    this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); 
-    this.generatedSkuPreview.set(p.code); 
-    this.formValues.set(this.productForm.getRawValue()); 
-    this.showProductModal.set(true); 
-  }  
+    this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
+  }
+
   closeProductModal() { this.showProductModal.set(false); } 
   onCategoryChange() { const cat = this.productForm.get('category')?.value; if (cat && !this.editingProduct()) { const codeMap = this.categoryCodes(); const foundCode = codeMap[cat] || ''; this.currentCategoryCode.set(foundCode); this.updateSkuPreview(foundCode); } } 
   onCodeInput(e: any) { const val = e.target.value.toUpperCase(); this.currentCategoryCode.set(val); if (!this.editingProduct()) { this.updateSkuPreview(val); } } 
-  updateSkuPreview(prefix: string) { if (prefix) { const sku = this.store.generateProductCode(prefix); this.generatedSkuPreview.set(sku); this.productForm.patchValue({ code: sku }); } } 
-  handleImageError(event: any) { event.target.src = 'https://placehold.co/100x100?text=Broken+Link'; } 
+  updateSkuPreview(prefix: string) { if (prefix) { const sku = this.store.generateProductCode(prefix); this.generatedSkuPreview.set(sku); this.productForm.patchValue({ code: sku }); } }
 addImageUrl(url: string) { 
     if(!url || !url.trim()) return; 
 
@@ -2015,56 +2090,28 @@ async handleFileSelect(event: any) {
   removeImage(index: number) { this.tempImages.update(l => l.filter((_, i) => i !== index)); }
   
 submitProduct() { 
-    const val = this.productForm.value; 
-    if (val.category) { 
-      const catName = val.category.trim(); 
-      this.store.addCategory(catName); 
-      if (this.currentCategoryCode()) { 
-        const newSettings = { ...this.store.settings() }; 
-        if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; 
-        newSettings.categoryCodes[catName] = this.currentCategoryCode(); 
-        this.store.updateSettings(newSettings); 
-      } 
-    } 
-    const finalImages = this.tempImages(); 
-    const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
-    const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
-    const bulkCount = Number(val.bulkCount) || 0; 
-    const bulkTotal = Number(val.bulkTotal) || 0; 
-    
-    const p: any = { 
-        id: this.editingProduct()?.id || Date.now().toString(), 
-        code: finalCode, 
-        name: val.name, 
-        purchaseUrl: val.purchaseUrl || '', // 👈 將網址寫入資料庫
-        category: val.category, 
-        subCategory: val.subCategory || '',
-        tags: val.tagsStr ? val.tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [],
-        image: mainImage, 
-        images: finalImages, 
-        priceGeneral: val.priceGeneral, 
-        priceVip: val.priceVip, 
-        priceWholesale: 0, 
-        localPrice: val.localPrice, 
-        stock: val.isPreorder ? 99999 : val.stock, 
-        options: val.optionsStr ? val.optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [], 
-        note: val.note, 
-        exchangeRate: val.exchangeRate, 
-        costMaterial: val.costMaterial, 
-        weight: val.weight, 
-        shippingCostPerKg: val.shippingCostPerKg, 
-        priceType: 'normal', 
-        soldCount: this.editingProduct()?.soldCount || 0, 
-        country: 'Korea', 
-        allowPayment: { cash: true, bankTransfer: true, cod: true }, 
-        allowShipping: { meetup: true, myship: true, family: true, delivery: true }, 
-        isPreorder: val.isPreorder, 
-        isListed: val.isListed 
-    };        
-    if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
-    
-    if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
-    this.closeProductModal(); 
+     const val = this.productForm.value; 
+     if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
+     const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
+     const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
+     const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
+     
+     const p: any = { 
+         id: this.editingProduct()?.id || Date.now().toString(), 
+         code: finalCode, 
+         name: val.name, 
+         purchaseUrl: val.purchaseUrl || '', 
+         category: val.category, 
+         subCategory: val.subCategory || '',
+         tags: val.tagsStr ? val.tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [],
+         image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, 
+         options: val.optionsStr ? val.optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [], 
+         note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed 
+     };        
+     if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
+     
+     if (this.editingProduct()) this.store.updateProduct(p); else this.store.addProduct(p); 
+     this.closeProductModal(); 
   }
   
   editUser(u: User) { this.openUserModal(u); } 

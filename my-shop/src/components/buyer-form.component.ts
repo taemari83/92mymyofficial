@@ -9,11 +9,18 @@ import { StoreService, Product } from '../services/store.service';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="min-h-screen bg-gray-50 pb-20 font-sans selection:bg-brand-200">
+      <nav class="bg-white sticky top-0 z-40 px-4 py-3 border-b border-gray-200 shadow-sm flex items-center justify-between">
+        <h1 class="text-xl font-black text-brand-900 tracking-wide">📦 採購回報</h1>
         <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">✕</button>
       </nav>
 
       <main class="max-w-md mx-auto p-4 space-y-5 animate-fade-in">
         
+        <div class="flex bg-gray-200/50 p-1 rounded-xl w-full">
+          <button (click)="isNewProduct.set(false); clearForm()" [class.bg-white]="!isNewProduct()" [class.shadow-sm]="!isNewProduct()" [class.text-brand-900]="!isNewProduct()" [class.text-gray-500]="isNewProduct()" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">📦 買現有缺貨商品</button>
+          <button (click)="isNewProduct.set(true); clearForm()" [class.bg-white]="isNewProduct()" [class.shadow-sm]="isNewProduct()" [class.text-brand-900]="isNewProduct()" [class.text-gray-500]="!isNewProduct()" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">✨ 現場開發新品</button>
+        </div>
+
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
           <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-2">
             <span class="text-lg">📍</span><h2 class="font-bold text-gray-800">購買來源</h2>
@@ -21,7 +28,7 @@ import { StoreService, Product } from '../services/store.service';
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-gray-500 mb-1">國家</label>
-              <input type="text" list="countryList" [(ngModel)]="formData.country" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-brand-400">
+              <input type="text" list="countryList" [(ngModel)]="formData.country" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-brand-400" />
               <datalist id="countryList">
                 <option value="韓國"></option>
                 <option value="日本"></option>
@@ -32,39 +39,63 @@ import { StoreService, Product } from '../services/store.service';
             </div>
             <div>
               <label class="block text-xs font-bold text-gray-500 mb-1">購買日期</label>
-              <input type="date" [(ngModel)]="formData.date" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-brand-400">
+              <input type="date" [(ngModel)]="formData.date" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 outline-none focus:border-brand-400" />
             </div>
           </div>
           <div>
             <label class="block text-xs font-bold text-gray-500 mb-1">購買地點 / 網址 (必填)</label>
-            <input type="text" [(ngModel)]="formData.location" placeholder="例如：明洞 Olive Young / 網址" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-400 focus:bg-white transition-colors">
+            <input type="text" [(ngModel)]="formData.location" placeholder="例如：明洞 Olive Young / 網址" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-400 focus:bg-white transition-colors" />
           </div>
         </div>
 
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-16 h-16 bg-brand-50 rounded-bl-full -z-0"></div>
           <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-2 relative z-10">
-            <span class="text-lg">🛍️</span><h2 class="font-bold text-gray-800">搜尋已上架商品</h2>
+            <span class="text-lg">🛍️</span><h2 class="font-bold text-gray-800">商品資訊</h2>
           </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-500 mb-1">關鍵字搜尋 🔍 (打字自動過濾)</label>
-            <input type="text" list="productList" [(ngModel)]="searchProductText" (change)="onProductSearchChange()" placeholder="請輸入商品名稱或貨號..." class="w-full p-3 bg-brand-50 border border-brand-200 rounded-xl text-sm font-bold text-brand-900 outline-none focus:border-brand-400">
-            <datalist id="productList">
-              @for(p of store.products(); track p.id) {
-                <option [value]="'[' + p.code + '] ' + p.name"></option>
-              }
-            </datalist>
-          </div>
-          
-          @if(formData.sku) {
-            <div class="grid grid-cols-2 gap-3 mt-2 p-3 bg-gray-50 rounded-xl border border-gray-100 animate-fade-in">
+
+          @if (!isNewProduct()) {
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1">關鍵字搜尋 🔍</label>
+              <input type="text" list="productList" [(ngModel)]="searchProductText" (change)="onProductSearchChange()" placeholder="請輸入商品名稱或貨號..." class="w-full p-3 bg-brand-50 border border-brand-200 rounded-xl text-sm font-bold text-brand-900 outline-none focus:border-brand-400" />
+              <datalist id="productList">
+                @for(p of store.products(); track p.id) {
+                  <option [value]="'[' + p.code + '] ' + p.name"></option>
+                }
+              </datalist>
+            </div>
+            @if(formData.sku) {
+              <div class="grid grid-cols-2 gap-3 mt-2 p-3 bg-gray-50 rounded-xl border border-gray-100 animate-fade-in">
+                <div>
+                  <span class="block text-[10px] text-gray-400">已選商品</span>
+                  <span class="text-xs font-bold text-gray-700 line-clamp-2">{{ formData.productName }}</span>
+                </div>
+                <div>
+                  <span class="block text-[10px] text-gray-400">對應貨號 (SKU)</span>
+                  <span class="text-xs font-mono font-bold text-brand-600">{{ formData.sku }}</span>
+                </div>
+              </div>
+            }
+          } @else {
+            <div>
+              <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label>
+              <input type="text" [(ngModel)]="formData.productName" placeholder="輸入完整商品名稱" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-400" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
               <div>
-                <span class="block text-[10px] text-gray-400">已選商品</span>
-                <span class="text-xs font-bold text-gray-700 line-clamp-2">{{ formData.productName }}</span>
+                <label class="block text-xs font-bold text-gray-500 mb-1">主分類</label>
+                <select [(ngModel)]="formData.category" (change)="generateSku()" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-brand-900 outline-none focus:border-brand-400">
+                  <option value="" disabled>選擇分類...</option>
+                  @for(c of store.categories(); track c) {
+                    <option [value]="c">{{ c }}</option>
+                  }
+                </select>
               </div>
               <div>
-                <span class="block text-[10px] text-gray-400">對應貨號 (SKU)</span>
-                <span class="text-xs font-mono font-bold text-brand-600">{{ formData.sku }}</span>
+                <label class="block text-xs font-bold text-gray-500 mb-1">分配貨號</label>
+                <div class="w-full p-3 bg-brand-900 text-white rounded-xl text-sm font-mono font-black text-center shadow-inner h-[46px] flex items-center justify-center">
+                  {{ formData.sku || '尚未給號' }}
+                </div>
               </div>
             </div>
           }
@@ -77,17 +108,17 @@ import { StoreService, Product } from '../services/store.service';
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-gray-500 mb-1">當地單價</label>
-              <input type="number" [(ngModel)]="formData.localPrice" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg font-black text-gray-800 outline-none focus:border-brand-400">
+              <input type="number" [(ngModel)]="formData.localPrice" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg font-black text-gray-800 outline-none focus:border-brand-400" />
             </div>
             <div>
               <label class="block text-xs font-bold text-gray-500 mb-1">採購數量</label>
-              <input type="number" [(ngModel)]="formData.quantity" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg font-black text-gray-800 outline-none focus:border-brand-400 text-center">
+              <input type="number" [(ngModel)]="formData.quantity" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-lg font-black text-gray-800 outline-none focus:border-brand-400 text-center" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-gray-500 mb-1">當地運費 (可填 0)</label>
-              <input type="number" [(ngModel)]="formData.localShipping" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 outline-none focus:border-brand-400">
+              <input type="number" [(ngModel)]="formData.localShipping" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-gray-600 outline-none focus:border-brand-400" />
             </div>
             <div class="bg-red-50 rounded-xl p-3 border border-red-100 flex flex-col justify-center">
               <label class="block text-[10px] font-bold text-red-400 mb-0.5">總支出 (自動加總)</label>
@@ -128,7 +159,7 @@ import { StoreService, Product } from '../services/store.service';
           <div class="flex flex-wrap gap-2">
             @for(img of uploadedImages(); track $index) {
               <div class="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-                <img [src]="img" class="w-full h-full object-cover">
+                <img [src]="img" class="w-full h-full object-cover" />
                 <button (click)="removeImage($index)" class="absolute top-1 right-1 bg-black/60 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">✕</button>
               </div>
             }
@@ -137,7 +168,7 @@ import { StoreService, Product } from '../services/store.service';
                 <span class="animate-spin text-xl mb-1">⏳</span>
               } @else {
                 <span class="text-2xl mb-1">+</span>
-                <input type="file" accept="image/*" class="hidden" (change)="uploadToDrive($event)" [disabled]="isUploading()">
+                <input type="file" accept="image/*" class="hidden" (change)="uploadToDrive($event)" [disabled]="isUploading()" />
               }
             </label>
           </div>
