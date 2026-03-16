@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StoreService, Product } from '../services/store.service';
@@ -16,11 +16,6 @@ import { StoreService, Product } from '../services/store.service';
 
       <main class="max-w-md mx-auto p-4 space-y-5 animate-fade-in">
         
-        <div class="flex bg-gray-200/50 p-1 rounded-xl w-full">
-          <button (click)="isNewProduct.set(false); clearForm()" [class.bg-white]="!isNewProduct()" [class.shadow-sm]="!isNewProduct()" [class.text-brand-900]="!isNewProduct()" [class.text-gray-500]="isNewProduct()" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">📦 買現有商品</button>
-          <button (click)="isNewProduct.set(true); clearForm()" [class.bg-white]="isNewProduct()" [class.shadow-sm]="isNewProduct()" [class.text-brand-900]="isNewProduct()" [class.text-gray-500]="!isNewProduct()" class="flex-1 py-2 rounded-lg text-sm font-bold transition-all">✨ 現場開發新品</button>
-        </div>
-
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4">
           <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-2">
             <span class="text-lg">📍</span><h2 class="font-bold text-gray-800">購買來源</h2>
@@ -51,50 +46,29 @@ import { StoreService, Product } from '../services/store.service';
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-4 relative overflow-hidden">
           <div class="absolute top-0 right-0 w-16 h-16 bg-brand-50 rounded-bl-full -z-0"></div>
           <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-2 relative z-10">
-            <span class="text-lg">🛍️</span><h2 class="font-bold text-gray-800">商品資訊</h2>
+            <span class="text-lg">🛍️</span><h2 class="font-bold text-gray-800">搜尋已上架商品</h2>
           </div>
-
-          @if (!isNewProduct()) {
-            <div>
-              <label class="block text-xs font-bold text-gray-500 mb-1">關鍵字搜尋 🔍</label>
-              <input type="text" list="productList" [(ngModel)]="searchProductText" (change)="onProductSearchChange()" placeholder="請輸入商品名稱或貨號..." class="w-full p-3 bg-brand-50 border border-brand-200 rounded-xl text-sm font-bold text-brand-900 outline-none focus:border-brand-400" />
-              <datalist id="productList">
-                @for(p of store.products(); track p.id) {
-                  <option [value]="'[' + p.code + '] ' + p.name"></option>
-                }
-              </datalist>
-            </div>
-            @if(formData.sku) {
-              <div class="grid grid-cols-2 gap-3 mt-2 p-3 bg-gray-50 rounded-xl border border-gray-100 animate-fade-in">
-                <div>
-                  <span class="block text-[10px] text-gray-400">已選商品</span>
-                  <span class="text-xs font-bold text-gray-700 line-clamp-2">{{ formData.productName }}</span>
-                </div>
-                <div>
-                  <span class="block text-[10px] text-gray-400">對應貨號 (SKU)</span>
-                  <span class="text-xs font-mono font-bold text-brand-600">{{ formData.sku }}</span>
-                </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 mb-1">關鍵字搜尋 🔍 (打字自動過濾)</label>
+            <input type="text" list="productList" [(ngModel)]="searchProductText" (change)="onProductSearchChange()" placeholder="請輸入商品名稱或貨號..." class="w-full p-3 bg-brand-50 border border-brand-200 rounded-xl text-sm font-bold text-brand-900 outline-none focus:border-brand-400" />
+            <datalist id="productList">
+              @for(p of store.products(); track p.id) {
+                <option [value]="'[' + p.code + '] ' + p.name"></option>
+              }
+            </datalist>
+          </div>
+          
+          @if(formData.sku) {
+            <div class="flex items-center gap-3 mt-2 p-3 bg-gray-50 rounded-xl border border-gray-100 animate-fade-in">
+              <div class="w-14 h-14 bg-white rounded-lg border border-gray-200 overflow-hidden shrink-0">
+                <img [src]="formData.productImage" class="w-full h-full object-cover" />
               </div>
-            }
-          } @else {
-            <div>
-              <label class="block text-xs font-bold text-gray-500 mb-1">商品名稱</label>
-              <input type="text" [(ngModel)]="formData.productName" placeholder="輸入完整商品名稱" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:border-brand-400" />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-bold text-gray-500 mb-1">主分類</label>
-                <select [(ngModel)]="formData.category" (change)="generateSku()" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold text-brand-900 outline-none focus:border-brand-400">
-                  <option value="" disabled>選擇分類...</option>
-                  @for(c of store.categories(); track c) {
-                    <option [value]="c">{{ c }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-bold text-gray-500 mb-1">分配貨號</label>
-                <div class="w-full p-3 bg-brand-900 text-white rounded-xl text-sm font-mono font-black text-center shadow-inner h-[46px] flex items-center justify-center">
-                  {{ formData.sku || '尚未給號' }}
+              <div class="flex-1 min-w-0">
+                <span class="block text-[10px] text-gray-400">已選商品</span>
+                <span class="text-xs font-bold text-gray-700 line-clamp-1">{{ formData.productName }}</span>
+                <div class="flex items-center gap-1 mt-1">
+                   <span class="text-[10px] text-gray-400">貨號 (SKU)</span>
+                   <span class="text-xs font-mono font-bold text-brand-600">{{ formData.sku }}</span>
                 </div>
               </div>
             </div>
@@ -184,12 +158,12 @@ import { StoreService, Product } from '../services/store.service';
 export class BuyerFormComponent {
   store = inject(StoreService);
   
+  // ⚠️ 這裡請換回你最新部署的 GAS 網址！
   readonly GAS_URL = 'https://script.google.com/macros/s/AKfycbzSqZFXKWlmeI4WLkE8iBYrbGWfeWxVJigl-zOLMhUQVlVv5_qW9OpLJZenLElZqhNZxA/exec';
 
-  isNewProduct = signal(false);
   isUploading = signal(false);
   uploadedImages = signal<string[]>([]);
-  searchProductText = '';
+  searchProductText = ''; // 用於綁定搜尋框
 
   formData = {
     date: new Date().toISOString().split('T')[0],
@@ -197,6 +171,7 @@ export class BuyerFormComponent {
     location: '',
     selectedProductId: '',
     productName: '',
+    productImage: '', // 新增儲存預覽圖片的變數
     category: '',
     sku: '',
     localPrice: null as number | null,
@@ -216,35 +191,29 @@ export class BuyerFormComponent {
   clearForm() {
     this.formData.selectedProductId = '';
     this.formData.productName = '';
+    this.formData.productImage = '';
     this.formData.category = '';
     this.formData.sku = '';
     this.formData.localPrice = null;
     this.formData.quantity = 1;
+    this.formData.localShipping = 0;
   }
 
+  // 🚀 智慧搜尋邏輯：反查商品名稱，並帶入預覽圖片
   onProductSearchChange() {
     const found = this.store.products().find((p: Product) => `[${p.code}] ${p.name}` === this.searchProductText);
+    
     if (found) {
       this.formData.selectedProductId = found.id;
       this.formData.productName = found.name;
       this.formData.sku = found.code;
       this.formData.category = found.category;
       this.formData.localPrice = found.localPrice || null;
+      // 抓取商品圖片，如果沒有就放個假圖防破版
+      this.formData.productImage = found.image || 'https://placehold.co/100x100?text=No+Image'; 
     } else {
-      this.formData.selectedProductId = '';
-      this.formData.productName = '';
-      this.formData.sku = '';
+      this.clearForm();
     }
-  }
-
-  generateSku() {
-    if (!this.isNewProduct() || !this.formData.category) return;
-    const codeMap = this.store.settings().categoryCodes || {};
-    const prefix = codeMap[this.formData.category] || 'Z'; 
-    const now = new Date();
-    const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const randomNum = String(Math.floor(Math.random() * 999) + 1).padStart(3, '0');
-    this.formData.sku = `${prefix}${datePart}${randomNum}`;
   }
 
   async uploadToDrive(event: any) {
@@ -257,10 +226,13 @@ export class BuyerFormComponent {
     reader.onload = async (e: any) => {
       const base64Data = e.target.result.split(',')[1];
       
+      // 🚀 精準命名邏輯：商品名稱_YYMMDD_流水號
       const now = new Date();
       const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
       const randomSerial = String(Math.floor(Math.random() * 999)).padStart(3, '0');
-      const safeProductName = this.formData.productName ? this.formData.productName.replace(/[\/\\:*?"<>|]/g, '') : '未命名商品';
+      // 將商品名稱裡面的特殊符號過濾掉，避免檔名出錯
+      const safeProductName = this.formData.productName ? this.formData.productName.replace(/[\/\\\\:*?"<>|]/g, '').trim() : '未命名商品';
+      
       const finalFileName = `${safeProductName}_${datePart}_${randomSerial}.jpg`;
 
       const payload = new URLSearchParams();
@@ -293,8 +265,8 @@ export class BuyerFormComponent {
   }
 
   async submitPurchase() {
-    if (!this.formData.location || (!this.formData.productName && !this.formData.selectedProductId) || !this.formData.localPrice) {
-      alert('請先搜尋選擇商品，並填寫必填欄位！');
+    if (!this.formData.location || !this.formData.selectedProductId || !this.formData.localPrice) {
+      alert('請先搜尋選擇商品，並填寫必填欄位 (購買地點、單價)！');
       return;
     }
 
@@ -306,8 +278,9 @@ export class BuyerFormComponent {
       status: 'pending_sync'
     };
 
-    alert(`✅ 採購紀錄送出成功！\n貨號: ${this.formData.sku}\n總花費: ${finalData.totalLocalCost}`);
+    alert(`✅ 採購紀錄送出成功！\\n貨號: ${this.formData.sku}\\n總花費: ${finalData.totalLocalCost}`);
     
+    // 清空表單，準備填寫下一筆
     this.searchProductText = '';
     this.clearForm();
     this.uploadedImages.set([]);
