@@ -8,9 +8,9 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gray-50 pb-36 font-sans selection:bg-brand-200 text-gray-800">
+    <div class="min-h-screen bg-gray-50 pb-12 font-sans selection:bg-brand-200 text-gray-800">
       
-      <nav class="bg-white px-4 py-3 border-b border-gray-200 shadow-sm relative z-40 mb-4">
+      <nav class="bg-white px-4 py-3 border-b border-gray-200 shadow-sm relative z-20 mb-2">
         <div class="flex items-center justify-between mb-2">
           <h1 class="text-xl font-black text-brand-900 tracking-wide">📦 採購回報</h1>
           <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">✕</button>
@@ -30,7 +30,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
         @if(currentStep() === 'cart') {
           <div class="space-y-4 animate-slide-in">
             
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-brand-100 mt-1">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-brand-100">
               <div class="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
                 <div class="flex items-center gap-2">
                   <span class="text-lg">📋</span><h2 class="font-bold text-brand-900">系統待買任務</h2>
@@ -160,8 +160,8 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               }
             </div>
 
-            <div class="fixed bottom-[70px] left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-[45] flex justify-center shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
-              <button (click)="goToNextStep()" class="w-full max-w-md py-3.5 bg-black text-white rounded-xl font-bold tracking-wide shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:bg-gray-400 disabled:shadow-none flex items-center justify-center" [disabled]="purchaseItems().length === 0">
+            <div class="sticky bottom-6 z-50 mt-8 flex justify-center w-full">
+              <button (click)="goToNextStep()" class="w-full py-4 bg-black text-white rounded-2xl font-bold tracking-wide shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] transition-transform active:scale-95 disabled:opacity-50 disabled:bg-gray-400 disabled:shadow-none flex items-center justify-center" [disabled]="purchaseItems().length === 0">
                 下一步：帳單結帳回報 ➔
               </button>
             </div>
@@ -171,7 +171,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
         @if(currentStep() === 'checkout') {
           <div class="space-y-4 animate-slide-in mt-2">
             
-            <button (click)="currentStep.set('cart')" class="text-sm font-bold text-gray-500 flex items-center gap-1 mb-2 hover:text-gray-800 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 w-fit shadow-sm">
+            <button (click)="currentStep.set('cart')" class="text-sm font-bold text-gray-500 flex items-center gap-1 mb-2 hover:text-gray-800 transition-colors bg-white px-3 py-1.5 rounded-xl border border-gray-200 w-fit shadow-sm">
               <span>⬅</span> 返回修改採購清單
             </button>
 
@@ -238,7 +238,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               </div>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3 mb-24">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
               <div class="flex items-center justify-between border-b border-gray-100 pb-2">
                 <div class="flex items-center gap-2">
                   <span class="text-lg">📸</span><h2 class="font-bold text-gray-800">實拍與收據</h2>
@@ -263,8 +263,8 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               </div>
             </div>
 
-            <div class="fixed bottom-[70px] left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-[45] flex justify-center shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
-              <button (click)="submitPurchase()" class="w-full max-w-md py-3.5 bg-brand-900 text-white rounded-xl font-bold tracking-wide shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
+            <div class="sticky bottom-6 z-50 mt-8 flex justify-center w-full">
+              <button (click)="submitPurchase()" class="w-full max-w-md py-4 bg-brand-900 text-white rounded-2xl font-bold tracking-wide shadow-[0_10px_25px_-5px_rgba(0,100,0,0.2)] transition-transform active:scale-95 flex items-center justify-center gap-2">
                 <span>📤</span> 確認結帳並送出回報
               </button>
             </div>

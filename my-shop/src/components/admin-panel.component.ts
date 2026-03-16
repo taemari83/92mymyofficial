@@ -488,7 +488,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    </div> 
                  }
                  <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap flex items-center justify-center gap-1 transition-colors"><span>📊</span> 匯出報表</button>
-                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span> 同步至 Sheets</button>
+                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span> 同步</button>
                </div>
             </div>
 
@@ -556,8 +556,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">審核買手回報的單據與實際支出</p>
                  </div>
                  <div class="flex items-center gap-2">
-                    <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出 CSV</button>
-                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步至 Sheets</button>
+                    <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出</button>
+                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步</button>
                  </div>
               </div>
 
@@ -1816,7 +1816,7 @@ getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '�
     }
   }
 
-  // 📥 匯出 CSV：採購總帳
+  // 📥 匯出：採購總帳
   exportPurchasesCSV() {
     const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '實際付現/刷卡總額', '付款人', '分潤模式', '狀態'];
     
