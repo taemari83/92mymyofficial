@@ -61,7 +61,7 @@ import { environment } from './environments/environment';
       後台
     </a>
      <a routerLink="/buyer" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
-      採購回報
+      採購
     </a>
   }
 </div>
