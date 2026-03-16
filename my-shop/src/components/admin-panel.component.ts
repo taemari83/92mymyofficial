@@ -63,8 +63,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
            </div>
           <div class="flex gap-2 items-center">
-             <button (click)="showProcurementModal.set(true)" class="px-3 md:px-4 py-1.5 md:py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl font-bold hover:bg-yellow-200 flex items-center gap-1.5 shadow-sm transition-colors whitespace-nowrap">
-               <span class="text-lg"></span> <span class="hidden sm:inline">叫貨</span>
+             <button (click)="showProcurementModal.set(true)" class="px-4 py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl font-bold hover:bg-yellow-200 flex items-center justify-center gap-2 shadow-sm transition-colors whitespace-nowrap">
+               <span class="text-lg leading-none mt-0.5">📦</span> <span class="hidden sm:block leading-none mt-0.5">叫貨</span>
              </button>
              <button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button>
            </div>
