@@ -66,8 +66,11 @@ export class StoreService {
   currentUser = signal<User | null>(null);
   private user$ = toObservable(this.currentUser);
 
-  users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(collection(this.firestore, 'users'), { idField: 'id' }) as Observable<User[]> : of([]))), { initialValue: [] });
+users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(collection(this.firestore, 'users'), { idField: 'id' }) as Observable<User[]> : of([]))), { initialValue: [] });
   orders = toSignal(this.user$.pipe(switchMap(u => { if (!u) return of([]); const ref = collection(this.firestore, 'orders'); const q = u.isAdmin ? ref : query(ref, where('userId', '==', u.id)); return collectionData(q, { idField: 'id' }) as Observable<Order[]>; })), { initialValue: [] });
+  
+  // 🧾 採購總帳：即時讀取資料庫
+  purchases = toSignal(collectionData(collection(this.firestore, 'purchases'), { idField: 'id' }) as Observable<any[]>, { initialValue: [] });
 
   cart = signal<CartItem[]>([]);
   cartCount = computed(() => this.cart().reduce((count, item) => count + item.quantity, 0));
@@ -108,9 +111,29 @@ export class StoreService {
   private categories$ = docData(doc(this.firestore, 'config/categories')).pipe(map((data: any) => data ? (data.list as string[]) : ['熱銷精選', '服飾', '包包', '生活小物']));
   categories = toSignal(this.categories$, { initialValue: ['熱銷精選', '服飾', '包包', '生活小物'] });
 
-  async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), { ...u }); }
+async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), { ...u }); }
   async updateOrderStatus(id: string, status: OrderStatus, extra: any = {}) { await updateDoc(doc(this.firestore, 'orders', id), { status, ...extra }); }
   async deleteOrder(o: Order) { await deleteDoc(doc(this.firestore, 'orders', o.id)); }
+
+  // 🧾 新增：寫入採購單，並自動同步商品的「已買到」數量
+  async addPurchaseBatch(data: any) { 
+    const docRef = await addDoc(collection(this.firestore, 'purchases'), data);
+    for (const item of data.items) {
+      const p = this.products().find((x: Product) => x.id === item.productId);
+      if (p) {
+         const currentMap = (p as any).procured || {};
+         const currentQty = currentMap[item.option] || 0;
+         await this.updateProduct({ ...p, procured: { ...currentMap, [item.option]: currentQty + item.quantity } } as any);
+      }
+    }
+    return docRef;
+  }
+  
+  // 🧾 新增：核准採購單狀態
+  async updatePurchaseStatus(id: string, status: string) { 
+    await updateDoc(doc(this.firestore, 'purchases', id), { status }); 
+  }  
+  
   async addProduct(p: Product) { await setDoc(doc(this.firestore, 'products', p.id), { ...p, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true }); }
   async updateProduct(p: Product) { await updateDoc(doc(this.firestore, 'products', p.id), { ...p }); }
   async toggleProductListing(id: string, current: boolean) { await updateDoc(doc(this.firestore, 'products', id), { isListed: !current }); }

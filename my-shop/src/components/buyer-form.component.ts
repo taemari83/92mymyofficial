@@ -8,9 +8,9 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gray-50 pb-28 font-sans selection:bg-brand-200 text-gray-800">
+    <div class="min-h-screen bg-gray-50 pb-36 font-sans selection:bg-brand-200 text-gray-800">
       
-      <nav class="bg-white/95 backdrop-blur-md sticky top-0 z-[100] px-4 py-3 border-b border-gray-200 shadow-sm relative">
+      <nav class="bg-white px-4 py-3 border-b border-gray-200 shadow-sm relative z-40 mb-4">
         <div class="flex items-center justify-between mb-2">
           <h1 class="text-xl font-black text-brand-900 tracking-wide">📦 採購回報</h1>
           <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">✕</button>
@@ -160,7 +160,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               }
             </div>
 
-            <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-50 flex justify-center">
+            <div class="fixed bottom-[70px] left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-[45] flex justify-center shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
               <button (click)="goToNextStep()" class="w-full max-w-md py-3.5 bg-black text-white rounded-xl font-bold tracking-wide shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:bg-gray-400 disabled:shadow-none flex items-center justify-center" [disabled]="purchaseItems().length === 0">
                 下一步：帳單結帳回報 ➔
               </button>
@@ -238,7 +238,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               </div>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3 mb-24">
               <div class="flex items-center justify-between border-b border-gray-100 pb-2">
                 <div class="flex items-center gap-2">
                   <span class="text-lg">📸</span><h2 class="font-bold text-gray-800">實拍與收據</h2>
@@ -263,7 +263,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               </div>
             </div>
 
-            <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-50 flex justify-center">
+            <div class="fixed bottom-[70px] left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-[45] flex justify-center shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
               <button (click)="submitPurchase()" class="w-full max-w-md py-3.5 bg-brand-900 text-white rounded-xl font-bold tracking-wide shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
                 <span>📤</span> 確認結帳並送出回報
               </button>
@@ -356,7 +356,6 @@ export class BuyerFormComponent {
     return itemsTotal + shipping;
   }
 
-  // 自動解析多行網址
   parseUrls(urlsStr: string | undefined | null): string[] {
     if (!urlsStr) return [];
     return urlsStr.split(/[\n, ]+/).filter(u => u.trim().startsWith('http'));
@@ -520,6 +519,8 @@ export class BuyerFormComponent {
       return;
     }
 
+    this.isUploading.set(true); // 鎖定畫面防止連點
+    
     const finalData = {
       ...this.formData,
       items: this.purchaseItems(),
@@ -530,16 +531,27 @@ export class BuyerFormComponent {
       status: 'pending_sync'
     };
     
-    alert(`✅ 整筆單據回報成功！\n共包含 ${this.purchaseItems().length} 項商品\n實際總扣款: ${finalData.totalLocalCost}`);
-    
-    this.searchProductText = '';
-    this.clearSelection();
-    this.purchaseItems.set([]);
-    this.uploadedImages.set([]);
-    this.formData.location = '';
-    this.formData.localShipping = 0;
-    this.formData.actualTotalCost = null; 
-    this.currentStep.set('cart');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      // 🚀 正式寫入資料庫，並觸發叫貨清單數量的自動扣減！
+      await this.store.addPurchaseBatch(finalData);
+      
+      alert(`✅ 整筆單據回報成功！\n資料已傳送至後台「採購總帳」。\n實際總扣款: NT$ ${finalData.totalLocalCost}`);
+      
+      // 清空表單
+      this.searchProductText = '';
+      this.clearSelection();
+      this.purchaseItems.set([]);
+      this.uploadedImages.set([]);
+      this.formData.location = '';
+      this.formData.localShipping = 0;
+      this.formData.actualTotalCost = null; 
+      this.currentStep.set('cart');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      console.error(error);
+      alert('❌ 發生網路錯誤，資料庫寫入失敗，請重試！');
+    } finally {
+      this.isUploading.set(false);
+    }
   }
 }
