@@ -8,9 +8,9 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen bg-gray-50 pb-24 font-sans selection:bg-brand-200 text-gray-800">
+    <div class="min-h-screen bg-gray-50 pb-28 font-sans selection:bg-brand-200 text-gray-800">
       
-      <nav class="bg-white sticky top-0 z-40 px-4 py-3 border-b border-gray-200 shadow-sm">
+      <nav class="bg-white/95 backdrop-blur-md sticky top-0 z-[100] px-4 py-3 border-b border-gray-200 shadow-sm relative">
         <div class="flex items-center justify-between mb-2">
           <h1 class="text-xl font-black text-brand-900 tracking-wide">📦 採購回報</h1>
           <button class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-bold text-gray-600">✕</button>
@@ -25,12 +25,12 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
         </div>
       </nav>
 
-      <main class="max-w-md mx-auto p-4 animate-fade-in">
+      <main class="max-w-md mx-auto p-4 animate-fade-in relative z-10">
         
         @if(currentStep() === 'cart') {
           <div class="space-y-4 animate-slide-in">
             
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-brand-100">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-brand-100 mt-1">
               <div class="flex items-center justify-between border-b border-gray-100 pb-2 mb-3">
                 <div class="flex items-center gap-2">
                   <span class="text-lg">📋</span><h2 class="font-bold text-brand-900">系統待買任務</h2>
@@ -77,7 +77,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
             </div>
             
             @if(selectedProduct(); as p) {
-              <div class="p-4 bg-white rounded-2xl border-2 border-brand-300 shadow-lg space-y-4 animate-bounce-in relative z-10">
+              <div class="p-4 bg-white rounded-2xl border-2 border-brand-300 shadow-lg space-y-4 animate-bounce-in relative z-20">
                 <div class="flex justify-between items-start">
                   <div class="flex gap-3 flex-1 min-w-0">
                     <div class="w-16 h-16 bg-gray-100 rounded-xl border border-gray-100 overflow-hidden shrink-0">
@@ -94,16 +94,26 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                   <button (click)="clearSelection()" class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs text-gray-500 shrink-0 hover:bg-gray-200">✕</button>
                 </div>
 
+                @if(p.purchaseUrl) {
+                  <div class="space-y-2 w-full overflow-hidden">
+                    @for(url of parseUrls(p.purchaseUrl); track $index) {
+                      <a [href]="url" target="_blank" class="block w-full py-2.5 px-3 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-bold text-center border border-blue-100 transition-colors shadow-sm truncate">
+                        🔗 前往網址購買 {{ parseUrls(p.purchaseUrl).length > 1 ? ($index + 1) : '' }}
+                      </a>
+                    }
+                  </div>
+                }
+
                 <div class="flex gap-2 w-full">
                   <div class="flex-1 min-w-0">
                     <label class="flex justify-between items-end mb-1">
-                      <span class="text-[10px] font-bold text-gray-500 truncate pr-1">單品實際花費</span>
-                      @if(referencePrice()) { <span class="text-[9px] font-bold text-gray-400 bg-gray-100 px-1 rounded truncate">參考價:{{ referencePrice() | number }}</span> }
+                      <span class="text-[10px] font-bold text-red-500 truncate pr-1">單價(必填)</span>
+                      @if(referencePrice()) { <span class="text-[9px] font-bold text-gray-400 bg-gray-100 px-1 rounded truncate">參考:{{ referencePrice() | number }}</span> }
                     </label>
-                    <input type="number" [(ngModel)]="tempPrice" placeholder="填寫收據金額..." class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-black outline-none focus:border-brand-400 focus:bg-white transition-colors" />
+                    <input type="number" [(ngModel)]="tempPrice" placeholder="填寫收據金額..." class="w-full p-2.5 bg-red-50/30 border border-red-200 rounded-xl text-sm font-black outline-none focus:border-red-400 focus:bg-red-50 transition-colors placeholder:text-gray-400 placeholder:font-normal" />
                   </div>
                   <div class="w-20 sm:w-24 shrink-0 min-w-0">
-                    <label class="block text-[10px] font-bold text-gray-500 mb-1 truncate">數量</label>
+                    <label class="block text-[10px] font-bold text-gray-400 mb-1 truncate">數量</label>
                     <input type="number" [(ngModel)]="tempQty" class="w-full p-2.5 bg-brand-50 border border-brand-200 text-brand-900 rounded-xl text-sm font-black outline-none focus:border-brand-500 text-center" />
                   </div>
                 </div>
@@ -150,8 +160,8 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               }
             </div>
 
-            <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-50">
-              <button (click)="goToNextStep()" class="w-full max-w-md mx-auto py-3.5 bg-black text-white rounded-xl font-bold tracking-wide shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:bg-gray-400 disabled:shadow-none" [disabled]="purchaseItems().length === 0">
+            <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-50 flex justify-center">
+              <button (click)="goToNextStep()" class="w-full max-w-md py-3.5 bg-black text-white rounded-xl font-bold tracking-wide shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:bg-gray-400 disabled:shadow-none flex items-center justify-center" [disabled]="purchaseItems().length === 0">
                 下一步：帳單結帳回報 ➔
               </button>
             </div>
@@ -159,9 +169,9 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
         }
 
         @if(currentStep() === 'checkout') {
-          <div class="space-y-4 animate-slide-in">
+          <div class="space-y-4 animate-slide-in mt-2">
             
-            <button (click)="currentStep.set('cart')" class="text-sm font-bold text-gray-500 flex items-center gap-1 mb-2 hover:text-gray-800 transition-colors">
+            <button (click)="currentStep.set('cart')" class="text-sm font-bold text-gray-500 flex items-center gap-1 mb-2 hover:text-gray-800 transition-colors bg-white px-3 py-1.5 rounded-lg border border-gray-200 w-fit shadow-sm">
               <span>⬅</span> 返回修改採購清單
             </button>
 
@@ -203,7 +213,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                 
                 <div class="bg-red-50 rounded-xl p-3.5 border border-red-200 flex flex-col justify-center shadow-inner">
                   <label class="block text-[10px] font-black text-red-500 mb-1.5 tracking-widest">實際付現/刷卡總額 (必填) ⚠️</label>
-                  <input type="number" [(ngModel)]="formData.actualTotalCost" placeholder="請照著收據填寫最終數字" class="w-full p-3 bg-white border border-red-300 rounded-xl text-lg font-black text-red-600 outline-none focus:border-red-500 transition-colors placeholder:text-red-200 placeholder:text-xs placeholder:font-normal text-center" />
+                  <input type="number" [(ngModel)]="formData.actualTotalCost" placeholder="請照著收據填寫數字" class="w-full p-3 bg-white border border-red-300 rounded-xl text-lg font-black text-red-600 outline-none focus:border-red-500 transition-colors placeholder:text-red-200 placeholder:text-xs placeholder:font-normal text-center" />
                 </div>
               </div>
             </div>
@@ -228,7 +238,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               </div>
             </div>
 
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3 mb-24">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 space-y-3">
               <div class="flex items-center justify-between border-b border-gray-100 pb-2">
                 <div class="flex items-center gap-2">
                   <span class="text-lg">📸</span><h2 class="font-bold text-gray-800">實拍與收據</h2>
@@ -253,8 +263,8 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               </div>
             </div>
 
-            <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-50">
-              <button (click)="submitPurchase()" class="w-full max-w-md mx-auto py-3.5 bg-brand-900 text-white rounded-xl font-bold tracking-wide shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
+            <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-gray-100 z-50 flex justify-center">
+              <button (click)="submitPurchase()" class="w-full max-w-md py-3.5 bg-brand-900 text-white rounded-xl font-bold tracking-wide shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
                 <span>📤</span> 確認結帳並送出回報
               </button>
             </div>
@@ -298,7 +308,7 @@ export class BuyerFormComponent {
     country: '韓國',
     location: '',
     localShipping: 0,
-    actualTotalCost: null as number | null, // 🔥 新增：實際刷卡金額
+    actualTotalCost: null as number | null, 
     payer: '藝辰',
     shareMode: '親帶',
   };
@@ -340,11 +350,16 @@ export class BuyerFormComponent {
     event.target.src = 'https://placehold.co/150x150?text=No+Image';
   }
 
-  // 這是「預估」加總
   getCalculatedTotal(): number {
     const itemsTotal = this.purchaseItems().reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const shipping = Number(this.formData.localShipping) || 0;
     return itemsTotal + shipping;
+  }
+
+  // 自動解析多行網址
+  parseUrls(urlsStr: string | undefined | null): string[] {
+    if (!urlsStr) return [];
+    return urlsStr.split(/[\n, ]+/).filter(u => u.trim().startsWith('http'));
   }
 
   selectTask(task: any) {
@@ -494,14 +509,12 @@ export class BuyerFormComponent {
     this.uploadedImages.update(imgs => imgs.filter((_, i) => i !== index));
   }
 
-  // 🔥 升級：提交時嚴格檢查「實際花費」
   async submitPurchase() {
     if (!this.formData.location) {
       alert('請填寫購買地點或網址！');
       return;
     }
     
-    // 帳務防呆：買手一定要手動打字確認總金額，否則不給過！
     if (this.formData.actualTotalCost === null || this.formData.actualTotalCost <= 0) {
       alert('⚠️ 帳務防呆：請填寫這張單據「實際付現/刷卡的總額」！\n這攸關公司對帳準確度，請確認無誤再送出。');
       return;
@@ -510,8 +523,8 @@ export class BuyerFormComponent {
     const finalData = {
       ...this.formData,
       items: this.purchaseItems(),
-      estimatedLocalCost: this.getCalculatedTotal(), // 保留預估值供參考
-      totalLocalCost: Number(this.formData.actualTotalCost), // 👈 這個才是進帳本的真實成本！
+      estimatedLocalCost: this.getCalculatedTotal(), 
+      totalLocalCost: Number(this.formData.actualTotalCost), 
       receiptImages: this.uploadedImages(),
       createdAt: new Date().getTime(),
       status: 'pending_sync'
@@ -525,7 +538,7 @@ export class BuyerFormComponent {
     this.uploadedImages.set([]);
     this.formData.location = '';
     this.formData.localShipping = 0;
-    this.formData.actualTotalCost = null; // 清空花費
+    this.formData.actualTotalCost = null; 
     this.currentStep.set('cart');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
