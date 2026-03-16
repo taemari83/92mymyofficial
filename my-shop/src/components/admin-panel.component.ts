@@ -586,7 +586,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               </div> 
 
               <div class="p-4 sm:p-6 overflow-y-auto flex-1 custom-scrollbar"> 
-<form [formGroup]="productForm" class="space-y-5"> 
+                <form [formGroup]="productForm" class="space-y-5"> 
                   
                   <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100"> 
                     <label class="block text-xs font-bold text-gray-500 mb-2">商品圖片 (第一張為主圖)</label> 
@@ -631,11 +631,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <input type="text" formControlName="purchaseUrl" class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm outline-none focus:border-brand-400" placeholder="貼上韓國官網或店家網址..."> 
                   </div>
 
-                  <div class="grid grid-cols-3 gap-2 sm:gap-4 mt-4">> 
+                  <div class="grid grid-cols-3 gap-2 sm:gap-4 mt-4"> 
                     <div class="bg-brand-50 p-2 sm:p-3 rounded-xl border border-brand-100"> 
                       <label class="block text-[10px] sm:text-xs font-bold text-brand-700 mb-1">售價 (NT$)</label> 
                       <input type="number" formControlName="priceGeneral" class="w-full p-1.5 sm:p-2 border border-brand-200 rounded-lg focus:outline-none focus:border-brand-500 font-bold text-brand-900 text-sm sm:text-lg"> 
-                    </div>
+                    </div> 
                     <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200"> 
                       <label class="block text-[10px] sm:text-xs font-bold text-gray-600 mb-1">當地原價</label> 
                       <input type="number" formControlName="localPrice" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-gray-700 text-sm sm:text-lg"> 
