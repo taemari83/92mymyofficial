@@ -1601,22 +1601,26 @@ if(p) {
 
 pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
-  // 🔥 修正：主控台熱銷排行改為抓取真實訂單加總，不再只看初始設定值
-  topProducts = computed(() => {
+  // 🧠 核心升級：掃描全站真實訂單，算出每個商品的「真實總銷量」
+  productSalesMap = computed(() => {
     const allOrders = this.store.orders().filter(o => o.status !== 'cancelled' && o.status !== 'refunded');
     const salesCount: Record<string, number> = {};
-
     allOrders.forEach(order => {
       order.items.forEach((item: any) => {
         if (!salesCount[item.productId]) salesCount[item.productId] = 0;
         salesCount[item.productId] += item.quantity;
       });
     });
+    return salesCount;
+  });
 
+  // 🔥 修正：主控台熱銷排行改為使用剛算好的真實銷量大腦
+  topProducts = computed(() => {
+    const salesMap = this.productSalesMap();
     return [...this.store.products()]
       .map(p => ({
         ...p,
-        soldCount: salesCount[p.id] || 0 // 將算出的真實銷量覆蓋原本的 soldCount 讓畫面直接顯示
+        soldCount: salesMap[p.id] || 0 
       }))
       .sort((a: any, b: any) => b.soldCount - a.soldCount)
       .slice(0, 5);
@@ -2012,14 +2016,19 @@ exportInventoryCSV() {
 
   syncProductsToGoogleSheets() {
     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ];
+    const salesMap = this.productSalesMap();
     
     const dataRows = this.store.products().map((p: Product) => {
       const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
+      const normalProfit = p.priceGeneral - cost; 
+      const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
+      const realSoldCount = salesMap[p.id] || 0; // 真實銷量
+      
       return [
         '', '', '', `'${p.code}`, '', p.name, p.category, p.subCategory || '', (p.tags || []).join(','), p.priceGeneral, p.priceVip,
         p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '',
         (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE',
-        p.isListed ? 'TRUE' : 'FALSE', p.note || '', cost.toFixed(0), (p.priceGeneral - cost).toFixed(0), p.soldCount
+        p.isListed ? 'TRUE' : 'FALSE', '', p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, realSoldCount
       ];
     });
     this.pushToGoogleSheets('商品總表', [headers, ...dataRows]);
@@ -2197,16 +2206,22 @@ exportInventoryCSV() {
   }
 
   exportProductsCSV() { 
-     // 🔥 表頭更新：把「次分類」與「標籤」移到「分類(C)」後面
      const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
+     const salesMap = this.productSalesMap();
      
      const rows = this.store.products().map((p: Product) => { 
         const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
         const normalProfit = p.priceGeneral - cost; 
         const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
+        const realSoldCount = salesMap[p.id] || 0; // 取得真實銷量
         
-        // 🔥 寫入順序同步調整
-        return [ '', '', '', p.code, '', p.name, p.category, p.subCategory || '', (p.tags || []).join(','), p.priceGeneral, p.priceVip, p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', `\t${p.code}`, p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, p.soldCount ]; 
+        return [ 
+          '', '', '', `\t${p.code}`, '', p.name, p.category, p.subCategory || '', (p.tags || []).join(','), p.priceGeneral, p.priceVip, 
+          p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', 
+          (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', 
+          '', // 👈 自訂貨號 (R欄) 強制給空字串，防止後面欄位往前遞補
+          p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, realSoldCount 
+        ]; 
      }); 
      this.downloadCSV(`商品總表_對齊格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }
