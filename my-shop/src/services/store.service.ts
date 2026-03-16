@@ -134,6 +134,24 @@ async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), 
     await updateDoc(doc(this.firestore, 'purchases', id), { status }); 
   }  
   
+  // 🧾 新增：刪除採購單，並自動把「已買到」的數量扣回去
+  async deletePurchase(purchaseId: string, items: any[]) {
+    // 1. 刪除該筆採購單據
+    await deleteDoc(doc(this.firestore, 'purchases', purchaseId));
+    
+    // 2. 把當初加上去的「已買到數量」扣回來
+    for (const item of items) {
+      const p = this.products().find((x: Product) => x.id === item.productId);
+      if (p) {
+         const currentMap = (p as any).procured || {};
+         const currentQty = currentMap[item.option] || 0;
+         // 扣除數量，並確保最低不會變成負數
+         const newQty = Math.max(0, currentQty - item.quantity); 
+         await this.updateProduct({ ...p, procured: { ...currentMap, [item.option]: newQty } } as any);
+      }
+    }
+  }
+
   async addProduct(p: Product) { await setDoc(doc(this.firestore, 'products', p.id), { ...p, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true }); }
   async updateProduct(p: Product) { await updateDoc(doc(this.firestore, 'products', p.id), { ...p }); }
   async toggleProductListing(id: string, current: boolean) { await updateDoc(doc(this.firestore, 'products', id), { isListed: !current }); }

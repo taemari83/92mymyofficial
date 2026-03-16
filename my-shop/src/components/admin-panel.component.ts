@@ -622,12 +622,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                   @if(p.status === 'pending_sync') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold border border-yellow-200 w-fit">待核銷</span> }
                                   @else { <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold border border-green-200 w-fit">已入帳</span> }
                                </td>
-                               <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none">
+                               <td class="p-4 flex items-center justify-end gap-2">
                                   @if(p.status === 'pending_sync') { 
-                                    <button (click)="approvePurchase(p)" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors shadow-sm active:scale-95">✅ 核准入帳</button> 
+                                    <button (click)="approvePurchase(p)" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors shadow-sm active:scale-95 whitespace-nowrap">✅ 核准</button> 
                                   } @else {
-                                    <button class="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold cursor-not-allowed border border-gray-200">已完成</button>
+                                    <button class="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold cursor-not-allowed border border-gray-200 whitespace-nowrap">已完成</button>
                                   }
+                                  <button (click)="deletePurchaseRecord(p)" class="px-3 py-2 bg-white text-red-400 hover:text-red-600 hover:bg-red-50 border border-red-100 rounded-lg text-xs font-bold transition-colors shadow-sm whitespace-nowrap">🗑️ 刪除</button>
                                </td>
                             </tr>
                          } @empty {
@@ -1813,6 +1814,12 @@ getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '�
     if(confirm(`⚠️ 確定核准這筆支出 (實際刷卡總額: NT$ ${p.totalLocalCost}) 並入帳嗎？`)) {
       await this.store.updatePurchaseStatus(p.id, 'completed');
       alert('✅ 已成功核准並記入帳本！');
+    }
+  }
+  async deletePurchaseRecord(p: any) {
+    if (confirm(`⚠️ 警告：確定要徹底刪除這筆採購單嗎？\n系統將會同步扣回商品對應的「已採購數量」，資料刪除後無法復原！`)) {
+      await this.store.deletePurchase(p.id, p.items || []);
+      alert('✅ 採購單已成功刪除，叫貨數量已退回！');
     }
   }
 
