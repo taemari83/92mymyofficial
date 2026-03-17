@@ -1805,7 +1805,9 @@ getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '�
   
   // 🚀 核心升級：直接抓取資料庫裡的真實採購單，並依時間排序
   purchaseList = computed(() => {
-    return [...this.store.purchases()].sort((a: any, b: any) => b.createdAt - a.createdAt);
+    // 加上 || [] 防呆，避免新功能還沒有資料時回傳 undefined 導致 [...undefined] 畫面崩潰
+    const purchases = this.store.purchases() || [];
+    return [...purchases].sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
   });
 
   openReceipts(images: string[]) {
