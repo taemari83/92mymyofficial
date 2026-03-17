@@ -585,39 +585,39 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         </tr>
                       </thead>
                       <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-200">
-                   @for(p of purchaseList(); track p?.id || $index) {
+                         @for(p of purchaseList(); track $index) {
                             <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden relative">
                                <td class="p-4 bg-gray-50/50 md:bg-transparent block md:table-cell border-b md:border-none border-gray-200">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">回報時間 / 購買日</span>
-                                  <div class="font-bold text-gray-800">{{ p.date }}</div>
-                                  <div class="text-[10px] text-gray-400">回報: {{ p.createdAt | date:'MM/dd HH:mm' }}</div>
+                                  <div class="font-bold text-gray-800">{{ p.date || '無日期' }}</div>
+                                  <div class="text-[10px] text-gray-400">回報: {{ p.createdAt ? (p.createdAt | date:'MM/dd HH:mm') : '無' }}</div>
                                </td>
                                <td class="p-4 block md:table-cell border-b md:border-none border-gray-100">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">地點/網址</span>
-                                  <div class="font-bold text-gray-700 flex items-center gap-1"><span class="text-[10px] bg-gray-200 px-1 rounded">{{ p.country }}</span> {{ p.location }}</div>
+                                  <div class="font-bold text-gray-700 flex items-center gap-1"><span class="text-[10px] bg-gray-200 px-1 rounded">{{ p.country || '未指定' }}</span> {{ p.location || '無' }}</div>
                                </td>
                                <td class="p-4 block md:table-cell border-b md:border-none border-gray-100">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">購買品項</span>
-                                  <div class="text-xs text-gray-600 font-bold mb-1">{{ p.items?.length || 0 }} 項商品 (預估值: NT$ {{ p.estimatedLocalCost | number }})</div>
+                                  <div class="text-xs text-gray-600 font-bold mb-1">{{ p.items?.length || 0 }} 項商品 (預估值: NT$ {{ p.estimatedLocalCost || 0 | number }})</div>
                                   <div class="flex flex-col gap-0.5">
-                @for(item of (p.items || []); track $index) {
-                  <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
-                 }
-                   </div>
+                                    @for(item of (p.items || []); track $index) {
+                                      <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
+                                    }
+                                  </div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">單據運費</span>
-                                  <div class="font-mono text-gray-500">NT$ {{ p.localShipping | number }}</div>
+                                  <div class="font-mono text-gray-500">NT$ {{ p.localShipping || 0 | number }}</div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實際刷卡總額</span>
-                                  <div class="font-black text-red-600 text-base">NT$ {{ p.totalLocalCost | number }}</div>
+                                  <div class="font-black text-red-600 text-base">NT$ {{ p.totalLocalCost || 0 | number }}</div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">付款人 / 分潤</span>
                                   <div class="text-right md:text-center">
-                                     <div class="font-bold text-gray-800">{{ p.payer }}</div>
-                                     <div class="text-[10px] text-gray-400">{{ p.shareMode }}</div>
+                                     <div class="font-bold text-gray-800">{{ p.payer || '未指定' }}</div>
+                                     <div class="text-[10px] text-gray-400">{{ p.shareMode || '-' }}</div>
                                   </div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
