@@ -1160,9 +1160,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    </div>
                    @if(procureRange() === 'custom') {
                       <div class="flex items-center gap-2 animate-fade-in ml-auto w-full sm:w-auto mt-2 sm:mt-0">
-                         <input type="date" [ngModel]="procureStart()" (ngModelChange)="procureStart.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                         <input type="date" [ngModel]="procureStart()" (ngModelChange)="procureStart.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600" />
                          <span class="text-gray-400">-</span>
-                         <input type="date" [ngModel]="procureEnd()" (ngModelChange)="procureEnd.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                         <input type="date" [ngModel]="procureEnd()" (ngModelChange)="procureEnd.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600" />
                       </div>
                    }
                 </div>
@@ -1174,7 +1174,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         [class.bg-white]="cargo.procured < cargo.needed" [class.border-gray-200]="cargo.procured < cargo.needed" [class.shadow-sm]="cargo.procured < cargo.needed"
                         [class.bg-green-50]="cargo.procured >= cargo.needed" [class.border-green-200]="cargo.procured >= cargo.needed" [class.opacity-60]="cargo.procured >= cargo.needed">
                    
-                     <img [src]="cargo.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0">
+                     <img [src]="cargo.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0" />
                    
                      <div class="flex-1 min-w-0">
                        <h4 class="font-bold text-gray-800 text-sm sm:text-base truncate">{{ cargo.name }}</h4>
@@ -1201,26 +1201,16 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                        }
                      </div>
                    </div>
-                } @empty {
+               } @empty {
                   <div class="text-center py-20 flex flex-col items-center justify-center opacity-50">
                     <span class="text-6xl mb-4">🎉</span>
-                    <p class="text-gray-500 font-bold">目前沒有需要叫貨的商品！<br>訂單都買齊啦！</p>
+                    <p class="text-gray-500 font-bold">目前沒有需要叫貨的商品！<br />訂單都買齊啦！</p>
                   </div>
                 }
               </div>
             </div>
           </div>
         }
-  } @empty {
-    <div class="text-center py-20 flex flex-col items-center justify-center opacity-50">
-      <span class="text-6xl mb-4">🎉</span>
-      <p class="text-gray-500 font-bold">目前沒有需要叫貨的商品！<br>訂單都買齊啦！</p>
-    </div>
-  }
-</div>
-            </div>
-          </div>
-        }    
       </main>
     </div>
   `,
