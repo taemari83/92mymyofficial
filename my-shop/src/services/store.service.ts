@@ -129,6 +129,11 @@ async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), 
     return docRef;
   }
   
+  // 🧾 新增：單筆建立採購草稿單 (一鍵結算用)
+  async addPurchase(purchase: any) {
+    await setDoc(doc(this.firestore, 'purchases', purchase.id), purchase);
+  }
+
   // 🧾 新增：核准採購單狀態
   async updatePurchaseStatus(id: string, status: string) { 
     await updateDoc(doc(this.firestore, 'purchases', id), { status }); 

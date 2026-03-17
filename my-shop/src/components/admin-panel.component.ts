@@ -598,6 +598,35 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full"><div class="bg-brand-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div><div class="relative z-10"><div class="text-brand-200 text-xs font-bold uppercase tracking-widest mb-1">總營收 (已扣除折扣)</div><div class="text-3xl font-black">NT$ {{ accountingStats().revenue | number }}</div></div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">淨利潤</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().profit | number:'1.0-0' }}</div><div class="mt-2 inline-block px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">淨利率 {{ accountingStats().margin | number:'1.1-1' }}%</div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">總成本 (商品+物流)</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().cost | number:'1.0-0' }}</div></div><div class="lg:col-span-3 bg-blue-50/50 p-4 rounded-[2rem] border border-blue-50 flex items-center text-blue-800/70 text-xs leading-relaxed">💡 報表說明：<br>• 只要有下單(包含未付款)，皆會計入上方「總營收/淨利」方便追蹤。<br>• 僅排除「已退款」與「已取消」的訂單。<br>• 下方「收款狀態分析」方便對帳實際入帳的現金流。</div></div>
             
+            <div class="mt-8 w-full animate-fade-in">
+               <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                 <span>🤝</span> 合夥人分潤結算 
+                 <span class="text-xs bg-brand-100 text-brand-600 px-2 py-1 rounded-full font-normal shadow-sm">依「已入帳」真實淨利自動拆分</span>
+               </h4>
+               <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                  <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-colors">
+                     <div class="text-xs text-gray-500 font-bold mb-1 uppercase">藝辰 (親帶25% / 批發0%)</div>
+                     <div class="text-2xl lg:text-3xl font-black text-gray-800">NT$ {{ accountingStats().shares.yichen | number:'1.0-0' }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-5 text-5xl group-hover:scale-110 transition-transform">👧🏻</div>
+                  </div>
+                  <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-colors">
+                     <div class="text-xs text-gray-500 font-bold mb-1 uppercase">子婷 (親帶25% / 批發40%)</div>
+                     <div class="text-2xl lg:text-3xl font-black text-gray-800">NT$ {{ accountingStats().shares.ziting | number:'1.0-0' }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-5 text-5xl group-hover:scale-110 transition-transform">👩🏻</div>
+                  </div>
+                  <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-colors">
+                     <div class="text-xs text-gray-500 font-bold mb-1 uppercase">小芸 (親帶25% / 批發40%)</div>
+                     <div class="text-2xl lg:text-3xl font-black text-gray-800">NT$ {{ accountingStats().shares.xiaoyun | number:'1.0-0' }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-5 text-5xl group-hover:scale-110 transition-transform">👱🏻‍♀️</div>
+                  </div>
+                  <div class="bg-brand-50 p-5 rounded-2xl border border-brand-200 shadow-sm relative overflow-hidden group hover:border-brand-400 transition-colors">
+                     <div class="text-xs text-brand-600 font-bold mb-1 uppercase">公司保留 (親帶25% / 批發20%)</div>
+                     <div class="text-2xl lg:text-3xl font-black text-brand-900">NT$ {{ accountingStats().shares.company | number:'1.0-0' }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-5xl group-hover:scale-110 transition-transform">🏢</div>
+                  </div>
+               </div>
+            </div>
+
             <div class="mt-4 w-full"><h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><span>💰 收款狀態分析</span><span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-normal">Cash Flow</span></h4><div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full"><div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">應收總額</div><div class="text-lg font-black text-gray-800 whitespace-nowrap">\${{ accountingStats().payment.total | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🧾</div></div><div class="bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm relative overflow-hidden"><div class="text-xs text-green-600 font-bold mb-1 uppercase">已實收 (入帳)</div><div class="text-lg font-black text-green-700 whitespace-nowrap">\${{ accountingStats().payment.received | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">💰</div></div><div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm relative overflow-hidden"><div class="text-xs text-yellow-600 font-bold mb-1 uppercase">對帳中</div><div class="text-lg font-black text-yellow-700 whitespace-nowrap">\${{ accountingStats().payment.verifying | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">🔍</div></div><div class="bg-red-50 p-4 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden"><div class="text-xs text-red-600 font-bold mb-1 uppercase">未收款(含貨到付款)</div><div class="text-lg font-black text-red-700 whitespace-nowrap">\${{ accountingStats().payment.unpaid | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">⚠️</div></div><div class="bg-gray-100 p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden opacity-75"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">待退款</div><div class="text-lg font-black text-gray-600 whitespace-nowrap">\${{ accountingStats().payment.refund | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">↩️</div></div><div class="bg-gray-800 text-white p-4 rounded-2xl border border-gray-700 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-400 font-bold mb-1 uppercase">已退款 (結案)</div><div class="text-lg font-black text-white whitespace-nowrap">\${{ accountingStats().payment.refundedTotal | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-20 text-4xl">💸</div></div></div></div>
             
             <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
@@ -1010,6 +1039,19 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> </div> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl font-mono bg-gray-50 text-gray-500"> </div> 
                       </div> 
+
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4">
+                        <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-blue-200 pb-2">
+                          <h4 class="font-bold text-blue-800 text-sm flex items-center gap-1"><span>🤝</span> 合夥人分潤模式設定</h4>
+                        </div>
+                        <div class="col-span-1 sm:col-span-2">
+                          <label class="block text-xs font-bold text-blue-600 mb-1">進貨來源與分潤比例</label>
+                          <select formControlName="shareMode" class="w-full p-3 border border-blue-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm font-bold bg-white text-blue-900 cursor-pointer shadow-sm">
+                            <option value="親帶">✈️ 親帶 (藝辰25% / 子婷25% / 小芸25% / 公司25%)</option>
+                            <option value="批發">📦 批發 (藝辰0% / 子婷40% / 小芸40% / 公司20%)</option>
+                          </select>
+                        </div>
+                      </div>
 
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-200">
                         <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-red-200 pb-2">
@@ -1818,56 +1860,92 @@ try {
     const filteredOrders = this.accountingFilteredOrders();
     let revenue = 0; let cost = 0; let discounts = 0;
     let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
+    
+    // 🤝 合夥人分潤累加器
+    let shareYichen = 0; let shareZiting = 0; let shareXiaoyun = 0; let shareCompany = 0;
 
- filteredOrders.forEach((o: Order) => {
-      if (o.status === 'refund_needed') payRefund += o.finalTotal;
-      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
-      else if (['payment_confirmed', 'shipped', 'completed', 'picked_up'].includes(o.status)) {
-          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
-      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
-          payUnpaid += o.finalTotal;
-      }
+    filteredOrders.forEach((o: Order) => {
+      if (o.status === 'refund_needed') payRefund += o.finalTotal;
+      else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
+      else if (['payment_confirmed', 'shipped', 'completed', 'picked_up'].includes(o.status)) {
+          if (o.paymentMethod === 'cod' && o.status !== 'completed') payUnpaid += o.finalTotal; else payReceived += o.finalTotal;
+      } else if (['pending_payment', 'unpaid_alert'].includes(o.status)) {
+          payUnpaid += o.finalTotal;
+      }
 
-      // 🔥 新增邏輯：判斷這筆訂單是否「已實收」(轉帳已確認，或貨到付款已完成)
-      let isReceived = false;
-      if (['payment_confirmed', 'shipped', 'completed', 'picked_up'].includes(o.status)) {
-          if (o.paymentMethod !== 'cod' || o.status === 'completed') {
-              isReceived = true;
-          }
-      }
-      
-      // 🔥 只有已實收的訂單，才算入上方的總營收、總成本與淨利潤
-      if (isReceived) {
-          revenue += o.finalTotal;
+      let isReceived = false;
+      if (['payment_confirmed', 'shipped', 'completed', 'picked_up'].includes(o.status)) {
+          if (o.paymentMethod !== 'cod' || o.status === 'completed') {
+              isReceived = true;
+          }
+      }
+      
+      if (isReceived) {
+          revenue += o.finalTotal;
+          let orderCost = 0;
+          let totalRawProfit = 0; // 紀錄原始未扣折扣的總利潤
 
-          o.items.forEach((i: CartItem) => {
-              const p = this.store.products().find((x: Product) => x.id === i.productId);
-              if (p) {
-                  let currentLocalPrice = p.localPrice || 0;
-                  const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
-                  if (fullOption.includes('=')) {
-                      const parts = fullOption.split('=');
-                      if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
-                  }
-                  if (currentLocalPrice > 0 || p.localPrice) {
-                      const costMat = p.costMaterial || 0;
-                      const weight = p.weight || 0;
-                      const shipKg = p.shippingCostPerKg || 0; // 🔥 預設改為 0
-                      const rate = p.exchangeRate || 1;
-                      cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
-                  } else {
-                      cost += (i.unitCost || 0) * i.quantity;
-                  }
-              } else {
-                  cost += (i.unitCost || 0) * i.quantity;
-              } 
-          });
-          discounts += o.discount + o.usedCredits;
-      }
-    });
+          // 第一圈：精算這筆訂單的成本，與每項商品的「原始毛利」
+          const itemsData = o.items.map((i: CartItem) => {
+              const p = this.store.products().find((x: Product) => x.id === i.productId);
+              let itemCost = 0;
+              let shareMode = (p as any)?.shareMode || '親帶'; // 抓取分潤模式
+
+              if (p) {
+                  let currentLocalPrice = p.localPrice || 0;
+                  const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+                  if (fullOption.includes('=')) {
+                      const parts = fullOption.split('=');
+                      if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+                  }
+                  if (currentLocalPrice > 0 || p.localPrice) {
+                      const costMat = p.costMaterial || 0;
+                      const weight = p.weight || 0;
+                      const shipKg = p.shippingCostPerKg || 0; 
+                      const rate = p.exchangeRate || 1;
+                      itemCost = ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
+                  } else { itemCost = (i.unitCost || 0) * i.quantity; }
+              } else { itemCost = (i.unitCost || 0) * i.quantity; } 
+
+              orderCost += itemCost;
+              const rawItemProfit = (i.price * i.quantity) - itemCost;
+              totalRawProfit += rawItemProfit;
+
+              return { itemCost, shareMode, rawItemProfit };
+          });
+
+          cost += orderCost;
+          discounts += o.discount + o.usedCredits;
+
+          // 第二圈：計算真實淨利 (扣除折扣後)，並依商品貢獻比例拆分給合夥人！
+          const orderRealProfit = o.finalTotal - orderCost;
+          
+          itemsData.forEach(item => {
+              // 依比例分攤整筆訂單的真實淨利 (就算有折價卷也能公平分攤)
+              const actualItemProfit = totalRawProfit !== 0 ? orderRealProfit * (item.rawItemProfit / totalRawProfit) : 0;
+              
+              if (item.shareMode === '親帶') {
+                  shareYichen += actualItemProfit * 0.25;
+                  shareZiting += actualItemProfit * 0.25;
+                  shareXiaoyun += actualItemProfit * 0.25;
+                  shareCompany += actualItemProfit * 0.25;
+              } else {
+                  // 買手批發：藝辰0%, 子婷40%, 小芸40%, 公司20%
+                  shareZiting += actualItemProfit * 0.40;
+                  shareXiaoyun += actualItemProfit * 0.40;
+                  shareCompany += actualItemProfit * 0.20;
+              }
+          });
+      }
+    });
 
     return { 
-        revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal } 
+        revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, 
+        maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, 
+        minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, 
+        avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, 
+        payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal },
+        shares: { yichen: shareYichen, ziting: shareZiting, xiaoyun: shareXiaoyun, company: shareCompany } // 👈 匯出分潤結果
     };
   });
 
@@ -2141,7 +2219,8 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       isPreorder: [false], 
       isListed: [true], 
       bulkCount: [0], 
-      bulkTotal: [0] 
+      bulkTotal: [0],
+      shareMode: ['親帶'] // 👈 新增這行：預設為親帶
     });
     const s = this.store.settings();
     this.settingsForm = this.fb.group({ enableCash: [s.paymentMethods.cash], enableBank: [s.paymentMethods.bankTransfer], enableCod: [s.paymentMethods.cod], birthdayGiftGeneral: [s.birthdayGiftGeneral], birthdayGiftVip: [s.birthdayGiftVip], shipping: this.fb.group({ freeThreshold: [s.shipping.freeThreshold], methods: this.fb.group({ meetup: this.fb.group({ enabled: [s.shipping.methods.meetup.enabled], fee: [s.shipping.methods.meetup.fee] }), myship: this.fb.group({ enabled: [s.shipping.methods.myship.enabled], fee: [s.shipping.methods.myship.fee] }), family: this.fb.group({ enabled: [s.shipping.methods.family.enabled], fee: [s.shipping.methods.family.fee] }), delivery: this.fb.group({ enabled: [s.shipping.methods.delivery.enabled], fee: [s.shipping.methods.delivery.fee] }) }) }) });
@@ -2504,24 +2583,23 @@ exportInventoryCSV() {
     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
     
     let list = this.accountingFilteredOrders(); 
-    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%'];
+    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%', '藝辰分潤', '子婷分潤', '小芸分潤', '公司保留'];
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
 
     const rows = list.map((o: Order) => { 
       let costGeneralTotal = 0; 
-      let costVipTotal = 0;
-      
-      const itemDetails = o.items.map((i: CartItem) => { 
+      let totalRawProfit = 0;
+
+      const itemsData = o.items.map((i: CartItem) => { 
         const p = this.store.products().find((x: Product) => x.id === i.productId); 
         let detailString = `• ${i.productName} (${i.option}) x${i.quantity}`;
-
-        let costGen = 0;
-        let costVip = 0;
+        let costGen = 0; let currentPriceGeneral = 0; let currentPriceVip = 0;
+        let shareMode = (p as any)?.shareMode || '親帶';
 
         if (p) { 
           let currentLocalPrice = p.localPrice || 0;
-          let currentPriceGeneral = p.priceGeneral || 0;
-          let currentPriceVip = p.priceVip || 0;
+          currentPriceGeneral = p.priceGeneral || 0;
+          currentPriceVip = p.priceVip || 0;
 
           const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
           if (fullOption.includes('=')) {
@@ -2532,44 +2610,39 @@ exportInventoryCSV() {
                   currentLocalPrice = Number(parts[3]) || currentLocalPrice;
               }
           }
-
-          const costMat = p.costMaterial || 0;
-          const weight = p.weight || 0;
-          const shipKg = p.shippingCostPerKg || 200;
-          const rate = p.exchangeRate || 1; 
-
-          if (currentLocalPrice > 0) {
-             costGen = (currentLocalPrice * rate) + costMat + (weight * shipKg);
-          } else if (p.localPrice > 0) {
-             costGen = (p.localPrice * rate) + costMat + (weight * shipKg);
-          } else {
-             costGen = i.unitCost || 0;
-          }
-
+          const rate = p.exchangeRate || 1; const shipKg = p.shippingCostPerKg || 0; 
+          costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
         } else {
-          costGen = i.unitCost || 0;
-          detailString += ` [實收:$${i.price} (已下架)]`;
+          costGen = i.unitCost || 0; detailString += ` [實收:$${i.price} (已下架)]`;
         }
         
-        costGeneralTotal += costGen * i.quantity;
+        const itemCostTotal = costGen * i.quantity;
+        costGeneralTotal += itemCostTotal;
+        const rawProfit = (i.price * i.quantity) - itemCostTotal;
+        totalRawProfit += rawProfit;
 
-        return detailString;
-      }).join('\n'); 
+        return { detailString, rawProfit, shareMode };
+      }); 
 
       const profit = o.finalTotal - costGeneralTotal; 
       const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
       
+      // 計算單筆訂單的合夥人分潤
+      let oYichen = 0; let oZiting = 0; let oXiaoyun = 0; let oCompany = 0;
+      itemsData.forEach(item => {
+         const actualItemProfit = totalRawProfit !== 0 ? profit * (item.rawProfit / totalRawProfit) : 0;
+         if (item.shareMode === '親帶') {
+            oYichen += actualItemProfit * 0.25; oZiting += actualItemProfit * 0.25; oXiaoyun += actualItemProfit * 0.25; oCompany += actualItemProfit * 0.25;
+         } else {
+            oZiting += actualItemProfit * 0.40; oXiaoyun += actualItemProfit * 0.40; oCompany += actualItemProfit * 0.20;
+         }
+      });
+
       return [ 
-        `\t${o.id}`, 
-        new Date(o.createdAt).toLocaleDateString('zh-TW'), 
-        payMap[o.paymentMethod] || o.paymentMethod,
-        o.paymentLast5 ? `\t${o.paymentLast5}` : '',
-        itemDetails, 
-        o.finalTotal, 
-        costGeneralTotal.toFixed(0), 
-        profit.toFixed(0), 
-        margin.toFixed(1) 
+        `\t${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `\t${o.paymentLast5}` : '',
+        itemsData.map(i => i.detailString).join('\n'), o.finalTotal, Math.round(costGeneralTotal), Math.round(profit), `${margin.toFixed(1)}%`,
+        Math.round(oYichen), Math.round(oZiting), Math.round(oXiaoyun), Math.round(oCompany)
       ];
     }); 
     this.downloadCSV(`銷售報表_明細_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows); 
@@ -2589,36 +2662,56 @@ exportInventoryCSV() {
     
     let list = this.accountingFilteredOrders(); 
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
-    const headers = ['訂單編號', '結算日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%', '收款狀態'];
+    const headers = ['訂單編號', '結算日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%', '收款狀態', '藝辰分潤', '子婷分潤', '小芸分潤', '公司保留'];
 
     const payloadRows = list.map((o: Order) => { 
-      let costGeneralTotal = 0; 
-      const itemDetails = o.items.map((i: CartItem) => { 
+      let costGeneralTotal = 0; let totalRawProfit = 0;
+      
+      const itemsData = o.items.map((i: CartItem) => { 
         const p = this.store.products().find((x: Product) => x.id === i.productId); 
         let detailString = `• ${i.productName} (${i.option}) x${i.quantity}`;
+        let costGen = 0; let currentPriceGeneral = 0; let currentPriceVip = 0;
+        let shareMode = (p as any)?.shareMode || '親帶';
+
         if (p) { 
-          let currentLocalPrice = p.localPrice || 0; let currentPriceGeneral = p.priceGeneral || 0; let currentPriceVip = p.priceVip || 0;
+          let currentLocalPrice = p.localPrice || 0; currentPriceGeneral = p.priceGeneral || 0; currentPriceVip = p.priceVip || 0;
           const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
           if (fullOption.includes('=')) {
               const parts = fullOption.split('=');
               if (parts.length >= 4) { currentPriceGeneral = Number(parts[1]) || currentPriceGeneral; currentPriceVip = Number(parts[2]) || currentPriceVip; currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
           }
           const rate = p.exchangeRate || 1; const shipKg = p.shippingCostPerKg || 0; 
-          let costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
-          costGeneralTotal += costGen * i.quantity;
+          costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
         } else {
-          costGeneralTotal += (i.unitCost || 0) * i.quantity; detailString += ` [實收:$${i.price} (已下架)]`;
+          costGen = i.unitCost || 0; detailString += ` [實收:$${i.price} (已下架)]`;
         }
-        return detailString;
-      }).join('\n'); 
+        
+        const itemCostTotal = costGen * i.quantity;
+        costGeneralTotal += itemCostTotal;
+        const rawProfit = (i.price * i.quantity) - itemCostTotal;
+        totalRawProfit += rawProfit;
+
+        return { detailString, rawProfit, shareMode };
+      }); 
 
       const profit = o.finalTotal - costGeneralTotal; 
       const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
       
+      let oYichen = 0; let oZiting = 0; let oXiaoyun = 0; let oCompany = 0;
+      itemsData.forEach(item => {
+         const actualItemProfit = totalRawProfit !== 0 ? profit * (item.rawProfit / totalRawProfit) : 0;
+         if (item.shareMode === '親帶') {
+            oYichen += actualItemProfit * 0.25; oZiting += actualItemProfit * 0.25; oXiaoyun += actualItemProfit * 0.25; oCompany += actualItemProfit * 0.25;
+         } else {
+            oZiting += actualItemProfit * 0.40; oXiaoyun += actualItemProfit * 0.40; oCompany += actualItemProfit * 0.20;
+         }
+      });
+
       return [ 
         `'${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `'${o.paymentLast5}` : '', 
-        itemDetails, o.finalTotal, Math.round(costGeneralTotal), Math.round(profit), `${margin.toFixed(1)}%`, this.getPaymentStatusLabel(o.status, o.paymentMethod)
+        itemsData.map(i => i.detailString).join('\n'), o.finalTotal, Math.round(costGeneralTotal), Math.round(profit), `${margin.toFixed(1)}%`, this.getPaymentStatusLabel(o.status, o.paymentMethod),
+        Math.round(oYichen), Math.round(oZiting), Math.round(oXiaoyun), Math.round(oCompany)
       ];
     }); 
 
@@ -2666,6 +2759,7 @@ openProductForm() {
     this.productForm.reset(); 
     this.productForm.patchValue({ 
       purchaseUrl: '', 
+      shareMode: '親帶', // 👈 新增預設值
       exchangeRate: 1, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' 
     }); 
     this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
@@ -2676,6 +2770,7 @@ openProductForm() {
     this.productForm.patchValue({ 
       ...p, 
       purchaseUrl: (p as any).purchaseUrl || '', 
+      shareMode: (p as any).shareMode || '親帶', // 👈 讀取舊資料防呆
       optionsStr: (p.options || []).join('\n'), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 
     }); 
     this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
@@ -2784,7 +2879,7 @@ async handleFileSelect(event: any) {
 submitProduct() { 
      const val = this.productForm.value; 
      if (val.category) { const catName = val.category.trim(); this.store.addCategory(catName); if (this.currentCategoryCode()) { const newSettings = { ...this.store.settings() }; if (!newSettings.categoryCodes) newSettings.categoryCodes = {}; newSettings.categoryCodes[catName] = this.currentCategoryCode(); this.store.updateSettings(newSettings); } } 
-     const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://picsum.photos/300/300'; 
+     const finalImages = this.tempImages(); const mainImage = finalImages.length > 0 ? finalImages[0] : 'https://placehold.co/300x300?text=No+Image'; 
      const finalCode = this.editingProduct() ? val.code : (this.generatedSkuPreview() || val.code || this.store.generateNextProductCode()); 
      const bulkCount = Number(val.bulkCount) || 0; const bulkTotal = Number(val.bulkTotal) || 0; 
      
@@ -2793,6 +2888,7 @@ submitProduct() {
          code: finalCode, 
          name: val.name, 
          purchaseUrl: val.purchaseUrl || '', 
+         shareMode: val.shareMode, // 👈 儲存分潤模式
          category: val.category, 
          subCategory: val.subCategory || '',
          tags: val.tagsStr ? val.tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [],
