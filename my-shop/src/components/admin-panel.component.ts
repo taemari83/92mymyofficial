@@ -589,48 +589,48 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                             <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden relative">
                                <td class="p-4 bg-gray-50/50 md:bg-transparent block md:table-cell border-b md:border-none border-gray-200">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">回報時間 / 購買日</span>
-                                  <div class="font-bold text-gray-800">{{ p.date || '無日期' }}</div>
-                                  <div class="text-[10px] text-gray-400">回報: {{ p.createdAt ? (p.createdAt | date:'MM/dd HH:mm') : '無' }}</div>
+                                  <div class="font-bold text-gray-800">{{ p?.date || '無日期' }}</div>
+                                  <div class="text-[10px] text-gray-400">回報: {{ p?.createdAt || '無' }}</div>
                                </td>
                                <td class="p-4 block md:table-cell border-b md:border-none border-gray-100">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">地點/網址</span>
-                                  <div class="font-bold text-gray-700 flex items-center gap-1"><span class="text-[10px] bg-gray-200 px-1 rounded">{{ p.country || '未指定' }}</span> {{ p.location || '無' }}</div>
+                                  <div class="font-bold text-gray-700 flex items-center gap-1"><span class="text-[10px] bg-gray-200 px-1 rounded">{{ p?.country || '未指定' }}</span> {{ p?.location || '無' }}</div>
                                </td>
                                <td class="p-4 block md:table-cell border-b md:border-none border-gray-100">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">購買品項</span>
-                                  <div class="text-xs text-gray-600 font-bold mb-1">{{ p.items?.length || 0 }} 項商品 (預估值: NT$ {{ p.estimatedLocalCost || 0 | number }})</div>
+                                  <div class="text-xs text-gray-600 font-bold mb-1">{{ p?.items?.length || 0 }} 項商品 (預估值: NT$ {{ p?.estimatedLocalCost || 0 }})</div>
                                   <div class="flex flex-col gap-0.5">
-                                    @for(item of (p.items || []); track $index) {
-                                      <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
+                                    @for(item of (p?.items || []); track $index) {
+                                      <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item?.productName }} x{{ item?.quantity }}</div>
                                     }
                                   </div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">單據運費</span>
-                                  <div class="font-mono text-gray-500">NT$ {{ p.localShipping || 0 | number }}</div>
+                                  <div class="font-mono text-gray-500">NT$ {{ p?.localShipping || 0 }}</div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實際刷卡總額</span>
-                                  <div class="font-black text-red-600 text-base">NT$ {{ p.totalLocalCost || 0 | number }}</div>
+                                  <div class="font-black text-red-600 text-base">NT$ {{ p?.totalLocalCost || 0 }}</div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">付款人 / 分潤</span>
                                   <div class="text-right md:text-center">
-                                     <div class="font-bold text-gray-800">{{ p.payer || '未指定' }}</div>
-                                     <div class="text-[10px] text-gray-400">{{ p.shareMode || '-' }}</div>
+                                     <div class="font-bold text-gray-800">{{ p?.payer || '未指定' }}</div>
+                                     <div class="text-[10px] text-gray-400">{{ p?.shareMode || '-' }}</div>
                                   </div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實拍收據</span>
-                                  <button (click)="openReceipts(p.receiptImages)" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 mx-auto transition-transform active:scale-95 shadow-sm border border-blue-100"><span>📸</span> 查看 ({{ p.receiptImages?.length || 0 }})</button>
+                                  <button (click)="openReceipts(p?.receiptImages)" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 mx-auto transition-transform active:scale-95 shadow-sm border border-blue-100"><span>📸</span> 查看 ({{ p?.receiptImages?.length || 0 }})</button>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">狀態</span>
-                                  @if(p.status === 'pending_sync') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold border border-yellow-200 w-fit">待核銷</span> }
+                                  @if(p?.status === 'pending_sync') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold border border-yellow-200 w-fit">待核銷</span> }
                                   @else { <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold border border-green-200 w-fit">已入帳</span> }
                                </td>
                                <td class="p-4 flex items-center justify-end gap-2">
-                                  @if(p.status === 'pending_sync') { 
+                                  @if(p?.status === 'pending_sync') { 
                                     <button (click)="approvePurchase(p)" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors shadow-sm active:scale-95 whitespace-nowrap">✅ 核准</button> 
                                   } @else {
                                     <button class="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold cursor-not-allowed border border-gray-200 whitespace-nowrap">已完成</button>
@@ -1965,13 +1965,18 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   viewReceiptImages = signal<string[]>([]);
   
   // 🚀 核心升級：直接抓取資料庫裡的真實採購單，並依時間排序
-  purchaseList = computed(() => {
-    const purchases = this.store.purchases();
-    // 終極防呆：確保資料庫回傳的絕對是陣列，並過濾掉可能的壞檔
-    if (!Array.isArray(purchases)) return [];
-    return [...purchases]
-      .filter(p => !!p)
-      .sort((a: any, b: any) => (b?.createdAt || 0) - (a?.createdAt || 0));
+  purchaseList = computed(() => {
+    const purchases = this.store.purchases();
+    // 終極防呆：確保資料庫回傳的絕對是陣列，並過濾掉可能的壞檔
+    if (!Array.isArray(purchases)) return [];
+    return [...purchases]
+      .filter(p => !!p)
+      .sort((a: any, b: any) => {
+         // 🛡️ 防呆：將字串轉為時間戳，如果無法轉換就當作 0，絕不報錯
+         const timeA = new Date(a?.createdAt || 0).getTime() || 0;
+         const timeB = new Date(b?.createdAt || 0).getTime() || 0;
+         return timeB - timeA;
+      });
   });
 
   openReceipts(images: string[]) {
