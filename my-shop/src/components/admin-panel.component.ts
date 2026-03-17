@@ -240,9 +240,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  <div class="flex flex-wrap items-center ml-auto gap-2 mt-2 md:mt-0 w-full md:w-auto justify-end">
                     <span class="hidden lg:flex text-xs text-gray-400 items-center whitespace-nowrap mr-2">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                     <div class="flex gap-2 w-full md:w-auto">
-                       <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-2 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
-                       <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-lg font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-2 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
-                    </div>
+                       <button (click)="openGiveawayModal()" class="flex-1 sm:flex-none px-4 py-2 bg-purple-500 text-white rounded-lg font-bold shadow-sm hover:bg-purple-600 flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>🎁</span> 抽獎單</button>
+                       <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
+                       <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-lg font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
+                    </div>
                  </div>
                </div>
                
@@ -1371,6 +1372,74 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             </div>
           </div>
         }
+       @if (showGiveawayModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closeGiveawayModal()">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 bg-purple-50 flex justify-between items-center shrink-0">
+                <h3 class="text-xl font-bold text-purple-900 flex items-center gap-2"><span>🎁</span> 建立行銷 / 抽獎單</h3>
+                <button (click)="closeGiveawayModal()" class="w-8 h-8 rounded-full bg-purple-200/50 text-purple-700 font-bold hover:bg-purple-200">✕</button>
+              </div>
+              <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <div class="mb-4 p-3 bg-blue-50 text-blue-700 rounded-xl text-xs font-bold leading-relaxed">
+                  💡 說明：此訂單金額為 $0，不計入營業額。<br>系統將自動扣除商品庫存，並將商品成本認列至「營業支出-行銷抽獎」。
+                </div>
+                <form [formGroup]="giveawayForm" class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">選擇贈品 / 商品</label>
+                    <select formControlName="productId" (change)="onGiveawayProductChange($event)" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm font-bold bg-gray-50 cursor-pointer">
+                      <option value="" disabled selected>請選擇商品...</option>
+                      @for(p of store.products(); track p.id) {
+                        <option [value]="p.id">{{ p.name }} (庫存: {{ p.stock >= 9999 ? '無限' : p.stock }})</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">規格</label>
+                      <select formControlName="option" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm font-bold bg-white">
+                        @if (giveawaySelectedProduct(); as sp) {
+                           @for(opt of sp.options; track opt) {
+                             <option [value]="opt.split('=')[0].trim()">{{ opt.split('=')[0].trim() }}</option>
+                           }
+                           @if (!sp.options || sp.options.length === 0) { <option value="單一規格">單一規格</option> }
+                        } @else {
+                           <option value="單一規格">單一規格</option>
+                        }
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">贈送數量</label>
+                      <input type="number" formControlName="quantity" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm font-bold text-center">
+                    </div>
+                  </div>
+                  <div class="border-t border-gray-100 pt-4 mt-2">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">中獎者 / 收件人姓名</label>
+                    <input type="text" formControlName="winnerName" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm font-bold" placeholder="例如：王小明 或 IG 帳號">
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">連絡電話</label>
+                      <input type="text" formControlName="winnerPhone" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">收件門市 / 地址</label>
+                      <input type="text" formControlName="shippingAddress" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">抽獎活動備註</label>
+                    <input type="text" formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm" placeholder="例如：9月粉絲同樂抽獎">
+                  </div>
+                </form>
+              </div>
+              <div class="p-6 border-t border-gray-100 bg-white shrink-0">
+                <button (click)="submitGiveawayOrder()" [disabled]="giveawayForm.invalid || !giveawaySelectedProduct()" class="w-full py-3 rounded-xl bg-purple-600 text-white font-bold text-lg hover:bg-purple-700 transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                  確認建立 $0 抽獎單
+                </button>
+              </div>
+            </div>
+          </div>
+        }   
       </main>
     </div>
   `,
@@ -1419,6 +1488,11 @@ export class AdminPanelComponent {
   activeWallet = signal<any>(null);
   walletForm!: FormGroup;
   
+  // 🎁 抽獎單表單控制
+  showGiveawayModal = signal(false);
+  giveawayForm!: FormGroup;
+  giveawaySelectedProduct = signal<Product | null>(null);
+
   filteredExpenses = computed(() => {
     let list = this.expenses();
     if (this.expenseCategoryFilter() !== 'all') {
@@ -1881,7 +1955,9 @@ try {
       }
       
       if (isReceived) {
-          revenue += o.finalTotal;
+          if ((o.paymentMethod as string) === 'giveaway') return; // 👈 神級防呆：抽獎單不計入銷售成本
+
+          revenue += o.finalTotal;
           let orderCost = 0;
           let totalRawProfit = 0; // 紀錄原始未扣折扣的總利潤
 
@@ -1930,7 +2006,7 @@ try {
                   shareXiaoyun += actualItemProfit * 0.25;
                   shareCompany += actualItemProfit * 0.25;
               } else {
-                  // 買手批發：藝辰0%, 子婷40%, 小芸40%, 公司20%
+                  // 批發：藝辰0%, 子婷40%, 小芸40%, 公司20%
                   shareZiting += actualItemProfit * 0.40;
                   shareXiaoyun += actualItemProfit * 0.40;
                   shareCompany += actualItemProfit * 0.20;
@@ -2241,6 +2317,16 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       amount: ['', [Validators.required, Validators.min(1)]],
       note: ['']
     });
+
+    this.giveawayForm = this.fb.group({
+      productId: ['', Validators.required],
+      option: ['單一規格'],
+      quantity: [1, [Validators.required, Validators.min(1)]],
+      winnerName: ['', Validators.required],
+      winnerPhone: [''],
+      shippingAddress: [''],
+      note: ['']
+    });
   } // 👈 constructor 的唯一結束大括號
 
   calculateUserTotalSpend(userId: string): number {
@@ -2361,7 +2447,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', pending_shipping: '待出貨', shipped: '已出貨', arrived_notified: '已貨到門市', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
   getShippingStatusClass(s: string) { if(s==='shipped') return 'bg-blue-100 text-blue-700'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-gray-800 text-white'; return 'text-gray-400'; } 
   
-  getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; return map[m] || m; }
+  getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 行銷抽獎' }; return map[m] || m; }
   getShippingLabel(m: string) { const map: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; return map[m] || m; }
   
   openAction(e: Event, order: Order) { e.stopPropagation(); this.actionModalOrder.set(order); this.cancelConfirmState.set(false); } 
@@ -2410,7 +2496,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
   exportOrdersCSV() { 
     const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)']; 
-    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; 
+    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 抽獎' }; 
     const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
 
     const rows = this.filteredOrders().map((o: Order) => { 
@@ -2497,7 +2583,7 @@ exportInventoryCSV() {
   }
 
   syncOrdersToGoogleSheets() {
-    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; 
+    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 抽獎'}; 
     const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
     
     const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)'];
@@ -3153,4 +3239,120 @@ submitProduct() {
     alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
     this.closeExpenseModal();
   }
+
+  // ==========================================
+  // 🎁 行銷抽獎與 0 元訂單模組
+  // ==========================================
+  openGiveawayModal() {
+    this.giveawayForm.reset({ quantity: 1, option: '單一規格' });
+    this.giveawaySelectedProduct.set(null);
+    this.showGiveawayModal.set(true);
+  }
+
+  closeGiveawayModal() {
+    this.showGiveawayModal.set(false);
+  }
+
+  onGiveawayProductChange(event: any) {
+    const pid = event.target.value;
+    const p = this.store.products().find((x: Product) => x.id === pid);
+    this.giveawaySelectedProduct.set(p || null);
+    if (p && p.options && p.options.length > 0) {
+      this.giveawayForm.patchValue({ option: p.options[0].split('=')[0].trim() });
+    } else {
+      this.giveawayForm.patchValue({ option: '單一規格' });
+    }
+  }
+
+  async submitGiveawayOrder() {
+    if (this.giveawayForm.invalid) return;
+    const val = this.giveawayForm.value;
+    const p = this.giveawaySelectedProduct();
+    if (!p) return alert('請選擇商品');
+
+    if (p.stock !== 99999 && p.stock < val.quantity) {
+      if (!confirm(`⚠️ 警告：該商品庫存不足 (剩餘 ${p.stock})，確定要繼續建單扣除嗎？`)) return;
+    }
+
+    // 1. 精算該商品成本 (轉移至營業支出用)
+    let currentLocalPrice = p.localPrice || 0;
+    const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === val.option) || '';
+    if (fullOption.includes('=')) {
+        const parts = fullOption.split('=');
+        if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+    }
+    const rate = p.exchangeRate || 1; 
+    const shipKg = p.shippingCostPerKg || 0; 
+    const unitCost = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : 0;
+    const totalCost = unitCost * val.quantity;
+
+    // 2. 建立 0 元訂單
+    const newOrder: Order = {
+      id: 'GW-' + Date.now(),
+      userId: 'GIVEAWAY',
+      userName: val.winnerName,
+      userPhone: val.winnerPhone,
+      userEmail: '',
+      shippingName: val.winnerName,
+      shippingPhone: val.winnerPhone,
+      shippingAddress: val.shippingAddress,
+      paymentMethod: 'giveaway' as any, 
+      shippingMethod: 'delivery',
+      subtotal: 0,        // 👈 補上：訂單小計 0 元
+      shippingFee: 0,     // 👈 補上：運費 0 元
+      discount: 0,
+      usedCredits: 0,
+      finalTotal: 0,
+      depositPaid: 0,     // 👈 補上：已付訂金 0 元
+      balanceDue: 0,      // 👈 補上：剩餘尾款 0 元
+      status: 'completed', // 預設完成
+      createdAt: Date.now(),
+      items: [{
+      productId: p.id,
+      productName: p.name,
+      productImage: p.image,
+      option: val.option,
+      quantity: val.quantity,
+      price: 0, // 售價 0 元
+      unitCost: unitCost,
+      isPreorder: p.isPreorder || false  // 👈 補上這個屬性，滿足系統嚴格格式
+      }]
+    };
+
+    // 3. 自動建立對應的營業支出
+    const newExpense = {
+      id: 'EXP-GW-' + Date.now(),
+      date: new Date().toISOString().slice(0, 10),
+      item: `行銷贈品: ${p.name} x${val.quantity}`,
+      category: '行銷抽獎',
+      amount: Math.round(totalCost),
+      currency: 'TWD',
+      payer: '公司吸收',
+      note: `得獎者: ${val.winnerName} ${val.note ? '('+val.note+')' : ''}`
+    };
+
+    try {
+      // 扣庫存
+      if (p.stock !== 99999) {
+         await this.store.updateProduct({ ...p, stock: p.stock - val.quantity });
+      }
+      
+      // 加入訂單庫
+      if ((this.store as any).addOrder) {
+         await (this.store as any).addOrder(newOrder);
+      } else {
+         const currentOrders = this.store.orders();
+         (this.store.orders as any).set([newOrder, ...currentOrders]);
+      }
+
+      // 自動記帳：拋轉至營業支出
+      this.expenses.update(es => [newExpense, ...es]);
+
+      alert(`✅ 抽獎單已成功建立！\n商品庫存已扣除 ${val.quantity} 件。\n成本 NT$ ${Math.round(totalCost)} 已自動認列至「營業支出-行銷抽獎」。`);
+      this.closeGiveawayModal();
+    } catch(err) {
+      alert('❌ 建立失敗: ' + err);
+    }
+  }
+  
 }
