@@ -27,21 +27,24 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
         </div>
 
-        <div class="flex-1 overflow-y-auto py-4 px-2 md:px-3 space-y-1">
+       <div class="flex-1 overflow-y-auto py-4 px-2 md:px-3 space-y-1">
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-2 text-center md:text-left">主要功能</div>
           <button (click)="activeTab.set('dashboard'); isSidebarOpen.set(false)" [class]="navClass('dashboard')"><span class="text-xl md:text-lg">🏠</span> <span class="inline">主控台</span></button>
           <button (click)="activeTab.set('orders'); isSidebarOpen.set(false)" [class]="navClass('orders')"><span class="text-xl md:text-lg relative">🛍️@if(pendingCount() > 0) {<span class="absolute -top-1 -right-1 md:hidden bg-red-400 text-white text-[8px] w-3 h-3 flex items-center justify-center rounded-full">{{ pendingCount() }}</span>}</span> <span class="inline">訂單管理</span>@if(pendingCount() > 0) {<span class="inline ml-auto bg-red-400 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ pendingCount() }}</span>}</button>
           <button (click)="activeTab.set('products'); isSidebarOpen.set(false)" [class]="navClass('products')"><span class="text-xl md:text-lg">📦</span> <span class="inline">商品管理</span></button>
           <button (click)="activeTab.set('customers'); isSidebarOpen.set(false)" [class]="navClass('customers')"><span class="text-xl md:text-lg">👥</span> <span class="inline">客戶管理</span></button>
+          
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">數據分析</div>
           <button (click)="activeTab.set('accounting'); isSidebarOpen.set(false)" [class]="navClass('accounting')"><span class="text-xl md:text-lg">📊</span> <span class="inline">銷售報表</span></button>
           <button (click)="activeTab.set('inventory'); isSidebarOpen.set(false)" [class]="navClass('inventory')"><span class="text-xl md:text-lg">🏭</span> <span class="inline">庫存管理</span></button>
           <button (click)="activeTab.set('purchases'); isSidebarOpen.set(false)" [class]="navClass('purchases')"><span class="text-xl md:text-lg">🧾</span> <span class="inline">採購總帳</span></button>
+          
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">資金與支出</div>
-          <button (click)="activeTab.set('wallets'); isSidebarOpen.set(false)" [class]="navClass('wallets')"><span class="text-xl md:text-lg">👛</span> <span class="inline">資金帳戶</span></button>
-          <button (click)="activeTab.set('expenses'); isSidebarOpen.set(false)" [class]="navClass('expenses')"><span class="text-xl md:text-lg">💸</span> <span class="inline">營業支出</span></button>
+          <button (click)="activeTab.set('wallets'); isSidebarOpen.set(false)" [class]="navClass('wallets')"><span class="text-xl md:text-lg">👛</span> <span class="inline">資金帳戶</span></button>
+          <button (click)="activeTab.set('expenses'); isSidebarOpen.set(false)" [class]="navClass('expenses')"><span class="text-xl md:text-lg">💸</span> <span class="inline">營業支出</span></button>
+          
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">設定</div>
-           <button (click)="activeTab.set('settings'); isSidebarOpen.set(false)" [class]="navClass('settings')"><span class="text-xl md:text-lg">⚙️</span> <span class="inline">商店設定</span></button>
+          <button (click)="activeTab.set('settings'); isSidebarOpen.set(false)" [class]="navClass('settings')"><span class="text-xl md:text-lg">⚙️</span> <span class="inline">商店設定</span></button>
         </div>
         
         <div class="p-2 md:p-4 border-t border-gray-100">
