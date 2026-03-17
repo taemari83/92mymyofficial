@@ -1962,7 +1962,7 @@ try {
           let totalRawProfit = 0; // 紀錄原始未扣折扣的總利潤
 
           // 第一圈：精算這筆訂單的成本，與每項商品的「原始毛利」
-          const itemsData = o.items.map((i: CartItem) => {
+          const itemsData = (o.items || []).map((i: CartItem) => { // 🛡️ 把 .map 也加上神盾
               const p = this.store.products().find((x: Product) => x.id === i.productId);
               let itemCost = 0;
               let shareMode = (p as any)?.shareMode || '親帶'; // 抓取分潤模式
@@ -2091,7 +2091,7 @@ try {
           if (dStr === today) todayRev += o.finalTotal; 
           if (dMonth === thisMonth) {
               monthSales += o.finalTotal; 
-              o.items.forEach((i: CartItem) => { 
+              (o.items || []).forEach((i: CartItem) => { // 🛡️ 加上神盾
                 const p = this.store.products().find((x: Product) => x.id === i.productId); 
 if(p) {
                     let currentLocalPrice = p.localPrice || 0;
@@ -2127,18 +2127,19 @@ if(p) {
 
 pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
-  // 🧠 核心升級：掃描全站真實訂單，算出每個商品的「真實總銷量」
-  productSalesMap = computed(() => {
-    const allOrders = this.store.orders().filter(o => o.status !== 'cancelled' && o.status !== 'refunded');
-    const salesCount: Record<string, number> = {};
-    allOrders.forEach(order => {
-      order.items.forEach((item: any) => {
-        if (!salesCount[item.productId]) salesCount[item.productId] = 0;
-        salesCount[item.productId] += item.quantity;
-      });
-    });
-    return salesCount;
-  });
+ // 🧠 核心升級：掃描全站真實訂單，算出每個商品的「真實總銷量」
+  productSalesMap = computed(() => {
+    const allOrders = this.store.orders().filter(o => o.status !== 'cancelled' && o.status !== 'refunded');
+    const salesCount: Record<string, number> = {};
+    allOrders.forEach(order => {
+      // 🛡️ 加上 (order.items || []) 阻擋舊訂單的空值攻擊
+      (order.items || []).forEach((item: any) => {
+        if (!salesCount[item.productId]) salesCount[item.productId] = 0;
+        salesCount[item.productId] += item.quantity;
+      });
+    });
+    return salesCount;
+  });
 
   // 🔥 修正：主控台熱銷排行改為使用剛算好的真實銷量大腦
   topProducts = computed(() => {
