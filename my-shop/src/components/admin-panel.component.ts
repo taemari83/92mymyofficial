@@ -647,29 +647,26 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'wallets') {
           <div class="space-y-6 w-full animate-fade-in">
-             <div class="flex justify-between items-end">
-                <div>
-                   <h3 class="text-2xl font-bold text-brand-900">👛 資金帳戶 (Wallets)</h3>
-                   <p class="text-sm text-gray-400 mt-1">管理各幣別營運資金與買手餘額</p>
-                </div>
-                <button class="px-4 py-2 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-colors">+ 新增帳戶</button>
+             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50">
+                <p class="text-sm font-bold text-gray-500">💡 管理各幣別營運資金與買手餘額</p>
+                <button class="w-full sm:w-auto px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 新增帳戶</button>
              </div>
              
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                 @for(w of wallets(); track w.id) {
-                   <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden group">
-                      <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full blur-2xl opacity-20" [class.bg-blue-500]="w.currency==='TWD'" [class.bg-purple-500]="w.currency==='KRW'"></div>
-                      <div class="flex justify-between items-center mb-4">
+                   <div class="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden group">
+                      <div class="absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-20" [class.bg-blue-500]="w.currency==='TWD'" [class.bg-purple-500]="w.currency==='KRW'"></div>
+                      <div class="flex justify-between items-center mb-6">
                          <span class="text-sm font-bold text-gray-500 bg-gray-50 px-3 py-1 rounded-lg">{{ w.currency }}</span>
-                         <button class="text-gray-400 hover:text-brand-900 font-bold text-sm">明細 ➔</button>
+                         <button class="text-gray-400 hover:text-brand-900 font-bold text-sm transition-colors">明細 ➔</button>
                       </div>
-                      <h4 class="text-lg font-bold text-gray-800 mb-1">{{ w.name }}</h4>
-                      <div class="text-4xl font-black" [class.text-blue-600]="w.currency==='TWD'" [class.text-purple-600]="w.currency==='KRW'">
+                      <h4 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">{{ w.name }}</h4>
+                      <div class="text-4xl sm:text-5xl font-black break-words" [class.text-blue-600]="w.currency==='TWD'" [class.text-purple-600]="w.currency==='KRW'">
                          {{ w.symbol }} {{ w.balance | number }}
                       </div>
-                      <div class="flex gap-2 mt-6">
-                         <button class="flex-1 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 transition-colors">儲值 (收入)</button>
-                         <button class="flex-1 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 transition-colors">扣款 (支出)</button>
+                      <div class="flex gap-3 mt-8">
+                         <button class="flex-1 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 transition-colors">儲值 (收入)</button>
+                         <button class="flex-1 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 transition-colors">扣款 (支出)</button>
                       </div>
                    </div>
                 }
@@ -679,13 +676,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'expenses') {
           <div class="space-y-6 w-full animate-fade-in">
-             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div>
-                   <h3 class="text-2xl font-bold text-brand-900">💸 營業支出 (Expenses)</h3>
-                   <p class="text-sm text-gray-400 mt-1">記錄包材、機票、貨運費等公積金攤提</p>
-                </div>
-                <div class="flex gap-2">
-                   <select [ngModel]="expenseCategoryFilter()" (ngModelChange)="expenseCategoryFilter.set($event)" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:border-brand-300">
+             <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <p class="text-sm font-bold text-gray-500">💡 記錄包材、機票、貨運費等公積金攤提</p>
+                <div class="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
+                   <select [ngModel]="expenseCategoryFilter()" (ngModelChange)="expenseCategoryFilter.set($event)" class="flex-1 sm:flex-none bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:border-brand-300">
                       <option value="all">全部類別</option>
                       <option value="包材費">包材費</option>
                       <option value="國際貨運費">國際貨運費</option>
@@ -694,15 +688,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <option value="行銷抽獎">行銷抽獎</option>
                       <option value="商品採購">商品採購 (自動)</option>
                    </select>
-                   <button class="px-4 py-2 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-colors whitespace-nowrap">+ 記一筆</button>
+                   <button class="flex-1 sm:flex-none px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 記一筆</button>
                 </div>
              </div>
 
-             <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden custom-scrollbar">
-                <table class="w-full text-sm text-left whitespace-nowrap">
-                   <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200">
+             <div class="bg-transparent md:bg-white md:rounded-[2rem] md:shadow-sm md:border md:border-gray-50 overflow-hidden overflow-x-auto w-full custom-scrollbar pb-2">
+                <table class="w-full text-sm text-left whitespace-nowrap block md:table md:min-w-[700px]">
+                   <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200 hidden md:table-header-group">
                       <tr>
-                         <th class="p-4">日期</th>
+                         <th class="p-4 pl-6">日期</th>
                          <th class="p-4">支出項目</th>
                          <th class="p-4">類別</th>
                          <th class="p-4 text-right">金額</th>
@@ -710,25 +704,42 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          <th class="p-4">備註</th>
                       </tr>
                    </thead>
-                   <tbody class="divide-y divide-gray-100">
+                   <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
                       @for(e of filteredExpenses(); track e.id) {
-                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="p-4 text-gray-500 font-mono">{{ e.date }}</td>
-                            <td class="p-4 font-bold text-gray-800">{{ e.item }}</td>
-                            <td class="p-4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">{{ e.category }}</span></td>
-                            <td class="p-4 text-right font-black" [class.text-red-500]="e.category !== '儲值'">{{ e.currency === 'KRW' ? '₩' : 'NT$' }} {{ e.amount | number }}</td>
-                            <td class="p-4 text-center text-gray-600 font-bold">{{ e.payer }}</td>
-                            <td class="p-4 text-xs text-gray-400">{{ e.note || '-' }}</td>
+                         <tr class="hover:bg-gray-50 transition-colors block md:table-row bg-white border border-gray-200 md:border-none rounded-[1.5rem] md:rounded-none mb-4 md:mb-0 shadow-sm md:shadow-none p-1 md:p-0">
+                            <td class="p-4 md:pl-6 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none">
+                               <span class="md:hidden text-xs text-gray-400 font-bold">日期</span>
+                               <span class="text-gray-500 font-mono">{{ e.date }}</span>
+                            </td>
+                            <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none">
+                               <span class="md:hidden text-xs text-gray-400 font-bold">支出項目</span>
+                               <span class="font-bold text-gray-800 whitespace-normal break-all text-right md:text-left max-w-[200px] md:max-w-none leading-snug">{{ e.item }}</span>
+                            </td>
+                            <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none">
+                               <span class="md:hidden text-xs text-gray-400 font-bold">類別</span>
+                               <span class="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md text-xs font-bold">{{ e.category }}</span>
+                            </td>
+                            <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none md:text-right">
+                               <span class="md:hidden text-xs text-gray-400 font-bold">金額</span>
+                               <span class="font-black text-lg md:text-sm" [class.text-red-500]="e.category !== '儲值'">{{ e.currency === 'KRW' ? '₩' : 'NT$' }} {{ e.amount | number }}</span>
+                            </td>
+                            <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none md:text-center">
+                               <span class="md:hidden text-xs text-gray-400 font-bold">付款人</span>
+                               <span class="text-gray-600 font-bold">{{ e.payer }}</span>
+                            </td>
+                            <td class="p-4 flex items-center justify-between md:table-cell">
+                               <span class="md:hidden text-xs text-gray-400 font-bold">備註</span>
+                               <span class="text-xs text-gray-400 truncate max-w-[150px] text-right md:text-left" [title]="e.note">{{ e.note || '-' }}</span>
+                            </td>
                          </tr>
                       } @empty {
-                         <tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold">目前無支出紀錄</td></tr>
+                         <tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold block md:table-cell">目前無支出紀錄</td></tr>
                       }
                    </tbody>
                 </table>
              </div>
           </div>
         }
-
         @if (activeTab() === 'settings') { 
           <div class="w-full py-6"> 
             <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 space-y-12 w-full"> 
@@ -1225,8 +1236,8 @@ export class AdminPanelComponent {
 
   // ===== 👛 Phase 1: 資金帳戶與營業支出 =====
   wallets = signal<any[]>([
-    { id: 'w1', name: '台幣營運資金 (小芸)', currency: 'TWD', balance: 84948, symbol: 'NT$' },
-    { id: 'w2', name: '韓元營運資金 (藝辰)', currency: 'KRW', balance: 3937963, symbol: '₩' }
+    { id: 'w1', name: '台幣營運資金', currency: 'TWD', balance: 84948, symbol: 'NT$' },
+    { id: 'w2', name: '韓元營運資金', currency: 'KRW', balance: 3937963, symbol: '₩' }
   ]);
 
   expenses = signal<any[]>([
