@@ -197,17 +197,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                  <span class="font-bold text-gray-800 font-mono text-base md:text-sm">#{{ order.id }}</span>
                                  @if(order.paymentName) { <span class="w-2 h-2 rounded-full bg-blue-500" title="已回報匯款"></span> }
                                </div>
-                               <div class="flex flex-col gap-1">
+                              <div class="flex flex-col gap-0.5">
                                  @for(item of (order.items || []); track item.productId + item.option) {
-                                   <div class="text-[11px] text-gray-500 max-w-full md:max-w-[220px] flex items-start gap-1">
-                                     <span class="truncate mt-0.5">• {{ item.productName }} <span class="opacity-70">({{ item.option }})</span> <span class="font-bold text-brand-900">x{{ item.quantity }}</span></span>
-                                     @if(getItemProcureStatus(item.productId, item.option); as proc) {
-                                        @if(proc.procured >= proc.needed) {
-                                           <span class="shrink-0 bg-green-100 text-green-700 px-1 py-0.5 rounded text-[9px] font-bold mt-0.5">✅ 買齊</span>
-                                        } @else {
-                                           <span class="shrink-0 bg-red-100 text-red-600 px-1 py-0.5 rounded text-[9px] font-bold mt-0.5" title="總需: {{proc.needed}} / 已買: {{proc.procured}}">⚠️ 缺{{ proc.needed - proc.procured }}</span>
-                                        }
-                                     }
+                                   <div class="text-[11px] text-gray-500 truncate max-w-full md:max-w-[220px]">
+                                     • {{ item.productName }} <span class="opacity-70">({{ item.option }})</span> <span class="font-bold text-brand-900">x{{ item.quantity }}</span>
                                    </div>
                                  }
                                </div>
@@ -971,18 +964,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     @for(item of o.items; track item.productId + item.option) {
                        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
                           <img [src]="item.productImage" class="w-10 h-10 rounded-md object-cover bg-gray-200 shrink-0">
-                          <div class="flex-1 min-w-0">
+                         <div class="flex-1 min-w-0">
                              <div class="text-xs font-bold text-gray-800 truncate">{{ item.productName }}</div>
                              <div class="text-[10px] text-gray-500">{{ item.option }}</div>
-                                                          @if(getItemProcureStatus(item.productId, item.option); as proc) {
-                               <div class="mt-1">
-                                 @if(proc.procured >= proc.needed) {
-                                    <span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[10px] font-bold">✅ 已買齊 (總需: {{proc.needed}})</span>
-                                 } @else {
-                                    <span class="bg-red-100 text-red-600 px-1.5 py-0.5 rounded text-[10px] font-bold">⚠️ 叫貨中 (已買: {{proc.procured}} / 總需: {{proc.needed}})</span>
-                                 }
-                               </div>
-                             }
                           </div>
                           <div class="text-right shrink-0">
                              <div class="text-xs font-bold text-brand-900">NT$ {{ item.price }}</div>
@@ -1269,7 +1253,6 @@ export class AdminPanelComponent {
   // 建立一個快速尋找叫貨狀態的字典 (全局統計)
   procurementStatusMap = computed(() => {
     const map = new Map<string, { needed: number, procured: number }>();
-    // 只抓取需要叫貨的活躍訂單
     const activeOrders = this.store.orders().filter((o: Order) => 
       ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status)
     );
@@ -1287,7 +1270,7 @@ export class AdminPanelComponent {
     return map;
   });
 
-  // 供 HTML 與 CSV 匯出呼叫，取得單一商品的叫貨進度
+  // 供匯出報表呼叫，取得單一商品的叫貨進度
   getItemProcureStatus(productId: string, option: string) {
     const key = `${productId}_${option || '單一規格'}`;
     return this.procurementStatusMap().get(key);
@@ -1983,7 +1966,7 @@ getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '�
           detailString += ` [實收:$${i.price}]`;
         }
         
-        // 👇 新增：在 CSV 裡面加上叫貨狀態 👇
+        // 👇 加上叫貨狀態
         const procStatus = this.getItemProcureStatus(i.productId, i.option);
         if (procStatus) {
           if (procStatus.procured >= procStatus.needed) {
@@ -1992,7 +1975,6 @@ getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '�
             detailString += ` (⚠️缺${procStatus.needed - procStatus.procured})`;
           }
         }
-
         return detailString;
       }).join('\n');
 
@@ -2055,20 +2037,36 @@ exportInventoryCSV() {
   }
 
   syncOrdersToGoogleSheets() {
-    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; 
-    const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
-    
-    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)'];
-    const dataRows = this.filteredOrders().map((o: Order) => [
-      `'${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId),
-      payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `'${o.paymentLast5}` : '',
-      shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod),
-      o.shippingLink || '', o.items.map((i: CartItem) => `• ${i.productName} (${i.option}) x${i.quantity}`).join('\n')
-    ]);
-    
-    // 把表頭放在第一行送出
-    this.pushToGoogleSheets('訂單管理', [headers, ...dataRows]);
-  }
+    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款' }; 
+    const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
+    
+    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)'];
+    const dataRows = this.filteredOrders().map((o: Order) => {
+      // 👇 在這裡組裝帶有叫貨狀態的明細
+      const itemDetails = o.items.map((i: CartItem) => {
+        let detailString = `• ${i.productName} (${i.option}) x${i.quantity}`;
+        const procStatus = this.getItemProcureStatus(i.productId, i.option);
+        if (procStatus) {
+          if (procStatus.procured >= procStatus.needed) {
+            detailString += ` (✅已買齊)`;
+          } else {
+            detailString += ` (⚠️缺${procStatus.needed - procStatus.procured})`;
+          }
+        }
+        return detailString;
+      }).join('\n');
+
+      return [
+        `'${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId),
+        payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `'${o.paymentLast5}` : '',
+        shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod),
+        o.shippingLink || '', itemDetails
+      ];
+    });
+    
+    // 把表頭放在第一行送出
+    this.pushToGoogleSheets('訂單管理', [headers, ...dataRows]);
+  }
 
   syncProductsToGoogleSheets() {
     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ];
