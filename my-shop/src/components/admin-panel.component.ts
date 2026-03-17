@@ -600,10 +600,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">購買品項</span>
                                   <div class="text-xs text-gray-600 font-bold mb-1">{{ p.items?.length || 0 }} 項商品 (預估值: NT$ {{ p.estimatedLocalCost | number }})</div>
                                   <div class="flex flex-col gap-0.5">
-                                    @for(item of p.items; track item.productId) {
-                                      <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
-                                    }
-                                  </div>
+                                  @for(item of (p.items || []); track item.productId) {
+                                  <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
+                               }
+                               </div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">單據運費</span>
@@ -1291,8 +1291,12 @@ export class AdminPanelComponent {
   procureEnd = signal('');
 
   procurementList = computed(() => {
+    // 🔥 強化：明確宣告依賴並加上 || [] 防呆，確保資料庫沒資料時不會報錯
+    const allOrders = this.store.orders() || [];
+    const allProducts = this.store.products() || [];
+
     // 抓出「客人已付款 / 待對帳」需要叫貨的訂單
-    const activeOrders = this.store.orders().filter((o: Order) => 
+    const activeOrders = allOrders.filter((o: Order) => 
       ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status)
     );
 
@@ -1300,14 +1304,15 @@ export class AdminPanelComponent {
     let filteredOrders = activeOrders;
     const range = this.procureRange();
     const now = new Date();
+    
     if (range === 'today') {
        const todayStr = now.toDateString();
-       filteredOrders = filteredOrders.filter((o: Order) => new Date(o.createdAt).toDateString() === todayStr);
+       filteredOrders = activeOrders.filter((o: Order) => new Date(o.createdAt).toDateString() === todayStr);
     } else if (range === 'yesterday') {
        const yest = new Date(now);
        yest.setDate(yest.getDate() - 1);
        const yestStr = yest.toDateString();
-       filteredOrders = filteredOrders.filter((o: Order) => new Date(o.createdAt).toDateString() === yestStr);
+       filteredOrders = activeOrders.filter((o: Order) => new Date(o.createdAt).toDateString() === yestStr);
     } else if (range === 'custom') {
        const start = this.procureStart();
        const end = this.procureEnd();
@@ -1324,7 +1329,7 @@ export class AdminPanelComponent {
 
         if (!listMap.has(key)) {
           // 去商品庫找這件商品，取得圖片跟目前「已買到」的數量
-          const product = this.store.products().find((p: Product) => p.id === item.productId);
+          const product = allProducts.find((p: Product) => p.id === item.productId);
           listMap.set(key, {
             productId: item.productId,
             name: item.productName,
@@ -1338,6 +1343,7 @@ export class AdminPanelComponent {
         }
         // 累加客人下單的需求量
         listMap.get(key).needed += (item.quantity || 1);
+        
         // 記錄包含的訂單日期 (加入防呆，避免無效日期導致畫面崩潰)
         try {
            const dateObj = new Date(order.createdAt);
@@ -1345,7 +1351,8 @@ export class AdminPanelComponent {
               listMap.get(key).orderDatesSet.add(dateObj.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }));
            }
         } catch (e) {}
-        listMap.get(key).orderDatesStr = Array.from(listMap.get(key).orderDatesSet).join(', ');      });
+        listMap.get(key).orderDatesStr = Array.from(listMap.get(key).orderDatesSet).join(', ');      
+      });
     });
 
     // 聰明排序：還沒買齊的排在上面，買齊(打勾)的沉到下面
