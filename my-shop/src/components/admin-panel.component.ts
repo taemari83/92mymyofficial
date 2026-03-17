@@ -79,56 +79,81 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          @if (showProcurementModal()) {
           <div class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-md flex flex-col justify-end animate-slide-up" (click)="showProcurementModal.set(false)">
             <div class="bg-gray-50 w-full h-[85vh] md:h-[90vh] rounded-t-[2rem] flex flex-col overflow-hidden shadow-2xl relative" (click)="$event.stopPropagation()">
-              <div class="p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm space-y-4">
+              
+              <div class="p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm space-y-4 shrink-0">
                 <div class="flex justify-between items-center">
                    <h2 class="text-xl font-bold text-brand-900 flex items-center gap-2"><span>📦</span> 即時叫貨總表</h2>
                    <div class="flex items-center gap-2 sm:gap-3">
-                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-xs font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span> 匯出</button>
-                     <button (click)="syncProcurementToGoogleSheets()" class="px-3 py-1.5 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black shadow-sm flex items-center gap-1 transition-colors"><span>☁️</span> 同步</button>
+                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-xs font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span></button>
+                     <button (click)="syncProcurementToGoogleSheets()" class="px-3 py-1.5 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black shadow-sm flex items-center gap-1 transition-colors"><span>☁️</span></button>
                      <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors shrink-0">✕</button>
                    </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
-                   <div class="flex gap-1 overflow-x-auto custom-scrollbar">
-                     <button (click)="procureRange.set('all')" [class.bg-brand-900]="procureRange() === 'all'" [class.text-white]="procureRange() === 'all'" [class.text-gray-500]="procureRange() !== 'all'" [class.hover:bg-gray-200]="procureRange() !== 'all'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">全部未買</button>
-                     <button (click)="procureRange.set('today')" [class.bg-brand-900]="procureRange() === 'today'" [class.text-white]="procureRange() === 'today'" [class.text-gray-500]="procureRange() !== 'today'" [class.hover:bg-gray-200]="procureRange() !== 'today'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">今日</button>
-                     <button (click)="procureRange.set('yesterday')" [class.bg-brand-900]="procureRange() === 'yesterday'" [class.text-white]="procureRange() === 'yesterday'" [class.text-gray-500]="procureRange() !== 'yesterday'" [class.hover:bg-gray-200]="procureRange() !== 'yesterday'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">昨日</button>
-                     <button (click)="procureRange.set('custom')" [class.bg-brand-900]="procureRange() === 'custom'" [class.text-white]="procureRange() === 'custom'" [class.text-gray-500]="procureRange() !== 'custom'" [class.hover:bg-gray-200]="procureRange() !== 'custom'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">自訂</button>
+                
+                <div class="flex flex-col gap-2">
+                   <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                     <div class="flex gap-1 overflow-x-auto custom-scrollbar">
+                       <button (click)="procureRange.set('all')" [class.bg-brand-900]="procureRange() === 'all'" [class.text-white]="procureRange() === 'all'" [class.text-gray-500]="procureRange() !== 'all'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">全部未買</button>
+                       <button (click)="procureRange.set('today')" [class.bg-brand-900]="procureRange() === 'today'" [class.text-white]="procureRange() === 'today'" [class.text-gray-500]="procureRange() !== 'today'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">今日</button>
+                       <button (click)="procureRange.set('yesterday')" [class.bg-brand-900]="procureRange() === 'yesterday'" [class.text-white]="procureRange() === 'yesterday'" [class.text-gray-500]="procureRange() !== 'yesterday'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">昨日</button>
+                       <button (click)="procureRange.set('custom')" [class.bg-brand-900]="procureRange() === 'custom'" [class.text-white]="procureRange() === 'custom'" [class.text-gray-500]="procureRange() !== 'custom'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">自訂</button>
+                     </div>
+                     @if(procureRange() === 'custom') {
+                        <div class="flex items-center gap-2 ml-auto w-full sm:w-auto mt-2 sm:mt-0">
+                           <input type="date" [ngModel]="procureStart()" (ngModelChange)="procureStart.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                           <span class="text-gray-400">-</span>
+                           <input type="date" [ngModel]="procureEnd()" (ngModelChange)="procureEnd.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                        </div>
+                     }
                    </div>
-                   @if(procureRange() === 'custom') {
-                      <div class="flex items-center gap-2 animate-fade-in ml-auto w-full sm:w-auto mt-2 sm:mt-0">
-                         <input type="date" [ngModel]="procureStart()" (ngModelChange)="procureStart.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
-                         <span class="text-gray-400">-</span>
-                         <input type="date" [ngModel]="procureEnd()" (ngModelChange)="procureEnd.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                   
+                   <div class="flex items-center justify-between gap-3 px-1">
+                      <div class="flex items-center gap-2 flex-1 relative">
+                         <span class="absolute left-3 text-gray-400 text-sm">🔍</span>
+                         <input type="text" [ngModel]="procureSearch()" (ngModelChange)="procureSearch.set($event)" placeholder="搜尋商品名稱或分類..." class="w-full bg-white border border-gray-200 rounded-lg pl-8 pr-3 py-2 text-sm font-bold text-gray-700 focus:outline-none focus:border-brand-400 shadow-sm">
                       </div>
-                   }
+                      <label class="flex items-center gap-2 cursor-pointer shrink-0 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm">
+                         <input type="checkbox" [ngModel]="procureShowOnlyShort()" (ngModelChange)="procureShowOnlyShort.set($event)" class="rounded text-brand-600 w-4 h-4">
+                         <span class="text-sm font-bold text-gray-600">只看缺貨</span>
+                      </label>
+                   </div>
                 </div>
               </div>
 
-              <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar pb-24">
-                @for(cargo of procurementList(); track cargo.productId + '||' + cargo.option) {
-                   <div class="flex items-center gap-3 p-3 sm:p-4 rounded-2xl border transition-all" 
-                        [class.bg-white]="cargo.procured < cargo.needed" [class.border-gray-200]="cargo.procured < cargo.needed" [class.shadow-sm]="cargo.procured < cargo.needed"
-                        [class.bg-green-50]="cargo.procured >= cargo.needed" [class.border-green-200]="cargo.procured >= cargo.needed" [class.opacity-60]="cargo.procured >= cargo.needed">
-                     <img [src]="cargo.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0">
-                     <div class="flex-1 min-w-0">
-                       <h4 class="font-bold text-gray-800 text-sm sm:text-base truncate">{{ cargo.name }}</h4>
-                       <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">規格: <span class="font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{{ cargo.option }}</span></div>
-                       <div class="text-xs text-gray-400 mt-1 font-mono">已買 {{ cargo.procured }} / 總需 {{ cargo.needed }} <span class="ml-2 text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded inline-block" title="包含的訂單日期">📅 {{ cargo.orderDatesStr }}</span></div>
-                     </div>
-                     <div class="flex items-center gap-2 shrink-0">
-                       @if(cargo.procured >= cargo.needed) {
-                         <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full text-xl sm:text-2xl font-bold">✅</div>
-                         <button (click)="updateProcured(cargo, -1)" class="text-[10px] text-gray-400 underline ml-1">退回</button>
-                       } @else {
-                         <button (click)="updateProcured(cargo, -1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200 text-lg">-</button>
-                         <div class="flex flex-col items-center min-w-[2.5rem]">
-                           <span class="text-[10px] text-red-500 font-bold">還缺</span>
-                           <span class="text-xl font-black text-red-600 leading-none">{{ cargo.needed - cargo.procured }}</span>
+              <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar pb-6 bg-gray-50">
+                @for(group of groupedProcurementList(); track group.category) {
+                   <div class="space-y-3">
+                      <div class="flex items-center gap-2 sticky top-0 bg-gray-50/95 backdrop-blur z-10 py-2 border-b border-gray-200/50">
+                         <span class="bg-brand-400 w-2 h-4 rounded-full"></span>
+                         <h3 class="font-black text-gray-800 text-lg">{{ group.category }}</h3>
+                         <span class="text-xs text-gray-400 font-mono bg-gray-200 px-2 py-0.5 rounded-full">{{ group.items.length }} 件</span>
+                      </div>
+
+                      @for(cargo of group.items; track cargo.productId + '||' + cargo.option) {
+                         <div class="flex items-center gap-3 p-3 sm:p-4 rounded-2xl border transition-all" 
+                              [class.bg-white]="cargo.procured < cargo.needed" [class.border-gray-200]="cargo.procured < cargo.needed" [class.shadow-sm]="cargo.procured < cargo.needed"
+                              [class.bg-green-50]="cargo.procured >= cargo.needed" [class.border-green-200]="cargo.procured >= cargo.needed" [class.opacity-60]="cargo.procured >= cargo.needed">
+                           <img [src]="cargo.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0">
+                           <div class="flex-1 min-w-0">
+                             <h4 class="font-bold text-gray-800 text-sm sm:text-base truncate">{{ cargo.name }}</h4>
+                             <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">規格: <span class="font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{{ cargo.option }}</span></div>
+                             <div class="text-xs text-gray-400 mt-1 font-mono">已買 {{ cargo.procured }} / 總需 {{ cargo.needed }} <span class="ml-2 text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded inline-block" title="包含的訂單日期">📅 {{ cargo.orderDatesStr }}</span></div>
+                           </div>
+                           <div class="flex items-center gap-2 shrink-0">
+                             @if(cargo.procured >= cargo.needed) {
+                               <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full text-xl sm:text-2xl font-bold">✅</div>
+                               <button (click)="updateProcured(cargo, -1)" class="text-[10px] text-gray-400 underline ml-1">退回</button>
+                             } @else {
+                               <button (click)="updateProcured(cargo, -1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200 text-lg">-</button>
+                               <div class="flex flex-col items-center min-w-[2.5rem]">
+                                 <span class="text-[10px] text-red-500 font-bold">還缺</span>
+                                 <span class="text-xl font-black text-red-600 leading-none">{{ cargo.needed - cargo.procured }}</span>
+                               </div>
+                               <button (click)="updateProcured(cargo, 1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-brand-900 text-white font-bold text-2xl active:scale-90 transition-transform shadow-md">+</button>
+                             }
+                           </div>
                          </div>
-                         <button (click)="updateProcured(cargo, 1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-brand-900 text-white font-bold text-2xl active:scale-90 transition-transform shadow-md">+</button>
-                       }
-                     </div>
+                      }
                    </div>
                 } @empty {
                   <div class="text-center py-20 flex flex-col items-center justify-center">
@@ -137,6 +162,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   </div>
                 }
               </div>
+              
+              <div class="p-4 bg-white border-t border-gray-100 shrink-0 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] z-20">
+                 <button (click)="generatePurchaseDraft()" class="w-full py-3.5 bg-gray-800 text-white rounded-xl font-bold shadow-lg hover:bg-black transition-colors flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <span class="text-xl">🧾</span> 結算今日已叫貨 (建立採購草稿單)
+                 </button>
+              </div>
+
             </div>
           </div>
         }
@@ -1271,23 +1303,26 @@ export class AdminPanelComponent {
   productViewMode = signal<'list' | 'grid'>('list');
   isSidebarOpen = signal(false);
 
-  // ===== 📦 連線叫貨神器專用變數與邏輯 =====
+ // ===== 📦 連線叫貨神器專用變數與邏輯 =====
   showProcurementModal = signal(false);
   procureRange = signal('all'); 
   procureStart = signal('');
   procureEnd = signal('');
 
+  // 🌟 進階功能 1：新增搜尋與過濾狀態
+  procureSearch = signal('');
+  procureShowOnlyShort = signal(false);
+
+  // 基礎清單：負責撈出資料、算好數量與日期
   procurementList = computed(() => {
-    // 🔥 強化：明確宣告依賴並加上 || [] 防呆，確保資料庫沒資料時不會報錯
     const allOrders = this.store.orders() || [];
     const allProducts = this.store.products() || [];
 
-    // 抓出「客人已付款 / 待對帳」需要叫貨的訂單
+    // 抓出「客人已付款 / 待對帳」需要叫貨的訂單 (保留你原本精準的防呆條件)
     const activeOrders = allOrders.filter((o: Order) => 
       ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status)
     );
 
-    // 📅 新增：日期區間篩選邏輯
     let filteredOrders = activeOrders;
     const range = this.procureRange();
     const now = new Date();
@@ -1315,23 +1350,21 @@ export class AdminPanelComponent {
         const key = `${item.productId}_${optionName}`;
 
         if (!listMap.has(key)) {
-          // 去商品庫找這件商品，取得圖片跟目前「已買到」的數量
           const product = allProducts.find((p: Product) => p.id === item.productId);
           listMap.set(key, {
             productId: item.productId,
             name: item.productName,
             option: optionName,
             image: product?.image || item.productImage || '',
+            category: product?.category || '未分類', // 🌟 新增：抓取商品分類，為了後面的群組化做準備
             needed: 0,
-            procured: (product as any)?.procured?.[optionName] || 0, // 讀取已買數量
+            procured: (product as any)?.procured?.[optionName] || 0,
             orderDatesSet: new Set<string>(),
             orderDatesStr: ''
           });
         }
-        // 累加客人下單的需求量
         listMap.get(key).needed += (item.quantity || 1);
         
-        // 記錄包含的訂單日期 (加入防呆，避免無效日期導致畫面崩潰)
         try {
            const dateObj = new Date(order.createdAt);
            if (!isNaN(dateObj.getTime())) {
@@ -1342,17 +1375,50 @@ export class AdminPanelComponent {
       });
     });
 
-    // 聰明排序：還沒買齊的排在上面，買齊(打勾)的沉到下面
-    return Array.from(listMap.values()).sort((a, b) => {
-      const aDone = a.procured >= a.needed;
-      const bDone = b.procured >= b.needed;
-      if (aDone && !bDone) return 1;
-      if (!aDone && bDone) return -1;
-      return 0;
-    });
+    return Array.from(listMap.values());
   });
 
-  // 點擊 +1 或 -1 的更新按鈕
+  // 🌟 進階功能 2：建立「分類群組與過濾」的超級大腦
+  groupedProcurementList = computed(() => {
+    let list = this.procurementList();
+
+    // 過濾 1: 關鍵字搜尋
+    const q = this.procureSearch().toLowerCase();
+    if (q) {
+      list = list.filter(item => 
+        item.name.toLowerCase().includes(q) || 
+        item.option.toLowerCase().includes(q) || 
+        item.category.toLowerCase().includes(q)
+      );
+    }
+
+    // 過濾 2: 只看缺貨
+    if (this.procureShowOnlyShort()) {
+      list = list.filter(item => item.procured < item.needed);
+    }
+
+    // 分組: 依照「分類」打包
+    const groups = new Map<string, any[]>();
+    list.forEach(item => {
+      const cat = item.category;
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat)!.push(item);
+    });
+
+    // 轉換為陣列並排序 (缺貨的排上面)
+    return Array.from(groups.entries()).map(([category, items]) => ({
+      category,
+      items: items.sort((a, b) => {
+         const aDone = a.procured >= a.needed;
+         const bDone = b.procured >= b.needed;
+         if (aDone && !bDone) return 1;
+         if (!aDone && bDone) return -1;
+         return 0;
+      })
+    }));
+  });
+
+  // 點擊 +1 或 -1 的更新按鈕 (不變)
   async updateProcured(item: any, change: number) {
     const product = this.store.products().find((p: Product) => p.id === item.productId);
     if (!product) return;
@@ -1360,9 +1426,8 @@ export class AdminPanelComponent {
     const currentMap = (product as any).procured || {};
     const currentQty = currentMap[item.option] || 0;
     let newQty = currentQty + change;
-    if (newQty < 0) newQty = 0; // 最低就是 0
+    if (newQty < 0) newQty = 0; 
 
-    // 更新商品資料庫
     const updatedProduct = {
       ...product,
       procured: { ...currentMap, [item.option]: newQty }
@@ -1370,8 +1435,53 @@ export class AdminPanelComponent {
     await this.store.updateProduct(updatedProduct);
   }
   
-  // 👇 從這裡開始新增 👇
-  // 建立一個快速尋找叫貨狀態的字典 (全局統計)
+  // 🌟 進階功能 3：一鍵結算建立「採購草稿單」
+  async generatePurchaseDraft() {
+    const toBuyItems = this.procurementList().filter(i => i.procured > 0);
+    if (toBuyItems.length === 0) return alert('⚠️ 目前沒有已經叫到貨的商品可以結算！\n請先在列表點擊「+」增加數量。');
+
+    if (!confirm(`💡 確定要將這 ${toBuyItems.length} 項有叫到貨的商品，建立為「採購單草稿」嗎？\n(建立後可至採購總帳填寫實際金額並上傳收據)`)) return;
+
+    const draftItems = toBuyItems.map(i => ({
+      productId: i.productId,
+      productName: i.name,
+      option: i.option,
+      quantity: i.procured,
+    }));
+
+    const draftPurchase = {
+      id: 'PUR-DRAFT-' + Date.now(),
+      date: new Date().toISOString().slice(0, 10),
+      createdAt: new Date().getTime(),
+      country: '韓國',
+      location: '未填寫現場/店家',
+      items: draftItems,
+      estimatedLocalCost: 0,
+      localShipping: 0,
+      totalLocalCost: 0,
+      payer: this.store.currentUser()?.name || '買手',
+      shareMode: '-',
+      status: 'pending_sync', // 預設為待核銷
+      receiptImages: []
+    };
+
+    try {
+      if ((this.store as any).addPurchase) {
+         await (this.store as any).addPurchase(draftPurchase);
+      } else {
+         const current = this.store.purchases();
+         (this.store.purchases as any).set([draftPurchase, ...current]);
+      }
+      
+      alert('✅ 採購草稿單已建立！\n請前往「採購總帳」分頁查看並完善金額。');
+      this.showProcurementModal.set(false); // 關閉叫貨總表
+      this.activeTab.set('purchases');      // 自動跳轉到採購總帳
+    } catch (err) {
+      alert('❌ 建立草稿單發生錯誤：' + err);
+    }
+  }
+
+  // 建立一個快速尋找叫貨狀態的字典 (供報表匯出用)
   procurementStatusMap = computed(() => {
     const map = new Map<string, { needed: number, procured: number }>();
     const activeOrders = this.store.orders().filter((o: Order) => 
@@ -1396,7 +1506,6 @@ export class AdminPanelComponent {
     const key = `${productId}_${option || '單一規格'}`;
     return this.procurementStatusMap().get(key);
   }
-  // 👆 新增結束 👆
   // =====================================
 
   filteredAdminProducts = computed(() => {
