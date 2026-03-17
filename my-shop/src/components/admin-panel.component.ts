@@ -3337,12 +3337,15 @@ submitProduct() {
          await this.store.updateProduct({ ...p, stock: p.stock - val.quantity });
       }
       
-      // 加入訂單庫
-      if ((this.store as any).addOrder) {
-         await (this.store as any).addOrder(newOrder);
+      // 🛡️ 終極防呆版：加入訂單庫
+      const storeAny = this.store as any;
+      if (typeof storeAny.addOrder === 'function') {
+         await storeAny.addOrder(newOrder);
+      } else if (typeof storeAny.createOrder === 'function') {
+         await storeAny.createOrder(newOrder);
       } else {
-         const currentOrders = this.store.orders();
-         (this.store.orders as any).set([newOrder, ...currentOrders]);
+         // 如果系統不開放直接 set 寫入，我們就溫和地把資料塞進陣列最前面
+         this.store.orders().unshift(newOrder);
       }
 
       // 自動記帳：拋轉至營業支出
