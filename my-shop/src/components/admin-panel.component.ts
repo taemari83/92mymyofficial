@@ -765,8 +765,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          {{ w.symbol }} {{ w.balance | number }}
                       </div>
                       <div class="flex gap-3 mt-8">
-                         <button class="flex-1 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 transition-colors">儲值 (收入)</button>
-                         <button class="flex-1 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-bold text-gray-700 transition-colors">扣款 (支出)</button>
+                         <button (click)="openWalletModal(w, 'add')" class="flex-1 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl text-sm font-bold text-green-700 transition-colors">儲值 (收入)</button>
+                         <button (click)="openWalletModal(w, 'deduct')" class="flex-1 py-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-sm font-bold text-red-700 transition-colors">扣款 (支出)</button>
                       </div>
                    </div>
                 }
@@ -788,8 +788,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <option value="行銷抽獎">行銷抽獎</option>
                       <option value="商品採購">商品採購 (自動)</option>
                    </select>
-                   <button class="flex-1 sm:flex-none px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 記一筆</button>
-                </div>
+                   <button (click)="openExpenseModal()" class="flex-1 sm:flex-none px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 記一筆</button>                </div>
              </div>
 
              <div class="bg-transparent md:bg-white md:rounded-[2rem] md:shadow-sm md:border md:border-gray-50 overflow-hidden overflow-x-auto w-full custom-scrollbar pb-2">
@@ -1232,6 +1231,104 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             </div> 
           </div> 
         }
+      @if (showWalletModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closeWalletModal()">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-bounce-in" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-gray-800">
+                  {{ walletAction() === 'add' ? '💰 新增資金 (儲值)' : '💸 提領資金 (扣款)' }}
+                </h3>
+                <button (click)="closeWalletModal()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300">✕</button>
+              </div>
+              <div class="p-6">
+                <div class="mb-4 text-center">
+                  <div class="text-sm font-bold text-gray-500 mb-1">目標帳戶</div>
+                  <div class="text-lg font-black text-brand-900">{{ activeWallet()?.name }} ({{ activeWallet()?.currency }})</div>
+                </div>
+                <form [formGroup]="walletForm" class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">金額 ({{ activeWallet()?.symbol }})</label>
+                    <input type="number" formControlName="amount" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 font-black text-lg text-center" placeholder="請輸入金額">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">備註 (選填)</label>
+                    <input type="text" formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm" placeholder="例如：股東注資、盈餘提撥">
+                  </div>
+                </form>
+              </div>
+              <div class="p-4 border-t border-gray-100 flex gap-2">
+                <button (click)="closeWalletModal()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200">取消</button>
+                <button (click)="submitWalletAction()" [disabled]="walletForm.invalid" class="flex-1 py-3 rounded-xl text-white font-bold transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" [class.bg-green-600]="walletAction() === 'add'" [class.hover:bg-green-700]="walletAction() === 'add'" [class.bg-red-600]="walletAction() === 'deduct'" [class.hover:bg-red-700]="walletAction() === 'deduct'">
+                  確認送出
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (showExpenseModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closeExpenseModal()">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
+                <h3 class="text-xl font-bold text-gray-800">💸 新增營業支出</h3>
+                <button (click)="closeExpenseModal()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300">✕</button>
+              </div>
+              <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <form [formGroup]="expenseForm" class="space-y-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">日期</label>
+                      <input type="date" formControlName="date" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">支出類別</label>
+                      <select formControlName="category" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white">
+                        <option value="包材費">包材費</option>
+                        <option value="國際貨運費">國際貨運費</option>
+                        <option value="機票費">機票/行李</option>
+                        <option value="海關稅">海關稅金</option>
+                        <option value="行銷抽獎">行銷抽獎</option>
+                        <option value="其他雜支">其他雜支</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">支出項目 (品項/摘要)</label>
+                    <input type="text" formControlName="item" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold" placeholder="例如：打包破壞袋500個">
+                  </div>
+                  <div class="grid grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-100">
+                    <div>
+                      <label class="block text-xs font-bold text-red-600 mb-1">扣款幣別 (錢包)</label>
+                      <select formControlName="currency" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 text-sm font-bold bg-white">
+                        <option value="TWD">台幣 (TWD)</option>
+                        <option value="KRW">韓元 (KRW)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-red-600 mb-1">金額</label>
+                      <input type="number" formControlName="amount" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 text-lg font-black text-red-600" placeholder="0">
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">付款人</label>
+                      <input type="text" formControlName="payer" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold" placeholder="例如：子婷、藝辰">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">備註 (選填)</label>
+                      <input type="text" formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm" placeholder="其他說明">
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="p-6 border-t border-gray-100 bg-white shrink-0">
+                <button (click)="submitExpense()" [disabled]="expenseForm.invalid" class="w-full py-3 rounded-xl bg-brand-900 text-white font-bold text-lg hover:bg-black transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                  確認記帳並扣除餘額
+                </button>
+              </div>
+            </div>
+          </div>
+        }
       </main>
     </div>
   `,
@@ -1271,6 +1368,14 @@ export class AdminPanelComponent {
 
   expenseSearch = signal('');
   expenseCategoryFilter = signal('all');
+
+// 新增支出與錢包的表單及彈窗控制
+  showExpenseModal = signal(false);
+  expenseForm!: FormGroup;
+  showWalletModal = signal(false);
+  walletAction = signal<'add'|'deduct'>('add');
+  activeWallet = signal<any>(null);
+  walletForm!: FormGroup;
   
   filteredExpenses = computed(() => {
     let list = this.expenses();
@@ -2016,32 +2121,48 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   }
   
   constructor() {
-    this.productForm = this.fb.group({ 
-      name: ['', Validators.required], 
-      purchaseUrl: [''], // 👈 這裡新增了購買網址欄位
-      category: [''], 
-      subCategory: [''], 
-      tagsStr: [''], 
-      code: [''], 
-      priceGeneral: [0], 
-      priceVip: [0], 
-      localPrice: [0], 
-      exchangeRate: [1], 
-      weight: [0], 
-      shippingCostPerKg: [0], 
-      costMaterial: [0], 
-      stock: [0], 
-      optionsStr: [''], 
-      note: [''], 
-      isPreorder: [false], 
-      isListed: [true], 
-      bulkCount: [0], 
-      bulkTotal: [0] 
+    this.productForm = this.fb.group({ 
+      name: ['', Validators.required], 
+      purchaseUrl: [''], 
+      category: [''], 
+      subCategory: [''], 
+      tagsStr: [''], 
+      code: [''], 
+      priceGeneral: [0], 
+      priceVip: [0], 
+      localPrice: [0], 
+      exchangeRate: [1], 
+      weight: [0], 
+      shippingCostPerKg: [0], 
+      costMaterial: [0], 
+      stock: [0], 
+      optionsStr: [''], 
+      note: [''], 
+      isPreorder: [false], 
+      isListed: [true], 
+      bulkCount: [0], 
+      bulkTotal: [0] 
+    });
+    const s = this.store.settings();
+    this.settingsForm = this.fb.group({ enableCash: [s.paymentMethods.cash], enableBank: [s.paymentMethods.bankTransfer], enableCod: [s.paymentMethods.cod], birthdayGiftGeneral: [s.birthdayGiftGeneral], birthdayGiftVip: [s.birthdayGiftVip], shipping: this.fb.group({ freeThreshold: [s.shipping.freeThreshold], methods: this.fb.group({ meetup: this.fb.group({ enabled: [s.shipping.methods.meetup.enabled], fee: [s.shipping.methods.meetup.fee] }), myship: this.fb.group({ enabled: [s.shipping.methods.myship.enabled], fee: [s.shipping.methods.myship.fee] }), family: this.fb.group({ enabled: [s.shipping.methods.family.enabled], fee: [s.shipping.methods.family.fee] }), delivery: this.fb.group({ enabled: [s.shipping.methods.delivery.enabled], fee: [s.shipping.methods.delivery.fee] }) }) }) });
+    this.userForm = this.fb.group({ name: ['', Validators.required], phone: [''], birthday: [''], tier: ['general'], credits: [0], totalSpend: [0], note: [''] });
+
+    // 👇 新增的支出與錢包表單初始化 (包在 constructor 裡面)
+    this.expenseForm = this.fb.group({
+      date: [new Date().toISOString().slice(0, 10), Validators.required],
+      item: ['', Validators.required],
+      category: ['包材費'],
+      amount: ['', [Validators.required, Validators.min(1)]],
+      currency: ['TWD'],
+      payer: ['', Validators.required],
+      note: ['']
     });
-    const s = this.store.settings();
-    this.settingsForm = this.fb.group({ enableCash: [s.paymentMethods.cash], enableBank: [s.paymentMethods.bankTransfer], enableCod: [s.paymentMethods.cod], birthdayGiftGeneral: [s.birthdayGiftGeneral], birthdayGiftVip: [s.birthdayGiftVip], shipping: this.fb.group({ freeThreshold: [s.shipping.freeThreshold], methods: this.fb.group({ meetup: this.fb.group({ enabled: [s.shipping.methods.meetup.enabled], fee: [s.shipping.methods.meetup.fee] }), myship: this.fb.group({ enabled: [s.shipping.methods.myship.enabled], fee: [s.shipping.methods.myship.fee] }), family: this.fb.group({ enabled: [s.shipping.methods.family.enabled], fee: [s.shipping.methods.family.fee] }), delivery: this.fb.group({ enabled: [s.shipping.methods.delivery.enabled], fee: [s.shipping.methods.delivery.fee] }) }) }) });
-    this.userForm = this.fb.group({ name: ['', Validators.required], phone: [''], birthday: [''], tier: ['general'], credits: [0], totalSpend: [0], note: [''] });
-  }
+
+    this.walletForm = this.fb.group({
+      amount: ['', [Validators.required, Validators.min(1)]],
+      note: ['']
+    });
+  } // 👈 constructor 的唯一結束大括號
 
   calculateUserTotalSpend(userId: string): number {
     const validStatuses = ['payment_confirmed', 'pending_shipping', 'shipped', 'arrived_notified', 'picked_up', 'completed'];
@@ -2837,5 +2958,103 @@ submitProduct() {
       }
     } catch(e) {}
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+  }
+  // ==========================================
+  // 👛 錢包餘額與支出管理連動邏輯
+  // ==========================================
+  openWalletModal(wallet: any, action: 'add' | 'deduct') {
+    this.activeWallet.set(wallet);
+    this.walletAction.set(action);
+    this.walletForm.reset();
+    this.showWalletModal.set(true);
+  }
+
+  closeWalletModal() {
+    this.showWalletModal.set(false);
+    this.activeWallet.set(null);
+  }
+
+  submitWalletAction() {
+    if (this.walletForm.invalid) return;
+    const amount = Number(this.walletForm.value.amount);
+    const note = this.walletForm.value.note || (this.walletAction() === 'add' ? '手動儲值' : '手動提領');
+    const wallet = this.activeWallet();
+
+    if (this.walletAction() === 'deduct' && amount > wallet.balance) {
+      if (!confirm(`⚠️ 警告：欲扣款金額大於目前餘額，是否繼續扣到變負數？`)) return;
+    }
+
+    // 更新錢包餘額
+    this.wallets.update(ws => ws.map(w => {
+      if (w.id === wallet.id) {
+        return { ...w, balance: this.walletAction() === 'add' ? w.balance + amount : w.balance - amount };
+      }
+      return w;
+    }));
+
+    // 在支出表記錄一筆金流軌跡
+    this.expenses.update(es => [{
+      id: 'TRX-' + Date.now(),
+      date: new Date().toISOString().slice(0, 10),
+      item: `資金帳戶調整 (${this.walletAction() === 'add' ? '儲值' : '扣款'})`,
+      category: '儲值',
+      amount: this.walletAction() === 'add' ? -amount : amount,
+      currency: wallet.currency,
+      payer: '系統操作',
+      note: note
+    }, ...es]);
+
+    alert(`✅ 已成功${this.walletAction() === 'add' ? '儲值' : '扣款'} ${wallet.symbol} ${amount}`);
+    this.closeWalletModal();
+  }
+
+  openExpenseModal() {
+    this.expenseForm.reset({
+      date: new Date().toISOString().slice(0, 10),
+      category: '包材費',
+      currency: 'TWD'
+    });
+    this.showExpenseModal.set(true);
+  }
+
+  closeExpenseModal() {
+    this.showExpenseModal.set(false);
+  }
+
+  submitExpense() {
+    if (this.expenseForm.invalid) return;
+    const val = this.expenseForm.value;
+    const expAmount = Number(val.amount);
+
+    // 1. 自動去扣除對應幣別的錢包餘額
+    let walletFound = false;
+    this.wallets.update(ws => ws.map(w => {
+      if (w.currency === val.currency) {
+        walletFound = true;
+        return { ...w, balance: w.balance - expAmount };
+      }
+      return w;
+    }));
+
+    if (!walletFound) {
+      alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`);
+    }
+
+    // 2. 建立新的支出紀錄
+    const newExpense = {
+      id: 'EXP-' + Date.now(),
+      date: val.date,
+      item: val.item,
+      category: val.category,
+      amount: expAmount,
+      currency: val.currency,
+      payer: val.payer,
+      note: val.note || ''
+    };
+
+    this.expenses.update(es => [newExpense, ...es]);
+    
+    alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
+    this.closeExpenseModal();
   }
 }
