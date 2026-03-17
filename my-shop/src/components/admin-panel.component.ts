@@ -70,11 +70,76 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
            </div>
           <div class="flex gap-2 items-center">
              <button (click)="showProcurementModal.set(true); procureRange.set('all');" class="px-4 py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl font-bold hover:bg-yellow-200 flex items-center justify-center gap-2 shadow-sm transition-colors whitespace-nowrap">
-  <span class="text-lg leading-none mt-0.5">📦</span> <span class="hidden sm:block leading-none mt-0.5">叫貨</span>
-</button>
+             <span class="text-lg leading-none mt-0.5">📦</span> <span class="hidden sm:block leading-none mt-0.5">叫貨</span>
+             </button>
              <button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button>
            </div>
          </div>
+
+         @if (showProcurementModal()) {
+          <div class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-md flex flex-col justify-end animate-slide-up" (click)="showProcurementModal.set(false)">
+            <div class="bg-gray-50 w-full h-[85vh] md:h-[90vh] rounded-t-[2rem] flex flex-col overflow-hidden shadow-2xl relative" (click)="$event.stopPropagation()">
+              <div class="p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                   <h2 class="text-xl font-bold text-brand-900 flex items-center gap-2"><span>📦</span> 即時叫貨總表</h2>
+                   <div class="flex items-center gap-2 sm:gap-3">
+                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-xs font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span> 匯出</button>
+                     <button (click)="syncProcurementToGoogleSheets()" class="px-3 py-1.5 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black shadow-sm flex items-center gap-1 transition-colors"><span>☁️</span> 同步</button>
+                     <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors shrink-0">✕</button>
+                   </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                   <div class="flex gap-1 overflow-x-auto custom-scrollbar">
+                     <button (click)="procureRange.set('all')" [class.bg-brand-900]="procureRange() === 'all'" [class.text-white]="procureRange() === 'all'" [class.text-gray-500]="procureRange() !== 'all'" [class.hover:bg-gray-200]="procureRange() !== 'all'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">全部未買</button>
+                     <button (click)="procureRange.set('today')" [class.bg-brand-900]="procureRange() === 'today'" [class.text-white]="procureRange() === 'today'" [class.text-gray-500]="procureRange() !== 'today'" [class.hover:bg-gray-200]="procureRange() !== 'today'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">今日</button>
+                     <button (click)="procureRange.set('yesterday')" [class.bg-brand-900]="procureRange() === 'yesterday'" [class.text-white]="procureRange() === 'yesterday'" [class.text-gray-500]="procureRange() !== 'yesterday'" [class.hover:bg-gray-200]="procureRange() !== 'yesterday'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">昨日</button>
+                     <button (click)="procureRange.set('custom')" [class.bg-brand-900]="procureRange() === 'custom'" [class.text-white]="procureRange() === 'custom'" [class.text-gray-500]="procureRange() !== 'custom'" [class.hover:bg-gray-200]="procureRange() !== 'custom'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">自訂</button>
+                   </div>
+                   @if(procureRange() === 'custom') {
+                      <div class="flex items-center gap-2 animate-fade-in ml-auto w-full sm:w-auto mt-2 sm:mt-0">
+                         <input type="date" [ngModel]="procureStart()" (ngModelChange)="procureStart.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                         <span class="text-gray-400">-</span>
+                         <input type="date" [ngModel]="procureEnd()" (ngModelChange)="procureEnd.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600">
+                      </div>
+                   }
+                </div>
+              </div>
+
+              <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar pb-24">
+                @for(cargo of procurementList(); track cargo.productId + '||' + cargo.option) {
+                   <div class="flex items-center gap-3 p-3 sm:p-4 rounded-2xl border transition-all" 
+                        [class.bg-white]="cargo.procured < cargo.needed" [class.border-gray-200]="cargo.procured < cargo.needed" [class.shadow-sm]="cargo.procured < cargo.needed"
+                        [class.bg-green-50]="cargo.procured >= cargo.needed" [class.border-green-200]="cargo.procured >= cargo.needed" [class.opacity-60]="cargo.procured >= cargo.needed">
+                     <img [src]="cargo.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0">
+                     <div class="flex-1 min-w-0">
+                       <h4 class="font-bold text-gray-800 text-sm sm:text-base truncate">{{ cargo.name }}</h4>
+                       <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">規格: <span class="font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{{ cargo.option }}</span></div>
+                       <div class="text-xs text-gray-400 mt-1 font-mono">已買 {{ cargo.procured }} / 總需 {{ cargo.needed }} <span class="ml-2 text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded inline-block" title="包含的訂單日期">📅 {{ cargo.orderDatesStr }}</span></div>
+                     </div>
+                     <div class="flex items-center gap-2 shrink-0">
+                       @if(cargo.procured >= cargo.needed) {
+                         <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full text-xl sm:text-2xl font-bold">✅</div>
+                         <button (click)="updateProcured(cargo, -1)" class="text-[10px] text-gray-400 underline ml-1">退回</button>
+                       } @else {
+                         <button (click)="updateProcured(cargo, -1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200 text-lg">-</button>
+                         <div class="flex flex-col items-center min-w-[2.5rem]">
+                           <span class="text-[10px] text-red-500 font-bold">還缺</span>
+                           <span class="text-xl font-black text-red-600 leading-none">{{ cargo.needed - cargo.procured }}</span>
+                         </div>
+                         <button (click)="updateProcured(cargo, 1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-brand-900 text-white font-bold text-2xl active:scale-90 transition-transform shadow-md">+</button>
+                       }
+                     </div>
+                   </div>
+                } @empty {
+                  <div class="text-center py-20 flex flex-col items-center justify-center">
+                    <span class="text-6xl mb-4">🎉</span>
+                    <p class="text-gray-500 font-bold text-lg">目前沒有需要叫貨的商品！<br>訂單都買齊啦！</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
 
         @if (activeTab() === 'dashboard') {
           <div class="space-y-8 w-full overflow-x-hidden">
@@ -1134,82 +1199,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <div class="p-4 bg-gray-50 border-t border-gray-100 shrink-0"> <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> </div> 
             </div> 
           </div> 
-        }
-      @if (showProcurementModal()) {
-          <div class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-md flex flex-col justify-end animate-slide-up" (click)="showProcurementModal.set(false)">
-            <div class="bg-gray-50 w-full h-[85vh] md:h-[90vh] rounded-t-[2rem] flex flex-col overflow-hidden shadow-2xl relative" (click)="$event.stopPropagation()">
-              
-              <div class="p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm space-y-4">
-                <div class="flex justify-between items-center">
-                   <h2 class="text-xl font-bold text-brand-900 flex items-center gap-2">
-                     <span>📦</span> 即時叫貨總表
-                   </h2>
-                   <div class="flex items-center gap-2 sm:gap-3">
-                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-xs font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span> 匯出</button>
-                     <button (click)="syncProcurementToGoogleSheets()" class="px-3 py-1.5 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black shadow-sm flex items-center gap-1 transition-colors"><span>☁️</span> 同步</button>
-                     <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors shrink-0">✕</button>
-                   </div>
-                </div>
-                
-                <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
-                   <div class="flex gap-1 overflow-x-auto custom-scrollbar">
-                     <button (click)="procureRange.set('all')" [class.bg-brand-900]="procureRange() === 'all'" [class.text-white]="procureRange() === 'all'" [class.text-gray-500]="procureRange() !== 'all'" [class.hover:bg-gray-200]="procureRange() !== 'all'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">全部未買</button>
-                     <button (click)="procureRange.set('today')" [class.bg-brand-900]="procureRange() === 'today'" [class.text-white]="procureRange() === 'today'" [class.text-gray-500]="procureRange() !== 'today'" [class.hover:bg-gray-200]="procureRange() !== 'today'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">今日</button>
-                     <button (click)="procureRange.set('yesterday')" [class.bg-brand-900]="procureRange() === 'yesterday'" [class.text-white]="procureRange() === 'yesterday'" [class.text-gray-500]="procureRange() !== 'yesterday'" [class.hover:bg-gray-200]="procureRange() !== 'yesterday'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">昨日</button>
-                     <button (click)="procureRange.set('custom')" [class.bg-brand-900]="procureRange() === 'custom'" [class.text-white]="procureRange() === 'custom'" [class.text-gray-500]="procureRange() !== 'custom'" [class.hover:bg-gray-200]="procureRange() !== 'custom'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">自訂</button>
-                   </div>
-                   @if(procureRange() === 'custom') {
-                      <div class="flex items-center gap-2 animate-fade-in ml-auto w-full sm:w-auto mt-2 sm:mt-0">
-                         <input type="date" [ngModel]="procureStart()" (ngModelChange)="procureStart.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600" />
-                         <span class="text-gray-400">-</span>
-                         <input type="date" [ngModel]="procureEnd()" (ngModelChange)="procureEnd.set($event)" class="bg-white border border-gray-200 rounded text-xs font-bold p-1.5 outline-none w-full sm:w-auto text-gray-600" />
-                      </div>
-                   }
-                </div>
-              </div>
-
-              <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar pb-24">
-                @for(cargo of procurementList(); track cargo.productId + '||' + cargo.option) {
-                   <div class="flex items-center gap-3 p-3 sm:p-4 rounded-2xl border transition-all" 
-                        [class.bg-white]="cargo.procured < cargo.needed" [class.border-gray-200]="cargo.procured < cargo.needed" [class.shadow-sm]="cargo.procured < cargo.needed"
-                        [class.bg-green-50]="cargo.procured >= cargo.needed" [class.border-green-200]="cargo.procured >= cargo.needed" [class.opacity-60]="cargo.procured >= cargo.needed">
-                   
-                     <img [src]="cargo.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0" />
-                   
-                     <div class="flex-1 min-w-0">
-                       <h4 class="font-bold text-gray-800 text-sm sm:text-base truncate">{{ cargo.name }}</h4>
-                       <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                         規格: <span class="font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{{ cargo.option }}</span>
-                       </div>
-                       <div class="text-xs text-gray-400 mt-1 font-mono">
-                         已買 {{ cargo.procured }} / 總需 {{ cargo.needed }}
-                         <span class="ml-2 text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded inline-block" title="包含的訂單日期">📅 {{ cargo.orderDatesStr }}</span>
-                       </div>
-                     </div>
-
-                     <div class="flex items-center gap-2 shrink-0">
-                       @if(cargo.procured >= cargo.needed) {
-                         <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full text-xl sm:text-2xl font-bold">✅</div>
-                         <button (click)="updateProcured(cargo, -1)" class="text-[10px] text-gray-400 underline ml-1">退回</button>
-                       } @else {
-                         <button (click)="updateProcured(cargo, -1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200 text-lg">-</button>
-                         <div class="flex flex-col items-center min-w-[2.5rem]">
-                           <span class="text-[10px] text-red-500 font-bold">還缺</span>
-                           <span class="text-xl font-black text-red-600 leading-none">{{ cargo.needed - cargo.procured }}</span>
-                         </div>
-                         <button (click)="updateProcured(cargo, 1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-brand-900 text-white font-bold text-2xl active:scale-90 transition-transform shadow-md">+</button>
-                       }
-                     </div>
-                   </div>
-               } @empty {
-                  <div class="text-center py-20 flex flex-col items-center justify-center opacity-50">
-                    <span class="text-6xl mb-4">🎉</span>
-                    <p class="text-gray-500 font-bold">目前沒有需要叫貨的商品！<br />訂單都買齊啦！</p>
-                  </div>
-                }
-              </div>
-            </div>
-          </div>
         }
       </main>
     </div>
