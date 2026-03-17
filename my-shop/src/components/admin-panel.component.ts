@@ -1169,47 +1169,48 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               </div>
 
               <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 custom-scrollbar pb-24">
-  @for(cargo of procurementList(); track cargo.productId + '||' + cargo.option) {
-     <div class="flex items-center gap-3 p-3 sm:p-4 rounded-2xl border transition-all" 
-          [class.bg-white]="cargo.procured < cargo.needed" [class.border-gray-200]="cargo.procured < cargo.needed" [class.shadow-sm]="cargo.procured < cargo.needed"
-          [class.bg-green-50]="cargo.procured >= cargo.needed" [class.border-green-200]="cargo.procured >= cargo.needed" [class.opacity-60]="cargo.procured >= cargo.needed">
-     
-       <img [src]="cargo.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0">
-     
-       <div class="flex-1 min-w-0">
-         <h4 class="font-bold text-gray-800 text-sm sm:text-base truncate">{{ cargo.name }}</h4>
-         <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
-           規格: <span class="font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{{ cargo.option }}</span>
-         </div>
-         <div class="text-xs text-gray-400 mt-1 font-mono">
-           已買 {{ cargo.procured }} / 總需 {{ cargo.needed }}
-           <span class="ml-2 text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded inline-block" title="包含的訂單日期">📅 {{ cargo.orderDatesStr }}</span>
-         </div>
-       </div>
+                @for(cargo of procurementList(); track cargo.productId + '||' + cargo.option) {
+                   <div class="flex items-center gap-3 p-3 sm:p-4 rounded-2xl border transition-all" 
+                        [class.bg-white]="cargo.procured < cargo.needed" [class.border-gray-200]="cargo.procured < cargo.needed" [class.shadow-sm]="cargo.procured < cargo.needed"
+                        [class.bg-green-50]="cargo.procured >= cargo.needed" [class.border-green-200]="cargo.procured >= cargo.needed" [class.opacity-60]="cargo.procured >= cargo.needed">
+                   
+                     <img [src]="cargo.image" (error)="handleImageError($event)" class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover border border-gray-100 shrink-0">
+                   
+                     <div class="flex-1 min-w-0">
+                       <h4 class="font-bold text-gray-800 text-sm sm:text-base truncate">{{ cargo.name }}</h4>
+                       <div class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                         規格: <span class="font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{{ cargo.option }}</span>
+                       </div>
+                       <div class="text-xs text-gray-400 mt-1 font-mono">
+                         已買 {{ cargo.procured }} / 總需 {{ cargo.needed }}
+                         <span class="ml-2 text-[10px] bg-brand-50 text-brand-600 px-1.5 py-0.5 rounded inline-block" title="包含的訂單日期">📅 {{ cargo.orderDatesStr }}</span>
+                       </div>
+                     </div>
 
-       <div class="flex items-center gap-2 shrink-0">
-         @if(cargo.procured >= cargo.needed) {
-           <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full text-xl sm:text-2xl font-bold">✅</div>
-           <button (click)="updateProcured(cargo, -1)" class="text-[10px] text-gray-400 underline ml-1">退回</button>
-         } @else {
-           <button (click)="updateProcured(cargo, -1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200 text-lg">-</button>
-           <div class="flex flex-col items-center min-w-[2.5rem]">
-             <span class="text-[10px] text-red-500 font-bold">還缺</span>
-             <span class="text-xl font-black text-red-600 leading-none">{{ cargo.needed - cargo.procured }}</span>
-           </div>
-           <button (click)="updateProcured(cargo, 1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-brand-900 text-white font-bold text-2xl active:scale-90 transition-transform shadow-md">+</button>
-         }
-       </div>
-     </div>
-  } @empty {
-    <div class="text-center py-20 flex flex-col items-center justify-center opacity-50">
-      <span class="text-6xl mb-4">🎉</span>
-      <p class="text-gray-500 font-bold">目前沒有需要叫貨的商品！<br>訂單都買齊啦！</p>
-    </div>
-  }
-</div>
-       </div>
-     </div>
+                     <div class="flex items-center gap-2 shrink-0">
+                       @if(cargo.procured >= cargo.needed) {
+                         <div class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-full text-xl sm:text-2xl font-bold">✅</div>
+                         <button (click)="updateProcured(cargo, -1)" class="text-[10px] text-gray-400 underline ml-1">退回</button>
+                       } @else {
+                         <button (click)="updateProcured(cargo, -1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200 text-lg">-</button>
+                         <div class="flex flex-col items-center min-w-[2.5rem]">
+                           <span class="text-[10px] text-red-500 font-bold">還缺</span>
+                           <span class="text-xl font-black text-red-600 leading-none">{{ cargo.needed - cargo.procured }}</span>
+                         </div>
+                         <button (click)="updateProcured(cargo, 1)" class="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-brand-900 text-white font-bold text-2xl active:scale-90 transition-transform shadow-md">+</button>
+                       }
+                     </div>
+                   </div>
+                } @empty {
+                  <div class="text-center py-20 flex flex-col items-center justify-center opacity-50">
+                    <span class="text-6xl mb-4">🎉</span>
+                    <p class="text-gray-500 font-bold">目前沒有需要叫貨的商品！<br>訂單都買齊啦！</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
   } @empty {
     <div class="text-center py-20 flex flex-col items-center justify-center opacity-50">
       <span class="text-6xl mb-4">🎉</span>
