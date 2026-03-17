@@ -10,7 +10,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
-    <div class="flex h-screen w-full bg-[#FDFBF9] font-sans overflow-hidden relative">
+    <div class="flex h-full min-h-[calc(100vh-64px)] w-full bg-[#FDFBF9] font-sans overflow-hidden relative">
       
       @if (!store.currentUser()?.isAdmin) {
         <div class="absolute top-0 left-0 right-0 bg-red-500 text-white p-2.5 text-center text-sm font-bold z-[100] shadow-md animate-pulse">
@@ -19,10 +19,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
       }
 
       @if (isSidebarOpen()) {
-        <div class="fixed inset-0 bg-black/40 z-[60] md:hidden backdrop-blur-sm transition-opacity" (click)="isSidebarOpen.set(false)"></div>
+        <div class="fixed inset-0 bg-black/40 z-[30] md:hidden backdrop-blur-sm transition-opacity" (click)="isSidebarOpen.set(false)"></div>
       }
 
-      <aside class="fixed inset-y-0 left-0 z-[70] w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-2xl transform transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none" [class.-translate-x-full]="!isSidebarOpen()">
+      <aside class="fixed inset-y-0 left-0 z-[40] w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-2xl transform transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none" [class.-translate-x-full]="!isSidebarOpen()">
         <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start mt-6 md:mt-0">
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
         </div>
@@ -197,13 +197,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                  <span class="font-bold text-gray-800 font-mono text-base md:text-sm">#{{ order.id }}</span>
                                  @if(order.paymentName) { <span class="w-2 h-2 rounded-full bg-blue-500" title="已回報匯款"></span> }
                                </div>
-                              <div class="flex flex-col gap-0.5">
-                                 @for(item of (order.items || []); track item.productId + item.option) {
-                                   <div class="text-[11px] text-gray-500 truncate max-w-full md:max-w-[220px]">
-                                     • {{ item.productName }} <span class="opacity-70">({{ item.option }})</span> <span class="font-bold text-brand-900">x{{ item.quantity }}</span>
-                                   </div>
-                                 }
-                               </div>
+                              <div class="flex flex-col gap-1.5 mt-1">
+                               @for(item of (order.items || []); track item.productId + item.option) {
+                                 <div class="text-[11px] text-gray-600 whitespace-normal break-all leading-snug flex items-start gap-1 text-left">
+                                   <span class="mt-0.5 shrink-0">•</span>
+                                   <span class="flex-1">{{ item.productName }} <span class="opacity-70">({{ item.option }})</span> <span class="font-bold text-brand-900 ml-1">x{{ item.quantity }}</span></span>
+                                 </div>
+                               }
+                             </div>
                              </div>
                            </div>
                          </td>
@@ -960,21 +961,21 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  </div>
 
                  <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">訂單明細</div>
-                 <div class="space-y-2 mb-6">
+                 <div class="space-y-3 mb-6">
                     @for(item of o.items; track item.productId + item.option) {
-                       <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
-                          <img [src]="item.productImage" class="w-10 h-10 rounded-md object-cover bg-gray-200 shrink-0">
-                         <div class="flex-1 min-w-0">
-                             <div class="text-xs font-bold text-gray-800 truncate">{{ item.productName }}</div>
-                             <div class="text-[10px] text-gray-500">{{ item.option }}</div>
-                          </div>
-                          <div class="text-right shrink-0">
-                             <div class="text-xs font-bold text-brand-900">NT$ {{ item.price }}</div>
-                             <div class="text-[10px] text-gray-500">x{{ item.quantity }}</div>
+                       <div class="flex items-start gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+                          <img [src]="item.productImage" class="w-12 h-12 rounded-lg object-cover bg-gray-100 shrink-0 border border-gray-100">
+                          <div class="flex-1 min-w-0 flex flex-col gap-1">
+                             <div class="text-sm font-bold text-gray-800 leading-snug whitespace-normal break-all">{{ item.productName }}</div>
+                             <div class="text-xs text-gray-500">{{ item.option }}</div>
+                          </div>
+                          <div class="text-right shrink-0 flex flex-col items-end gap-1">
+                             <div class="text-sm font-bold text-brand-900">NT$ {{ item.price }}</div>
+                             <div class="text-xs text-gray-500">x{{ item.quantity }}</div>
                           </div>
                        </div>
                     }
-                    <div class="flex justify-between items-center px-2 pt-2 border-t border-gray-100 font-bold text-brand-900">
+                    <div class="flex justify-between items-center px-2 pt-3 border-t border-gray-200 font-bold text-brand-900 text-lg">
                        <span>總計</span>
                        <span>NT$ {{ o.finalTotal }}</span>
                     </div>
