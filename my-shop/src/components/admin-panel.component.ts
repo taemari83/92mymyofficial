@@ -585,7 +585,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         </tr>
                       </thead>
                       <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-200">
-                         @for(p of purchaseList(); track p.id) {
+                   @for(p of purchaseList(); track p?.id || $index) {
                             <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden relative">
                                <td class="p-4 bg-gray-50/50 md:bg-transparent block md:table-cell border-b md:border-none border-gray-200">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">回報時間 / 購買日</span>
@@ -600,10 +600,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">購買品項</span>
                                   <div class="text-xs text-gray-600 font-bold mb-1">{{ p.items?.length || 0 }} 項商品 (預估值: NT$ {{ p.estimatedLocalCost | number }})</div>
                                   <div class="flex flex-col gap-0.5">
-                                  @for(item of (p.items || []); track item.productId) {
-                                  <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
-                               }
-                               </div>
+                @for(item of (p.items || []); track $index) {
+                  <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item.productName }} x{{ item.quantity }}</div>
+                 }
+                   </div>
                                </td>
                                <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
                                   <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">單據運費</span>
@@ -1966,10 +1966,13 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   
   // 🚀 核心升級：直接抓取資料庫裡的真實採購單，並依時間排序
   purchaseList = computed(() => {
-    // 加上 || [] 防呆，避免新功能還沒有資料時回傳 undefined 導致 [...undefined] 畫面崩潰
-    const purchases = this.store.purchases() || [];
-    return [...purchases].sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
-  });
+    const purchases = this.store.purchases();
+    // 終極防呆：確保資料庫回傳的絕對是陣列，並過濾掉可能的壞檔
+    if (!Array.isArray(purchases)) return [];
+    return [...purchases]
+      .filter(p => !!p)
+      .sort((a: any, b: any) => (b?.createdAt || 0) - (a?.createdAt || 0));
+  });
 
   openReceipts(images: string[]) {
     this.viewReceiptImages.set(images || []);
