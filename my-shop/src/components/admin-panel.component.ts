@@ -1043,19 +1043,18 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <span>📦</span> 即時叫貨總表
                    </h2>
                    <div class="flex items-center gap-2 sm:gap-3">
-                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-xs sm:text-sm font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span></span> <span class="hidden sm:inline">匯出</span></button>
-                     <button (click)="syncProcurementToGoogleSheets()" class="px-3 py-1.5 bg-brand-900 text-white rounded-lg text-xs sm:text-sm font-bold hover:bg-black shadow-sm flex items-center gap-1 transition-colors"><span></span> <span class="hidden sm:inline">同步</span></button>
+                     <button (click)="exportProcurementCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 border border-brand-200 rounded-lg text-xs font-bold hover:bg-brand-100 shadow-sm flex items-center gap-1 transition-colors"><span>📥</span> 匯出</button>
+                     <button (click)="syncProcurementToGoogleSheets()" class="px-3 py-1.5 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black shadow-sm flex items-center gap-1 transition-colors"><span>☁️</span> 同步</button>
                      <button (click)="showProcurementModal.set(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold transition-colors shrink-0">✕</button>
                    </div>
                 </div>
                 
                 <div class="flex flex-wrap items-center gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100">
                    <div class="flex gap-1 overflow-x-auto custom-scrollbar">
-                     @for(r of [{id:'all', label:'全部未買'}, {id:'today', label:'今日'}, {id:'yesterday', label:'昨日'}, {id:'custom', label:'自訂'}]; track r.id) {
-                        <button (click)="procureRange.set(r.id)" [class.bg-brand-900]="procureRange() === r.id" [class.text-white]="procureRange() === r.id" [class.text-gray-500]="procureRange() !== r.id" [class.hover:bg-gray-200]="procureRange() !== r.id" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">
-                           {{ r.label }}
-                        </button>
-                     }
+                     <button (click)="procureRange.set('all')" [class.bg-brand-900]="procureRange() === 'all'" [class.text-white]="procureRange() === 'all'" [class.text-gray-500]="procureRange() !== 'all'" [class.hover:bg-gray-200]="procureRange() !== 'all'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">全部未買</button>
+                     <button (click)="procureRange.set('today')" [class.bg-brand-900]="procureRange() === 'today'" [class.text-white]="procureRange() === 'today'" [class.text-gray-500]="procureRange() !== 'today'" [class.hover:bg-gray-200]="procureRange() !== 'today'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">今日</button>
+                     <button (click)="procureRange.set('yesterday')" [class.bg-brand-900]="procureRange() === 'yesterday'" [class.text-white]="procureRange() === 'yesterday'" [class.text-gray-500]="procureRange() !== 'yesterday'" [class.hover:bg-gray-200]="procureRange() !== 'yesterday'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">昨日</button>
+                     <button (click)="procureRange.set('custom')" [class.bg-brand-900]="procureRange() === 'custom'" [class.text-white]="procureRange() === 'custom'" [class.text-gray-500]="procureRange() !== 'custom'" [class.hover:bg-gray-200]="procureRange() !== 'custom'" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">自訂</button>
                    </div>
                    @if(procureRange() === 'custom') {
                       <div class="flex items-center gap-2 animate-fade-in ml-auto w-full sm:w-auto mt-2 sm:mt-0">
@@ -1212,10 +1211,14 @@ export class AdminPanelComponent {
         }
         // 累加客人下單的需求量
         listMap.get(key).needed += (item.quantity || 1);
-        // 記錄包含的訂單日期
-        listMap.get(key).orderDatesSet.add(new Date(order.createdAt).toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }));
-        listMap.get(key).orderDatesStr = Array.from(listMap.get(key).orderDatesSet).join(', ');
-      });
+        // 記錄包含的訂單日期 (加入防呆，避免無效日期導致畫面崩潰)
+        try {
+           const dateObj = new Date(order.createdAt);
+           if (!isNaN(dateObj.getTime())) {
+              listMap.get(key).orderDatesSet.add(dateObj.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }));
+           }
+        } catch (e) {}
+        listMap.get(key).orderDatesStr = Array.from(listMap.get(key).orderDatesSet).join(', ');      });
     });
 
     // 聰明排序：還沒買齊的排在上面，買齊(打勾)的沉到下面
