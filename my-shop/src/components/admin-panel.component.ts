@@ -531,9 +531,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  <div class="flex flex-col w-full lg:w-auto gap-3">
                     <div class="flex flex-wrap items-center justify-start lg:justify-end gap-3 w-full">
                        <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span><input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"><span class="text-gray-300">-</span><input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"></div>
+                       <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                          <span class="text-xs text-gray-400 font-bold whitespace-nowrap">消費額 ≥</span>
+                          <input type="number" [ngModel]="minSpendFilter()" (ngModelChange)="minSpendFilter.set($event)" class="bg-transparent text-sm font-bold text-brand-900 outline-none w-16 md:w-20" placeholder="0">
+                       </div>
                        <div class="flex gap-2 w-full sm:w-auto">
+                         <button (click)="openBulkCustomerModal()" class="flex-1 sm:flex-none px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 whitespace-nowrap shadow-sm flex items-center justify-center transition-colors gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次操作 ({{ selectedCustomerIds().length }})</button>
                          <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">📥 匯出</button>
-                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">☁️ 同步</button>
+                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-lg font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">☁️ 同步</button>
                        </div>
                     </div>
                     <div class="relative w-full lg:w-80"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
@@ -544,7 +549,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    <table class="w-full text-sm text-left whitespace-nowrap block md:table">
                       <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 hidden md:table-header-group">
                         <tr>
-                          <th class="p-4 sticky left-0 z-20 bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">會員編號 / Google UID</th>
+                          <th class="p-4 sticky left-0 z-20 bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">
+                             <div class="flex items-center gap-3">
+                                <input type="checkbox" (change)="toggleAllUsers($event)" class="w-4 h-4 rounded text-blue-600 cursor-pointer">
+                                <span>會員編號 / Google UID</span>
+                             </div>
+                          </th>
                           <th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th>
                         </tr>
                       </thead>
@@ -552,7 +562,16 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          @for(u of paginatedUsers(); track u.id) {
                             <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden">
                                <td class="p-4 bg-gray-50/50 md:bg-white group-even:md:bg-[#F8FAFC] group-hover:md:bg-[#F0F7FF] md:sticky md:left-0 z-10 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
-                                  <div class="flex flex-col"><span class="text-sm font-bold text-brand-900 font-mono tracking-wide">{{ formatMemberNo(u) }}</span><div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID"><span class="text-[10px] text-gray-400 font-mono">UID:</span><span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900">{{ u.id }}</span></div></div>
+                                  <div class="flex items-center gap-3">
+                                     <input type="checkbox" [checked]="selectedCustomerIds().includes(u.id)" (change)="toggleUserSelection(u.id)" class="w-4 h-4 rounded text-blue-600 cursor-pointer shrink-0">
+                                     <div class="flex flex-col min-w-0">
+                                        <span class="text-sm font-bold text-brand-900 font-mono tracking-wide truncate">{{ formatMemberNo(u) }}</span>
+                                        <div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID">
+                                           <span class="text-[10px] text-gray-400 font-mono">UID:</span>
+                                           <span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900 truncate">{{ u.id }}</span>
+                                        </div>
+                                     </div>
+                                  </div>
                                </td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
@@ -1439,7 +1458,46 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               </div>
             </div>
           </div>
-        }   
+        } 
+        @if (showBulkCustomerModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showBulkCustomerModal.set(false)">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-bounce-in" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 bg-blue-50 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-blue-900">⚡️ 批次操作客戶</h3>
+                <button (click)="showBulkCustomerModal.set(false)" class="w-8 h-8 rounded-full bg-blue-200/50 text-blue-700 font-bold hover:bg-blue-200">✕</button>
+              </div>
+              <div class="p-6 space-y-4">
+                <div class="text-center mb-2">
+                  <span class="text-sm text-gray-500 font-bold">已選擇</span>
+                  <div class="text-3xl font-black text-brand-900">{{ selectedCustomerIds().length }} <span class="text-sm text-gray-400 font-bold">人</span></div>
+                </div>
+                
+                <div>
+                  <label class="block text-xs font-bold text-gray-500 mb-1">執行動作</label>
+                  <select [ngModel]="bulkActionType()" (ngModelChange)="bulkActionType.set($event)" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm font-bold bg-white">
+                    <option value="credits">💰 批次發放購物金</option>
+                    <option value="vip">🌟 批次升級為 VIP</option>
+                  </select>
+                </div>
+
+                @if(bulkActionType() === 'credits') {
+                  <div class="animate-fade-in space-y-4">
+                    <div>
+                      <label class="block text-xs font-bold text-blue-600 mb-1">發放金額 ($)</label>
+                      <input type="number" [ngModel]="bulkCreditAmount()" (ngModelChange)="bulkCreditAmount.set($event)" class="w-full p-3 border border-blue-200 rounded-xl focus:outline-none focus:border-blue-400 text-lg font-black text-blue-700" placeholder="0">
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="p-6 border-t border-gray-100 bg-white">
+                <button (click)="submitBulkAction()" class="w-full py-3 rounded-xl bg-blue-600 text-white font-bold text-lg hover:bg-blue-700 transition-transform active:scale-95">
+                  確認執行
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+        
       </main>
     </div>
   `,
@@ -2226,18 +2284,27 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     return list.slice(start, start + size); 
   });
 
-  customerPageSize = signal<number | 'all'>(50); customerPage = signal(1); customerSearch = signal(''); 
-  birthMonthFilter = signal('all'); memberStart = signal(''); memberEnd = signal(''); 
-  showUserModal = signal(false); editingUser = signal<User | null>(null); userForm: FormGroup;
-  
-  filteredUsers = computed(() => { 
-    let list = [...this.store.users()]; 
-    const q = this.customerSearch().toLowerCase(); const bm = this.birthMonthFilter(); const start = this.memberStart(); const end = this.memberEnd(); 
-    if (q) list = list.filter((u: User) => u.name.toLowerCase().includes(q) || (u.phone && u.phone.includes(q)) || u.id.toLowerCase().includes(q) || (u.memberNo && u.memberNo.includes(q))); 
-    if (bm !== 'all') list = list.filter((u: User) => { if (!u.birthday) return false; return new Date(u.birthday).getMonth() + 1 === parseInt(bm); }); 
-    if (start || end) { list = list.filter(u => { if (!u.memberNo || u.memberNo.length < 9) return false; const noDatePart = u.memberNo.substring(1, 9); const startDate = start ? start.replace(/-/g, '') : null; const endDate = end ? end.replace(/-/g, '') : null; if (startDate && noDatePart < startDate) return false; if (endDate && noDatePart > endDate) return false; return true; }); } 
-    return list; 
-  });
+  customerPageSize = signal<number | 'all'>(50); customerPage = signal(1); customerSearch = signal(''); 
+  minSpendFilter = signal<number | null>(null); memberStart = signal(''); memberEnd = signal(''); 
+  showUserModal = signal(false); editingUser = signal<User | null>(null); userForm: FormGroup;
+
+  // ⚡️ 批次操作狀態
+  selectedCustomerIds = signal<string[]>([]);
+  showBulkCustomerModal = signal(false);
+  bulkActionType = signal<'vip' | 'credits'>('credits');
+  bulkCreditAmount = signal<number>(0);
+  
+  filteredUsers = computed(() => { 
+    let list = [...this.store.users()]; 
+    const q = this.customerSearch().toLowerCase(); const minSpend = this.minSpendFilter(); const start = this.memberStart(); const end = this.memberEnd(); 
+    if (q) list = list.filter((u: User) => u.name.toLowerCase().includes(q) || (u.phone && u.phone.includes(q)) || u.id.toLowerCase().includes(q) || (u.memberNo && u.memberNo.includes(q))); 
+    if (start || end) { list = list.filter(u => { if (!u.memberNo || u.memberNo.length < 9) return false; const noDatePart = u.memberNo.substring(1, 9); const startDate = start ? start.replace(/-/g, '') : null; const endDate = end ? end.replace(/-/g, '') : null; if (startDate && noDatePart < startDate) return false; if (endDate && noDatePart > endDate) return false; return true; }); } 
+    // 🛡️ 新增：累積消費篩選
+    if (minSpend !== null && minSpend > 0) {
+       list = list.filter((u: User) => this.calculateUserTotalSpend(u.id) >= minSpend);
+    }
+    return list; 
+  });
   
   paginatedUsers = computed(() => { 
     const list = this.filteredUsers(); const size = this.customerPageSize(); 
@@ -3018,6 +3085,59 @@ submitProduct() {
     } else { 
       alert('請檢查必填欄位'); 
     } 
+  }
+
+  // ⚡️ 客戶批次勾選與操作邏輯 (位置精確防呆版)
+  toggleUserSelection(id: string) {
+    const curr = this.selectedCustomerIds();
+    if (curr.includes(id)) this.selectedCustomerIds.set(curr.filter(x => x !== id));
+    else this.selectedCustomerIds.set([...curr, id]);
+  }
+
+  toggleAllUsers(event: any) {
+    // 🛡️ 加上 as HTMLInputElement 滿足 TS 嚴格型別檢查
+    if ((event.target as HTMLInputElement).checked) {
+      this.selectedCustomerIds.set(this.paginatedUsers().map(u => u.id));
+    } else {
+      this.selectedCustomerIds.set([]);
+    }
+  }
+
+  openBulkCustomerModal() {
+    if (this.selectedCustomerIds().length === 0) return alert('請先勾選客戶！');
+    this.bulkActionType.set('credits');
+    this.bulkCreditAmount.set(0);
+    this.showBulkCustomerModal.set(true);
+  }
+
+  async submitBulkAction() {
+    const ids = this.selectedCustomerIds();
+    const action = this.bulkActionType();
+    const amount = this.bulkCreditAmount();
+    
+    if (action === 'credits' && amount <= 0) return alert('請輸入大於 0 的購物金金額！');
+    if (!confirm(`確定要對選取的 ${ids.length} 位客戶執行批次操作嗎？`)) return;
+
+    const allUsers = this.store.users();
+    let updatedCount = 0;
+
+    for (const id of ids) {
+      const user = allUsers.find(u => u.id === id);
+      if (user) {
+         let changes: any = {};
+         if (action === 'vip') {
+            changes.tier = 'vip';
+         } else if (action === 'credits') {
+            changes.credits = (user.credits || 0) + amount;
+         }
+         await this.store.updateUser({ ...user, ...changes });
+         updatedCount++;
+      }
+    }
+    
+    alert(`✅ 成功更新 ${updatedCount} 位客戶資料！`);
+    this.showBulkCustomerModal.set(false);
+    this.selectedCustomerIds.set([]); // 清空勾選
   }
 
   renameCategory(oldName: string, newName: string) { this.store.renameCategory(oldName, newName); }
