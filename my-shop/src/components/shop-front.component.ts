@@ -67,40 +67,52 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
            </div>
          </div>
          
-         <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar px-2">
-            <button 
-              (click)="selectedCategory.set('all'); selectedSubCategory.set('全部')"
-              [class.bg-brand-900]="selectedCategory() === 'all'" [class.text-white]="selectedCategory() === 'all'" [class.bg-white]="selectedCategory() !== 'all'" [class.text-gray-500]="selectedCategory() !== 'all'"
-              class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0"
-            >All</button>
-            <button 
-              (click)="selectedCategory.set('新品'); selectedSubCategory.set('全部')"
-              [class.bg-red-500]="selectedCategory() === '新品'" [class.text-white]="selectedCategory() === '新品'" [class.bg-white]="selectedCategory() !== '新品'" [class.text-red-500]="selectedCategory() !== '新品'"
-              class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0 flex items-center gap-1"
-            ><span>✨</span> 本月新品</button>
+         <div class="md:hidden flex flex-col gap-2">
+           <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar px-2">
+              <button (click)="selectedCategory.set('all'); selectedSubCategory.set('全部')" [class.bg-brand-900]="selectedCategory() === 'all'" [class.text-white]="selectedCategory() === 'all'" [class.bg-white]="selectedCategory() !== 'all'" [class.text-gray-500]="selectedCategory() !== 'all'" class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0">All</button>
+              <button (click)="selectedCategory.set('新品'); selectedSubCategory.set('全部')" [class.bg-red-500]="selectedCategory() === '新品'" [class.text-white]="selectedCategory() === '新品'" [class.bg-white]="selectedCategory() !== '新品'" [class.text-red-500]="selectedCategory() !== '新品'" class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0 flex items-center gap-1"><span>✨</span> 本月新品</button>
+              @for (cat of store.categories(); track cat) {
+                @if(cat !== '新品') {
+                  <button (click)="selectedCategory.set(cat); selectedSubCategory.set('全部')" [class.bg-brand-900]="selectedCategory() === cat" [class.text-white]="selectedCategory() === cat" [class.bg-white]="selectedCategory() !== cat" [class.text-gray-500]="selectedCategory() !== cat" class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0">{{ cat }}</button>
+                }
+              }
+           </div>
+           @if (currentSubCategories().length > 0) {
+              <div class="flex gap-2 overflow-x-auto pb-1 custom-scrollbar px-2 animate-fade-in">
+                @for (sub of currentSubCategories(); track sub) {
+                  <button (click)="selectedSubCategory.set(sub)" [class.bg-gray-800]="selectedSubCategory() === sub" [class.text-white]="selectedSubCategory() === sub" [class.bg-white]="selectedSubCategory() !== sub" [class.text-gray-500]="selectedSubCategory() !== sub" class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors border border-gray-100 shadow-sm shrink-0">{{ sub }}</button>
+                }
+              </div>
+           }
+         </div>
+
+         <div class="hidden md:flex flex-wrap items-center gap-8 px-4 py-1">
+            <button (click)="selectedCategory.set('all'); selectedSubCategory.set('全部')" class="font-bold text-base transition-colors py-2 border-b-2" [class.text-brand-900]="selectedCategory() === 'all'" [class.text-gray-500]="selectedCategory() !== 'all'" [class.border-brand-900]="selectedCategory() === 'all'" [class.border-transparent]="selectedCategory() !== 'all'">All</button>
+            <button (click)="selectedCategory.set('新品'); selectedSubCategory.set('全部')" class="font-bold text-base transition-colors py-2 flex items-center gap-1 border-b-2" [class.text-red-500]="selectedCategory() === '新品'" [class.text-gray-500]="selectedCategory() !== '新品'" [class.border-red-500]="selectedCategory() === '新品'" [class.border-transparent]="selectedCategory() !== '新品'"><span>✨</span> 本月新品</button>
 
             @for (cat of store.categories(); track cat) {
               @if(cat !== '新品') {
-                <button 
-                  (click)="selectedCategory.set(cat); selectedSubCategory.set('全部')"
-                  [class.bg-brand-900]="selectedCategory() === cat" [class.text-white]="selectedCategory() === cat" [class.bg-white]="selectedCategory() !== cat" [class.text-gray-500]="selectedCategory() !== cat"
-                  class="px-6 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors border border-transparent shadow-sm shrink-0"
-                >{{ cat }}</button>
+                <div class="relative group">
+                   <button (click)="selectedCategory.set(cat); selectedSubCategory.set('全部')" class="font-bold text-base transition-colors py-2 flex items-center gap-1.5 border-b-2" [class.text-brand-900]="selectedCategory() === cat" [class.text-gray-500]="selectedCategory() !== cat" [class.border-brand-900]="selectedCategory() === cat" [class.border-transparent]="selectedCategory() !== cat">
+                      {{ cat }}
+                      @if(getSubCategoriesForHover(cat).length > 0) {
+                        <span class="text-[10px] text-gray-400 group-hover:rotate-180 transition-transform duration-300">▼</span>
+                      }
+                   </button>
+
+                   @if(getSubCategoriesForHover(cat).length > 0) {
+                     <div class="absolute top-[100%] left-0 hidden group-hover:flex flex-col bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] rounded-2xl p-2 min-w-[180px] border border-gray-100 z-[100] animate-fade-in origin-top">
+                        <button (click)="selectedCategory.set(cat); selectedSubCategory.set('全部')" class="text-left px-4 py-2.5 text-sm font-bold rounded-xl transition-colors mb-1" [class.bg-brand-50]="selectedCategory() === cat && selectedSubCategory() === '全部'" [class.text-brand-900]="selectedCategory() === cat && selectedSubCategory() === '全部'" [class.text-gray-700]="!(selectedCategory() === cat && selectedSubCategory() === '全部')" [class.hover:bg-brand-50]="true" [class.hover:text-brand-900]="true">全部 {{ cat }}</button>
+                        
+                        @for(sub of getSubCategoriesForHover(cat); track sub) {
+                          <button (click)="selectedCategory.set(cat); selectedSubCategory.set(sub)" class="text-left px-4 py-2.5 text-sm font-bold rounded-xl transition-colors" [class.bg-gray-50]="selectedCategory() === cat && selectedSubCategory() === sub" [class.text-brand-900]="selectedCategory() === cat && selectedSubCategory() === sub" [class.text-gray-600]="!(selectedCategory() === cat && selectedSubCategory() === sub)" [class.hover:bg-gray-50]="true" [class.hover:text-brand-900]="true">{{ sub }}</button>
+                        }
+                     </div>
+                   }
+                </div>
               }
             }
          </div>
-
-         @if (currentSubCategories().length > 0) {
-            <div class="flex gap-2 overflow-x-auto pb-1 custom-scrollbar px-2 animate-fade-in">
-              @for (sub of currentSubCategories(); track sub) {
-                <button 
-                  (click)="selectedSubCategory.set(sub)"
-                  [class.bg-gray-800]="selectedSubCategory() === sub" [class.text-white]="selectedSubCategory() === sub" [class.bg-white]="selectedSubCategory() !== sub" [class.text-gray-500]="selectedSubCategory() !== sub"
-                  class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors border border-gray-100 shadow-sm shrink-0"
-                >{{ sub }}</button>
-              }
-            </div>
-         }
       </div>
 
       @if (viewMode() === 'grid') {
@@ -515,6 +527,13 @@ export class ShopFrontComponent {
     if (uniqueSubs.length === 0) return [];
     return ['全部', ...uniqueSubs];
   });
+
+  // 💡 取得特定主分類下的所有次分類 (專供電腦版 Hover 下拉選單使用)
+  getSubCategoriesForHover(cat: string): string[] {
+    const productsInCat = this.store.visibleProducts().filter(p => p.category === cat);
+    const existingSubs = productsInCat.map(p => p.subCategory).filter((sub): sub is string => !!sub); 
+    return [...new Set(existingSubs)];
+  }
 
   hasCustomPrice(p: Product): boolean {
     return p?.options?.some(opt => opt.includes('=')) || false;
