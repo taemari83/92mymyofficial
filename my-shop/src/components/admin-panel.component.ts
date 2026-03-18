@@ -1228,7 +1228,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  <div class="flex justify-between items-center mb-3">
                     <div class="text-sm font-bold text-gray-700 border-l-4 border-brand-400 pl-2">訂單明細</div>
                     @if(o.items.length > 1) {
-                       <button (click)="isSplittingOrder.set(!isSplittingOrder()); splitItemIndices.set(new Set())" class="text-xs bg-gray-100 px-3 py-1.5 rounded-lg font-bold text-gray-600 hover:bg-gray-200 transition-colors shadow-sm">
+                       <button (click)="toggleSplitMode()" class="text-xs bg-gray-100 px-3 py-1.5 rounded-lg font-bold text-gray-600 hover:bg-gray-200 transition-colors shadow-sm">
                          {{ isSplittingOrder() ? '取消拆單' : '✂️ 拆分此訂單' }}
                        </button>
                     }
@@ -3568,6 +3568,12 @@ submitProduct() {
      ];
 
      this.downloadCSV(`終極會計總表_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows);
+  }
+
+  // ✂️ 開關拆單模式，並清空勾選紀錄
+  toggleSplitMode() {
+     this.isSplittingOrder.set(!this.isSplittingOrder());
+     this.splitItemIndices.set(new Set<number>());
   }
 
   // ✂️ 智慧拆單邏輯：打勾切換
