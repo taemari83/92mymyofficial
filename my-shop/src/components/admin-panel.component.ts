@@ -656,7 +656,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             </div>
             
             <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
-            <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>期間商品銷售分析</span></h4>
                   <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-fit">
@@ -1270,7 +1269,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                        </div>
                     }
                  </div>
-              </div>
 
                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                    <button (click)="store.notifyArrival(o)" class="p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed">
@@ -1319,7 +1317,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      🗑️ 徹底刪除訂單 (測試用)
                    </button>
                  </div> 
-              </div> 
+              </div>
               
               <div class="p-4 bg-gray-50 border-t border-gray-100 shrink-0"> <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> </div> 
             </div> 
