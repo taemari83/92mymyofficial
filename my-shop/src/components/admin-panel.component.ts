@@ -649,6 +649,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
             <div class="mt-4 w-full"><h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><span>💰 收款狀態分析</span><span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-normal">Cash Flow</span></h4><div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full"><div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">應收總額</div><div class="text-lg font-black text-gray-800 whitespace-nowrap">\${{ accountingStats().payment.total | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🧾</div></div><div class="bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm relative overflow-hidden"><div class="text-xs text-green-600 font-bold mb-1 uppercase">已實收 (入帳)</div><div class="text-lg font-black text-green-700 whitespace-nowrap">\${{ accountingStats().payment.received | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">💰</div></div><div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm relative overflow-hidden"><div class="text-xs text-yellow-600 font-bold mb-1 uppercase">對帳中</div><div class="text-lg font-black text-yellow-700 whitespace-nowrap">\${{ accountingStats().payment.verifying | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">🔍</div></div><div class="bg-red-50 p-4 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden"><div class="text-xs text-red-600 font-bold mb-1 uppercase">未收款(含貨到付款)</div><div class="text-lg font-black text-red-700 whitespace-nowrap">\${{ accountingStats().payment.unpaid | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">⚠️</div></div><div class="bg-gray-100 p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden opacity-75"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">待退款</div><div class="text-lg font-black text-gray-600 whitespace-nowrap">\${{ accountingStats().payment.refund | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">↩️</div></div><div class="bg-gray-800 text-white p-4 rounded-2xl border border-gray-700 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-400 font-bold mb-1 uppercase">已退款 (結案)</div><div class="text-lg font-black text-white whitespace-nowrap">\${{ accountingStats().payment.refundedTotal | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-20 text-4xl">💸</div></div></div></div>
             
+            <div class="mt-4 w-full animate-fade-in">
+               <button (click)="exportFinalMonthlyReport()" class="w-full py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-transform active:scale-[0.98] flex items-center justify-center gap-3">
+                  <span class="text-3xl">🏆</span> 一鍵產出【當期終極會計結算總表】(自動扣除營業支出與精算合夥人分潤)
+               </button>
+            </div>
+            
+            <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
             <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>期間商品銷售分析</span></h4>
@@ -1219,10 +1226,26 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     }
                  </div>
 
-                 <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">訂單明細</div>
+                 <div class="flex justify-between items-center mb-3">
+                    <div class="text-sm font-bold text-gray-700 border-l-4 border-brand-400 pl-2">訂單明細</div>
+                    @if(o.items.length > 1) {
+                       <button (click)="isSplittingOrder.set(!isSplittingOrder()); splitItemIndices.set(new Set())" class="text-xs bg-gray-100 px-3 py-1.5 rounded-lg font-bold text-gray-600 hover:bg-gray-200 transition-colors shadow-sm">
+                         {{ isSplittingOrder() ? '取消拆單' : '✂️ 拆分此訂單' }}
+                       </button>
+                    }
+                 </div>
+                 
                  <div class="space-y-3 mb-6">
-                    @for(item of o.items; track item.productId + item.option) {
-                       <div class="flex items-start gap-3 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+                    @for(item of o.items; track item.productId + item.option; let i = $index) {
+                       <div class="flex items-start gap-3 bg-white p-3 rounded-xl border shadow-sm transition-all cursor-pointer"
+                            [class.border-gray-200]="!splitItemIndices().has(i)"
+                            [class.border-brand-500]="splitItemIndices().has(i)"
+                            [class.bg-brand-50]="splitItemIndices().has(i)"
+                            (click)="isSplittingOrder() ? toggleSplitItem(i) : null">
+                          
+                          @if(isSplittingOrder()) {
+                             <input type="checkbox" [checked]="splitItemIndices().has(i)" class="mt-4 w-4 h-4 text-brand-600 pointer-events-none shrink-0">
+                          }
                           <img [src]="item.productImage" class="w-12 h-12 rounded-lg object-cover bg-gray-100 shrink-0 border border-gray-100">
                           <div class="flex-1 min-w-0 flex flex-col gap-1">
                              <div class="text-sm font-bold text-gray-800 leading-snug whitespace-normal break-all">{{ item.productName }}</div>
@@ -1234,11 +1257,20 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                           </div>
                        </div>
                     }
-                    <div class="flex justify-between items-center px-2 pt-3 border-t border-gray-200 font-bold text-brand-900 text-lg">
-                       <span>總計</span>
-                       <span>NT$ {{ o.finalTotal }}</span>
-                    </div>
+
+                    @if(isSplittingOrder()) {
+                       <div class="p-3 bg-brand-900 rounded-xl mb-4 shadow-lg flex justify-between items-center animate-fade-in mt-4">
+                          <span class="text-sm font-bold text-white">已選 {{ splitItemIndices().size }} 件商品移至新單</span>
+                          <button (click)="confirmSplitOrder(o)" [disabled]="splitItemIndices().size === 0 || splitItemIndices().size === o.items.length" class="px-4 py-2 bg-white text-brand-900 text-xs font-black rounded-lg disabled:opacity-50 transition-transform active:scale-95">確認拆分</button>
+                       </div>
+                    } @else {
+                       <div class="flex justify-between items-center px-2 pt-3 border-t border-gray-200 font-bold text-brand-900 text-lg">
+                          <span>總計</span>
+                          <span>NT$ {{ o.finalTotal }}</span>
+                       </div>
+                    }
                  </div>
+              </div>
 
                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                    <button (click)="store.notifyArrival(o)" class="p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed">
@@ -2214,7 +2246,9 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
   statsRange = signal('今日'); orderStart = signal(''); orderEnd = signal(''); orderSearch = signal('');  orderPageSize = signal<number | 'all'>(50); orderPage = signal(1); orderStatusTab = signal('all'); 
   actionModalOrder = signal<Order | null>(null); cancelConfirmState = signal(false);
-  
+  isSplittingOrder = signal(false); // 👈 新增：控制是否開啟拆單模式
+  splitItemIndices = signal<Set<number>>(new Set()); // 👈 新增：記錄選中了哪些商品
+
   orderTabs = [ 
     { id: 'all', label: '全部' }, 
     { id: 'pending', label: '待付款' },   // 客人還沒匯款
@@ -2520,7 +2554,11 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   getShippingLabel(m: string) { const map: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; return map[m] || m; }
   
   openAction(e: Event, order: Order) { e.stopPropagation(); this.actionModalOrder.set(order); this.cancelConfirmState.set(false); } 
-  closeActionModal() { this.actionModalOrder.set(null); } 
+  closeActionModal() { 
+     this.actionModalOrder.set(null); 
+     this.isSplittingOrder.set(false); 
+     this.splitItemIndices.set(new Set());
+  } 
 
   // --- 彈窗內的詳細操作按鈕 (已加入自動發信) ---
   doConfirm(o: Order) { this.store.updateOrderStatus(o.id, 'payment_confirmed'); this.store.sendOrderNotification(o, 'payment_confirmed'); this.closeActionModal(); } 
@@ -3483,6 +3521,119 @@ submitProduct() {
     } catch(err: any) {
       alert('❌ 建立失敗: ' + (err?.message || err));
     }
+     
   }
-  
+  // 🏆 終極大絕招：一鍵產出【終極會計結算總表】
+  exportFinalMonthlyReport() {
+     const stats = this.accountingStats();
+     const range = this.accountingRange(); 
+     const now = new Date(); 
+     let startDate: Date | null = null; let endDate: Date | null = null;
+     
+     if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
+     else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+     else if (range === 'custom') {
+       if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart());
+       if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd());
+     }
+
+     // 撈取區間內的「營業支出」
+     const validExpenses = this.expenses().filter(e => {
+        const d = new Date(e.date);
+        if (startDate && d < startDate) return false;
+        if (endDate) { const ed = new Date(endDate); ed.setHours(23,59,59,999); if (d > ed) return false; }
+        return true;
+     });
+
+     // 計算總費用 (韓元簡單除以 40 轉台幣概算，台幣直接加)
+     let opExTwd = 0;
+     validExpenses.forEach(e => {
+        opExTwd += (e.currency === 'KRW') ? (e.amount / 40) : e.amount; 
+     });
+
+     const finalNet = stats.profit - opExTwd;
+     const realCompanyShare = stats.shares.company - opExTwd;
+
+     const headers = ['項目', '金額 (NT$)', '詳細說明'];
+     const rows = [
+        ['總營收 (Sales)', Math.round(stats.revenue), '當期所有已收款訂單之實收總額'],
+        ['總商品成本 (COGS)', Math.round(stats.cost), '當期售出商品之進價、關稅與運費總和'],
+        ['商品總毛利 (Gross Margin)', Math.round(stats.profit), '總營收 - 總商品成本'],
+        ['總營業支出 (OpEx)', Math.round(opExTwd), '當期紀錄之包材、機票、行銷等雜支 (韓元以40概算)'],
+        ['🏆 最終淨利潤 (Net Income)', Math.round(finalNet), '商品毛利 - 營業支出 (最真實的淨賺)'],
+        ['-----------------', '------', '-----------------'],
+        ['合夥人：藝辰 應匯款', Math.round(stats.shares.yichen), '親帶淨利 25%'],
+        ['合夥人：子婷 應匯款', Math.round(stats.shares.ziting), '親帶 25% + 批發 40%'],
+        ['合夥人：小芸 應匯款', Math.round(stats.shares.xiaoyun), '親帶 25% + 批發 40%'],
+        ['🏢 公司保留真實盈餘', Math.round(realCompanyShare), '公司毛利分潤 (親帶25%/批發20%) 扣除 總營業支出']
+     ];
+
+     this.downloadCSV(`終極會計總表_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows);
+  }
+
+  // ✂️ 智慧拆單邏輯：打勾切換
+  toggleSplitItem(index: number) {
+     const curr = new Set(this.splitItemIndices());
+     if (curr.has(index)) curr.delete(index);
+     else curr.add(index);
+     this.splitItemIndices.set(curr);
+  }
+
+  // ✂️ 智慧拆單邏輯：確認拆分並拋轉後台
+  async confirmSplitOrder(o: Order) {
+     const indices = Array.from(this.splitItemIndices());
+     if(indices.length === 0 || indices.length === o.items.length) return alert('請選擇部分商品來拆單！（不可全選或不選）');
+     
+     const newShippingFeeStr = prompt('📦 建立新訂單\n\n請輸入【拆分出來的新訂單】運費 (若免運請輸入 0)：', '0');
+     if(newShippingFeeStr === null) return;
+     const newShippingFee = parseInt(newShippingFeeStr, 10) || 0;
+
+     // 1. 分出兩批商品
+     const newItems = o.items.filter((_, i) => indices.includes(i));
+     const remainItems = o.items.filter((_, i) => !indices.includes(i));
+
+     // 2. 重新計算小計
+     const newSubtotal = newItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+     const remainSubtotal = remainItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+     try {
+         // 3. 呼叫現成的 createOrder，讓它自動發信給客人並產生新 ID
+         const newOrderRes = await this.store.createOrder(
+             { name: o.paymentName || o.userName, time: '', last5: o.paymentLast5 || '' },
+             { name: o.shippingName, phone: o.shippingPhone, address: o.shippingAddress, store: o.shippingAddress },
+             0, // 折抵金留在原單
+             o.paymentMethod,
+             o.shippingMethod,
+             newShippingFee,
+             newItems,
+             0 // 多入優惠先保留在原單
+         );
+
+         if(newOrderRes) {
+             // 4. 更新原訂單，扣除移走的金額
+             const remainTotal = remainSubtotal + o.shippingFee - o.discount - o.usedCredits;
+             const remainNote = (o as any).note ? `${(o as any).note}\n(已拆分部分商品至 #${newOrderRes.id})` : `(已拆分部分商品至 #${newOrderRes.id})`;
+             
+             await this.store.updateOrderStatus(o.id, o.status, {
+                 items: remainItems,
+                 subtotal: remainSubtotal,
+                 finalTotal: Math.max(0, remainTotal),
+                 balanceDue: Math.max(0, remainTotal - o.depositPaid),
+                 note: remainNote
+             });
+             
+             // 5. 新單備註標記來源
+             await this.store.updateOrderStatus(newOrderRes.id, o.status, {
+                 note: `(從訂單 #${o.id} 拆分出來)`
+             });
+
+             alert(`✅ 拆單成功！\n新訂單編號為：#${newOrderRes.id}\n系統已發送新訂單通知信給客戶！`);
+             this.isSplittingOrder.set(false);
+             this.closeActionModal();
+         }
+     } catch(e: any) {
+         alert('❌ 拆單發生錯誤：' + e.message);
+     }
+  }
 }
