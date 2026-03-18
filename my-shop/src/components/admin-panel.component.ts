@@ -240,7 +240,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  <div class="flex flex-wrap items-center ml-auto gap-2 mt-2 md:mt-0 w-full md:w-auto justify-end">
                     <span class="hidden lg:flex text-xs text-gray-400 items-center whitespace-nowrap mr-2">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                     <div class="flex gap-2 w-full md:w-auto">
-                       <button (click)="openGiveawayModal()" class="flex-1 sm:flex-none px-4 py-2 bg-purple-500 text-white rounded-lg font-bold shadow-sm hover:bg-purple-600 flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>🎁</span> 抽獎單</button>
+                       <div class="flex gap-1 w-full md:w-auto"> <button (click)="openGiveawayModal()" class="flex-1 sm:flex-none px-4 py-2 bg-purple-400 text-white rounded-lg font-bold shadow-sm hover:bg-purple-500 flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>🎁</span> 抽獎單</button>
                        <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
                        <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-lg font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
                     </div>
@@ -1962,7 +1962,8 @@ try {
           let totalRawProfit = 0; // 紀錄原始未扣折扣的總利潤
 
           // 第一圈：精算這筆訂單的成本，與每項商品的「原始毛利」
-          const itemsData = (o.items || []).map((i: CartItem) => { // 🛡️ 把 .map 也加上神盾
+          const itemsItems = o.items || []; // 🛡️ 加上神盾：如果是舊資料或 undefined 則轉為空陣列
+          const itemsData = itemsItems.map((i: CartItem) => {
               const p = this.store.products().find((x: Product) => x.id === i.productId);
               let itemCost = 0;
               let shareMode = (p as any)?.shareMode || '親帶'; // 抓取分潤模式
