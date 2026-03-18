@@ -441,17 +441,32 @@ export class CartComponent {
         // ✅ 庫存檢查通過，繼續建立訂單
         const val = this.form.value;
         try {
+           // 💡 結帳前，把所有畫面上算好的優惠數字整理好
+           const totalCartDiscount = this.storeService.cartDiscount() || 0; // 多入組折扣
+           const platformDiscount = this.currentDiscount() || 0;            // 賣貨便/好賣家 預扣運費折抵
+           const usedCredits = this.calculatedCredits() || 0;               // 購物金折抵
+           
+           // 將多入折扣與平台折抵合併為總折扣 (傳給後台的 discount 欄位)
+           const combinedDiscount = totalCartDiscount + platformDiscount;
+
+           // 🚀 執行結帳大絕招：把所有資訊完美送入後台
            const orderResult = await this.storeService.createOrder(
               { name: val.payName, time: val.payDate, last5: val.payLast5 }, 
               { name: val.shipName, phone: val.shipPhone, address: val.shipAddress, store: val.shipStore },
-              this.calculatedCredits(), val.paymentMethod, val.shippingMethod, this.currentShippingFee(), itemsToCheck
+              usedCredits, 
+              val.paymentMethod, 
+              val.shippingMethod, 
+              this.currentShippingFee(), 
+              itemsToCheck,
+              combinedDiscount // 👈 把我們算好的總折扣傳遞過去！
            );
 
            if (!orderResult) {
-              alert('結帳失敗，請確認登入狀態後重試！');
+              alert('結帳失敗，請確認網路連線或重整頁面後重試！');
               return;
            }
 
+           // 🎉 結帳成功：清空勾選狀態，進入成功畫面
            this.selectedIndices.set(new Set());
            this.step.set(3);
            

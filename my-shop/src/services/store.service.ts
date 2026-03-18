@@ -218,18 +218,20 @@ addToCart(product: Product, option: string, quantity: number) {
       return [...current, { productId: product.id, productName: product.name, productImage: product.image, option: parsedOption, price: finalPrice, quantity, isPreorder: product.isPreorder, unitCost: currentCost }];
     });
   }  
-  async createOrder(paymentInfo: any, shippingInfo: any, usedCredits: number, paymentMethod: any, shippingMethod: any, shippingFee: number, checkoutItems: CartItem[]) {
+  async createOrder(
+    paymentInfo: any, shippingInfo: any, usedCredits: number, 
+    paymentMethod: any, shippingMethod: any, shippingFee: number, 
+    checkoutItems: CartItem[], combinedDiscount: number = 0 // 👈 加入第 8 個參數接收前台折扣
+  ) {
     const user = this.currentUser(); if (!user) return null;
-    let originalTotal = 0; let finalItemsTotal = 0; const grouped = new Map<string, number>();
-    checkoutItems.forEach(item => { grouped.set(item.productId, (grouped.get(item.productId) || 0) + item.quantity); originalTotal += item.price * item.quantity; });
-    grouped.forEach((qty, productId) => {
-       const product = this.products().find(p => p.id === productId); const firstItem = checkoutItems.find(i => i.productId === productId); if(!firstItem) return;
-       if (product?.bulkDiscount && product.bulkDiscount.count > 1 && product.bulkDiscount.total > 0) {
-          const sets = Math.floor(qty / product.bulkDiscount.count); const remainder = qty % product.bulkDiscount.count;
-          finalItemsTotal += (sets * product.bulkDiscount.total) + (remainder * firstItem.price);
-       } else { finalItemsTotal += checkoutItems.filter(i => i.productId === productId).reduce((s, i) => s + (i.price * i.quantity), 0); }
+    
+    let originalTotal = 0; 
+    checkoutItems.forEach(item => { 
+       originalTotal += item.price * item.quantity; 
     });
-    const bulkDiscountAmount = originalTotal - finalItemsTotal; const finalTotal = finalItemsTotal + shippingFee - usedCredits;
+    
+    // 🚀 核心升級：直接套用前台算好的完美總折扣與總計，確保帳務一毛不差！
+    const finalTotal = originalTotal + shippingFee - usedCredits - combinedDiscount;
     
     const orderId = this.generateOrderId();
 
@@ -244,13 +246,12 @@ addToCart(product: Product, option: string, quantity: number) {
       shippingAddress: (shippingMethod === 'myship' || shippingMethod === 'family') ? shippingInfo.store : shippingInfo.address,
       items: checkoutItems, 
       subtotal: originalTotal, 
-      discount: bulkDiscountAmount, 
+      discount: combinedDiscount, // 👈 存入包含多入與平台的總折扣
       shippingFee, 
       usedCredits, 
-      finalTotal, 
-      depositPaid: finalTotal - 20, 
+      finalTotal: Math.max(0, finalTotal), 
+      depositPaid: Math.max(0, finalTotal - 20), 
       balanceDue: 20, 
-      // 🔥 修正：結帳當下如果有填後五碼，就直接判定為「待對帳」，否則才是「待付款」
       status: (paymentInfo.last5 && paymentInfo.last5.trim() !== '') ? 'paid_verifying' : 'pending_payment', 
       paymentMethod, 
       shippingMethod, 
@@ -262,7 +263,7 @@ addToCart(product: Product, option: string, quantity: number) {
     
     await setDoc(doc(this.firestore, 'orders', orderId), orderData);
 
-    fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'new_order', orderId: orderId, total: finalTotal, name: orderData.userName, email: user.email }) }).catch(e => console.error(e));
+    fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'new_order', orderId: orderId, total: orderData.finalTotal, name: orderData.userName, email: user.email }) }).catch(e => console.error(e));
     this.cart.update(current => current.filter(c => !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)));
     return orderData;
   }

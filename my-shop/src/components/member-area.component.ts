@@ -143,6 +143,35 @@ import { StoreService } from '../services/store.service';
                         </div>
                       </div>
                     </div>
+
+                    @if (order.paymentMethod === 'bank_transfer' && (order.status === 'pending_payment' || order.status === 'unpaid_alert')) {
+                      <div class="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-xl animate-fade-in">
+                        <div class="text-sm font-bold text-blue-800 mb-2">💰 請填寫匯款後五碼</div>
+                        <div class="flex gap-2">
+                          <input #last5Input type="text" maxlength="5" placeholder="輸入帳號後 5 碼" class="flex-1 p-2.5 rounded-lg border border-blue-200 focus:outline-none focus:border-blue-400 font-mono font-bold text-center tracking-widest text-brand-900">
+                          <button (click)="submitPaymentInfo(order, last5Input.value)" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors active:scale-95 shadow-sm whitespace-nowrap">
+                            送出對帳
+                          </button>
+                        </div>
+                        <p class="text-[10px] text-blue-500 mt-1.5">* 匯款帳號：凱基銀行(809) 606-904-0006-7288</p>
+                      </div>
+                    }
+
+                    @if (order.shippingLink && (order.status === 'shipped' || order.status === 'arrived_notified' || order.status === 'completed' || order.status === 'picked_up')) {
+                      <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between animate-fade-in">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                           <span class="text-2xl shrink-0">🚚</span>
+                           <div class="min-w-0">
+                             <div class="text-xs font-bold text-gray-500">包裹追蹤碼 / 連結</div>
+                             <div class="text-sm font-bold text-brand-900 font-mono select-all truncate">{{ order.shippingLink }}</div>
+                           </div>
+                        </div>
+                        <a [href]="order.shippingLink.startsWith('http') ? order.shippingLink : 'https://myship.7-11.com.tw/general/detail/GM2602124017223'" target="_blank" class="shrink-0 ml-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs font-bold text-gray-700 hover:bg-gray-100 shadow-sm transition-colors text-decoration-none">
+                          追蹤包裹
+                        </a>
+                      </div>
+                    }
+
                   </div>
                 }
               </div>
@@ -197,5 +226,24 @@ export class MemberAreaComponent {
 
   logout() {
     this.storeService.logout();
+  }
+
+  // 🔥 新增：讓客人自助填寫匯款後五碼的魔法函式
+  async submitPaymentInfo(order: any, last5: string) {
+    const cleanLast5 = last5.trim();
+    if (!cleanLast5 || cleanLast5.length < 5) {
+      alert('⚠️ 請輸入完整的帳號後 5 碼！');
+      return;
+    }
+    
+    if (!confirm(`確認送出後五碼「${cleanLast5}」嗎？\n送出後系統將為您切換為對帳中。`)) return;
+
+    try {
+      // 呼叫 StoreService，把訂單狀態改成「對帳中」，並把客人填寫的後五碼存進去
+      await this.storeService.updateOrderStatus(order.id, 'paid_verifying', { paymentLast5: cleanLast5 });
+      alert('✅ 成功送出！請稍候，客服確認款項後會立即為您安排出貨！');
+    } catch(e) {
+      alert('❌ 送出失敗，請檢查網路連線或稍後再試。');
+    }
   }
 }
