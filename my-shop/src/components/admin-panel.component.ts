@@ -249,11 +249,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
              </div>
                
              <div class="flex flex-col gap-4 mb-4 w-full">
-    
-    <div class="relative w-full">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-      <input type="text" [(ngModel)]="orderSearch" placeholder="搜尋訂單編號、客戶名稱..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200">
-    </div> 
+                <div class="relative w-full">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                  <input type="text" [(ngModel)]="orderSearch" placeholder="搜尋訂單編號、客戶名稱..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200">
+                </div>
     <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm w-full flex-wrap">
   @for(tab of orderTabs; track tab.id) { 
     <button (click)="orderStatusTab.set(tab.id)" 
