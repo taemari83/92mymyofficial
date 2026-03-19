@@ -968,8 +968,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                            </div>
                          </div>
                          <div class="flex items-center gap-2 shrink-0">
-                            <button type="button" (click)="editPromo(promo)" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors shadow-sm">編輯</button>
-                            <button type="button" (click)="deletePromo(promo)" class="px-3 py-1.5 bg-white text-red-500 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors shadow-sm">刪除</button>
+                            <button type="button" (click)="openPromoForm(i)" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-200 shadow-sm">編輯</button>
+                            <button type="button" (click)="deletePromo(i)" class="px-3 py-1.5 bg-white text-red-500 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-50 shadow-sm">刪除</button>
                          </div>
                        </div>
                     } @empty {
@@ -1740,53 +1740,47 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           </div>
         }
           @if (showPromoModal()) {
-          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closePromoModal()">
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showPromoModal.set(false)">
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-bounce-in" (click)="$event.stopPropagation()">
               <div class="p-6 border-b border-gray-100 bg-pink-50 flex justify-between items-center">
-                <h3 class="text-xl font-bold text-pink-900">🎟️ {{ editingPromo() ? '編輯' : '新增' }}折扣碼</h3>
-                <button (click)="closePromoModal()" class="w-8 h-8 rounded-full bg-pink-200/50 text-pink-700 font-bold hover:bg-pink-200">✕</button>
+                <h3 class="text-xl font-bold text-pink-900">🎟️ {{ editingPromoIndex() !== null ? '編輯' : '新增' }}折扣碼</h3>
+                <button type="button" (click)="showPromoModal.set(false)" class="w-8 h-8 rounded-full bg-pink-200 text-pink-700 font-bold hover:bg-pink-300">✕</button>
               </div>
-              <div class="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
+              <div class="p-6">
                 <form [formGroup]="promoForm" class="space-y-4">
                   <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">折扣代碼 (英文數字)</label>
-                    <input type="text" formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-lg font-black uppercase text-center tracking-widest" placeholder="例如: VIP99">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">折扣代碼 (客戶輸入用)</label>
+                    <input type="text" formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 uppercase font-black tracking-widest text-center" placeholder="如: VIP99">
                   </div>
                   <div class="grid grid-cols-2 gap-3">
                     <div>
-                      <label class="block text-xs font-bold text-gray-500 mb-1">類型</label>
-                      <select formControlName="type" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm font-bold bg-white">
-                        <option value="fixed">扣減金額 ($)</option>
-                        <option value="percent">打折 (%)</option>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">優惠類型</label>
+                      <select formControlName="type" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white">
+                        <option value="amount">扣減金額 ($)</option>
+                        <option value="percent">全單打折 (%)</option>
                       </select>
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-gray-500 mb-1">數值 (如:50 或 0.9)</label>
-                      <input type="number" formControlName="value" step="0.1" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm font-bold">
-                    </div>
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label class="block text-xs font-bold text-gray-500 mb-1">低消門檻 (0為不限)</label>
-                      <input type="number" formControlName="minSpend" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm">
-                    </div>
-                    <div>
-                      <label class="block text-xs font-bold text-gray-500 mb-1">使用次數 (0為無限)</label>
-                      <input type="number" formControlName="usageLimit" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm">
+                      <label class="block text-xs font-bold text-gray-500 mb-1">數值 (如:50 / 88折)</label>
+                      <input type="number" formControlName="value" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold">
                     </div>
                   </div>
                   <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">使用期限 (留空為永久)</label>
-                    <input type="date" formControlName="expiryDate" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm">
+                    <label class="block text-xs font-bold text-gray-500 mb-1">低消門檻 (0為不限)</label>
+                    <input type="number" formControlName="minSpend" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">活動備註 (僅管理員可見)</label>
+                    <input type="text" formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm" placeholder="如: 情人節活動">
                   </div>
                   <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer">
-                    <input type="checkbox" formControlName="isActive" class="w-5 h-5 rounded text-pink-600 focus:ring-pink-500">
-                    <span class="font-bold text-gray-700">立刻啟用此折扣碼</span>
+                    <input type="checkbox" formControlName="active" class="w-5 h-5 rounded text-pink-600 focus:ring-pink-500">
+                    <span class="font-bold text-gray-700">啟用此折扣碼</span>
                   </label>
                 </form>
               </div>
               <div class="p-6 border-t border-gray-100 bg-white">
-                <button (click)="submitPromo()" class="w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-lg hover:bg-pink-700 transition-transform active:scale-95">
+                <button type="button" (click)="savePromo()" [disabled]="promoForm.invalid" class="w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-lg hover:bg-pink-700 transition-transform active:scale-95 disabled:opacity-50">
                   確認儲存
                 </button>
               </div>
