@@ -202,6 +202,20 @@ import { StoreService, CartItem } from '../services/store.service';
             </div>
 
             <div class="bg-gray-50 p-4 rounded-xl space-y-2">
+               <div class="pt-1 pb-3 mb-2 border-b border-gray-200">
+                  <div class="flex gap-2">
+                     <input type="text" [(ngModel)]="inputPromoCode" [ngModelOptions]="{standalone: true}" placeholder="輸入折扣碼..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold uppercase tracking-wider outline-none focus:border-brand-400">
+                     <button type="button" (click)="applyPromoCode()" class="px-4 py-2 bg-gray-800 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors shrink-0">套用</button>
+                  </div>
+                  @if(promoError()) { <div class="text-xs text-red-500 font-bold mt-1.5 ml-1">{{ promoError() }}</div> }
+                  @if(appliedPromo()) { 
+                     <div class="flex items-center justify-between bg-green-50 text-green-700 text-xs font-bold px-3 py-2 rounded-lg mt-2 border border-green-200">
+                       <span class="flex items-center gap-1"><span>🎟️</span> 已套用「{{ appliedPromo()?.code }}」</span>
+                       <button type="button" (click)="removePromoCode()" class="text-gray-400 hover:text-red-500 text-base">✕</button>
+                     </div>
+                  }
+               </div>
+
                <div class="flex justify-between text-sm">
                   <span class="text-gray-500">商品原價小計</span>
                   <span class="font-bold">NT$ {{ selectedOriginalSubtotal() }}</span>
@@ -209,8 +223,15 @@ import { StoreService, CartItem } from '../services/store.service';
                
                @if(storeService.cartDiscount() > 0) {
                  <div class="flex justify-between text-sm text-red-500 font-bold">
-                    <span>🎉 任選多入優惠折扣</span>
+                    <span>🔥 任選多入優惠折扣</span>
                     <span>- NT$ {{ storeService.cartDiscount() }}</span>
+                 </div>
+               }
+
+               @if(appliedPromoDiscount() > 0) {
+                 <div class="flex justify-between text-sm text-brand-600 font-bold">
+                    <span>🎟️ 折扣碼折抵</span>
+                    <span>- NT$ {{ appliedPromoDiscount() | number:'1.0-0' }}</span>
                  </div>
                }
 
@@ -229,7 +250,7 @@ import { StoreService, CartItem } from '../services/store.service';
                }
                
                @if(storeService.currentUser()?.credits) {
-                  <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                  <div class="flex items-center justify-between pt-2 border-t border-gray-200 mt-1">
                      <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" [checked]="useCredits()" (change)="toggleCredits($event)" class="text-brand-600 rounded">
                         <span class="text-sm font-bold text-gray-700">使用購物金 (餘額: \${{ storeService.currentUser()?.credits }})</span>
@@ -280,6 +301,11 @@ export class CartComponent {
   useCredits = signal(false);
   selectedShippingMethod = signal('');
   
+  // 🎟️ 折扣碼專用狀態
+  inputPromoCode = signal('');
+  appliedPromo = signal<any>(null);
+  promoError = signal('');
+
   form: FormGroup = this.fb.group({
      paymentMethod: ['', Validators.required],
      shippingMethod: ['', Validators.required],
@@ -379,10 +405,30 @@ export class CartComponent {
   selectedOriginalSubtotal = computed(() => this.checkoutList().reduce((sum, i) => sum + (i.price * i.quantity), 0));
   selectedSubtotal = computed(() => Math.max(0, this.selectedOriginalSubtotal() - this.storeService.cartDiscount()));
 
+  // 🎟️ 計算折扣碼折抵金額
+  appliedPromoDiscount = computed(() => {
+     const promo = this.appliedPromo();
+     if (!promo) return 0;
+     const subtotal = this.selectedSubtotal();
+     
+     if (subtotal < promo.minSpend) return 0; // 低消未達標就不折抵
+     
+     if (promo.type === 'amount') {
+        return Math.min(subtotal, promo.value); // 最多折到底
+     } else if (promo.type === 'percent') {
+        // 例如 value 是 88，代表 88折，折抵金額 = 原價 * 0.12
+        const discountRate = (100 - promo.value) / 100;
+        return subtotal * discountRate;
+     }
+     return 0;
+  });
+
   currentShippingFee = computed(() => {
      const m = this.selectedShippingMethod();
      const settings = this.storeService.settings().shipping;
-     if (settings.freeThreshold > 0 && this.selectedSubtotal() >= settings.freeThreshold) return 0;
+     // 💡 注意：免運門檻是看扣掉折扣碼之後的金額
+     const subAfterPromo = this.selectedSubtotal() - this.appliedPromoDiscount();
+     if (settings.freeThreshold > 0 && subAfterPromo >= settings.freeThreshold) return 0;
      if (m === 'delivery') return settings.methods.delivery.fee;
      if (m === 'meetup') return settings.methods.meetup.fee;
      if (m === 'myship' || m === 'family') return 0;
@@ -395,13 +441,42 @@ export class CartComponent {
      if (!this.useCredits()) return 0;
      const user = this.storeService.currentUser();
      const max = user?.credits || 0;
-     const sub = this.selectedSubtotal() + this.currentShippingFee() - this.currentDiscount();
+     const sub = this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount();
      return Math.min(max, Math.max(0, sub));
   });
 
-  finalTotal = computed(() => Math.max(0, this.selectedSubtotal() + this.currentShippingFee() - this.currentDiscount() - this.calculatedCredits()));
+  finalTotal = computed(() => Math.max(0, this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount() - this.calculatedCredits()));
 
   toggleCredits(e: Event) { this.useCredits.set((e.target as HTMLInputElement).checked); }
+
+  // 🎟️ 處理折扣碼套用
+  applyPromoCode() {
+     this.promoError.set('');
+     const code = this.inputPromoCode().trim().toUpperCase();
+     if (!code) return;
+
+     const settings = this.storeService.settings();
+     const promos = settings.promoCodes || [];
+     const found = promos.find((p: any) => p.code.toUpperCase() === code && p.active);
+
+     if (!found) {
+        this.promoError.set('無效的折扣碼或已過期');
+        return;
+     }
+
+     if (this.selectedSubtotal() < found.minSpend) {
+        this.promoError.set(`此折扣碼需滿 NT$ ${found.minSpend} 才能使用`);
+        return;
+     }
+
+     this.appliedPromo.set(found);
+     this.inputPromoCode.set('');
+  }
+
+  removePromoCode() {
+     this.appliedPromo.set(null);
+     this.promoError.set('');
+  }
 
   proceed() {
      if (this.selectedIndices().size === 0) return;
@@ -432,24 +507,24 @@ export class CartComponent {
            }
         }
 
-        // 🚨 如果有任何商品缺貨，立刻彈出警告並中斷結帳！
         if (outOfStockItems.length > 0) {
            alert('⚠️ 結帳失敗！\n以下商品剛剛被搶光或已下架：\n\n' + outOfStockItems.join('\n') + '\n\n請將它們從購物車移除後再結帳。');
-           return; // 中斷流程，不建立訂單！
+           return;
         }
 
-        // ✅ 庫存檢查通過，繼續建立訂單
         const val = this.form.value;
         try {
-           // 💡 結帳前，把所有畫面上算好的優惠數字整理好
-           const totalCartDiscount = this.storeService.cartDiscount() || 0; // 多入組折扣
-           const platformDiscount = this.currentDiscount() || 0;            // 賣貨便/好賣家 預扣運費折抵
-           const usedCredits = this.calculatedCredits() || 0;               // 購物金折抵
-           
-           // 將多入折扣與平台折抵合併為總折扣 (傳給後台的 discount 欄位)
+           const totalCartDiscount = this.storeService.cartDiscount() || 0; 
+           const platformDiscount = this.currentDiscount() || 0;            
+           const usedCredits = this.calculatedCredits() || 0;               
            const combinedDiscount = totalCartDiscount + platformDiscount;
+           
+           // 🎟️ 取得折扣碼資訊
+           const appliedPromo = this.appliedPromo();
+           const promoCodeStr = appliedPromo ? appliedPromo.code : '';
+           const promoDiscountAmount = this.appliedPromoDiscount();
 
-           // 🚀 執行結帳大絕招：把所有資訊完美送入後台
+           // 🚀 執行結帳大絕招，把所有折扣資訊全送進去！
            const orderResult = await this.storeService.createOrder(
               { name: val.payName, time: val.payDate, last5: val.payLast5 }, 
               { name: val.shipName, phone: val.shipPhone, address: val.shipAddress, store: val.shipStore },
@@ -458,7 +533,9 @@ export class CartComponent {
               val.shippingMethod, 
               this.currentShippingFee(), 
               itemsToCheck,
-              combinedDiscount // 👈 把我們算好的總折扣傳遞過去！
+              combinedDiscount, 
+              promoCodeStr,         // 👈 傳送折扣碼代碼
+              promoDiscountAmount   // 👈 傳送折扣碼折抵金額
            );
 
            if (!orderResult) {
@@ -466,8 +543,8 @@ export class CartComponent {
               return;
            }
 
-           // 🎉 結帳成功：清空勾選狀態，進入成功畫面
            this.selectedIndices.set(new Set());
+           this.appliedPromo.set(null); // 清除折扣碼
            this.step.set(3);
            
         } catch (error: any) {

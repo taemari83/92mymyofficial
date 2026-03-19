@@ -35,11 +35,22 @@ export interface User {
 
 export type OrderStatus = 'pending_payment' | 'paid_verifying' | 'unpaid_alert' | 'refund_needed' | 'refunded' | 'payment_confirmed' | 'pending_shipping' | 'arrived_notified' | 'shipped' | 'picked_up' | 'completed' | 'cancelled';
 
+export interface PromoCode {
+  code: string;               // 折扣碼 (例如: 92VIP)
+  type: 'amount' | 'percent'; // 折抵金額(amount) 或 打折(percent)
+  value: number;              // 折抵 100元 或 88折 (輸入 88)
+  minSpend: number;           // 低消門檻 (例如滿 1000 才能用)
+  active: boolean;            // 啟用/停用
+  note?: string;              // 備註說明
+}
+
 export interface Order {
   id: string; userId: string; userEmail?: string; userName: string; 
-  userPhone?: string; shippingName?: string; shippingPhone?: string; shippingAddress?: string; // 🔥 補齊收件人欄位防呆
+  userPhone?: string; shippingName?: string; shippingPhone?: string; shippingAddress?: string;
   items: CartItem[]; subtotal: number;
   discount: number; shippingFee: number; usedCredits: number; finalTotal: number; depositPaid: number; balanceDue: number;
+  promoCode?: string;      // 👈 紀錄使用的折扣碼
+  promoDiscount?: number;  // 👈 紀錄折扣碼折了多少錢
   status: OrderStatus; paymentMethod: 'cash' | 'bank_transfer' | 'cod'; shippingMethod: 'meetup' | 'myship' | 'family' | 'delivery'; 
   createdAt: number; shippingLink?: string;
   paymentName?: string; paymentTime?: string; paymentLast5?: string;
@@ -47,6 +58,7 @@ export interface Order {
 
 export interface StoreSettings {
   birthdayGiftGeneral: number; birthdayGiftVip: number; categoryCodes: { [key: string]: string };
+  promoCodes?: PromoCode[]; // 👈 新增折扣碼資料庫
   paymentMethods: { cash: boolean; bankTransfer: boolean; cod: boolean; };
   shipping: { freeThreshold: number; methods: { meetup: { enabled: boolean, fee: number }; myship: { enabled: boolean, fee: number }; family: { enabled: boolean, fee: number }; delivery: { enabled: boolean, fee: number }; } }
 }
@@ -221,7 +233,8 @@ addToCart(product: Product, option: string, quantity: number) {
   async createOrder(
     paymentInfo: any, shippingInfo: any, usedCredits: number, 
     paymentMethod: any, shippingMethod: any, shippingFee: number, 
-    checkoutItems: CartItem[], combinedDiscount: number = 0 // 👈 加入第 8 個參數接收前台折扣
+    checkoutItems: CartItem[], combinedDiscount: number = 0,
+    promoCode: string = '', promoDiscount: number = 0 // 👈 新增折扣碼接收參數
   ) {
     const user = this.currentUser(); if (!user) return null;
     
@@ -230,9 +243,8 @@ addToCart(product: Product, option: string, quantity: number) {
        originalTotal += item.price * item.quantity; 
     });
     
-    // 🚀 核心升級：直接套用前台算好的完美總折扣與總計，確保帳務一毛不差！
-    const finalTotal = originalTotal + shippingFee - usedCredits - combinedDiscount;
-    
+    // 🚀 核心升級：把折扣碼的扣款也算進最終結帳金額
+    const finalTotal = originalTotal + shippingFee - usedCredits - combinedDiscount - promoDiscount;    
     const orderId = this.generateOrderId();
 
     const orderData: Order = {
@@ -247,6 +259,8 @@ addToCart(product: Product, option: string, quantity: number) {
       items: checkoutItems, 
       subtotal: originalTotal, 
       discount: combinedDiscount, // 👈 存入包含多入與平台的總折扣
+      promoCode: promoCode,           // 👈 寫入資料庫
+      promoDiscount: promoDiscount,   // 👈 寫入資料庫
       shippingFee, 
       usedCredits, 
       finalTotal: Math.max(0, finalTotal), 
@@ -303,5 +317,5 @@ addToCart(product: Product, option: string, quantity: number) {
   updateCartQty(index: number, delta: number) { this.cart.update(l => l.map((item, i) => i === index ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)); }
   clearCart() { this.cart.set([]); }
   
-  settings = toSignal(docData(doc(this.firestore, 'config/storeSettings')).pipe(map((data: any) => data || { birthdayGiftGeneral: 100, birthdayGiftVip: 500, categoryCodes: {}, paymentMethods: { cash: false, bankTransfer: true, cod: true }, shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } })), { initialValue: { birthdayGiftGeneral: 100, birthdayGiftVip: 500, categoryCodes: {}, paymentMethods: { cash: false, bankTransfer: true, cod: true }, shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } } });
+settings = toSignal(docData(doc(this.firestore, 'config/storeSettings')).pipe(map((data: any) => data || { birthdayGiftGeneral: 100, birthdayGiftVip: 500, categoryCodes: {}, promoCodes: [{ code: '92VIP', type: 'amount', value: 100, minSpend: 1000, active: true, note: '歡慶上線滿千折百' }], paymentMethods: { cash: false, bankTransfer: true, cod: true }, shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } })), { initialValue: { birthdayGiftGeneral: 100, birthdayGiftVip: 500, categoryCodes: {}, promoCodes: [{ code: '92VIP', type: 'amount', value: 100, minSpend: 1000, active: true, note: '歡慶上線滿千折百' }], paymentMethods: { cash: false, bankTransfer: true, cod: true }, shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } } });
 }
