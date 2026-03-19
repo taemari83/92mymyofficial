@@ -218,34 +218,35 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="space-y-6 w-full">
             <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 overflow-hidden w-full">
                
-               <div class="flex flex-wrap gap-2 mb-6 border-b border-gray-100 pb-4 items-center">
-                 <div class="flex gap-1 overflow-x-auto custom-scrollbar pb-1">
-                   @for(range of ['今日', '本週', '本月', '全部']; track range) { 
-                     <button (click)="setOrderRange(range)" 
-                             [class.text-brand-600]="statsRange() === range" 
-                             [class.bg-brand-50]="statsRange() === range" 
-                             [class.border-brand-200]="statsRange() === range" 
-                             class="px-4 py-1.5 rounded-lg text-sm font-medium border border-transparent hover:bg-gray-50 text-gray-500 transition-colors whitespace-nowrap">
-                        {{ range }}
-                     </button> 
-                   }
-                 </div>
-                <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200 ml-auto md:ml-4 w-full md:w-auto mt-2 md:mt-0 justify-between md:justify-start">
-                    <span class="text-xs text-gray-400 font-bold whitespace-nowrap">自訂:</span>
-                    <input type="date" [ngModel]="orderStart()" (ngModelChange)="orderStart.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-full md:w-32">
-                    <span class="text-gray-300">-</span>
-                    <input type="date" [ngModel]="orderEnd()" (ngModelChange)="orderEnd.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-full md:w-32">
+<div class="flex flex-col xl:flex-row justify-between gap-4 mb-6 border-b border-gray-100 pb-4">
+                 <div class="flex flex-wrap items-center gap-2">
+                   <div class="flex gap-1 bg-gray-50 p-1 rounded-xl">
+                     @for(range of ['今日', '本週', '本月', '全部']; track range) { 
+                       <button (click)="setOrderRange(range)" 
+                               [class.text-brand-900]="statsRange() === range" 
+                               [class.bg-white]="statsRange() === range" 
+                               [class.shadow-sm]="statsRange() === range" 
+                               class="px-4 py-1.5 rounded-lg text-sm font-bold border border-transparent text-gray-500 transition-all whitespace-nowrap">
+                          {{ range }}
+                       </button> 
+                     }
+                   </div>
+                   <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200">
+                      <span class="text-xs text-gray-400 font-bold whitespace-nowrap">自訂:</span>
+                      <input type="date" [ngModel]="orderStart()" (ngModelChange)="orderStart.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-32">
+                      <span class="text-gray-300">-</span>
+                      <input type="date" [ngModel]="orderEnd()" (ngModelChange)="orderEnd.set($event); statsRange.set('自訂')" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-32">
+                   </div>
                  </div>
                  
-                 <div class="flex flex-wrap items-center ml-auto gap-2 mt-2 md:mt-0 w-full md:w-auto justify-end">
-                    <span class="hidden lg:flex text-xs text-gray-400 items-center whitespace-nowrap mr-2">📅 {{ now | date:'yyyy/MM/dd' }}</span>
-                    <div class="flex gap-1 w-full md:w-auto">
-                       <button (click)="openGiveawayModal()" class="flex-1 sm:flex-none px-4 py-2 bg-[#C0AEE1] text-white rounded-lg font-bold shadow-sm hover:bg-[#A992D3] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>🎁</span> 抽獎單</button>
-                       <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-lg font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
-                       <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-lg font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
-                    </div>
+                 <div class="flex flex-wrap items-center gap-2 xl:ml-auto">
+                    <span class="hidden lg:block text-xs text-gray-400 font-bold mr-2">📅 {{ now | date:'yyyy/MM/dd' }}</span>
+                    <button (click)="openGiveawayModal()" class="flex-1 sm:flex-none px-4 py-2 bg-[#C0AEE1] text-white rounded-xl font-bold shadow-sm hover:bg-[#A992D3] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>🎁</span> 抽獎單</button>
+                    <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
+                    <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
                  </div>
                </div>
+             </div>
                
               <div class="flex flex-col gap-4 mb-4 w-full">
   <div class="relative w-full">
@@ -529,18 +530,31 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">查看會員資料與消費紀錄</p>
                  </div>
                  <div class="flex flex-col w-full lg:w-auto gap-3">
-                    <div class="flex flex-wrap items-center justify-start lg:justify-end gap-3 w-full">
-                       <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200"><span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span><input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"><span class="text-gray-300">-</span><input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-24 lg:w-32"></div>
-                       <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
-                          <span class="text-xs text-gray-400 font-bold whitespace-nowrap">消費額 ≥</span>
-                          <input type="number" [ngModel]="minSpendFilter()" (ngModelChange)="minSpendFilter.set($event)" class="bg-transparent text-sm font-bold text-brand-900 outline-none w-16 md:w-20" placeholder="0">
-                       </div>
-                       <div class="flex gap-2 w-full sm:w-auto">
-                         <button (click)="openBulkCustomerModal()" class="flex-1 sm:flex-none px-4 py-2 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 whitespace-nowrap shadow-sm flex items-center justify-center transition-colors gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次操作 ({{ selectedCustomerIds().length }})</button>
-                         <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">📥 匯出</button>
-                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-lg font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">☁️ 同步</button>
+                    <div class="flex flex-col w-full xl:w-auto gap-3 mt-4 xl:mt-0">
+                    <div class="flex flex-col xl:flex-row items-start xl:items-center justify-end gap-3 w-full">
+                       <div class="flex flex-wrap items-center gap-2">
+                         <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                            <span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span>
+                            <input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 sm:w-32">
+                            <span class="text-gray-300">-</span>
+                            <input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 sm:w-32">
+                         </div>
+                         <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                            <span class="text-xs text-gray-400 font-bold whitespace-nowrap">消費額 ≥</span>
+                            <input type="number" [ngModel]="minSpendFilter()" (ngModelChange)="minSpendFilter.set($event)" class="bg-transparent text-sm font-bold text-brand-900 outline-none w-16 md:w-20" placeholder="0">
+                         </div>
                        </div>
                     </div>
+                    
+                    <div class="flex flex-col sm:flex-row items-center gap-2 w-full">
+                       <div class="relative w-full sm:flex-1"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
+                       <div class="flex gap-2 w-full sm:w-auto shrink-0">
+                         <button (click)="openBulkCustomerModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 whitespace-nowrap shadow-sm flex items-center justify-center transition-colors gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次 ({{ selectedCustomerIds().length }})</button>
+                         <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">📥 匯出</button>
+                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-lg font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">☁️ 同步</button>
+                       </div>
+                    </div>
+                 </div>
                     <div class="relative w-full lg:w-80"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
                  </div>
               </div>
@@ -649,6 +663,35 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <div class="text-xs text-brand-600 font-bold mb-1 uppercase">公司保留 (親帶25% / 批發20%)</div>
                      <div class="text-2xl lg:text-3xl font-black text-brand-900">NT$ {{ accountingStats().shares.company | number:'1.0-0' }}</div>
                      <div class="absolute bottom-0 right-0 p-2 opacity-10 text-5xl group-hover:scale-110 transition-transform">🏢</div>
+                  </div>
+               </div>
+            </div>
+
+            <div class="mt-8 w-full animate-fade-in">
+               <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                 <span>🎯</span> 行銷預算與折讓追蹤 
+                 <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold shadow-sm">隱形成本大數據</span>
+               </h4>
+               <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                  <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group hover:border-purple-300 transition-colors">
+                     <div class="text-xs text-gray-500 font-bold mb-1">折扣碼折抵總額</div>
+                     <div class="text-2xl font-black text-purple-600">NT$ {{ accountingStats().marketing.promo | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🎟️</div>
+                  </div>
+                  <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group hover:border-purple-300 transition-colors">
+                     <div class="text-xs text-gray-500 font-bold mb-1">多入組優惠總額</div>
+                     <div class="text-2xl font-black text-purple-600">NT$ {{ accountingStats().marketing.bundle | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🔥</div>
+                  </div>
+                  <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group hover:border-purple-300 transition-colors">
+                     <div class="text-xs text-gray-500 font-bold mb-1">購物金折抵總額</div>
+                     <div class="text-2xl font-black text-purple-600">NT$ {{ accountingStats().marketing.credits | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">💎</div>
+                  </div>
+                  <div class="bg-purple-50 p-5 rounded-2xl border border-purple-200 shadow-sm relative overflow-hidden group">
+                     <div class="text-xs text-purple-800 font-bold mb-1">本期行銷總折讓</div>
+                     <div class="text-3xl font-black text-purple-900">NT$ {{ accountingStats().marketing.total | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">📈</div>
                   </div>
                </div>
             </div>
@@ -2178,6 +2221,9 @@ try {
     // 🤝 合夥人分潤累加器
     let shareYichen = 0; let shareZiting = 0; let shareXiaoyun = 0; let shareCompany = 0;
 
+    // 🎯 行銷成本累加器 (新增)
+    let promoTotal = 0; let bundleTotal = 0; let creditsTotal = 0;
+
     filteredOrders.forEach((o: Order) => {
       if (o.status === 'refund_needed') payRefund += o.finalTotal;
       else if (o.status === 'paid_verifying') payVerifying += o.finalTotal;
@@ -2197,13 +2243,18 @@ try {
       if (isReceived) {
           if ((o.paymentMethod as string) === 'giveaway') return; // 👈 神級防呆：抽獎單不計入銷售成本
 
-          revenue += o.finalTotal;
+          revenue += o.finalTotal;
           let orderCost = 0;
           let totalRawProfit = 0; // 紀錄原始未扣折扣的總利潤
 
+          // 🔥 統計行銷預算 (新增)
+          promoTotal += (o as any).promoDiscount || 0;
+          bundleTotal += (o.discount || 0);
+          creditsTotal += (o.usedCredits || 0);
+
           // 第一圈：精算這筆訂單的成本，與每項商品的「原始毛利」
-          const itemsItems = o.items || []; // 🛡️ 加上神盾：如果是舊資料或 undefined 則轉為空陣列
-          const itemsData = itemsItems.map((i: CartItem) => {
+          const itemsItems = o.items || []; // 🛡️ 加上神盾：如果是舊資料或 undefined 則轉為空陣列
+          const itemsData = itemsItems.map((i: CartItem) => {
               const p = this.store.products().find((x: Product) => x.id === i.productId);
               let itemCost = 0;
               let shareMode = (p as any)?.shareMode || '親帶'; // 抓取分潤模式
@@ -2261,6 +2312,7 @@ try {
         maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, 
         minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, 
         avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, 
+        marketing: { promo: promoTotal, bundle: bundleTotal, credits: creditsTotal, total: promoTotal + bundleTotal + creditsTotal }, // 👈 新增行銷數據
         payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal },
         shares: { yichen: shareYichen, ziting: shareZiting, xiaoyun: shareXiaoyun, company: shareCompany } // 👈 匯出分潤結果
     };
