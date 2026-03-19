@@ -620,7 +620,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             
             <div class="mt-4 w-full animate-fade-in">
                <button (click)="exportFinalMonthlyReport()" class="w-full py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-transform active:scale-[0.98] flex items-center justify-center gap-3">
-                  <span class="text-3xl">🏆</span> 一鍵產出【當期終極會計結算總表】(自動扣除營業支出與精算合夥人分潤)
+                  <span class="text-3xl">🏆</span> 當期會計結算總表(自動扣除營業支出與精算合夥人分潤)
                </button>
             </div>
             
