@@ -804,7 +804,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="space-y-6 w-full animate-fade-in">
              <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50">
                 <p class="text-sm font-bold text-gray-500">💡 管理各幣別營運資金與買手餘額</p>
-                <button class="w-full sm:w-auto px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 新增帳戶</button>
+                <button (click)="openAddWalletModal()" class="w-full sm:w-auto px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 新增帳戶</button>
              </div>
              
              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
@@ -827,6 +827,91 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 }
              </div>
           </div>
+
+          @if (showAddWalletModal()) {
+            <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closeAddWalletModal()">
+              <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-bounce-in" (click)="$event.stopPropagation()">
+                <div class="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                  <h3 class="text-xl font-bold text-gray-800">🏦 新增資金帳戶</h3>
+                  <button (click)="closeAddWalletModal()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300">✕</button>
+                </div>
+                <div class="p-6">
+                  <form [formGroup]="addWalletForm" class="space-y-4">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">帳戶名稱</label>
+                      <input type="text" formControlName="name" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold" placeholder="例如：日幣營運資金">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">幣別代碼</label>
+                        <input type="text" formControlName="currency" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold uppercase" placeholder="JPY">
+                      </div>
+                      <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">符號</label>
+                        <input type="text" formControlName="symbol" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold" placeholder="¥">
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">初始餘額</label>
+                      <input type="number" formControlName="balance" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 font-black text-lg" placeholder="0">
+                    </div>
+                  </form>
+                </div>
+                <div class="p-4 border-t border-gray-100 flex gap-2">
+                  <button (click)="closeAddWalletModal()" class="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200">取消</button>
+                  <button (click)="submitAddWallet()" [disabled]="addWalletForm.invalid" class="flex-1 py-3 rounded-xl bg-brand-900 text-white font-bold hover:bg-black transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">確認新增</button>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (showWalletDetailsModal()) {
+            <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closeWalletDetails()">
+              <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()">
+                <div class="p-4 sm:p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
+                  <div class="flex items-center gap-3">
+                     <h3 class="text-lg sm:text-xl font-bold text-gray-800">📄 {{ detailsWallet()?.name }} 交易明細</h3>
+                     <span class="hidden sm:inline-block bg-white px-2 py-1 rounded-lg text-xs font-bold text-gray-500 shadow-sm border border-gray-200">目前餘額: {{ detailsWallet()?.symbol }} {{ detailsWallet()?.balance | number }}</span>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                     <button (click)="exportWalletDetailsCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg text-xs font-bold transition-colors border border-brand-200 shadow-sm flex items-center gap-1"><span>📥</span> 匯出</button>
+                     <button (click)="closeWalletDetails()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300 flex items-center justify-center">✕</button>
+                  </div>
+                </div>
+                <div class="p-0 sm:p-6 overflow-y-auto flex-1 custom-scrollbar bg-gray-50/50">
+                   <div class="overflow-x-auto w-full custom-scrollbar">
+                      <table class="w-full text-sm text-left whitespace-nowrap block md:table">
+                         <thead class="bg-gray-100 text-gray-500 font-bold hidden md:table-header-group">
+                            <tr>
+                               <th class="p-3 rounded-tl-lg">日期</th>
+                               <th class="p-3">類別</th>
+                               <th class="p-3">項目說明</th>
+                               <th class="p-3">操作人</th>
+                               <th class="p-3 text-right rounded-tr-lg">收支金額 ({{ detailsWallet()?.symbol }})</th>
+                            </tr>
+                         </thead>
+                         <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
+                            @for(t of walletTransactions(); track t.id) {
+                               <tr class="hover:bg-white transition-colors block md:table-row bg-white border border-gray-200 md:border-none rounded-[1rem] md:rounded-none mb-3 md:mb-0 shadow-sm md:shadow-none p-2 md:p-0 mx-2 md:mx-0 mt-2 md:mt-0">
+                                  <td class="p-3 flex justify-between md:table-cell border-b border-gray-50 md:border-none"><span class="md:hidden text-xs text-gray-400 font-bold">日期</span><span class="text-gray-500 font-mono">{{ t.date }}</span></td>
+                                  <td class="p-3 flex justify-between md:table-cell border-b border-gray-50 md:border-none"><span class="md:hidden text-xs text-gray-400 font-bold">類別</span><span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">{{ t.category }}</span></td>
+                                  <td class="p-3 flex flex-col md:table-cell border-b border-gray-50 md:border-none"><span class="md:hidden text-xs text-gray-400 font-bold mb-1">項目</span><span class="font-bold text-gray-800 whitespace-normal break-all line-clamp-2 md:truncate md:max-w-[200px] block" [title]="t.item">{{ t.item }}</span></td>
+                                  <td class="p-3 flex justify-between md:table-cell border-b border-gray-50 md:border-none"><span class="md:hidden text-xs text-gray-400 font-bold">操作人</span><span class="text-gray-600 text-xs">{{ t.payer }}</span></td>
+                                  <td class="p-3 flex justify-between items-center md:table-cell md:text-right font-black" [class.text-green-600]="t.amount < 0" [class.text-red-500]="t.amount > 0">
+                                     <span class="md:hidden text-xs text-gray-400 font-bold">金額</span>
+                                     <span>{{ t.amount < 0 ? '+' : '-' }} {{ (t.amount < 0 ? -t.amount : t.amount) | number }}</span>
+                                  </td>
+                               </tr>
+                            } @empty {
+                               <tr><td colspan="5" class="p-8 text-center text-gray-400 font-bold block md:table-cell">此帳戶目前無任何交易紀錄</td></tr>
+                            }
+                         </tbody>
+                      </table>
+                   </div>
+                </div>
+              </div>
+            </div>
+          }
         }
 
         @if (activeTab() === 'expenses') {
@@ -1625,6 +1710,22 @@ export class AdminPanelComponent {
   walletAction = signal<'add'|'deduct'>('add');
   activeWallet = signal<any>(null);
   walletForm!: FormGroup;
+
+  // 🏦 新增帳戶表單控制
+  showAddWalletModal = signal(false);
+  addWalletForm!: FormGroup;
+
+  // 📄 錢包交易明細控制
+  showWalletDetailsModal = signal(false);
+  detailsWallet = signal<any>(null);
+  
+  // 💡 大腦：從所有「營業支出」中，精準抓出與這個錢包同幣別的所有金流
+  walletTransactions = computed(() => {
+     const w = this.detailsWallet();
+     if (!w) return [];
+     return this.expenses().filter(e => e.currency === w.currency)
+         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  });
   
   // 🎁 抽獎單表單控制
   showGiveawayModal = signal(false);
@@ -2467,6 +2568,13 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     this.walletForm = this.fb.group({
       amount: ['', [Validators.required, Validators.min(1)]],
       note: ['']
+    });
+
+    this.addWalletForm = this.fb.group({
+      name: ['', Validators.required],
+      currency: ['JPY', Validators.required],
+      symbol: ['¥', Validators.required],
+      balance: [0, Validators.required]
     });
 
     this.giveawayForm = this.fb.group({
@@ -3349,20 +3457,33 @@ submitProduct() {
     } catch(e) {}
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }
+  
   // ==========================================
   // 👛 錢包餘額與支出管理連動邏輯
   // ==========================================
-  // 📊 錢包明細專用狀態與過濾大腦
-  showWalletDetailsModal = signal(false);
-  detailsWallet = signal<any>(null);
+  openAddWalletModal() {
+     this.addWalletForm.reset({ currency: '', symbol: '', balance: 0 });
+     this.showAddWalletModal.set(true);
+  }
   
-  walletTransactions = computed(() => {
-     const w = this.detailsWallet();
-     if (!w) return [];
-     // 💡 智慧過濾：從所有「營業支出」中，抓出與這個錢包同幣別的所有金流
-     return this.expenses().filter(e => e.currency === w.currency)
-         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  });
+  closeAddWalletModal() {
+     this.showAddWalletModal.set(false);
+  }
+  
+  submitAddWallet() {
+     if (this.addWalletForm.invalid) return;
+     const val = this.addWalletForm.value;
+     const newWallet = {
+        id: 'w' + Date.now(),
+        name: val.name,
+        currency: val.currency.toUpperCase(),
+        symbol: val.symbol,
+        balance: Number(val.balance)
+     };
+     this.wallets.update(ws => [...ws, newWallet]);
+     alert(`✅ 成功新增帳戶：${val.name}`);
+     this.closeAddWalletModal();
+  }
 
   openWalletDetails(w: any) {
      this.detailsWallet.set(w);
@@ -3374,22 +3495,18 @@ submitProduct() {
      this.detailsWallet.set(null);
   }
 
-  // 📥 一鍵匯出該錢包的專屬流水帳
   exportWalletDetailsCSV() {
      const w = this.detailsWallet();
      if (!w) return;
      const headers = ['日期', '類別', '項目說明', '操作人', '收支類型', '金額', '備註'];
      const rows = this.walletTransactions().map(t => {
-        // 在支出系統中，負數代表存錢(收入)，正數代表花錢(支出)
         const type = t.amount < 0 ? '收入 (+)' : '支出 (-)';
         const absAmount = Math.abs(t.amount);
-        return [
-           t.date, t.category, t.item, t.payer, type, absAmount, t.note || ''
-        ];
+        return [t.date, t.category, t.item, t.payer, type, absAmount, t.note || ''];
      });
      this.downloadCSV(`${w.name}_資金流水帳_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
-  
+
   openWalletModal(wallet: any, action: 'add' | 'deduct') {
     this.activeWallet.set(wallet);
     this.walletAction.set(action);
