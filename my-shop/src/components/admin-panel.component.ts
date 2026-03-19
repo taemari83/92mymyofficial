@@ -239,19 +239,17 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    </div>
                  </div>
                  
-                 <div class="flex flex-wrap items-center gap-2 xl:ml-auto">
+<div class="flex flex-wrap items-center gap-2 xl:ml-auto">
                     <span class="hidden lg:block text-xs text-gray-400 font-bold mr-2">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                     <button (click)="openGiveawayModal()" class="flex-1 sm:flex-none px-4 py-2 bg-[#C0AEE1] text-white rounded-xl font-bold shadow-sm hover:bg-[#A992D3] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>🎁</span> 抽獎單</button>
                     <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
                     <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
                  </div>
                </div>
-             </div>
                
              <div class="flex flex-col gap-4 mb-4 w-full">
                 <div class="relative w-full">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-                  <input type="text" [(ngModel)]="orderSearch" placeholder="搜尋訂單編號、客戶名稱..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>                  <input type="text" [(ngModel)]="orderSearch" placeholder="搜尋訂單編號、客戶名稱..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-200">
                 </div>
     <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm w-full flex-wrap">
   @for(tab of orderTabs; track tab.id) { 
