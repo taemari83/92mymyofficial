@@ -801,7 +801,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         }
 
         @if (activeTab() === 'wallets') {
-          <div class="space-y-6 w-full animate-fade-in">
+          <div class="space-y-6 w-full animate-fade-in relative z-10">
              <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50">
                 <p class="text-sm font-bold text-gray-500">💡 管理各幣別營運資金與買手餘額</p>
                 <button (click)="openAddWalletModal()" class="w-full sm:w-auto px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 新增帳戶</button>
@@ -810,18 +810,19 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
                 @for(w of wallets(); track w.id) {
                    <div class="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden group">
-                      <div class="absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-20" [class.bg-blue-500]="w.currency==='TWD'" [class.bg-purple-500]="w.currency==='KRW'"></div>
-                      <div class="flex justify-between items-center mb-6">
+                      <div class="absolute -right-4 -top-4 w-24 h-24 rounded-full blur-2xl opacity-20 pointer-events-none" [class.bg-blue-500]="w.currency==='TWD'" [class.bg-purple-500]="w.currency==='KRW'"></div>
+                      
+                      <div class="flex justify-between items-center mb-6 relative z-20">
                          <span class="text-sm font-bold text-gray-500 bg-gray-50 px-3 py-1 rounded-lg">{{ w.currency }}</span>
-                         <button (click)="openWalletDetails(w)" class="text-gray-400 hover:text-brand-900 font-bold text-sm transition-colors">明細 ➔</button>
+                         <button (click)="openWalletDetails(w)" class="px-4 py-2 bg-gray-100 text-gray-600 hover:bg-brand-50 hover:text-brand-900 font-bold text-sm rounded-lg transition-colors cursor-pointer active:scale-95 shadow-sm">查看明細 ➔</button>
                       </div>
-                      <h4 class="text-lg sm:text-xl font-bold text-gray-800 mb-2">{{ w.name }}</h4>
-                      <div class="text-4xl sm:text-5xl font-black break-words" [class.text-blue-600]="w.currency==='TWD'" [class.text-purple-600]="w.currency==='KRW'">
+                      <h4 class="text-lg sm:text-xl font-bold text-gray-800 mb-2 relative z-20">{{ w.name }}</h4>
+                      <div class="text-4xl sm:text-5xl font-black break-words relative z-20" [class.text-blue-600]="w.currency==='TWD'" [class.text-purple-600]="w.currency==='KRW'">
                          {{ w.symbol }} {{ w.balance | number }}
                       </div>
-                      <div class="flex gap-3 mt-8">
-                         <button (click)="openWalletModal(w, 'add')" class="flex-1 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl text-sm font-bold text-green-700 transition-colors">儲值 (收入)</button>
-                         <button (click)="openWalletModal(w, 'deduct')" class="flex-1 py-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-sm font-bold text-red-700 transition-colors">扣款 (支出)</button>
+                      <div class="flex gap-3 mt-8 relative z-20">
+                         <button (click)="openWalletModal(w, 'add')" class="flex-1 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl text-sm font-bold text-green-700 transition-colors cursor-pointer active:scale-95">儲值 (收入)</button>
+                         <button (click)="openWalletModal(w, 'deduct')" class="flex-1 py-3 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-sm font-bold text-red-700 transition-colors cursor-pointer active:scale-95">扣款 (支出)</button>
                       </div>
                    </div>
                 }
@@ -1616,6 +1617,53 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           </div>
         }
 
+        @if (showWalletDetailsModal()) {
+          <div class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closeWalletDetails()">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()">
+              <div class="p-4 sm:p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                   <h3 class="text-lg sm:text-xl font-bold text-gray-800">📄 {{ detailsWallet()?.name }} 交易明細</h3>
+                   <span class="hidden sm:inline-block bg-white px-2 py-1 rounded-lg text-xs font-bold text-gray-500 shadow-sm border border-gray-200">目前餘額: {{ detailsWallet()?.symbol }} {{ detailsWallet()?.balance | number }}</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                   <button (click)="exportWalletDetailsCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg text-xs font-bold transition-colors border border-brand-200 shadow-sm flex items-center gap-1"><span>📥</span> 匯出</button>
+                   <button (click)="closeWalletDetails()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300 flex items-center justify-center cursor-pointer">✕</button>
+                </div>
+              </div>
+              <div class="p-0 sm:p-6 overflow-y-auto flex-1 custom-scrollbar bg-gray-50/50">
+                 <div class="overflow-x-auto w-full custom-scrollbar">
+                    <table class="w-full text-sm text-left whitespace-nowrap block md:table">
+                       <thead class="bg-gray-100 text-gray-500 font-bold hidden md:table-header-group">
+                          <tr>
+                             <th class="p-3 rounded-tl-lg">日期</th>
+                             <th class="p-3">類別</th>
+                             <th class="p-3">項目說明</th>
+                             <th class="p-3">操作人</th>
+                             <th class="p-3 text-right rounded-tr-lg">收支金額 ({{ detailsWallet()?.symbol }})</th>
+                          </tr>
+                       </thead>
+                       <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
+                          @for(t of walletTransactions(); track t.id) {
+                             <tr class="hover:bg-white transition-colors block md:table-row bg-white border border-gray-200 md:border-none rounded-[1rem] md:rounded-none mb-3 md:mb-0 shadow-sm md:shadow-none p-2 md:p-0 mx-2 md:mx-0 mt-2 md:mt-0">
+                                <td class="p-3 flex justify-between md:table-cell border-b border-gray-50 md:border-none"><span class="md:hidden text-xs text-gray-400 font-bold">日期</span><span class="text-gray-500 font-mono">{{ t.date }}</span></td>
+                                <td class="p-3 flex justify-between md:table-cell border-b border-gray-50 md:border-none"><span class="md:hidden text-xs text-gray-400 font-bold">類別</span><span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">{{ t.category }}</span></td>
+                                <td class="p-3 flex flex-col md:table-cell border-b border-gray-50 md:border-none"><span class="md:hidden text-xs text-gray-400 font-bold mb-1">項目</span><span class="font-bold text-gray-800 whitespace-normal break-all line-clamp-2 md:truncate md:max-w-[200px] block" [title]="t.item">{{ t.item }}</span></td>
+                                <td class="p-3 flex justify-between md:table-cell border-b border-gray-50 md:border-none"><span class="md:hidden text-xs text-gray-400 font-bold">操作人</span><span class="text-gray-600 text-xs">{{ t.payer }}</span></td>
+                                <td class="p-3 flex justify-between items-center md:table-cell md:text-right font-black" [class.text-green-600]="t.amount < 0" [class.text-red-500]="t.amount > 0">
+                                   <span class="md:hidden text-xs text-gray-400 font-bold">金額</span>
+                                   <span>{{ t.amount < 0 ? '+' : '-' }} {{ (t.amount < 0 ? -t.amount : t.amount) | number }}</span>
+                                </td>
+                             </tr>
+                          } @empty {
+                             <tr><td colspan="5" class="p-8 text-center text-gray-400 font-bold block md:table-cell">此帳戶目前無任何交易紀錄</td></tr>
+                          }
+                       </tbody>
+                    </table>
+                 </div>
+              </div>
+            </div>
+          </div>
+        }
       </main>
     </div>
   `,
