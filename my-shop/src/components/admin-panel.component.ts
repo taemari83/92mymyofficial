@@ -944,6 +944,39 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()" class="space-y-10"> 
                 <div class="space-y-4"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg text-lg">💳</span> 收款方式</h4><div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableCash" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">現金付款</span></label><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableBank" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">銀行轉帳</span></label><label class="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors"><input type="checkbox" formControlName="enableCod" class="w-5 h-5 rounded text-brand-600 focus:ring-brand-500"><span class="font-bold text-gray-700">貨到付款</span></label></div></div>
                 <div class="space-y-6" formGroupName="shipping"><div class="flex justify-between items-end"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-green-100 text-green-600 p-1.5 rounded-lg text-lg">🚚</span> 物流設定</h4><div class="flex items-center gap-2"><span class="text-sm font-bold text-gray-500">全館免運門檻 $</span><input type="number" formControlName="freeThreshold" class="w-24 border border-gray-200 rounded-lg p-2 text-center font-bold"></div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4" formGroupName="methods"><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="meetup"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 面交自取</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="myship"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 7-11 賣貨便</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="family"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 全家 好賣家</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div><div class="border border-gray-200 rounded-xl p-4 space-y-2" formGroupName="delivery"><div class="flex justify-between items-center"><label class="flex items-center gap-2 font-bold text-gray-700"><input type="checkbox" formControlName="enabled" class="rounded text-brand-600"> 宅配寄送</label><input type="number" formControlName="fee" class="w-20 border border-gray-200 rounded-lg p-1 text-right text-sm" placeholder="運費"></div></div></div></div>
+                <div class="space-y-4">
+                  <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                    <h4 class="font-bold text-gray-600 flex items-center gap-2">
+                      <span class="bg-pink-100 text-pink-600 p-1.5 rounded-lg text-lg">🎟️</span> 折扣碼管理
+                    </h4>
+                    <button type="button" (click)="openPromoForm()" class="px-4 py-2 bg-pink-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-pink-700 transition-transform active:scale-95 whitespace-nowrap">＋ 新增折扣碼</button>
+                  </div>
+                  <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
+                    @for(promo of $any(store).promoCodes(); track promo.id) {
+                       <div class="flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 bg-white p-3 rounded-lg border border-gray-200 shadow-sm transition-hover hover:border-pink-300">
+                         <div class="flex-1">
+                           <div class="flex items-center gap-2 mb-1">
+                             <span class="font-black text-xl text-brand-900 tracking-wider">{{ promo.code }}</span>
+                             @if(promo.isActive) { <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200">🟢 啟用中</span> }
+                             @else { <span class="bg-gray-200 text-gray-500 px-2 py-0.5 rounded text-[10px] font-bold">停用中</span> }
+                           </div>
+                           <div class="text-xs text-gray-500 flex flex-wrap gap-x-3 gap-y-1">
+                             <span class="font-bold text-pink-600">{{ promo.type === 'fixed' ? '折抵 NT$ ' + promo.value : '打 ' + (promo.value * 10) + ' 折' }}</span>
+                             <span>| 低消: {{ promo.minSpend === 0 ? '無' : '$' + promo.minSpend }}</span>
+                             <span>| 已用: <span class="font-bold">{{ promo.usedCount }}</span> / {{ promo.usageLimit === 0 ? '無限' : promo.usageLimit }}</span>
+                             <span>| 期限: {{ promo.expiryDate || '永久' }}</span>
+                           </div>
+                         </div>
+                         <div class="flex items-center gap-2 shrink-0">
+                            <button type="button" (click)="editPromo(promo)" class="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors shadow-sm">編輯</button>
+                            <button type="button" (click)="deletePromo(promo)" class="px-3 py-1.5 bg-white text-red-500 border border-red-100 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors shadow-sm">刪除</button>
+                         </div>
+                       </div>
+                    } @empty {
+                       <div class="text-center py-6 text-gray-400 font-bold text-sm">目前尚無設定任何折扣碼，點擊右上方新增吧！</div>
+                    }
+                  </div>
+                </div>
                 <div class="space-y-4"><h4 class="font-bold text-gray-600 flex items-center gap-2"><span class="bg-yellow-100 text-yellow-600 p-1.5 rounded-lg text-lg">🎁</span> 會員回饋 (生日禮金)</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-6"><div><label class="block text-xs font-bold text-gray-500 mb-1">一般會員生日禮 ($)</label><input type="number" formControlName="birthdayGiftGeneral" class="w-full border border-gray-200 rounded-xl p-3 font-bold"></div><div><label class="block text-xs font-bold text-gray-500 mb-1">VIP 生日禮 ($)</label><input type="number" formControlName="birthdayGiftVip" class="w-full border border-gray-200 rounded-xl p-3 font-bold"></div></div></div>
                 
                 <div class="space-y-4">
@@ -1706,6 +1739,60 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             </div>
           </div>
         }
+          @if (showPromoModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closePromoModal()">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm overflow-hidden animate-bounce-in" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 bg-pink-50 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-pink-900">🎟️ {{ editingPromo() ? '編輯' : '新增' }}折扣碼</h3>
+                <button (click)="closePromoModal()" class="w-8 h-8 rounded-full bg-pink-200/50 text-pink-700 font-bold hover:bg-pink-200">✕</button>
+              </div>
+              <div class="p-6 overflow-y-auto max-h-[70vh] custom-scrollbar">
+                <form [formGroup]="promoForm" class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">折扣代碼 (英文數字)</label>
+                    <input type="text" formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-lg font-black uppercase text-center tracking-widest" placeholder="例如: VIP99">
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">類型</label>
+                      <select formControlName="type" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm font-bold bg-white">
+                        <option value="fixed">扣減金額 ($)</option>
+                        <option value="percent">打折 (%)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">數值 (如:50 或 0.9)</label>
+                      <input type="number" formControlName="value" step="0.1" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm font-bold">
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">低消門檻 (0為不限)</label>
+                      <input type="number" formControlName="minSpend" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">使用次數 (0為無限)</label>
+                      <input type="number" formControlName="usageLimit" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">使用期限 (留空為永久)</label>
+                    <input type="date" formControlName="expiryDate" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-pink-400 text-sm">
+                  </div>
+                  <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer">
+                    <input type="checkbox" formControlName="isActive" class="w-5 h-5 rounded text-pink-600 focus:ring-pink-500">
+                    <span class="font-bold text-gray-700">立刻啟用此折扣碼</span>
+                  </label>
+                </form>
+              </div>
+              <div class="p-6 border-t border-gray-100 bg-white">
+                <button (click)="submitPromo()" class="w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-lg hover:bg-pink-700 transition-transform active:scale-95">
+                  確認儲存
+                </button>
+              </div>
+            </div>
+          </div>
+        }
       </main>
     </div>
   `,
@@ -1783,6 +1870,63 @@ export class AdminPanelComponent {
     return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   });
   // ===========================================
+
+// ===== 🎟️ 折扣碼管理系統 (進階版) =====
+  showPromoModal = signal(false);
+  editingPromoIndex = signal<number | null>(null);
+  promoForm!: FormGroup;
+
+  openPromoForm(index: number | null = null) {
+    this.editingPromoIndex.set(index);
+    if (index !== null) {
+      const promos = this.store.settings().promoCodes || [];
+      this.promoForm.patchValue(promos[index]);
+    } else {
+      this.promoForm.reset({ type: 'amount', value: 0, minSpend: 0, usageLimit: 0, usedCount: 0, expiryDate: '', active: true, note: '' });
+    }
+    this.showPromoModal.set(true);
+  }
+
+  savePromo() {
+    if (this.promoForm.invalid) return alert('請填寫完整資訊！');
+    const val = this.promoForm.value;
+    
+    // 組裝進階版資料
+    const promoData = {
+      code: val.code.trim().toUpperCase(),
+      type: val.type,
+      value: Number(val.value),
+      minSpend: Number(val.minSpend) || 0,
+      usageLimit: Number(val.usageLimit) || 0,
+      usedCount: val.usedCount || 0, // 保留已使用次數
+      expiryDate: val.expiryDate || '',
+      active: val.active,
+      note: val.note || ''
+    };
+
+    const settings = { ...this.store.settings() };
+    const promos = [...(settings.promoCodes || [])];
+    
+    const index = this.editingPromoIndex();
+    if (index !== null) {
+      promos[index] = promoData; // 更新現有
+    } else {
+      promos.push(promoData);    // 新增
+    }
+    
+    settings.promoCodes = promos;
+    this.store.updateSettings(settings); // 安全存入 Firebase Settings
+    this.showPromoModal.set(false);
+  }
+
+  deletePromo(index: number) {
+    if (!confirm('⚠️ 確定要刪除此折扣碼嗎？')) return;
+    const settings = { ...this.store.settings() };
+    const promos = [...(settings.promoCodes || [])];
+    promos.splice(index, 1);
+    settings.promoCodes = promos;
+    this.store.updateSettings(settings);
+  }
 
   // 👇 補上這段防破圖的函式 👇
   handleImageError(event: any) { 
@@ -2637,6 +2781,16 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       winnerPhone: [''],
       shippingAddress: [''],
       note: ['']
+    });
+
+    this.promoForm = this.fb.group({
+      code: ['', Validators.required],
+      type: ['fixed'],
+      value: [0, [Validators.required, Validators.min(1)]],
+      minSpend: [0],
+      usageLimit: [0],
+      expiryDate: [''],
+      isActive: [true]
     });
   } // 👈 constructor 的唯一結束大括號
 

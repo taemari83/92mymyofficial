@@ -42,6 +42,9 @@ export interface PromoCode {
   minSpend: number;           // 低消門檻 (例如滿 1000 才能用)
   active: boolean;            // 啟用/停用
   note?: string;              // 備註說明
+  usageLimit?: number;        // 總使用次數限制 (0代表無限)
+  usedCount?: number;         // 目前已被使用的次數
+  expiryDate?: string;        // 到期日 (YYYY-MM-DD)，空白代表不限期
 }
 
 export interface Order {
