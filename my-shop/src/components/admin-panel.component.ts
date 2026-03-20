@@ -2384,7 +2384,12 @@ try {
 
           // 🔥 統計行銷預算 (新增)
           promoTotal += (o as any).promoDiscount || 0;
-          bundleTotal += (o.discount || 0);
+          
+          // 💡 自動濾掉賣貨便/好賣家的 20 元物流開單預扣，還原真實的「多入組優惠」
+          let platformSubsidy = (o.shippingMethod === 'myship' || o.shippingMethod === 'family') ? 20 : 0;
+          let pureBundle = (o.discount || 0) - platformSubsidy;
+          bundleTotal += (pureBundle > 0 ? pureBundle : 0);
+          
           creditsTotal += (o.usedCredits || 0);
 
           // 第一圈：精算這筆訂單的成本，與每項商品的「原始毛利」
