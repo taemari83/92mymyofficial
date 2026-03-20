@@ -686,11 +686,16 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                </div>
             </div>
 
-            <div class="mt-8 w-full animate-fade-in">
-               <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                 <span>🎯</span> 行銷預算與折讓追蹤 
-                 <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold shadow-sm">隱形成本大數據</span>
-               </h4>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                 <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                   <span>🎯</span> 行銷預算與折讓追蹤 
+                   <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold shadow-sm">隱形成本大數據</span>
+                 </h4>
+                 <div class="flex gap-2 w-full sm:w-auto">
+                   <button (click)="exportMarketingCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-purple-100 text-purple-700 rounded-xl font-bold shadow-sm hover:bg-purple-200 transition-colors flex items-center justify-center gap-1 text-sm whitespace-nowrap"><span>📥</span> 匯出明細</button>
+                   <button (click)="syncMarketingToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] transition-colors flex items-center justify-center gap-1 text-sm whitespace-nowrap"><span>☁️</span> 同步</button>
+                 </div>
+               </div>
                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
                   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group hover:border-purple-300 transition-colors">
                      <div class="text-xs text-gray-500 font-bold mb-1">折扣碼折抵總額</div>
@@ -901,9 +906,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <option value="海關稅">海關稅金</option>
                       <option value="行銷抽獎">行銷抽獎</option>
                       <option value="商品採購">商品採購 (自動)</option>
+                      <option value="儲值">資金流轉</option>
                    </select>
-                   <button (click)="openExpenseModal()" class="flex-1 sm:flex-none px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 記一筆</button>                </div>
-             </div>
+                   <button (click)="exportExpensesCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold shadow-sm hover:bg-[#7a9180] transition-colors whitespace-nowrap flex items-center justify-center gap-1"><span>📥</span> 匯出</button>
+                   <button (click)="syncExpensesToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] transition-colors whitespace-nowrap flex items-center justify-center gap-1"><span>☁️</span> 同步</button>
+                   <button (click)="openExpenseModal()" class="flex-1 sm:flex-none px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 記一筆</button>
+                </div>
 
              <div class="bg-transparent md:bg-white md:rounded-[2rem] md:shadow-sm md:border md:border-gray-50 overflow-hidden overflow-x-auto w-full custom-scrollbar pb-2">
                 <table class="w-full text-sm text-left whitespace-nowrap block md:table md:min-w-[700px]">
@@ -1827,18 +1835,9 @@ export class AdminPanelComponent {
   fb: FormBuilder = inject(FormBuilder);
   now = new Date();
 
-  // ===== 👛 Phase 1: 資金帳戶與營業支出 =====
-  wallets = signal<any[]>([
-    { id: 'w1', name: '台幣營運資金', currency: 'TWD', balance: 84948, symbol: 'NT$' },
-    { id: 'w2', name: '韓元營運資金', currency: 'KRW', balance: 3937963, symbol: '₩' }
-  ]);
-
-  expenses = signal<any[]>([
-    { id: 'e1', date: '2026-04-05', item: '打包破壞袋500個', category: '包材費', amount: 861, currency: 'TWD', payer: '子婷', note: '' },
-    { id: 'e2', date: '2026-04-05', item: '貼紙印製', category: '包材費', amount: 954, currency: 'TWD', payer: '子婷', note: '' },
-    { id: 'e3', date: '2026-06-09', item: '韓國寄回台灣 24KG', category: '國際貨運費', amount: 181000, currency: 'KRW', payer: '藝辰', note: '' },
-    { id: 'e4', date: '2026-07-01', item: '韓國回台灣(50%) 機票+行李', category: '機票費', amount: 241677, currency: 'KRW', payer: '藝辰', note: '' }
-  ]);
+  // ===== 👛 Phase 2: 資金帳戶與營業支出 (正式連動 Firebase) =====
+  wallets = computed(() => this.store.wallets() || []);
+  expenses = computed(() => this.store.expenses() || []);
 
   expenseSearch = signal('');
   expenseCategoryFilter = signal('all');
@@ -2855,34 +2854,15 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   }
 
   async approvePurchase(p: any) {
-    if(confirm(`⚠️ 確定核准這筆支出 (實際刷卡總額: ${p.totalLocalCost}) 並入帳嗎？\n\n系統將會同步：\n1. 從對應幣別的【資金帳戶】扣除餘額\n2. 在【營業支出】自動建立一筆採購紀錄`)) {
-      
-      // 1. 自動判斷幣別並從錢包扣除
+    if(confirm(`⚠️ 確定核准這筆支出 (實際刷卡總額: ${p.totalLocalCost}) 並入帳嗎？\n\n系統將會同步：\n1. 從對應幣別的【資金帳戶】扣除餘額\n2. 在【營業支出】自動建立一筆採購紀錄`)) {
       const currency = p.country === '韓國' ? 'KRW' : 'TWD';
-      this.wallets.update(ws => ws.map(w => {
-         if (w.currency === currency) {
-            return { ...w, balance: w.balance - Number(p.totalLocalCost) };
-         }
-         return w;
-      }));
-
-      // 2. 自動在「營業支出」記一筆帳
-      this.expenses.update(es => [{
-         id: 'EXP-' + Date.now(),
-         date: new Date().toISOString().slice(0,10),
-         item: `採購單核銷: ${p.location || p.id}`,
-         category: '商品採購',
-         amount: Number(p.totalLocalCost),
-         currency: currency,
-         payer: p.payer,
-         note: `系統自動拋轉`
-      }, ...es]);
-
-      // 3. 更新採購單狀態
-      await this.store.updatePurchaseStatus(p.id, 'completed');
-      alert('✅ 已成功核准入帳！資金帳戶與支出報表已同步更新。');
-    }
-  }
+      const targetWallet = this.wallets().find((w:any) => w.currency === currency);
+      if(targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - Number(p.totalLocalCost)); }
+      await this.store.addExpense({ id: 'EXP-' + Date.now(), date: new Date().toISOString().slice(0,10), item: `採購單核銷: ${p.location || p.id}`, category: '商品採購', amount: Number(p.totalLocalCost), currency: currency, payer: p.payer, note: `系統自動拋轉` });
+      await this.store.updatePurchaseStatus(p.id, 'completed');
+      alert('✅ 已成功核准入帳！資金帳戶與支出報表已同步更新。');
+    }
+  }
   async deletePurchaseRecord(p: any) {
     if (confirm(`⚠️ 警告：確定要徹底刪除這筆採購單嗎？\n系統將會同步扣回商品對應的「已採購數量」，資料刪除後無法復原！`)) {
       await this.store.deletePurchase(p.id, p.items || []);
@@ -3700,17 +3680,11 @@ submitProduct() {
      this.showAddWalletModal.set(false);
   }
   
-  submitAddWallet() {
+  async submitAddWallet() {
      if (this.addWalletForm.invalid) return;
      const val = this.addWalletForm.value;
-     const newWallet = {
-        id: 'w' + Date.now(),
-        name: val.name,
-        currency: val.currency.toUpperCase(),
-        symbol: val.symbol,
-        balance: Number(val.balance)
-     };
-     this.wallets.update(ws => [...ws, newWallet]);
+     const newWallet = { id: 'w' + Date.now(), name: val.name, currency: val.currency.toUpperCase(), symbol: val.symbol, balance: Number(val.balance) };
+     await this.store.addWallet(newWallet);
      alert(`✅ 成功新增帳戶：${val.name}`);
      this.closeAddWalletModal();
   }
@@ -3749,36 +3723,17 @@ submitProduct() {
     this.activeWallet.set(null);
   }
 
-  submitWalletAction() {
+  async submitWalletAction() {
     if (this.walletForm.invalid) return;
     const amount = Number(this.walletForm.value.amount);
     const note = this.walletForm.value.note || (this.walletAction() === 'add' ? '手動儲值' : '手動提領');
     const wallet = this.activeWallet();
-
     if (this.walletAction() === 'deduct' && amount > wallet.balance) {
       if (!confirm(`⚠️ 警告：欲扣款金額大於目前餘額，是否繼續扣到變負數？`)) return;
     }
-
-    // 更新錢包餘額
-    this.wallets.update(ws => ws.map(w => {
-      if (w.id === wallet.id) {
-        return { ...w, balance: this.walletAction() === 'add' ? w.balance + amount : w.balance - amount };
-      }
-      return w;
-    }));
-
-    // 在支出表記錄一筆金流軌跡
-    this.expenses.update(es => [{
-      id: 'TRX-' + Date.now(),
-      date: new Date().toISOString().slice(0, 10),
-      item: `資金帳戶調整 (${this.walletAction() === 'add' ? '儲值' : '扣款'})`,
-      category: '儲值',
-      amount: this.walletAction() === 'add' ? -amount : amount,
-      currency: wallet.currency,
-      payer: '系統操作',
-      note: note
-    }, ...es]);
-
+    const newBalance = this.walletAction() === 'add' ? wallet.balance + amount : wallet.balance - amount;
+    await this.store.updateWalletBalance(wallet.id, newBalance);
+    await this.store.addExpense({ id: 'TRX-' + Date.now(), date: new Date().toISOString().slice(0, 10), item: `資金帳戶調整 (${this.walletAction() === 'add' ? '儲值' : '扣款'})`, category: '儲值', amount: this.walletAction() === 'add' ? -amount : amount, currency: wallet.currency, payer: this.store.currentUser()?.name || '系統操作', note: note });
     alert(`✅ 已成功${this.walletAction() === 'add' ? '儲值' : '扣款'} ${wallet.symbol} ${amount}`);
     this.closeWalletModal();
   }
@@ -3796,39 +3751,14 @@ submitProduct() {
     this.showExpenseModal.set(false);
   }
 
-  submitExpense() {
+  async submitExpense() {
     if (this.expenseForm.invalid) return;
     const val = this.expenseForm.value;
     const expAmount = Number(val.amount);
-
-    // 1. 自動去扣除對應幣別的錢包餘額
-    let walletFound = false;
-    this.wallets.update(ws => ws.map(w => {
-      if (w.currency === val.currency) {
-        walletFound = true;
-        return { ...w, balance: w.balance - expAmount };
-      }
-      return w;
-    }));
-
-    if (!walletFound) {
-      alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`);
-    }
-
-    // 2. 建立新的支出紀錄
-    const newExpense = {
-      id: 'EXP-' + Date.now(),
-      date: val.date,
-      item: val.item,
-      category: val.category,
-      amount: expAmount,
-      currency: val.currency,
-      payer: val.payer,
-      note: val.note || ''
-    };
-
-    this.expenses.update(es => [newExpense, ...es]);
-    
+    const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
+    if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
+    else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
+    await this.store.addExpense({ id: 'EXP-' + Date.now(), date: val.date, item: val.item, category: val.category, amount: expAmount, currency: val.currency, payer: val.payer, note: val.note || '' });
     alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
     this.closeExpenseModal();
   }
@@ -3947,7 +3877,7 @@ submitProduct() {
       }
 
       // 3. 自動記帳：完美拋轉至營業支出
-      this.expenses.update(es => [newExpense, ...es]);
+      await this.store.addExpense(newExpense as any);
 
       alert(`✅ 抽獎單已成功建立！\n商品庫存已扣除 ${val.quantity} 件。\n成本 NT$ ${Math.round(totalCost)} 已自動認列至「營業支出-行銷抽獎」。`);
       this.closeGiveawayModal();
@@ -3958,33 +3888,24 @@ submitProduct() {
   }
   // 🏆 終極大絕招：一鍵產出【終極會計結算總表】
   exportFinalMonthlyReport() {
-     const stats = this.accountingStats();
-     const range = this.accountingRange(); 
-     const now = new Date(); 
+     const stats = this.accountingStats(); const range = this.accountingRange(); const now = new Date(); 
      let startDate: Date | null = null; let endDate: Date | null = null;
-     
      if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
      else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
      else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
-     else if (range === 'custom') {
-       if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart());
-       if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd());
-     }
+     else if (range === 'custom') { if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart()); if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd()); }
 
-     // 撈取區間內的「營業支出」
      const validExpenses = this.expenses().filter(e => {
+        // 🔥 [會計防呆] 排除「商品採購」與「資金流轉(儲值)」，因為商品成本已在銷售時扣除(COGS)，不能重複扣抵淨利！
+        if (e.category === '商品採購' || e.category === '儲值') return false; 
         const d = new Date(e.date);
         if (startDate && d < startDate) return false;
         if (endDate) { const ed = new Date(endDate); ed.setHours(23,59,59,999); if (d > ed) return false; }
         return true;
      });
 
-     // 計算總費用 (韓元簡單除以 40 轉台幣概算，台幣直接加)
      let opExTwd = 0;
-     validExpenses.forEach(e => {
-        opExTwd += (e.currency === 'KRW') ? (e.amount / 40) : e.amount; 
-     });
-
+     validExpenses.forEach(e => { opExTwd += (e.currency === 'KRW') ? (e.amount / 40) : e.amount; });
      const finalNet = stats.profit - opExTwd;
      const realCompanyShare = stats.shares.company - opExTwd;
 
@@ -4001,7 +3922,6 @@ submitProduct() {
         ['合夥人：小芸 應匯款', Math.round(stats.shares.xiaoyun), '親帶 25% + 批發 40%'],
         ['🏢 公司保留真實盈餘', Math.round(realCompanyShare), '公司毛利分潤 (親帶25%/批發20%) 扣除 總營業支出']
      ];
-
      this.downloadCSV(`終極會計總表_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
 
@@ -4074,5 +3994,41 @@ submitProduct() {
      } catch(e: any) {
          alert('❌ 拆單發生錯誤：' + e.message);
      }
+  }
+
+  exportMarketingCSV() {
+     const list = this.accountingFilteredOrders().filter((o: Order) => o.discount > 0 || o.usedCredits > 0 || (o as any).promoDiscount > 0);
+     const headers = ['訂單編號', '結算日期', '客戶姓名', '使用折扣碼', '折扣碼折抵', '多入組折抵', '購物金折抵', '本單行銷總折讓'];
+     const rows = list.map((o: Order) => {
+        let platformSubsidy = (o.shippingMethod === 'myship' || o.shippingMethod === 'family') ? 20 : 0;
+        let pureBundle = (o.discount || 0) - platformSubsidy; pureBundle = pureBundle > 0 ? pureBundle : 0;
+        const promoAmt = (o as any).promoDiscount || 0; const creditAmt = o.usedCredits || 0; const total = pureBundle + promoAmt + creditAmt;
+        return [ `\t${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), this.getUserName(o.userId), (o as any).promoCode || '-', promoAmt, pureBundle, creditAmt, total ];
+     });
+     this.downloadCSV(`行銷預算折讓明細_${this.accountingRange()}_${new Date().toISOString().slice(0,10)}`, headers, rows);
+  }
+
+  syncMarketingToGoogleSheets() {
+     const list = this.accountingFilteredOrders().filter((o: Order) => o.discount > 0 || o.usedCredits > 0 || (o as any).promoDiscount > 0);
+     const headers = ['訂單編號', '結算日期', '客戶姓名', '使用折扣碼', '折扣碼折抵', '多入組折抵', '購物金折抵', '本單行銷總折讓'];
+     const dataRows = list.map((o: Order) => {
+        let platformSubsidy = (o.shippingMethod === 'myship' || o.shippingMethod === 'family') ? 20 : 0;
+        let pureBundle = (o.discount || 0) - platformSubsidy; pureBundle = pureBundle > 0 ? pureBundle : 0;
+        const promoAmt = (o as any).promoDiscount || 0; const creditAmt = o.usedCredits || 0; const total = pureBundle + promoAmt + creditAmt;
+        return [ `'${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), this.getUserName(o.userId), (o as any).promoCode || '-', promoAmt, pureBundle, creditAmt, total ];
+     });
+     this.pushToGoogleSheets('行銷折讓', [headers, ...dataRows]);
+  }
+
+  exportExpensesCSV() {
+     const headers = ['日期', '支出項目', '類別', '金額', '幣別', '付款人', '備註'];
+     const rows = this.filteredExpenses().map((e: any) => [ e.date, e.item, e.category, e.amount, e.currency, e.payer, e.note || '-' ]);
+     this.downloadCSV(`營業支出明細_${new Date().toISOString().slice(0,10)}`, headers, rows);
+  }
+
+  syncExpensesToGoogleSheets() {
+     const headers = ['日期', '支出項目', '類別', '金額', '幣別', '付款人', '備註'];
+     const dataRows = this.filteredExpenses().map((e: any) => [ e.date, e.item, e.category, e.amount, e.currency, e.payer, e.note || '-' ]);
+     this.pushToGoogleSheets('營業支出', [headers, ...dataRows]);
   }
 }

@@ -27,6 +27,8 @@ export interface CartItem {
   unitCost?: number; // 🔥 紀錄結帳當下的實際單位成本
 }
 
+export interface Wallet { id: string; name: string; currency: string; symbol: string; balance: number; }
+export interface Expense { id: string; date: string; item: string; category: string; amount: number; currency: string; payer: string; note: string; }
 export interface User {
   id: string; memberId?: string; memberNo?: string; phone?: string; email?: string; name: string; photoURL?: string; 
   totalSpend: number; isAdmin: boolean; tier: 'general' | 'vip' | 'wholesale'; credits: number; note?: string;
@@ -82,6 +84,8 @@ export class StoreService {
   currentUser = signal<User | null>(null);
   private user$ = toObservable(this.currentUser);
 
+  wallets = toSignal(collectionData(collection(this.firestore, 'wallets'), { idField: 'id' }) as Observable<Wallet[]>, { initialValue: [] });
+  expenses = toSignal(collectionData(collection(this.firestore, 'expenses'), { idField: 'id' }) as Observable<Expense[]>, { initialValue: [] });
 users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(collection(this.firestore, 'users'), { idField: 'id' }) as Observable<User[]> : of([]))), { initialValue: [] });
   orders = toSignal(this.user$.pipe(switchMap(u => { if (!u) return of([]); const ref = collection(this.firestore, 'orders'); const q = u.isAdmin ? ref : query(ref, where('userId', '==', u.id)); return collectionData(q, { idField: 'id' }) as Observable<Order[]>; })), { initialValue: [] });
   
@@ -130,7 +134,9 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
 async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), { ...u }); }
   async updateOrderStatus(id: string, status: OrderStatus, extra: any = {}) { await updateDoc(doc(this.firestore, 'orders', id), { status, ...extra }); }
   async deleteOrder(o: Order) { await deleteDoc(doc(this.firestore, 'orders', o.id)); }
-
+  async addWallet(w: Wallet) { await setDoc(doc(this.firestore, 'wallets', w.id), w); }
+  async updateWalletBalance(id: string, newBalance: number) { await updateDoc(doc(this.firestore, 'wallets', id), { balance: newBalance }); }
+  async addExpense(e: Expense) { await setDoc(doc(this.firestore, 'expenses', e.id), e); }
 
   // 🧾 新增：寫入採購單，並自動同步商品的「已買到」數量
   async addPurchaseBatch(data: any) { 
