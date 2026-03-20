@@ -911,6 +911,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    <button (click)="syncExpensesToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] transition-colors whitespace-nowrap flex items-center justify-center gap-1"><span>☁️</span> 同步</button>
                    <button (click)="openExpenseModal()" class="flex-1 sm:flex-none px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 記一筆</button>
                 </div>
+              </div>
 
              <div class="bg-transparent md:bg-white md:rounded-[2rem] md:shadow-sm md:border md:border-gray-50 overflow-hidden overflow-x-auto w-full custom-scrollbar pb-2">
                 <table class="w-full text-sm text-left whitespace-nowrap block md:table md:min-w-[700px]">
