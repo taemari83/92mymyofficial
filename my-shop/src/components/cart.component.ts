@@ -403,9 +403,11 @@ export class CartComponent {
   });
 
   selectedOriginalSubtotal = computed(() => this.checkoutList().reduce((sum, i) => sum + (i.price * i.quantity), 0));
+  
+  // 1. 商品小計 (已扣除多入組優惠)
   selectedSubtotal = computed(() => Math.max(0, this.selectedOriginalSubtotal() - this.storeService.cartDiscount()));
 
-  // 🎟️ 計算折扣碼折抵金額
+  // 🎟️ 2. 計算折扣碼折抵金額 (基於扣完多入組後的小計)
   appliedPromoDiscount = computed(() => {
      const promo = this.appliedPromo();
      if (!promo) return 0;
@@ -414,20 +416,23 @@ export class CartComponent {
      if (subtotal < promo.minSpend) return 0; // 低消未達標就不折抵
      
      if (promo.type === 'amount') {
-        return Math.min(subtotal, promo.value); // 最多折到底
+        return Math.min(subtotal, promo.value); // 最多折到底，不能變負數
      } else if (promo.type === 'percent') {
-        // 例如 value 是 88，代表 88折，折抵金額 = 原價 * 0.12
+        // 例如 value 是 88，代表 88折，折抵金額 = 原價 * 0.12 (只取整數)
         const discountRate = (100 - promo.value) / 100;
-        return subtotal * discountRate;
+        return Math.floor(subtotal * discountRate);
      }
      return 0;
   });
 
+  // 3. 計算運費 (免運門檻是看「扣掉折扣碼之後」的金額)
   currentShippingFee = computed(() => {
      const m = this.selectedShippingMethod();
      const settings = this.storeService.settings().shipping;
+     
      // 💡 注意：免運門檻是看扣掉折扣碼之後的金額
      const subAfterPromo = this.selectedSubtotal() - this.appliedPromoDiscount();
+     
      if (settings.freeThreshold > 0 && subAfterPromo >= settings.freeThreshold) return 0;
      if (m === 'delivery') return settings.methods.delivery.fee;
      if (m === 'meetup') return settings.methods.meetup.fee;
@@ -435,17 +440,26 @@ export class CartComponent {
      return 0;
   });
 
+  // 4. 平台物流補貼 (開單預扣)
   currentDiscount = computed(() => (this.selectedShippingMethod() === 'myship' || this.selectedShippingMethod() === 'family') ? 20 : 0);
 
+  // 5. 計算可使用的購物金 (不能超過「扣完折扣碼與運費後」的剩餘應付金額)
   calculatedCredits = computed(() => {
      if (!this.useCredits()) return 0;
      const user = this.storeService.currentUser();
      const max = user?.credits || 0;
-     const sub = this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount();
-     return Math.min(max, Math.max(0, sub));
+     
+     // 剩餘應付金額 = (小計 - 折扣碼) + 運費 - 平台補貼
+     const remainingToPay = this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount();
+     
+     return Math.min(max, Math.max(0, remainingToPay));
   });
 
-  finalTotal = computed(() => Math.max(0, this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount() - this.calculatedCredits()));
+  // 6. 最終結帳總金額
+  finalTotal = computed(() => {
+    const total = this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount() - this.calculatedCredits();
+    return Math.max(0, total);
+  });
 
   toggleCredits(e: Event) { this.useCredits.set((e.target as HTMLInputElement).checked); }
 
