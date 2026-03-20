@@ -31,8 +31,9 @@ export interface Wallet { id: string; name: string; currency: string; symbol: st
 export interface Expense { id: string; date: string; item: string; category: string; amount: number; currency: string; payer: string; note: string; }
 export interface User {
   id: string; memberId?: string; memberNo?: string; phone?: string; email?: string; name: string; photoURL?: string; 
-  totalSpend: number; isAdmin: boolean; tier: 'general' | 'vip' | 'wholesale'; credits: number; note?: string;
-  birthday?: string; address?: string;
+  totalSpend: number; isAdmin: boolean; 
+  tier: 'general' | 'v1' | 'v2' | 'v3' | 'wholesale' | string; // 👈 放寬 tier 支援多階級
+  credits: number; note?: string; birthday?: string; address?: string;
 }
 
 export type OrderStatus = 'pending_payment' | 'paid_verifying' | 'unpaid_alert' | 'refund_needed' | 'refunded' | 'payment_confirmed' | 'pending_shipping' | 'arrived_notified' | 'shipped' | 'picked_up' | 'completed' | 'cancelled';
@@ -64,6 +65,7 @@ export interface Order {
 
 export interface StoreSettings {
   birthdayGiftGeneral: number; birthdayGiftVip: number; categoryCodes: { [key: string]: string };
+  vipDiscounts?: { [tier: string]: number }; // 👈 新增：VIP 各階級折扣率 (例如 v1: 0.95)
   promoCodes?: PromoCode[]; // 👈 新增折扣碼資料庫
   paymentMethods: { cash: boolean; bankTransfer: boolean; cod: boolean; };
   shipping: { freeThreshold: number; methods: { meetup: { enabled: boolean, fee: number }; myship: { enabled: boolean, fee: number }; family: { enabled: boolean, fee: number }; delivery: { enabled: boolean, fee: number }; } }
@@ -111,6 +113,46 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
 
   cartTotal = computed(() => this.cart().reduce((sum, item) => sum + (item.price * item.quantity), 0) - this.cartDiscount());
 
+  // 🧠 真實採購平均成本大腦
+  averageActualCostMap = computed(() => {
+    const costData: Record<string, { totalCost: number, totalQty: number }> = {};
+    const allPurchases = this.purchases() || [];
+
+    allPurchases.forEach(p => {
+       const actualTotal = Number(p.totalLocalCost) || 0;
+       if (actualTotal <= 0) return; // 沒填寫真實花費的跳過
+
+       const estTotal = Number(p.estimatedLocalCost) || 1; // 避免除以 0
+       const costRatio = actualTotal / estTotal; // 算出現實比預估貴/便宜多少比例
+
+       (p.items || []).forEach((item: any) => {
+          const key = `${item.productId}_${item.option || '單一規格'}`;
+          const product = this.products().find((prod: Product) => prod.id === item.productId);
+          
+          // 抓取原本的預估當地成本
+          let estUnitCost = 0;
+          if (product) {
+              const exRate = product.exchangeRate || 1;
+              estUnitCost = (product.localPrice || 0) * exRate;
+          }
+          if (estUnitCost === 0) estUnitCost = actualTotal / p.items.reduce((s:number, i:any) => s + i.quantity, 0); // 兜底均分
+
+          // 真實成本 = 預估成本 × 整張單的溢價/折價比例
+          const actualUnitCost = estUnitCost * costRatio;
+
+          if (!costData[key]) costData[key] = { totalCost: 0, totalQty: 0 };
+          costData[key].totalCost += (actualUnitCost * item.quantity);
+          costData[key].totalQty += item.quantity;
+       });
+    });
+
+    const result = new Map<string, number>();
+    Object.keys(costData).forEach(key => {
+       result.set(key, costData[key].totalCost / costData[key].totalQty); // 算出歷史平均單價
+    });
+    return result;
+  });
+  
   constructor() {
     if (typeof localStorage !== 'undefined') {
       const savedCart = localStorage.getItem('92mymy_cart'); if (savedCart) this.cart.set(JSON.parse(savedCart));
@@ -211,23 +253,33 @@ addToCart(product: Product, option: string, quantity: number) {
     let parsedOption = option;
     let localCostToUse = product.localPrice; // 🔥 新增：預設使用母體當地原價
 
+    const vipDiscounts = this.settings().vipDiscounts || { v1: 0.95, v2: 0.9, v3: 0.85 };
+    const userTier = user?.tier || 'general';
+    const discountRate = vipDiscounts[userTier] || 1; // 若找不到階級或為 general，預設 1 (不打折)
+
     if (option.includes('=')) {
        const parts = option.split('=');
        parsedOption = parts[0].trim();
        
        const optGenPrice = parseInt(parts[1]?.trim(), 10) || product.priceGeneral;
-       const optVipPrice = parseInt(parts[2]?.trim(), 10) || product.priceVip;
        localCostToUse = parseInt(parts[3]?.trim(), 10) || product.localPrice;
 
-       // 🔥 正確判斷：如果是 VIP/批發會員，就套用 VIP 價
-       if (user?.tier === 'vip' || user?.tier === 'wholesale') {
-          finalPrice = optVipPrice > 0 ? optVipPrice : optGenPrice;
+       // 🔥 批發客走獨立批發價，其餘 VIP 套用「一般價 × VIP折數」
+       if (userTier === 'wholesale') {
+          finalPrice = product.priceWholesale > 0 ? product.priceWholesale : optGenPrice;
+       } else if (userTier !== 'general') {
+          finalPrice = Math.round(optGenPrice * discountRate); // VIP 全館打折 (四捨五入)
        } else {
           finalPrice = optGenPrice;
        }
     } else {
-       if (user?.tier === 'wholesale' && product.priceWholesale > 0) finalPrice = product.priceWholesale; 
-       else if (user?.tier === 'vip' && product.priceVip > 0) finalPrice = product.priceVip;
+       if (userTier === 'wholesale' && product.priceWholesale > 0) {
+           finalPrice = product.priceWholesale; 
+       } else if (userTier !== 'general') {
+           finalPrice = Math.round(product.priceGeneral * discountRate); // VIP 全館打折
+       } else {
+           finalPrice = product.priceGeneral;
+       }
     }
 
 // 🔥 直接使用商品後台設定的匯率，沒填的話預設為 1 (台幣)
@@ -328,5 +380,28 @@ addToCart(product: Product, option: string, quantity: number) {
   updateCartQty(index: number, delta: number) { this.cart.update(l => l.map((item, i) => i === index ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)); }
   clearCart() { this.cart.set([]); }
   
-settings = toSignal(docData(doc(this.firestore, 'config/storeSettings')).pipe(map((data: any) => data || { birthdayGiftGeneral: 100, birthdayGiftVip: 500, categoryCodes: {}, promoCodes: [{ code: '92VIP', type: 'amount', value: 100, minSpend: 1000, active: true, note: '歡慶上線滿千折百' }], paymentMethods: { cash: false, bankTransfer: true, cod: true }, shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } })), { initialValue: { birthdayGiftGeneral: 100, birthdayGiftVip: 500, categoryCodes: {}, promoCodes: [{ code: '92VIP', type: 'amount', value: 100, minSpend: 1000, active: true, note: '歡慶上線滿千折百' }], paymentMethods: { cash: false, bankTransfer: true, cod: true }, shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } } });
+settings = toSignal(
+    docData(doc(this.firestore, 'config/storeSettings')).pipe(
+      map((data: any) => data || { 
+        birthdayGiftGeneral: 100, 
+        birthdayGiftVip: 500, 
+        categoryCodes: {}, 
+        vipDiscounts: { v1: 0.95, v2: 0.9, v3: 0.85 }, // 👈 第一處：Firebase 沒資料時的預設值
+        promoCodes: [{ code: '92VIP', type: 'amount', value: 100, minSpend: 1000, active: true, note: '歡慶上線滿千折百' }], 
+        paymentMethods: { cash: false, bankTransfer: true, cod: true }, 
+        shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } 
+      })
+    ), 
+    { 
+      initialValue: { 
+        birthdayGiftGeneral: 100, 
+        birthdayGiftVip: 500, 
+        categoryCodes: {}, 
+        vipDiscounts: { v1: 0.95, v2: 0.9, v3: 0.85 }, // 👈 第二處：畫面剛載入時的初始值
+        promoCodes: [{ code: '92VIP', type: 'amount', value: 100, minSpend: 1000, active: true, note: '歡慶上線滿千折百' }], 
+        paymentMethods: { cash: false, bankTransfer: true, cod: true }, 
+        shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } 
+      } 
+    }
+  );
 }

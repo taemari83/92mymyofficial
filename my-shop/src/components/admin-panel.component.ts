@@ -653,7 +653,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             
             <div class="mt-4 w-full animate-fade-in">
                <button (click)="exportFinalMonthlyReport()" class="w-full py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-transform active:scale-[0.98] flex items-center justify-center gap-3">
-                  <span class="text-3xl">🏆</span> 當期會計結算總表(自動扣除營業支出與精算合夥人分潤)
+                  <span class="text-3xl">🏆</span> 會計結算總表(扣除營業支出與分潤)
                </button>
             </div>
             
@@ -684,7 +684,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <div class="absolute bottom-0 right-0 p-2 opacity-10 text-5xl group-hover:scale-110 transition-transform">🏢</div>
                   </div>
                </div>
-            </div>
 
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                  <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -2370,7 +2369,15 @@ try {
               let itemCost = 0;
               let shareMode = (p as any)?.shareMode || '親帶'; // 抓取分潤模式
 
-              if (p) {
+              // 🧠 呼叫大腦：查詢是否有採購單回填的「真實單件平均成本」
+              const key = `${i.productId}_${i.option || '單一規格'}`;
+              const actualCost = this.store.averageActualCostMap().get(key);
+
+              if (actualCost) {
+                  // 🎉 成功！採用採購單回填的真實平均成本 × 購買數量
+                  itemCost = actualCost * i.quantity;
+              } else if (p) {
+                  // 原本的預估公式 (如果這件商品還沒被採購核銷過，先用預估值墊著)
                   let currentLocalPrice = p.localPrice || 0;
                   const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
                   if (fullOption.includes('=')) {
@@ -2450,22 +2457,31 @@ try {
               stats.sold += item.quantity;
               stats.revenue += item.price * item.quantity; 
 
-// 計算成本
-              let currentLocalPrice = stats.product.localPrice || 0;
-              const fullOption = stats.product.options?.find((opt: string) => opt.split('=')[0].trim() === item.option) || '';
-              if (fullOption.includes('=')) {
-                  const parts = fullOption.split('=');
-                  if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
-              }
+              // 🧠 計算成本：優先呼叫採購大腦
+              const key = `${item.productId}_${item.option || '單一規格'}`;
+              const actualCost = this.store.averageActualCostMap().get(key);
 
-              if (currentLocalPrice > 0 || stats.product.localPrice) {
-                  const costMat = stats.product.costMaterial || 0;
-                  const weight = stats.product.weight || 0;
-                const shipKg = stats.product.shippingCostPerKg || 200;
-                  const rate = stats.product.exchangeRate || 1; // 🔥 抓取動態匯率
-                  stats.cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * item.quantity;
+              if (actualCost) {
+                  // 🎉 成功！採用真實平均成本
+                  stats.cost += actualCost * item.quantity;
               } else {
-                  stats.cost += (item.unitCost || 0) * item.quantity;
+                  // 沒採購過，用預估公式墊著
+                  let currentLocalPrice = stats.product.localPrice || 0;
+                  const fullOption = stats.product.options?.find((opt: string) => opt.split('=')[0].trim() === item.option) || '';
+                  if (fullOption.includes('=')) {
+                      const parts = fullOption.split('=');
+                      if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+                  }
+
+                  if (currentLocalPrice > 0 || stats.product.localPrice) {
+                      const costMat = stats.product.costMaterial || 0;
+                      const weight = stats.product.weight || 0;
+                      const shipKg = stats.product.shippingCostPerKg || 200;
+                      const rate = stats.product.exchangeRate || 1; 
+                      stats.cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * item.quantity;
+                  } else {
+                      stats.cost += (item.unitCost || 0) * item.quantity;
+                  }
               }
           }
       });
@@ -3123,7 +3139,17 @@ exportInventoryCSV() {
               }
           }
           const rate = p.exchangeRate || 1; const shipKg = p.shippingCostPerKg || 0; 
-          costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+          
+          // 🧠 呼叫大腦
+          const key = `${i.productId}_${i.option || '單一規格'}`;
+          const actualCost = this.store.averageActualCostMap().get(key);
+          
+          if (actualCost) {
+              costGen = actualCost; // 🎉 使用真實平均成本
+          } else {
+              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+          }
+          
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
         } else {
           costGen = i.unitCost || 0; detailString += ` [實收:$${i.price} (已下架)]`;
@@ -3135,7 +3161,7 @@ exportInventoryCSV() {
         totalRawProfit += rawProfit;
 
         return { detailString, rawProfit, shareMode };
-      }); 
+      });
 
       const profit = o.finalTotal - costGeneralTotal; 
       const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
@@ -3193,7 +3219,17 @@ exportInventoryCSV() {
               if (parts.length >= 4) { currentPriceGeneral = Number(parts[1]) || currentPriceGeneral; currentPriceVip = Number(parts[2]) || currentPriceVip; currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
           }
           const rate = p.exchangeRate || 1; const shipKg = p.shippingCostPerKg || 0; 
-          costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+          
+          // 🧠 呼叫大腦
+          const key = `${i.productId}_${i.option || '單一規格'}`;
+          const actualCost = this.store.averageActualCostMap().get(key);
+
+          if (actualCost) {
+              costGen = actualCost; // 🎉 使用真實平均成本
+          } else {
+              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+          }
+
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
         } else {
           costGen = i.unitCost || 0; detailString += ` [實收:$${i.price} (已下架)]`;
@@ -3205,7 +3241,7 @@ exportInventoryCSV() {
         totalRawProfit += rawProfit;
 
         return { detailString, rawProfit, shareMode };
-      }); 
+      });
 
       const profit = o.finalTotal - costGeneralTotal; 
       const margin = o.finalTotal ? (profit / o.finalTotal * 100) : 0;
