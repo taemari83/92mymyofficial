@@ -1245,9 +1245,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div> 
                       <label class="block text-xs font-bold text-gray-500 mb-1">會員等級</label> 
                       <select formControlName="tier" class="w-full p-3 border border-gray-200 rounded-xl bg-white"> 
-                        <option value="general">一般會員</option> 
-                        <option value="vip">VIP 會員</option> 
-                        <option value="wholesale">批發會員</option> 
+                        <option value="general">一般會員</option>
+                        <option value="v1">✨ V1.95折貴賓</option>
+                        <option value="v2">✨ V2.9折貴賓</option>
+                        <option value="v3">✨ V3.85折貴賓</option>
+                        <option value="wholesale">批發會員</option>
                       </select> 
                     </div> 
                   </div> 
