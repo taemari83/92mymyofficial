@@ -540,36 +540,41 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'customers') { 
           <div class="space-y-6 w-full">
-              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4 w-full">
-                 <div class="flex flex-col w-full lg:w-auto gap-3">
-                    <div class="flex flex-col w-full xl:w-auto gap-3 mt-4 xl:mt-0">
-                    <div class="flex flex-col xl:flex-row items-start xl:items-center justify-end gap-3 w-full">
-                       <div class="flex flex-wrap items-center gap-2">
-                         <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
-                            <span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span>
-                            <input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 sm:w-32">
-                            <span class="text-gray-300">-</span>
-                            <input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 sm:w-32">
-                         </div>
-                         <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
-                            <span class="text-xs text-gray-400 font-bold whitespace-nowrap">消費額 ≥</span>
-                            <input type="number" [ngModel]="minSpendFilter()" (ngModelChange)="minSpendFilter.set($event)" class="bg-transparent text-sm font-bold text-brand-900 outline-none w-16 md:w-20" placeholder="0">
-                         </div>
-                       </div>
-                    </div>
-                    
-                    <div class="flex flex-col sm:flex-row items-center gap-2 w-full">
-                       <div class="relative w-full sm:flex-1"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
-                       <div class="flex gap-2 w-full sm:w-auto shrink-0">
-                         <button (click)="openBulkCustomerModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 whitespace-nowrap shadow-sm flex items-center justify-center transition-colors gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次 ({{ selectedCustomerIds().length }})</button>
-                         <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">📥 匯出</button>
-                         <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-lg font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">☁️ 同步</button>
-                       </div>
-                    </div>
-                 </div>
-                    <div class="relative w-full lg:w-80"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
-                 </div>
+              <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full">
+                <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-4">
+                  <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 shadow-sm w-fit">
+                     <input type="checkbox" (change)="toggleAllUsers($event)" class="w-4 h-4 rounded text-blue-600 cursor-pointer">
+                     <span class="text-sm font-bold text-gray-600">全選本頁</span>
+                  </div>
+                  
+                  <div class="flex flex-wrap items-center gap-2">
+                     <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                        <span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span>
+                        <input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 sm:w-32">
+                        <span class="text-gray-300">-</span>
+                        <input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 sm:w-32">
+                     </div>
+                     <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                        <span class="text-xs text-gray-400 font-bold whitespace-nowrap">消費額 ≥</span>
+                        <input type="number" [ngModel]="minSpendFilter()" (ngModelChange)="minSpendFilter.set($event)" class="bg-transparent text-sm font-bold text-brand-900 outline-none w-16 md:w-20" placeholder="0">
+                     </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 w-full lg:w-auto">
+                     <div class="relative w-full sm:flex-1 lg:w-64">
+                       <input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300">
+                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                     </div>
+                  </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2 pt-4 border-t border-gray-100">
+                   <button (click)="openBulkCustomerModal()" class="px-4 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 shadow-sm flex items-center gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次操作 ({{ selectedCustomerIds().length }})</button>
+                   <button (click)="exportCustomersCSV()" class="px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] shadow-sm">📥 匯出</button>
+                   <button (click)="syncCustomersToGoogleSheets()" class="px-4 py-2.5 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] shadow-sm">☁️ 同步</button>
+                </div>
               </div>
+
               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full mt-2">
                 @for(u of paginatedUsers(); track u.id) {
                    <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all relative group" [class.border-blue-300]="selectedCustomerIds().includes(u.id)" [class.bg-blue-50]="selectedCustomerIds().includes(u.id)">
@@ -613,10 +618,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    <div class="col-span-full text-center py-12 text-gray-400 font-bold bg-white rounded-2xl border border-gray-100 shadow-sm">找不到相符的會員資料</div>
                 }
               </div>
-                 @if(customerPageSize() !== 'all' && filteredUsers().length > toNumber(customerPageSize())) {
-                    <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2"><button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">上一頁</button><span class="px-3 py-1 bg-white border border-gray-200 rounded text-sm font-bold text-brand-900">{{ customerPage() }}</span><button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">下一頁</button></div>
-                 }
-              </div>
+
+              @if(customerPageSize() !== 'all' && filteredUsers().length > toNumber(customerPageSize())) {
+                 <div class="mt-4 flex justify-end gap-2">
+                    <button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-gray-50 shadow-sm">上一頁</button>
+                    <span class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-brand-900 shadow-sm">{{ customerPage() }}</span>
+                    <button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-gray-50 shadow-sm">下一頁</button>
+                 </div>
+              }
           </div>
         }
 
