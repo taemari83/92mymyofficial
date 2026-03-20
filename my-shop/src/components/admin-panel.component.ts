@@ -584,46 +584,88 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       
                       <div class="flex items-center gap-4 border-b border-gray-50 pb-4 mb-4">
                          <div class="w-12 h-12 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold shrink-0">
-                            {{ u.name?.charAt(0) || 'U' }}
-                         </div>
-                         <div class="flex-1 min-w-0 pr-6">
-                            <h4 class="font-bold text-gray-800 text-lg truncate">{{ u.name }}</h4>
-                            <div class="text-[10px] text-gray-400 font-mono tracking-wider cursor-pointer hover:text-brand-600" title="點擊可選取複製">{{ formatMemberNo(u) }}</div>
-                            <div class="mt-1 flex gap-1">
-                               @if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-0.5 rounded text-[10px] font-bold">VIP</span> }
-                               @else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">批發</span> }
-                               @else { <span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-bold">一般</span> }
-                            </div>
-                         </div>
-                      </div>
-                      
-                      <div class="grid grid-cols-2 gap-3 mb-4">
-                         <div class="bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
-                            <div class="text-[10px] text-gray-400 font-bold mb-1">累積消費</div>
-                            <div class="font-black text-brand-900 text-sm">NT$ {{ calculateUserTotalSpend(u.id) | number }}</div>
-                         </div>
-                         <div class="bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
-                            <div class="text-[10px] text-gray-400 font-bold mb-1">購物金餘額</div>
-                            <div class="font-black text-brand-600 text-sm">{{ u.credits }}</div>
-                         </div>
-                      </div>
-                      
-                      <div class="text-xs text-gray-500 flex items-center gap-2 mb-4 truncate">
-                         <span>📞 {{ u.phone || '未提供電話' }}</span>
-                      </div>
-                      
-                      <button (click)="openUserModal(u)" class="w-full py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-brand-900 transition-colors shadow-sm">編輯資料</button>
-                   </div>
-                } @empty {
-                   <div class="col-span-full text-center py-12 text-gray-400 font-bold bg-white rounded-2xl border border-gray-100 shadow-sm">找不到相符的會員資料</div>
-                }
+                            {{ u.name?.charAt(0) || 'U' }}@if (activeTab() === 'customers') { 
+          <div class="space-y-6 w-full">
+              <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full">
+                
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                  
+                  <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+                     <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                        <span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span>
+                        <input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 sm:w-32">
+                        <span class="text-gray-300">-</span>
+                        <input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none w-28 sm:w-32">
+                     </div>
+                     <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                        <span class="text-xs text-gray-400 font-bold whitespace-nowrap">消費額 ≥</span>
+                        <input type="number" [ngModel]="minSpendFilter()" (ngModelChange)="minSpendFilter.set($event)" class="bg-transparent text-sm font-bold text-brand-900 outline-none w-16 md:w-20" placeholder="0">
+                     </div>
+                  </div>
+
+                  <div class="flex flex-col sm:flex-row items-center gap-2 w-full xl:w-auto mt-2 xl:mt-0">
+                     <div class="relative w-full sm:w-64 shrink-0">
+                       <input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100">
+                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                     </div>
+                     <div class="flex gap-2 w-full sm:w-auto shrink-0">
+                       <button (click)="openBulkCustomerModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 whitespace-nowrap shadow-sm flex items-center justify-center transition-colors gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次 ({{ selectedCustomerIds().length }})</button>
+                       <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">📥 匯出</button>
+                       <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-lg font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">☁️ 同步</button>
+                     </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
+                 <div class="overflow-x-auto w-full custom-scrollbar max-h-[65vh]">
+                   <table class="w-full text-sm text-left whitespace-nowrap block md:table">
+                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 hidden md:table-header-group sticky top-0 z-[40]">
+                        <tr>
+                          <th class="p-4 sticky left-0 z-[45] bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">
+                             <div class="flex items-center gap-3">
+                                <input type="checkbox" (change)="toggleAllUsers($event)" class="w-4 h-4 rounded text-blue-600 cursor-pointer">
+                                <span>會員編號 / Google UID</span>
+                             </div>
+                          </th>
+                          <th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-200">
+                         @for(u of paginatedUsers(); track u.id) {
+                            <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden">
+                               <td class="p-4 bg-gray-50/50 md:bg-white group-even:md:bg-[#F8FAFC] group-hover:md:bg-[#F0F7FF] md:sticky md:left-0 z-10 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
+                                  <div class="flex items-center gap-3">
+                                     <input type="checkbox" [checked]="selectedCustomerIds().includes(u.id)" (change)="toggleUserSelection(u.id)" class="w-4 h-4 rounded text-blue-600 cursor-pointer shrink-0">
+                                     <div class="flex flex-col min-w-0">
+                                        <span class="text-sm font-bold text-brand-900 font-mono tracking-wide truncate">{{ formatMemberNo(u) }}</span>
+                                        <div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID">
+                                           <span class="text-[10px] text-gray-400 font-mono">UID:</span>
+                                           <span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900 truncate">{{ u.id }}</span>
+                                        </div>
+                                     </div>
+                                  </div>
+                               </td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-900 md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">累積消費</span><div class="text-right">NT$ {{ calculateUserTotalSpend(u.id) | number }}</div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 text-brand-600 font-bold md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">購物金</span><div class="text-right">{{ u.credits }}</div></td>
+                               <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-600 md:text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-4 py-2 md:px-3 md:py-1 rounded-lg transition-colors bg-white md:bg-transparent shadow-sm md:shadow-none">編輯</button></td>
+                            </tr>
+                         } @empty {
+                            <tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold">找不到相符的會員資料</td></tr>
+                         }
+                      </tbody>
+                   </table>
+                 </div>
               </div>
 
               @if(customerPageSize() !== 'all' && filteredUsers().length > toNumber(customerPageSize())) {
-                 <div class="mt-4 flex justify-end gap-2">
-                    <button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-gray-50 shadow-sm">上一頁</button>
-                    <span class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-brand-900 shadow-sm">{{ customerPage() }}</span>
-                    <button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-gray-50 shadow-sm">下一頁</button>
+                 <div class="p-4 flex justify-end gap-2">
+                    <button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">上一頁</button>
+                    <span class="px-3 py-1 bg-white border border-gray-200 rounded text-sm font-bold text-brand-900">{{ customerPage() }}</span>
+                    <button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">下一頁</button>
                  </div>
               }
           </div>
