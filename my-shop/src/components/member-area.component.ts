@@ -8,7 +8,7 @@ import { StoreService } from '../services/store.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="p-6 bg-white rounded-lg shadow-md max-w-md mx-auto mt-10">
+    <div class="p-6 bg-white rounded-lg shadow-md max-w-md mx-auto mt-10 mb-20">
       <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">會員專區</h2>
 
       @if (!storeService.currentUser()) {
@@ -172,6 +172,10 @@ import { StoreService } from '../services/store.service';
                       </div>
                     }
 
+                    <button (click)="contactLine(order.id)" class="mt-4 w-full py-3 bg-[#00B900] hover:bg-[#00A000] text-white font-bold rounded-xl flex justify-center items-center gap-2 transition-colors shadow-sm active:scale-95">
+                      <span class="text-xl">💬</span> 用 LINE 聯絡客服
+                    </button>
+
                   </div>
                 }
               </div>
@@ -192,27 +196,26 @@ import { StoreService } from '../services/store.service';
       }
     </div>
   `,
-  styles: []
+  styles: [`
+    .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  `]
 })
 export class MemberAreaComponent {
   storeService = inject(StoreService);
 
-  // 🔥 核心修正 1：先嚴格過濾出「只屬於當前登入會員」的訂單
   myOwnOrders = computed(() => {
     const user = this.storeService.currentUser();
     const allOrders = this.storeService.orders();
     if (!user) return [];
     
-    // 即使是管理員，也只顯示 userId 符合自己的訂單
     return allOrders.filter(o => o.userId === user.id);
   });
 
-  // 🔥 核心修正 2：用過濾後的訂單來排序顯示
   sortedOrders = computed(() => {
     return [...this.myOwnOrders()].sort((a, b) => b.createdAt - a.createdAt);
   });
 
-  // 🔥 核心修正 3：用過濾後的訂單來計算累積消費
   calculatedTotalSpend = computed(() => {
     const validStatuses = ['payment_confirmed', 'pending_shipping', 'shipped', 'arrived_notified', 'picked_up', 'completed'];
     return this.myOwnOrders()
@@ -228,7 +231,6 @@ export class MemberAreaComponent {
     this.storeService.logout();
   }
 
-  // 🔥 新增：讓客人自助填寫匯款後五碼的魔法函式
   async submitPaymentInfo(order: any, last5: string) {
     const cleanLast5 = last5.trim();
     if (!cleanLast5 || cleanLast5.length < 5) {
@@ -239,11 +241,25 @@ export class MemberAreaComponent {
     if (!confirm(`確認送出後五碼「${cleanLast5}」嗎？\n送出後系統將為您切換為對帳中。`)) return;
 
     try {
-      // 呼叫 StoreService，把訂單狀態改成「對帳中」，並把客人填寫的後五碼存進去
       await this.storeService.updateOrderStatus(order.id, 'paid_verifying', { paymentLast5: cleanLast5 });
       alert('✅ 成功送出！請稍候，客服確認款項後會立即為您安排出貨！');
     } catch(e) {
       alert('❌ 送出失敗，請檢查網路連線或稍後再試。');
     }
+  }
+
+  // 🚀 核心功能：一鍵自動帶入訂單編號並導向 LINE 客服
+  contactLine(orderId: string) {
+    // 預先幫客人打好的訊息範本，讓他們不用自己手打編號
+    const message = `老闆娘你好，我的訂單編號是：#${orderId}\n我想詢問關於這筆訂單的問題：\n`;
+    
+    // 把文字轉換為網址可以讀懂的格式
+    const encodedMessage = encodeURIComponent(message);
+    
+    // 綁定官方 LINE 帳號 ID 與預設訊息
+    const lineUrl = `https://line.me/R/oaMessage/@289wxmsb/?${encodedMessage}`;
+    
+    // 開啟新視窗跳轉至 LINE
+    window.open(lineUrl, '_blank');
   }
 }

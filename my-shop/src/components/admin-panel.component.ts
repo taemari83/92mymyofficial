@@ -2649,20 +2649,6 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   isSplittingOrder = signal(false); // 👈 新增：控制是否開啟拆單模式
   splitItemIndices = signal<Set<number>>(new Set()); // 👈 新增：記錄選中了哪些商品
 
-  // 👇 貼上這段：後台客服專用狀態與發送邏輯
-  orderMessageInput = signal('');
-  async sendOrderMessage(o: Order) {
-     const text = this.orderMessageInput().trim();
-     if (!text) return;
-     
-     // 1. 寫入資料庫
-     await this.store.addOrderMessage(o.id, 'admin', text);
-     
-     // 2. 畫面即時更新與清空輸入框
-     this.orderMessageInput.set('');
-     const updatedMessages = [...(o.messages || []), { sender: 'admin' as const, text, time: Date.now() }];
-     this.actionModalOrder.set({ ...o, messages: updatedMessages });
-  }
 
   orderTabs = [ 
     { id: 'all', label: '全部' }, 
