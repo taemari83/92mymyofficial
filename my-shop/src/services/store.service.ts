@@ -97,57 +97,46 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
   cart = signal<CartItem[]>([]);
   cartCount = computed(() => this.cart().reduce((count, item) => count + item.quantity, 0));
 
-  cartDiscount = computed(() => {
-    const items = this.cart(); 
-    const allProducts = this.products(); 
-    let original = 0; 
-    let discounted = 0;
-    const grouped = new Map<string, number>();
-
-    // 1. 先計算「多入組優惠」的折抵
-    items.forEach(item => { 
-        grouped.set(item.productId, (grouped.get(item.productId) || 0) + item.quantity); 
-        original += item.price * item.quantity; 
-    });
-
+// 1. 專門算「多入組優惠」
+  cartBulkDiscount = computed(() => {
+    const items = this.cart(); const allProducts = this.products(); 
+    let discounted = 0; const grouped = new Map<string, number>();
+    items.forEach(item => { grouped.set(item.productId, (grouped.get(item.productId) || 0) + item.quantity); });
     grouped.forEach((qty, productId) => {
-       const product = allProducts.find(p => p.id === productId); 
-       const firstItem = items.find(i => i.productId === productId); 
-       if(!firstItem) return;
-
+       const product = allProducts.find(p => p.id === productId); const firstItem = items.find(i => i.productId === productId); if(!firstItem) return;
        if (product?.bulkDiscount && product.bulkDiscount.count > 1 && product.bulkDiscount.total > 0) {
-          const sets = Math.floor(qty / product.bulkDiscount.count); 
-          const remainder = qty % product.bulkDiscount.count;        
-          discounted += (sets * product.bulkDiscount.total) + (remainder * firstItem.price);
-       } else { 
-          discounted += items.filter(i => i.productId === productId).reduce((s, i) => s + (i.price * i.quantity), 0); 
+          const sets = Math.floor(qty / product.bulkDiscount.count); const remainder = qty % product.bulkDiscount.count;        
+          const original = items.filter(i => i.productId === productId).reduce((s, i) => s + (i.price * i.quantity), 0);
+          const newTotal = (sets * product.bulkDiscount.total) + (remainder * firstItem.price);
+          discounted += (original - newTotal);
        }
     });
+    return discounted; 
+  });
 
-    const bulkDiscountAmount = original - discounted; // 多件優惠省下的錢
-
-    // 2. 🧠 計算「VIP 階級全館折扣」 (動態計算)
+  // 2. 專門算「VIP 全館折扣」
+  cartVipDiscount = computed(() => {
+    const items = this.cart(); let original = 0;
+    items.forEach(item => { original += item.price * item.quantity; });
+    const bulkAmount = this.cartBulkDiscount();
+    
     const user = this.currentUser();
     const vipDiscounts = this.settings().vipDiscounts || { v1: 0.95, v2: 0.9, v3: 0.85 };
     const userTier = user?.tier || 'general';
     
-    let vipDiscountAmount = 0;
-    
-    // 排除一般會員與批發客 (批發客已經有專屬單價，不參與全館打折)
     if (userTier !== 'general' && userTier !== 'wholesale') {
         const discountRate = vipDiscounts[userTier] || 1;
-        // 💡 核心邏輯：以「扣除多件優惠後的剩餘總額」再來打 VIP 折扣，保護利潤！
-        const amountAfterBulk = original - bulkDiscountAmount;
+        const amountAfterBulk = original - bulkAmount;
         const amountAfterVip = Math.round(amountAfterBulk * discountRate);
-        vipDiscountAmount = amountAfterBulk - amountAfterVip; // 算出 VIP 幫客人省下多少錢
+        return amountAfterBulk - amountAfterVip;
     }
-
-    // 最終回傳：多件優惠省下的錢 + VIP 專屬省下的錢
-    return bulkDiscountAmount + vipDiscountAmount; 
+    return 0;
   });
 
-  cartTotal = computed(() => this.cart().reduce((sum, item) => sum + (item.price * item.quantity), 0) - this.cartDiscount());
+  // 3. 總折扣 (維持原本變數名稱，確保系統不報錯)
+  cartDiscount = computed(() => this.cartBulkDiscount() + this.cartVipDiscount());
 
+  cartTotal = computed(() => this.cart().reduce((sum, item) => sum + (item.price * item.quantity), 0) - this.cartDiscount());  
   // 🧠 真實採購平均成本大腦
   averageActualCostMap = computed(() => {
     const costData: Record<string, { totalCost: number, totalQty: number }> = {};
@@ -286,7 +275,7 @@ addToCart(product: Product, option: string, quantity: number) {
     const user = this.currentUser(); 
     let finalPrice = product.priceGeneral;
     let parsedOption = option;
-    let localCostToUse = product.localPrice; // 🔥 新增：預設使用母體當地原價
+    let localCostToUse = product.localPrice; // 🔥 預設使用母體當地原價
 
     if (option.includes('=')) {
        const parts = option.split('=');
@@ -295,7 +284,7 @@ addToCart(product: Product, option: string, quantity: number) {
        const optGenPrice = parseInt(parts[1]?.trim(), 10) || product.priceGeneral;
        localCostToUse = parseInt(parts[3]?.trim(), 10) || product.localPrice;
 
-       // 🔥 這裡只處理「批發客」的獨立價格，VIP 全館打折交給結帳區動態計算
+       // 🔥 這裡只處理「批發客」的獨立價格，一般 VIP 的全館打折交給結帳區動態計算
        if (user?.tier === 'wholesale') {
           finalPrice = product.priceWholesale > 0 ? product.priceWholesale : optGenPrice;
        } else {
@@ -318,8 +307,8 @@ addToCart(product: Product, option: string, quantity: number) {
       if (exist) return current.map(i => i === exist ? { ...i, quantity: i.quantity + quantity, price: finalPrice, unitCost: currentCost } : i);
       return [...current, { productId: product.id, productName: product.name, productImage: product.image, option: parsedOption, price: finalPrice, quantity, isPreorder: product.isPreorder, unitCost: currentCost }];
     });
-  }  
-  
+  }
+    
   async createOrder(
     paymentInfo: any, shippingInfo: any, usedCredits: number, 
     paymentMethod: any, shippingMethod: any, shippingFee: number, 

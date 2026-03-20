@@ -221,10 +221,17 @@ import { StoreService, CartItem } from '../services/store.service';
                   <span class="font-bold">NT$ {{ selectedOriginalSubtotal() }}</span>
                </div>
                
-               @if(storeService.cartDiscount() > 0) {
+               @if(storeService.cartBulkDiscount() > 0) {
                  <div class="flex justify-between text-sm text-red-500 font-bold">
                     <span>🔥 任選多入優惠折扣</span>
-                    <span>- NT$ {{ storeService.cartDiscount() }}</span>
+                    <span>- NT$ {{ storeService.cartBulkDiscount() | number }}</span>
+                 </div>
+               }
+
+               @if(storeService.cartVipDiscount() > 0) {
+                 <div class="flex justify-between text-sm text-purple-600 font-bold">
+                    <span>✨ VIP 全館專屬折扣</span>
+                    <span>- NT$ {{ storeService.cartVipDiscount() | number }}</span>
                  </div>
                }
 
@@ -407,7 +414,7 @@ export class CartComponent {
   // 1. 商品小計 (已扣除多入組優惠)
   selectedSubtotal = computed(() => Math.max(0, this.selectedOriginalSubtotal() - this.storeService.cartDiscount()));
 
-  // 🎟️ 2. 計算折扣碼折抵金額 (基於扣完多入組後的小計)
+  // 🎟️ 2. 計算折扣碼折抵金額 (基於扣完多件與VIP後的小計)
   appliedPromoDiscount = computed(() => {
      const promo = this.appliedPromo();
      if (!promo) return 0;
@@ -418,9 +425,10 @@ export class CartComponent {
      if (promo.type === 'amount') {
         return Math.min(subtotal, promo.value); // 最多折到底，不能變負數
      } else if (promo.type === 'percent') {
-        // 例如 value 是 88，代表 88折，折抵金額 = 原價 * 0.12 (只取整數)
-        const discountRate = (100 - promo.value) / 100;
-        return Math.floor(subtotal * discountRate);
+        // 如果 value 是 88，代表打 88 折。折抵金額 = 原價 - (原價 * 0.88)
+        const discountRate = promo.value / 100;
+        const finalPrice = Math.round(subtotal * discountRate);
+        return subtotal - finalPrice;
      }
      return 0;
   });
