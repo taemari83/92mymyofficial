@@ -251,7 +251,7 @@ export class MemberAreaComponent {
   // 🚀 核心功能：一鍵自動帶入訂單編號並導向 LINE 客服
   contactLine(orderId: string) {
     // 預先幫客人打好的訊息範本，讓他們不用自己手打編號
-    const message = `老闆娘你好，我的訂單編號是：#${orderId}\n我想詢問關於這筆訂單的問題：\n`;
+    const message = `訂單編號：#${orderId}\n我想詢問關於這筆訂單的問題：\n`;
     
     // 把文字轉換為網址可以讀懂的格式
     const encodedMessage = encodeURIComponent(message);

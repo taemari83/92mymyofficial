@@ -186,15 +186,47 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <div (click)="goToOrders('pending')" class="bg-white p-6 rounded-[1.5rem] border border-gray-200 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-gray-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl mb-1 group-hover:bg-gray-200">⚠️</div><div class="text-2xl md:text-3xl font-black text-gray-500">{{ dashboardMetrics().unpaid }}</div><div class="text-sm font-bold text-gray-600 whitespace-nowrap">未付款</div></div>
               <div (click)="goToOrders('refund')" class="bg-white p-6 rounded-[1.5rem] border border-red-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-red-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xl mb-1 group-hover:bg-red-200">⚡️</div><div class="text-2xl md:text-3xl font-black text-red-500">{{ dashboardMetrics().processing }}</div><div class="text-sm font-bold text-red-800 whitespace-nowrap">待處理 / 退款</div></div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
-               <div class="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-50 w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full mb-6">
+               <div class="lg:col-span-2 space-y-4">
+                  <h3 class="text-lg font-bold text-gray-700 px-2">⚡️ 快捷操作</h3>
+                  <div class="grid grid-cols-3 gap-4 h-full">
+                     <button (click)="openProductForm()" class="bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-200 p-4 rounded-2xl transition-all text-center group shadow-sm flex flex-col items-center justify-center h-32"><div class="w-10 h-10 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-transform">+</div><div class="font-bold text-gray-800 text-sm">新增商品</div></button>
+                     <button (click)="activeTab.set('inventory')" class="bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-200 p-4 rounded-2xl transition-all text-center group shadow-sm flex flex-col items-center justify-center h-32"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-transform">🏭</div><div class="font-bold text-gray-800 text-sm">庫存查詢</div></button>
+                     <button (click)="activeTab.set('settings'); openPromoForm()" class="bg-white hover:bg-pink-50 border border-gray-200 hover:border-pink-200 p-4 rounded-2xl transition-all text-center group shadow-sm flex flex-col items-center justify-center h-32"><div class="w-10 h-10 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-transform">🎟️</div><div class="font-bold text-gray-800 text-sm">折扣碼設定</div></button>
+                  </div>
+               </div>
+
+               <div class="lg:col-span-1 space-y-4">
+                  <h3 class="text-lg font-bold text-gray-700 px-2">🚨 系統通知</h3>
+                  @if(lowStockAlerts().length > 0) {
+                     <div class="bg-red-50/80 rounded-2xl p-4 border border-red-100 shadow-sm relative overflow-hidden h-32 flex flex-col justify-center animate-fade-in">
+                        <div class="absolute -right-2 -top-2 text-6xl opacity-10 pointer-events-none">🚨</div>
+                        <h3 class="text-red-800 font-bold text-base mb-2 flex items-center gap-2 relative z-10">
+                           現貨告急 
+                           <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{{ lowStockAlerts().length }}</span>
+                        </h3>
+                        <button (click)="showProcurementModal.set(true); procureRange.set('all');" class="w-full mt-2 py-2 bg-red-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-red-700 transition-colors active:scale-95 relative z-10 flex justify-center items-center gap-1">
+                           <span>📦</span> 查看叫貨單
+                        </button>
+                     </div>
+                  } @else {
+                     <div class="bg-green-50/80 rounded-2xl p-4 border border-green-100 shadow-sm flex flex-col items-center justify-center h-32">
+                        <div class="text-3xl mb-1">✅</div>
+                        <div class="text-green-800 font-bold text-sm">現貨庫存充足</div>
+                     </div>
+                  }
+               </div>
+            </div>
+
+            <div class="grid grid-cols-1 w-full">
+               <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-50 w-full">
                  <div class="flex items-center justify-between mb-6">
-                    <h3 class="font-bold text-xl text-gray-800 whitespace-nowrap">熱銷商品排行</h3>
+                    <h3 class="font-bold text-xl text-gray-800 whitespace-nowrap">🔥 熱銷商品排行</h3>
                     <button (click)="activeTab.set('accounting')" class="text-xs text-brand-600 hover:underline whitespace-nowrap">查看完整報表</button>
                  </div>
                  <div class="space-y-4">
                     @for (p of topProducts(); track p.id; let i = $index) {
-                       <div class="flex items-center gap-4 p-3 hover:bg-brand-50/50 rounded-2xl transition-colors group">
+                       <div class="flex items-center gap-4 p-3 hover:bg-brand-50/50 rounded-2xl transition-colors group cursor-pointer" (click)="editProduct(p)">
                           <div class="w-10 flex-shrink-0 flex items-center justify-center">@if(i === 0) { <span class="text-3xl">🥇</span> }@else if(i === 1) { <span class="text-3xl">🥈</span> }@else if(i === 2) { <span class="text-3xl">🥉</span> }@else { <span class="text-xl font-bold text-gray-300 font-mono italic">#{{ i + 1 }}</span> }</div>
                           <div class="w-14 h-14 rounded-xl bg-gray-100 overflow-hidden shadow-sm border border-gray-100 relative shrink-0"><img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-cover"></div>
                           <div class="flex-1 min-w-0"><h4 class="font-bold text-gray-800 truncate group-hover:text-brand-900">{{ p.name }}</h4><div class="flex gap-2 text-xs mt-0.5"><span class="text-gray-400 whitespace-nowrap">{{ p.category }}</span></div></div>
@@ -203,43 +235,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     }
                  </div>
                </div>
-               <div class="space-y-6 w-full">
-                  <h3 class="text-lg font-bold text-gray-700 px-2">快捷操作</h3>
-                  <div class="grid grid-cols-2 gap-4">
-                     <button (click)="openProductForm()" class="bg-white hover:bg-brand-50 border border-gray-200 hover:border-brand-200 p-4 rounded-2xl transition-all text-center group shadow-sm flex flex-col items-center justify-center h-32"><div class="w-10 h-10 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-transform">+</div><div class="font-bold text-gray-800 text-sm">新增商品</div></button>
-                     <button (click)="activeTab.set('inventory')" class="bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-200 p-4 rounded-2xl transition-all text-center group shadow-sm flex flex-col items-center justify-center h-32"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-transform">🏭</div><div class="font-bold text-gray-800 text-sm">庫存查詢</div></button>
-                  </div>
-               </div>
-               @if(lowStockAlerts().length > 0) {
-                     <div class="mt-2 bg-red-50/80 rounded-2xl p-4 border border-red-100 shadow-sm relative overflow-hidden animate-fade-in">
-                        <div class="absolute -right-2 -top-2 text-6xl opacity-10 pointer-events-none">🚨</div>
-                        <h3 class="text-red-800 font-bold text-base mb-3 flex items-center gap-2 relative z-10">
-                           <span>🚨</span> 現貨告急預警 
-                           <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{{ lowStockAlerts().length }}</span>
-                        </h3>
-                        <div class="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1 relative z-10">
-                           @for(p of lowStockAlerts(); track p.id) {
-                              <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-red-50 shadow-sm cursor-pointer hover:border-red-300 transition-colors" (click)="editProduct(p)">
-                                 <div class="flex items-center gap-2 min-w-0">
-                                    <img [src]="p.image" (error)="handleImageError($event)" class="w-8 h-8 rounded-lg object-cover bg-gray-100 shrink-0 border border-gray-100">
-                                    <div class="truncate">
-                                       <div class="text-xs font-bold text-gray-800 truncate" [title]="p.name">{{ p.name }}</div>
-                                       <div class="text-[9px] text-gray-400 font-mono mt-0.5">{{ p.code }}</div>
-                                    </div>
-                                 </div>
-                                 <div class="shrink-0 flex flex-col items-end pl-2">
-                                    <span class="text-[11px] font-black px-1.5 py-0.5 rounded" [class.bg-red-100]="p.stock > 0" [class.text-red-600]="p.stock > 0" [class.bg-gray-100]="p.stock <= 0" [class.text-gray-500]="p.stock <= 0">
-                                       {{ p.stock <= 0 ? '已售完' : '剩 ' + p.stock + ' 件' }}
-                                    </span>
-                                 </div>
-                              </div>
-                           }
-                        </div>
-                        <button (click)="showProcurementModal.set(true); procureRange.set('all');" class="w-full mt-3 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-red-700 transition-colors active:scale-95 relative z-10 flex justify-center items-center gap-1">
-                           <span>📦</span> 開啟叫貨總表
-                        </button>
-                     </div>
-                  }
             </div>
           </div>
         }
@@ -409,13 +404,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
               
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-                 <div>
-                    <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap flex items-end gap-2">
-                       商品管理 
-                       <span class="text-sm font-bold text-gray-400 mb-0.5">{{ store.products().length }} 件商品</span>
-                    </h3>
-                    <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">管理商品、庫存與定價</p>
-                 </div> 
+                 <div class="text-sm font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-lg w-fit mt-1">共 {{ store.products().length }} 件商品</div>
                  <div class="hidden sm:flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner">
                     <button (click)="productViewMode.set('list')" title="條列" [class.bg-white]="productViewMode() === 'list'" [class.shadow-sm]="productViewMode() === 'list'" [class.text-brand-900]="productViewMode() === 'list'" [class.text-gray-400]="productViewMode() !== 'list'" class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center"><span class="text-lg">≣</span></button>
                     <button (click)="productViewMode.set('grid')" title="宮格" [class.bg-white]="productViewMode() === 'grid'" [class.shadow-sm]="productViewMode() === 'grid'" [class.text-brand-900]="productViewMode() === 'grid'" [class.text-gray-400]="productViewMode() !== 'grid'" class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center"><span class="text-lg">⊞</span></button>
@@ -552,10 +541,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         @if (activeTab() === 'customers') { 
           <div class="space-y-6 w-full">
               <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4 w-full">
-                 <div class="min-w-[150px]">
-                    <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">客戶管理</h3>
-                    <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">查看會員資料與消費紀錄</p>
-                 </div>
                  <div class="flex flex-col w-full lg:w-auto gap-3">
                     <div class="flex flex-col w-full xl:w-auto gap-3 mt-4 xl:mt-0">
                     <div class="flex flex-col xl:flex-row items-start xl:items-center justify-end gap-3 w-full">
@@ -585,47 +570,49 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="relative w-full lg:w-80"><input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span></div>
                  </div>
               </div>
-              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
-                 <div class="overflow-x-auto w-full custom-scrollbar">
-                   <table class="w-full text-sm text-left whitespace-nowrap block md:table">
-                      <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 hidden md:table-header-group">
-                        <tr>
-                          <th class="p-4 sticky left-0 z-20 bg-gray-50 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">
-                             <div class="flex items-center gap-3">
-                                <input type="checkbox" (change)="toggleAllUsers($event)" class="w-4 h-4 rounded text-blue-600 cursor-pointer">
-                                <span>會員編號 / Google UID</span>
-                             </div>
-                          </th>
-                          <th class="p-4">會員資訊</th><th class="p-4">等級</th><th class="p-4 text-right">累積消費</th><th class="p-4 text-right">購物金</th><th class="p-4 text-right">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-200">
-                         @for(u of paginatedUsers(); track u.id) {
-                            <tr class="hover:bg-[#F0F7FF] transition-colors group flex flex-col md:table-row border border-gray-200 md:border-none rounded-2xl md:rounded-none mb-4 md:mb-0 bg-white md:even:bg-[#F8FAFC] shadow-sm md:shadow-none overflow-hidden">
-                               <td class="p-4 bg-gray-50/50 md:bg-white group-even:md:bg-[#F8FAFC] group-hover:md:bg-[#F0F7FF] md:sticky md:left-0 z-10 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
-                                  <div class="flex items-center gap-3">
-                                     <input type="checkbox" [checked]="selectedCustomerIds().includes(u.id)" (change)="toggleUserSelection(u.id)" class="w-4 h-4 rounded text-blue-600 cursor-pointer shrink-0">
-                                     <div class="flex flex-col min-w-0">
-                                        <span class="text-sm font-bold text-brand-900 font-mono tracking-wide truncate">{{ formatMemberNo(u) }}</span>
-                                        <div class="flex items-center gap-1 mt-1 cursor-pointer" title="點擊全選複製 UID">
-                                           <span class="text-[10px] text-gray-400 font-mono">UID:</span>
-                                           <span class="text-[10px] text-gray-500 font-mono select-all hover:text-brand-900 truncate">{{ u.id }}</span>
-                                        </div>
-                                     </div>
-                                  </div>
-                               </td>
-                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
-                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
-                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-900 md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">累積消費</span><div class="text-right">NT$ {{ calculateUserTotalSpend(u.id) | number }}</div></td>
-                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 text-brand-600 font-bold md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">購物金</span><div class="text-right">{{ u.credits }}</div></td>
-                               <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-600 md:text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-4 py-2 md:px-3 md:py-1 rounded-lg transition-colors bg-white md:bg-transparent shadow-sm md:shadow-none">編輯</button></td>
-                            </tr>
-                         } @empty {
-                            <tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold">找不到相符的會員資料</td></tr>
-                         }
-                      </tbody>
-                   </table>
-                 </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full mt-2">
+                @for(u of paginatedUsers(); track u.id) {
+                   <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-all relative group" [class.border-blue-300]="selectedCustomerIds().includes(u.id)" [class.bg-blue-50]="selectedCustomerIds().includes(u.id)">
+                      <div class="absolute top-4 right-4 z-10">
+                         <input type="checkbox" [checked]="selectedCustomerIds().includes(u.id)" (change)="toggleUserSelection(u.id)" class="w-5 h-5 rounded text-blue-600 cursor-pointer shadow-sm">
+                      </div>
+                      
+                      <div class="flex items-center gap-4 border-b border-gray-50 pb-4 mb-4">
+                         <div class="w-12 h-12 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold shrink-0">
+                            {{ u.name?.charAt(0) || 'U' }}
+                         </div>
+                         <div class="flex-1 min-w-0 pr-6">
+                            <h4 class="font-bold text-gray-800 text-lg truncate">{{ u.name }}</h4>
+                            <div class="text-[10px] text-gray-400 font-mono tracking-wider cursor-pointer hover:text-brand-600" title="點擊可選取複製">{{ formatMemberNo(u) }}</div>
+                            <div class="mt-1 flex gap-1">
+                               @if(u.tier === 'vip') { <span class="bg-purple-100 text-purple-600 px-2 py-0.5 rounded text-[10px] font-bold">VIP</span> }
+                               @else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold">批發</span> }
+                               @else { <span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-bold">一般</span> }
+                            </div>
+                         </div>
+                      </div>
+                      
+                      <div class="grid grid-cols-2 gap-3 mb-4">
+                         <div class="bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
+                            <div class="text-[10px] text-gray-400 font-bold mb-1">累積消費</div>
+                            <div class="font-black text-brand-900 text-sm">NT$ {{ calculateUserTotalSpend(u.id) | number }}</div>
+                         </div>
+                         <div class="bg-gray-50 p-2 rounded-xl text-center border border-gray-100">
+                            <div class="text-[10px] text-gray-400 font-bold mb-1">購物金餘額</div>
+                            <div class="font-black text-brand-600 text-sm">{{ u.credits }}</div>
+                         </div>
+                      </div>
+                      
+                      <div class="text-xs text-gray-500 flex items-center gap-2 mb-4 truncate">
+                         <span>📞 {{ u.phone || '未提供電話' }}</span>
+                      </div>
+                      
+                      <button (click)="openUserModal(u)" class="w-full py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:text-brand-900 transition-colors shadow-sm">編輯資料</button>
+                   </div>
+                } @empty {
+                   <div class="col-span-full text-center py-12 text-gray-400 font-bold bg-white rounded-2xl border border-gray-100 shadow-sm">找不到相符的會員資料</div>
+                }
+              </div>
                  @if(customerPageSize() !== 'all' && filteredUsers().length > toNumber(customerPageSize())) {
                     <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-2"><button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">上一頁</button><span class="px-3 py-1 bg-white border border-gray-200 rounded text-sm font-bold text-brand-900">{{ customerPage() }}</span><button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">下一頁</button></div>
                  }
@@ -780,10 +767,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         @if (activeTab() === 'purchases') {
           <div class="space-y-6 w-full animate-fade-in">
               <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4 w-full">
-                 <div class="min-w-[150px]">
-                    <h3 class="text-2xl font-bold text-brand-900 whitespace-nowrap">🧾 採購總帳</h3>
-                    <p class="text-sm text-gray-400 mt-1 whitespace-nowrap">審核買手回報的單據與實際支出</p>
-                 </div>
                  <div class="flex items-center gap-2">
                     <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出</button>
                     <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步</button>
@@ -1114,6 +1097,19 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <textarea formControlName="optionsStr" rows="4" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar leading-relaxed" placeholder="例如：&#10;燕麥色[圖2]=2580=2500=85000&#10;海軍藍[圖3]=2580=2500=85000&#10;單一顏色不換圖=2580"></textarea> 
                   </div>
 
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4">
+                        <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-blue-200 pb-2">
+                          <h4 class="font-bold text-blue-800 text-sm flex items-center gap-1"><span>🤝</span> 合夥人分潤模式設定</h4>
+                        </div>
+                        <div class="col-span-1 sm:col-span-2">
+                          <label class="block text-xs font-bold text-blue-600 mb-1">進貨來源與分潤比例</label>
+                          <select formControlName="shareMode" class="w-full p-3 border border-blue-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm font-bold bg-white text-blue-900 cursor-pointer shadow-sm">
+                            <option value="親帶">✈️ 親帶 (藝辰25% / 子婷25% / 小芸25% / 公司25%)</option>
+                            <option value="批發">📦 批發 (藝辰0% / 子婷40% / 小芸40% / 公司20%)</option>
+                          </select>
+                        </div>
+                      </div>
+
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                     <div> 
                       <label class="block text-xs font-bold text-gray-500 mb-1">主分類</label> 
@@ -1169,19 +1165,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> </div> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl font-mono bg-gray-50 text-gray-500"> </div> 
                       </div> 
-
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4">
-                        <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-blue-200 pb-2">
-                          <h4 class="font-bold text-blue-800 text-sm flex items-center gap-1"><span>🤝</span> 合夥人分潤模式設定</h4>
-                        </div>
-                        <div class="col-span-1 sm:col-span-2">
-                          <label class="block text-xs font-bold text-blue-600 mb-1">進貨來源與分潤比例</label>
-                          <select formControlName="shareMode" class="w-full p-3 border border-blue-200 rounded-xl focus:outline-none focus:border-blue-400 text-sm font-bold bg-white text-blue-900 cursor-pointer shadow-sm">
-                            <option value="親帶">✈️ 親帶 (藝辰25% / 子婷25% / 小芸25% / 公司25%)</option>
-                            <option value="批發">📦 批發 (藝辰0% / 子婷40% / 小芸40% / 公司20%)</option>
-                          </select>
-                        </div>
-                      </div>
 
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-200">
                         <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-red-200 pb-2">
