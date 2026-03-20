@@ -584,10 +584,20 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       
                       <div class="flex items-center gap-4 border-b border-gray-50 pb-4 mb-4">
                          <div class="w-12 h-12 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold shrink-0">
-                            {{ u.name?.charAt(0) || 'U' }}@if (activeTab() === 'customers') { 
+                            {{ u.name?.charAt(0) || 'U' }}
+          @if (activeTab() === 'customers') { 
           <div class="space-y-6 w-full">
               <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full">
                 
+                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                  
+                  <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+                     <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+                        <span class="text-xs text-gray-400 font-bold whitespace-nowrap">註冊:</span>
+                        <inpu@if (activeTab() === 'customers') { 
+          <div class="space-y-6 w-full">
+              
+              <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full">
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                   
                   <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
@@ -663,9 +673,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
               @if(customerPageSize() !== 'all' && filteredUsers().length > toNumber(customerPageSize())) {
                  <div class="p-4 flex justify-end gap-2">
-                    <button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">上一頁</button>
-                    <span class="px-3 py-1 bg-white border border-gray-200 rounded text-sm font-bold text-brand-900">{{ customerPage() }}</span>
-                    <button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50">下一頁</button>
+                    <button (click)="customerPage.set(customerPage() - 1)" [disabled]="customerPage() === 1" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50 shadow-sm">上一頁</button>
+                    <span class="px-3 py-1 bg-white border border-gray-200 rounded text-sm font-bold text-brand-900 shadow-sm">{{ customerPage() }}</span>
+                    <button (click)="customerPage.set(customerPage() + 1)" [disabled]="customerPage() * toNumber(customerPageSize()) >= filteredUsers().length" class="px-3 py-1 bg-white border border-gray-200 rounded text-sm disabled:opacity-50 hover:bg-gray-50 shadow-sm">下一頁</button>
                  </div>
               }
           </div>
