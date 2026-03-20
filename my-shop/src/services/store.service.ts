@@ -57,6 +57,7 @@ export interface Order {
   status: OrderStatus; paymentMethod: 'cash' | 'bank_transfer' | 'cod'; shippingMethod: 'meetup' | 'myship' | 'family' | 'delivery'; 
   createdAt: number; shippingLink?: string;
   paymentName?: string; paymentTime?: string; paymentLast5?: string;
+  messages?: { sender: 'user' | 'admin', text: string, time: number }[];
 }
 
 export interface StoreSettings {
@@ -130,6 +131,18 @@ async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), 
   async updateOrderStatus(id: string, status: OrderStatus, extra: any = {}) { await updateDoc(doc(this.firestore, 'orders', id), { status, ...extra }); }
   async deleteOrder(o: Order) { await deleteDoc(doc(this.firestore, 'orders', o.id)); }
 
+  // 👇 貼上這段：處理訂單留言的功能
+  async addOrderMessage(orderId: string, sender: 'user' | 'admin', text: string) {
+    const orderRef = doc(this.firestore, 'orders', orderId);
+    const snap = await getDoc(orderRef);
+    if (snap.exists()) {
+       const order = snap.data() as Order;
+       const msgs = order.messages || [];
+       msgs.push({ sender, text, time: Date.now() });
+       await updateDoc(orderRef, { messages: msgs });
+    }
+  }
+  
   // 🧾 新增：寫入採購單，並自動同步商品的「已買到」數量
   async addPurchaseBatch(data: any) { 
     const docRef = await addDoc(collection(this.firestore, 'purchases'), data);

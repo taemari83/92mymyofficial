@@ -1374,6 +1374,27 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     }
                  </div>
 
+                 <div class="mb-6 pt-4 border-t border-gray-200">
+                    <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">💬 訂單客服通訊 (買賣雙方可見)</div>
+                    <div class="bg-gray-50 rounded-xl p-4 h-48 overflow-y-auto custom-scrollbar flex flex-col gap-3 mb-3 border border-gray-100 shadow-inner">
+                       @for(msg of o.messages || []; track msg.time) {
+                          <div class="max-w-[85%] p-2.5 rounded-2xl text-sm" 
+                               [class.bg-brand-100]="msg.sender === 'admin'" [class.text-brand-900]="msg.sender === 'admin'" [class.self-end]="msg.sender === 'admin'" [class.rounded-tr-sm]="msg.sender === 'admin'"
+                               [class.bg-white]="msg.sender === 'user'" [class.text-gray-700]="msg.sender === 'user'" [class.border]="msg.sender === 'user'" [class.border-gray-200]="msg.sender === 'user'" [class.self-start]="msg.sender === 'user'" [class.rounded-tl-sm]="msg.sender === 'user'">
+                             <div class="font-bold text-[10px] mb-1 opacity-50">{{ msg.sender === 'admin' ? '賣家 (你)' : o.userName }}</div>
+                             <div class="leading-relaxed">{{ msg.text }}</div>
+                             <div class="text-[9px] mt-1.5 opacity-40 text-right">{{ msg.time | date:'MM/dd HH:mm' }}</div>
+                          </div>
+                       } @empty {
+                          <div class="text-center text-gray-400 text-xs my-auto font-bold">目前沒有任何通訊紀錄，可在此發送訊息給客人。</div>
+                       }
+                    </div>
+                    <div class="flex gap-2">
+                       <input type="text" [ngModel]="orderMessageInput()" (ngModelChange)="orderMessageInput.set($event)" placeholder="輸入回覆訊息..." class="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-brand-400 shadow-sm transition-colors">
+                       <button (click)="sendOrderMessage(o)" class="px-6 py-2 bg-brand-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-transform active:scale-95 shadow-md flex items-center gap-1"><span>📤</span> 傳送</button>
+                    </div>
+                 </div>
+          
                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
                    <button (click)="store.notifyArrival(o)" class="p-4 rounded-2xl bg-purple-50 hover:bg-purple-100 border border-purple-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed">
                       <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-purple-600">🚛</div>
@@ -2627,6 +2648,21 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   actionModalOrder = signal<Order | null>(null); cancelConfirmState = signal(false);
   isSplittingOrder = signal(false); // 👈 新增：控制是否開啟拆單模式
   splitItemIndices = signal<Set<number>>(new Set()); // 👈 新增：記錄選中了哪些商品
+
+  // 👇 貼上這段：後台客服專用狀態與發送邏輯
+  orderMessageInput = signal('');
+  async sendOrderMessage(o: Order) {
+     const text = this.orderMessageInput().trim();
+     if (!text) return;
+     
+     // 1. 寫入資料庫
+     await this.store.addOrderMessage(o.id, 'admin', text);
+     
+     // 2. 畫面即時更新與清空輸入框
+     this.orderMessageInput.set('');
+     const updatedMessages = [...(o.messages || []), { sender: 'admin' as const, text, time: Date.now() }];
+     this.actionModalOrder.set({ ...o, messages: updatedMessages });
+  }
 
   orderTabs = [ 
     { id: 'all', label: '全部' }, 
