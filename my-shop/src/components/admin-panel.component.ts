@@ -955,7 +955,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          <div class="flex-1">
                            <div class="flex items-center gap-2 mb-1">
                              <span class="font-black text-xl text-brand-900 tracking-wider">{{ promo.code }}</span>
-                             @if(promo.isActive) { <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200">🟢 啟用中</span> }
+                             @if(promo.active) { <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200">🟢 啟用中</span> }
                              @else { <span class="bg-gray-200 text-gray-500 px-2 py-0.5 rounded text-[10px] font-bold">停用中</span> }
                            </div>
                            <div class="text-xs text-gray-500 flex flex-wrap gap-x-3 gap-y-1">
@@ -2777,12 +2777,12 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
     this.promoForm = this.fb.group({
       code: ['', Validators.required],
-      type: ['fixed'],
+      type: ['amount'], // 👈 改成 amount (對應 HTML 裡的設定)
       value: [0, [Validators.required, Validators.min(1)]],
       minSpend: [0],
       usageLimit: [0],
       expiryDate: [''],
-      isActive: [true]
+      active: [true] // 👈 把 isActive 改成 active
     });
   } // 👈 constructor 的唯一結束大括號
 
@@ -3544,7 +3544,8 @@ submitProduct() {
       birthdayGiftGeneral: val.birthdayGiftGeneral, 
       birthdayGiftVip: val.birthdayGiftVip, 
       categoryCodes: currentSettings.categoryCodes, 
-      paymentMethods: { cash: val.enableCash, bankTransfer: val.enableBank, cod: val.enableCod }, 
+      promoCodes: currentSettings.promoCodes, // 👈 加上這一行，保護折扣碼不被洗掉！
+      paymentMethods: { cash: val.enableCash, bankTransfer: val.enableBank, cod: val.enableCod },
       shipping: { 
         freeThreshold: val.shipping.freeThreshold, 
         methods: { 
