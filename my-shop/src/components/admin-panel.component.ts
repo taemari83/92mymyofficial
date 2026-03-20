@@ -210,6 +210,36 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <button (click)="activeTab.set('inventory')" class="bg-white hover:bg-blue-50 border border-gray-200 hover:border-blue-200 p-4 rounded-2xl transition-all text-center group shadow-sm flex flex-col items-center justify-center h-32"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-transform">🏭</div><div class="font-bold text-gray-800 text-sm">庫存查詢</div></button>
                   </div>
                </div>
+               @if(lowStockAlerts().length > 0) {
+                     <div class="mt-2 bg-red-50/80 rounded-2xl p-4 border border-red-100 shadow-sm relative overflow-hidden animate-fade-in">
+                        <div class="absolute -right-2 -top-2 text-6xl opacity-10 pointer-events-none">🚨</div>
+                        <h3 class="text-red-800 font-bold text-base mb-3 flex items-center gap-2 relative z-10">
+                           <span>🚨</span> 現貨告急預警 
+                           <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{{ lowStockAlerts().length }}</span>
+                        </h3>
+                        <div class="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1 relative z-10">
+                           @for(p of lowStockAlerts(); track p.id) {
+                              <div class="flex items-center justify-between bg-white p-2 rounded-xl border border-red-50 shadow-sm cursor-pointer hover:border-red-300 transition-colors" (click)="editProduct(p)">
+                                 <div class="flex items-center gap-2 min-w-0">
+                                    <img [src]="p.image" (error)="handleImageError($event)" class="w-8 h-8 rounded-lg object-cover bg-gray-100 shrink-0 border border-gray-100">
+                                    <div class="truncate">
+                                       <div class="text-xs font-bold text-gray-800 truncate" [title]="p.name">{{ p.name }}</div>
+                                       <div class="text-[9px] text-gray-400 font-mono mt-0.5">{{ p.code }}</div>
+                                    </div>
+                                 </div>
+                                 <div class="shrink-0 flex flex-col items-end pl-2">
+                                    <span class="text-[11px] font-black px-1.5 py-0.5 rounded" [class.bg-red-100]="p.stock > 0" [class.text-red-600]="p.stock > 0" [class.bg-gray-100]="p.stock <= 0" [class.text-gray-500]="p.stock <= 0">
+                                       {{ p.stock <= 0 ? '已售完' : '剩 ' + p.stock + ' 件' }}
+                                    </span>
+                                 </div>
+                              </div>
+                           }
+                        </div>
+                        <button (click)="showProcurementModal.set(true); procureRange.set('all');" class="w-full mt-3 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-red-700 transition-colors active:scale-95 relative z-10 flex justify-center items-center gap-1">
+                           <span>📦</span> 開啟叫貨總表
+                        </button>
+                     </div>
+                  }
             </div>
           </div>
         }
@@ -2559,6 +2589,13 @@ if(p) {
   });
 
 pendingCount = computed(() => this.dashboardMetrics().toConfirm);
+
+// 🚨 第二關：庫存告急預警大腦 (非預購、有上架、且庫存小於 5 的商品)
+  lowStockAlerts = computed(() => {
+     return this.store.products()
+        .filter((p: Product) => !p.isPreorder && p.isListed && p.stock < 5)
+        .sort((a: Product, b: Product) => a.stock - b.stock); // 庫存越少排越前面
+  });
 
  // 🧠 核心升級：掃描全站真實訂單，算出每個商品的「真實總銷量」
   productSalesMap = computed(() => {
