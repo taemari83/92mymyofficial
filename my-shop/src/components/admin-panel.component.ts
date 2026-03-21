@@ -3681,12 +3681,17 @@ submitProduct() {
   }
   
   async submitAddWallet() {
-     if (this.addWalletForm.invalid) return;
-     const val = this.addWalletForm.value;
-     const newWallet = { id: 'w' + Date.now(), name: val.name, currency: val.currency.toUpperCase(), symbol: val.symbol, balance: Number(val.balance) };
-     await this.store.addWallet(newWallet);
-     alert(`✅ 成功新增帳戶：${val.name}`);
-     this.closeAddWalletModal();
+     if (this.addWalletForm.invalid) return alert('⚠️ 欄位填寫不完整');
+     try {
+         const val = this.addWalletForm.value;
+         const newWallet = { id: 'w' + Date.now(), name: val.name, currency: val.currency.toUpperCase(), symbol: val.symbol, balance: Number(val.balance) };
+         await this.store.addWallet(newWallet);
+         alert(`✅ 成功新增帳戶：${val.name}`);
+         this.closeAddWalletModal();
+     } catch (e: any) {
+         console.error(e);
+         alert('❌ 新增失敗，請檢查 Firebase Firestore 資料庫權限是否允許寫入 wallets！\n錯誤原因：' + e.message);
+     }
   }
 
   openWalletDetails(w: any) {
@@ -3732,10 +3737,16 @@ submitProduct() {
       if (!confirm(`⚠️ 警告：欲扣款金額大於目前餘額，是否繼續扣到變負數？`)) return;
     }
     const newBalance = this.walletAction() === 'add' ? wallet.balance + amount : wallet.balance - amount;
-    await this.store.updateWalletBalance(wallet.id, newBalance);
-    await this.store.addExpense({ id: 'TRX-' + Date.now(), date: new Date().toISOString().slice(0, 10), item: `資金帳戶調整 (${this.walletAction() === 'add' ? '儲值' : '扣款'})`, category: '儲值', amount: this.walletAction() === 'add' ? -amount : amount, currency: wallet.currency, payer: this.store.currentUser()?.name || '系統操作', note: note });
-    alert(`✅ 已成功${this.walletAction() === 'add' ? '儲值' : '扣款'} ${wallet.symbol} ${amount}`);
-    this.closeWalletModal();
+    
+    try {
+        await this.store.updateWalletBalance(wallet.id, newBalance);
+        await this.store.addExpense({ id: 'TRX-' + Date.now(), date: new Date().toISOString().slice(0, 10), item: `資金帳戶調整 (${this.walletAction() === 'add' ? '儲值' : '扣款'})`, category: '儲值', amount: this.walletAction() === 'add' ? -amount : amount, currency: wallet.currency, payer: this.store.currentUser()?.name || '系統操作', note: note });
+        alert(`✅ 已成功${this.walletAction() === 'add' ? '儲值' : '扣款'} ${wallet.symbol} ${amount}`);
+        this.closeWalletModal();
+    } catch (e: any) {
+        console.error(e);
+        alert('❌ 交易失敗，請檢查 Firebase 資料庫權限！\n錯誤原因：' + e.message);
+    }
   }
 
   openExpenseModal() {
@@ -3756,11 +3767,17 @@ submitProduct() {
     const val = this.expenseForm.value;
     const expAmount = Number(val.amount);
     const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
-    if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
-    else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
-    await this.store.addExpense({ id: 'EXP-' + Date.now(), date: val.date, item: val.item, category: val.category, amount: expAmount, currency: val.currency, payer: val.payer, note: val.note || '' });
-    alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
-    this.closeExpenseModal();
+    
+    try {
+        if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
+        else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
+        await this.store.addExpense({ id: 'EXP-' + Date.now(), date: val.date, item: val.item, category: val.category, amount: expAmount, currency: val.currency, payer: val.payer, note: val.note || '' });
+        alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
+        this.closeExpenseModal();
+    } catch (e: any) {
+        console.error(e);
+        alert('❌ 記帳失敗，請檢查 Firebase 資料庫權限！\n錯誤原因：' + e.message);
+    }
   }
 
   // ==========================================
