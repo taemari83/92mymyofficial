@@ -542,9 +542,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="space-y-6 w-full">
               <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full">
                 
-                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-                  
-                  <div class="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-4">
+                <div class="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-4">
                   
                   <div class="flex flex-wrap items-center gap-3 w-full 2xl:w-auto">
                      <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 w-full sm:w-auto">
