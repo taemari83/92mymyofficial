@@ -521,12 +521,25 @@ export class BuyerFormComponent {
 
     this.isUploading.set(true); // 鎖定畫面防止連點
     
+    // 🧹 終極防呆神器：清洗陣列，徹底消滅所有的 undefined！
+    const cleanItems = this.purchaseItems().map(item => ({
+      productId: item.productId || '',
+      productName: item.productName || '',
+      sku: item.sku || '',
+      category: item.category || '未分類', // 👈 就算前面漏了，這裡也會自動補上字串，不讓它變成 undefined
+      productImage: item.productImage || '',
+      purchaseUrl: item.purchaseUrl || '',
+      option: item.option || '單一規格',   // 👈 手動搜尋漏掉的規格，這裡也會自動補上
+      price: item.price || 0,
+      quantity: item.quantity || 1
+    }));
+
     const finalData = {
       ...this.formData,
-      items: this.purchaseItems(),
+      items: cleanItems, // 👈 替換成剛剛洗乾淨的無毒陣列
       estimatedLocalCost: this.getCalculatedTotal(), 
       totalLocalCost: Number(this.formData.actualTotalCost), 
-      receiptImages: this.uploadedImages(),
+      receiptImages: this.uploadedImages() || [], // 確保就算沒照片也是空陣列 []
       createdAt: new Date().getTime(),
       status: 'pending_sync'
     };
