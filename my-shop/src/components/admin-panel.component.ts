@@ -1522,6 +1522,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                    <button (click)="exportWalletDetailsCSV()" class="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg text-xs font-bold transition-colors border border-brand-200 shadow-sm flex items-center gap-1"><span>📥</span> 匯出</button>
+                   <button (click)="syncWalletDetailsToGoogleSheets()" class="px-3 py-1.5 bg-[#E5B5B5] text-white hover:bg-[#D4A0A0] rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步</button>
                    <button (click)="closeWalletDetails()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300 flex items-center justify-center">✕</button>
                 </div>
               </div>
@@ -3757,16 +3758,19 @@ submitProduct() {
      this.detailsWallet.set(null);
   }
 
-  exportWalletDetailsCSV() {
+  syncWalletDetailsToGoogleSheets() {
      const w = this.detailsWallet();
      if (!w) return;
      const headers = ['日期', '類別', '項目說明', '操作人', '收支類型', '金額', '備註'];
-     const rows = this.walletTransactions().map(t => {
+     const dataRows = this.walletTransactions().map(t => {
         const type = t.amount < 0 ? '收入 (+)' : '支出 (-)';
         const absAmount = Math.abs(t.amount);
-        return [t.date, t.category, t.item, t.payer, type, absAmount, t.note || ''];
+        return [t.date, t.category, t.item, t.payer, type, absAmount, t.note || '-'];
      });
-     this.downloadCSV(`${w.name}_資金流水帳_${new Date().toISOString().slice(0,10)}`, headers, rows);
+     
+     // 💡 動態建立分頁名稱，例如「日幣營運資金_流水帳」
+     const sheetName = `${w.name}_流水帳`;
+     this.pushToGoogleSheets(sheetName, [headers, ...dataRows]);
   }
 
   openWalletModal(wallet: any, action: 'add' | 'deduct') {
