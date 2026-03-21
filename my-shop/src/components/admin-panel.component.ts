@@ -922,7 +922,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          <th class="p-4">類別</th>
                          <th class="p-4 text-right">金額</th>
                          <th class="p-4 text-center">付款人</th>
-                         <th class="p-4">備註</th>
+                         <th class="p-4">收據/備註</th>
+                         <th class="p-4 text-center">操作</th>
                       </tr>
                    </thead>
                    <tbody class="block md:table-row-group divide-y-0 md:divide-y md:divide-gray-100">
@@ -946,15 +947,21 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                             </td>
                             <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none md:text-center">
                                <span class="md:hidden text-xs text-gray-400 font-bold">付款人</span>
-                               <span class="text-gray-600 font-bold">{{ e.payer }}</span>
+                               <span class="text-gray-600 text-xs font-bold">{{ e.payer }}</span>
                             </td>
-                            <td class="p-4 flex items-center justify-between md:table-cell">
-                               <span class="md:hidden text-xs text-gray-400 font-bold">備註</span>
-                               <span class="text-xs text-gray-400 truncate max-w-[150px] text-right md:text-left" [title]="e.note">{{ e.note || '-' }}</span>
+                            <td class="p-4 flex flex-col md:flex-row items-end md:items-center justify-between md:justify-start gap-2 md:table-cell border-b border-gray-50 md:border-none">
+                               <span class="md:hidden text-xs text-gray-400 font-bold mb-1">收據/備註</span>
+                               <div class="flex items-center gap-2">
+                                  @if(e.imageUrl) { <a [href]="e.imageUrl" target="_blank" title="查看收據照片" class="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 hover:border-brand-400 shrink-0"><img [src]="e.imageUrl" class="w-full h-full object-cover"></a> }
+                                  <span class="text-xs text-gray-400 truncate max-w-[150px] text-right md:text-left" [title]="e.note">{{ e.note || '-' }}</span>
+                               </div>
+                            </td>
+                            <td class="p-4 flex items-center justify-end md:table-cell md:text-center">
+                               <button (click)="editExpense(e)" class="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg text-xs font-bold transition-colors shadow-sm">編輯</button>
                             </td>
                          </tr>
                       } @empty {
-                         <tr><td colspan="6" class="p-8 text-center text-gray-400 font-bold block md:table-cell">目前無支出紀錄</td></tr>
+                         <tr><td colspan="7" class="p-8 text-center text-gray-400 font-bold block md:table-cell">目前無支出紀錄</td></tr>
                       }
                    </tbody>
                 </table>
@@ -1557,19 +1564,37 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closeExpenseModal()">
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()">
               <div class="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
-                <h3 class="text-xl font-bold text-gray-800">💸 新增營業支出</h3>
+                <h3 class="text-xl font-bold text-gray-800">{{ editingExpense() ? '📝 編輯營業支出' : '💸 新增營業支出' }}</h3>
                 <button (click)="closeExpenseModal()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300">✕</button>
               </div>
               <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
                 <form [formGroup]="expenseForm" class="space-y-4">
+                  
+                  <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
+                     <label class="block text-xs font-bold text-gray-500 mb-2">收據/證明照片 (選填)</label>
+                     <div class="flex items-center gap-3">
+                        @if(expenseForm.get('imageUrl')?.value) {
+                           <div class="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 relative group shrink-0">
+                              <img [src]="expenseForm.get('imageUrl')?.value" class="w-full h-full object-cover">
+                              <button type="button" (click)="expenseForm.patchValue({imageUrl: ''})" class="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">移除</button>
+                           </div>
+                        }
+                        <label class="flex-1 cursor-pointer px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-brand-300 transition-colors shadow-sm flex items-center justify-center gap-2">
+                           @if(isUploadingExpImage()) { <span class="animate-pulse">⏳ 傳送至 Google Drive 中...</span> }
+                           @else { <span>📸 點擊上傳收據相片</span> }
+                           <input type="file" accept="image/*" class="hidden" (change)="uploadExpenseImage($event)" [disabled]="isUploadingExpImage()">
+                        </label>
+                     </div>
+                  </div>
+
                   <div class="grid grid-cols-2 gap-4">
                     <div>
                       <label class="block text-xs font-bold text-gray-500 mb-1">日期</label>
                       <input type="date" formControlName="date" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold">
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-gray-500 mb-1">支出類別 (可選或自填)</label>
-                      <input type="text" list="expenseCatList" formControlName="category" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white" placeholder="選擇或手動輸入新類別">
+                      <label class="block text-xs font-bold text-gray-500 mb-1">支出類別</label>
+                      <input type="text" list="expenseCatList" formControlName="category" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white" placeholder="手填新類別">
                       <datalist id="expenseCatList">
                         <option value="包材費">包材費</option>
                         <option value="國際貨運費">國際貨運費</option>
@@ -1602,10 +1627,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <label class="block text-xs font-bold text-gray-500 mb-1">付款人</label>
                       <select formControlName="payer" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white cursor-pointer shadow-sm">
                         <option value="" disabled selected>請選擇付款人...</option>
-                        <option value="公司">公司公積金</option>
-                        <option value="藝辰">藝辰</option>
-                        <option value="子婷">子婷</option>
-                        <option value="小芸">小芸</option>
+                        <option value="公司">🏢 公司公積金</option>
+                        <option value="藝辰">👧🏻 藝辰</option>
+                        <option value="子婷">👩🏻 子婷</option>
+                        <option value="小芸">👱🏻‍♀️ 小芸</option>
                         <option value="其他">其他</option>
                       </select>
                     </div>
@@ -1617,8 +1642,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 </form>
               </div>
               <div class="p-6 border-t border-gray-100 bg-white shrink-0">
-                <button (click)="submitExpense()" [disabled]="expenseForm.invalid" class="w-full py-3 rounded-xl bg-brand-900 text-white font-bold text-lg hover:bg-black transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                  確認記帳並扣除餘額
+                <button (click)="submitExpense()" [disabled]="expenseForm.invalid || isUploadingExpImage()" class="w-full py-3 rounded-xl bg-brand-900 text-white font-bold text-lg hover:bg-black transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {{ editingExpense() ? '確認儲存修改' : '確認記帳並扣除餘額' }}
                 </button>
               </div>
             </div>
@@ -1816,6 +1841,8 @@ export class AdminPanelComponent {
 // 新增支出與錢包的表單及彈窗控制
   showExpenseModal = signal(false);
   expenseForm!: FormGroup;
+  editingExpense = signal<any>(null); // 👈 新增：紀錄目前正在編輯哪一筆
+  isUploadingExpImage = signal(false); // 👈 新增：上傳照片時的 Loading 狀態
   showWalletModal = signal(false);
   walletAction = signal<'add'|'deduct'>('add');
   activeWallet = signal<any>(null);
@@ -2773,7 +2800,8 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       amount: ['', [Validators.required, Validators.min(1)]],
       currency: [''],
       payer: ['', Validators.required],
-      note: ['']
+      note: [''],
+      imageUrl: [''] // 👈 這裡用來存 Google Drive 回傳的照片網址
     });
 
     this.walletForm = this.fb.group({
@@ -3775,33 +3803,90 @@ submitProduct() {
   }
 
   openExpenseModal() {
-    this.expenseForm.reset({
-      date: new Date().toISOString().slice(0, 10),
-      category: '包材費',
-      currency: 'TWD'
-    });
+    this.editingExpense.set(null);
+    this.expenseForm.reset({ date: new Date().toISOString().slice(0, 10), category: '包材費', currency: 'TWD', payer: '公司', imageUrl: '' });
+    this.showExpenseModal.set(true);
+  }
+
+  // 👇 新增：點擊編輯時觸發
+  editExpense(e: any) {
+    this.editingExpense.set(e);
+    this.expenseForm.patchValue(e);
     this.showExpenseModal.set(true);
   }
 
   closeExpenseModal() {
     this.showExpenseModal.set(false);
+    this.editingExpense.set(null);
+  }
+
+  // 👇 新增：上傳到 Google Drive 的專屬函式
+  async uploadExpenseImage(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+    this.isUploadingExpImage.set(true);
+
+    const DRIVE_GAS_URL = 'https://script.google.com/macros/s/AKfycbzytxzY1L85rbpkFUgRsQz0g1Djt_Z3hxzvrK8a__aXZ3DBJgOz43tZ6EGEDa_OEd3K-A/exec';
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e: any) => {
+        const base64Data = e.target.result.split(',')[1]; 
+        const payload = { filename: file.name, mimeType: file.type, base64: base64Data };
+
+        const response = await fetch(DRIVE_GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+          this.expenseForm.patchValue({ imageUrl: result.url });
+        } else {
+          alert('❌ Google Drive 上傳失敗：' + result.error);
+        }
+        
+        this.isUploadingExpImage.set(false);
+        event.target.value = '';
+      };
+      reader.readAsDataURL(file); 
+    } catch(e) { 
+      alert('❌ 網路錯誤，無法上傳照片'); 
+      this.isUploadingExpImage.set(false);
+      event.target.value = ''; 
+    } 
   }
 
   async submitExpense() {
     if (this.expenseForm.invalid) return;
     const val = this.expenseForm.value;
     const expAmount = Number(val.amount);
-    const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
     
     try {
-        if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
-        else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
-        await this.store.addExpense({ id: 'EXP-' + Date.now(), date: val.date, item: val.item, category: val.category, amount: expAmount, currency: val.currency, payer: val.payer, note: val.note || '' });
-        alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
+        const oldExp = this.editingExpense();
+        if (oldExp) {
+            // 🧠 智慧編輯邏輯：先把舊的錢退回舊錢包，再從新錢包扣除新金額！
+            const oldWallet = this.wallets().find((w:any) => w.currency === oldExp.currency);
+            if (oldWallet) await this.store.updateWalletBalance(oldWallet.id, oldWallet.balance + Number(oldExp.amount));
+            
+            const newWallet = this.wallets().find((w:any) => w.currency === val.currency);
+            if (newWallet) await this.store.updateWalletBalance(newWallet.id, newWallet.balance - expAmount);
+
+            await this.store.addExpense({ ...oldExp, ...val, amount: expAmount });
+            alert(`✅ 支出紀錄已完美修正，資金帳戶也已自動調整！`);
+        } else {
+            // 一般新增邏輯
+            const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
+            if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
+            else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
+            await this.store.addExpense({ id: 'EXP-' + Date.now(), date: val.date, item: val.item, category: val.category, amount: expAmount, currency: val.currency, payer: val.payer, note: val.note || '', imageUrl: val.imageUrl || '' });
+            alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
+        }
         this.closeExpenseModal();
     } catch (e: any) {
         console.error(e);
-        alert('❌ 記帳失敗，請檢查 Firebase 資料庫權限！\n錯誤原因：' + e.message);
+        alert('❌ 處理失敗，請檢查 Firebase 資料庫權限！\n錯誤原因：' + e.message);
     }
   }
 
