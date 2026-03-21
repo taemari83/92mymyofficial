@@ -257,13 +257,19 @@ import { StoreService, CartItem } from '../services/store.service';
                }
                
                @if(storeService.currentUser()?.credits) {
-                  <div class="flex items-center justify-between pt-2 border-t border-gray-200 mt-1">
-                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" [checked]="useCredits()" (change)="toggleCredits($event)" class="text-brand-600 rounded">
-                        <span class="text-sm font-bold text-gray-700">使用購物金 (餘額: \${{ storeService.currentUser()?.credits }})</span>
-                     </label>
-                     @if(useCredits()) {
-                        <span class="text-sm font-bold text-brand-600">- NT$ {{ calculatedCredits() }}</span>
+                  <div class="pt-3 mt-2 border-t border-gray-200">
+                     <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-bold text-gray-700">使用購物金 (餘額: NT$ {{ storeService.currentUser()?.credits }})</span>
+                     </div>
+                     <div class="flex gap-2">
+                        <input type="number" [(ngModel)]="inputCredits" [ngModelOptions]="{standalone: true}" (ngModelChange)="onCreditsChange($event)" placeholder="輸入欲折抵金額" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold outline-none focus:border-brand-400">
+                        <button type="button" (click)="applyAllCredits()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors shrink-0">全額折抵</button>
+                     </div>
+                     @if(calculatedCredits() > 0) {
+                        <div class="flex justify-between text-sm text-brand-600 font-bold mt-2">
+                           <span>💎 購物金折抵</span>
+                           <span>- NT$ {{ calculatedCredits() | number:'1.0-0' }}</span>
+                        </div>
                      }
                   </div>
                }
@@ -305,7 +311,7 @@ export class CartComponent {
 
   step = signal(1);
   selectedIndices = signal<Set<number>>(new Set());
-  useCredits = signal(false);
+  inputCredits = signal<number>(0);
   selectedShippingMethod = signal('');
   
   // 🎟️ 折扣碼專用狀態
@@ -453,23 +459,32 @@ export class CartComponent {
 
   // 5. 計算可使用的購物金 (不能超過「扣完折扣碼與運費後」的剩餘應付金額)
   calculatedCredits = computed(() => {
-     if (!this.useCredits()) return 0;
      const user = this.storeService.currentUser();
      const max = user?.credits || 0;
+     const requested = this.inputCredits() || 0;
      
      // 剩餘應付金額 = (小計 - 折扣碼) + 運費 - 平台補貼
      const remainingToPay = this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount();
      
-     return Math.min(max, Math.max(0, remainingToPay));
+     return Math.min(requested, max, Math.max(0, remainingToPay));
   });
 
+  onCreditsChange(val: number) {
+     if (val < 0) this.inputCredits.set(0);
+  }
+
+  applyAllCredits() {
+     const user = this.storeService.currentUser();
+     const max = user?.credits || 0;
+     const remainingToPay = this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount();
+     this.inputCredits.set(Math.floor(Math.min(max, Math.max(0, remainingToPay))));
+  }
+ 
   // 6. 最終結帳總金額
   finalTotal = computed(() => {
     const total = this.selectedSubtotal() - this.appliedPromoDiscount() + this.currentShippingFee() - this.currentDiscount() - this.calculatedCredits();
     return Math.max(0, total);
   });
-
-  toggleCredits(e: Event) { this.useCredits.set((e.target as HTMLInputElement).checked); }
 
   // 🎟️ 處理折扣碼套用
   applyPromoCode() {

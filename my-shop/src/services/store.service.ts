@@ -356,6 +356,14 @@ addToCart(product: Product, option: string, quantity: number) {
     
     await setDoc(doc(this.firestore, 'orders', orderId), orderData);
 
+    // 🧠 帳務資訊計入：實際扣除會員已使用的購物金
+    if (usedCredits > 0) {
+        const updatedUser = { ...user, credits: Math.max(0, (user.credits || 0) - usedCredits) };
+        await this.updateUser(updatedUser);
+        // 同步更新當下的 currentUser signal 狀態
+        this.currentUser.set(updatedUser);
+    }
+
     fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'new_order', orderId: orderId, total: orderData.finalTotal, name: orderData.userName, email: user.email }) }).catch(e => console.error(e));
     this.cart.update(current => current.filter(c => !checkoutItems.some(k => k.productId === c.productId && k.option === c.option)));
     return orderData;

@@ -1365,9 +1365,16 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                           <button (click)="confirmSplitOrder(o)" [disabled]="splitItemIndices().size === 0 || splitItemIndices().size === o.items.length" class="px-4 py-2 bg-white text-brand-900 text-xs font-black rounded-lg disabled:opacity-50 transition-transform active:scale-95">確認拆分</button>
                        </div>
                     } @else {
-                       <div class="flex justify-between items-center px-2 pt-3 border-t border-gray-200 font-bold text-brand-900 text-lg">
-                          <span>總計</span>
-                          <span>NT$ {{ o.finalTotal }}</span>
+                       <div class="px-2 pt-3 border-t border-gray-200 space-y-1 mt-2">
+                          <div class="flex justify-between text-sm text-gray-500"><span>商品小計</span><span>NT$ {{ o.subtotal }}</span></div>
+                          @if(o.discount > 0) { <div class="flex justify-between text-sm text-red-500 font-bold"><span>多入優惠/運費補貼</span><span>- NT$ {{ o.discount }}</span></div> }
+                          @if(o.promoDiscount > 0) { <div class="flex justify-between text-sm text-brand-600 font-bold"><span>🎟️ 折扣碼 ({{ o.promoCode }})</span><span>- NT$ {{ o.promoDiscount }}</span></div> }
+                          @if(o.usedCredits > 0) { <div class="flex justify-between text-sm text-purple-600 font-bold"><span>💎 購物金折抵</span><span>- NT$ {{ o.usedCredits }}</span></div> }
+                          @if(o.shippingFee > 0) { <div class="flex justify-between text-sm text-gray-500"><span>運費</span><span>+ NT$ {{ o.shippingFee }}</span></div> }
+                          <div class="flex justify-between items-center font-black text-brand-900 text-lg pt-2 mt-2 border-t border-gray-100">
+                             <span>總付款金額</span>
+                             <span>NT$ {{ o.finalTotal }}</span>
+                          </div>
                        </div>
                     }
                  </div>
