@@ -2769,9 +2769,9 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     this.expenseForm = this.fb.group({
       date: [new Date().toISOString().slice(0, 10), Validators.required],
       item: ['', Validators.required],
-      category: ['包材費'],
+      category: [''],
       amount: ['', [Validators.required, Validators.min(1)]],
-      currency: ['TWD'],
+      currency: [''],
       payer: ['', Validators.required],
       note: ['']
     });
