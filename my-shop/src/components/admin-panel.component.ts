@@ -899,13 +899,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 <div class="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
                    <select [ngModel]="expenseCategoryFilter()" (ngModelChange)="expenseCategoryFilter.set($event)" class="flex-1 sm:flex-none bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:border-brand-300">
                       <option value="all">全部類別</option>
-                      <option value="包材費">包材費</option>
-                      <option value="國際貨運費">國際貨運費</option>
-                      <option value="機票費">機票/行李</option>
-                      <option value="海關稅">海關稅金</option>
-                      <option value="行銷抽獎">行銷抽獎</option>
                       <option value="商品採購">商品採購 (自動)</option>
-                      <option value="儲值">資金流轉</option>
+                      <option value="儲值">資金流轉 (自動)</option>
+                      @for(cat of uniqueExpenseCategories(); track cat) {
+                         @if(cat !== '商品採購' && cat !== '儲值') {
+                            <option [value]="cat">{{ cat }}</option>
+                         }
+                      }
                    </select>
                    <button (click)="exportExpensesCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold shadow-sm hover:bg-[#7a9180] transition-colors whitespace-nowrap flex items-center justify-center gap-1"><span>📥</span> 匯出</button>
                    <button (click)="syncExpensesToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] transition-colors whitespace-nowrap flex items-center justify-center gap-1"><span>☁️</span> 同步</button>
@@ -1568,15 +1568,16 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <input type="date" formControlName="date" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold">
                     </div>
                     <div>
-                      <label class="block text-xs font-bold text-gray-500 mb-1">支出類別</label>
-                      <select formControlName="category" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white">
+                      <label class="block text-xs font-bold text-gray-500 mb-1">支出類別 (可選或自填)</label>
+                      <input type="text" list="expenseCatList" formControlName="category" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white" placeholder="選擇或手動輸入新類別">
+                      <datalist id="expenseCatList">
                         <option value="包材費">包材費</option>
                         <option value="國際貨運費">國際貨運費</option>
                         <option value="機票費">機票/行李</option>
                         <option value="海關稅">海關稅金</option>
                         <option value="行銷抽獎">行銷抽獎</option>
                         <option value="其他雜支">其他雜支</option>
-                      </select>
+                      </datalist>
                     </div>
                   </div>
                   <div>
@@ -1599,7 +1600,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="grid grid-cols-2 gap-4">
                     <div>
                       <label class="block text-xs font-bold text-gray-500 mb-1">付款人</label>
-                      <input type="text" formControlName="payer" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold" placeholder="例如：子婷、藝辰">
+                      <select formControlName="payer" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white cursor-pointer shadow-sm">
+                        <option value="" disabled selected>請選擇付款人...</option>
+                        <option value="公司">公司公積金</option>
+                        <option value="藝辰">藝辰</option>
+                        <option value="子婷">子婷</option>
+                        <option value="小芸">小芸</option>
+                        <option value="其他">其他</option>
+                      </select>
                     </div>
                     <div>
                       <label class="block text-xs font-bold text-gray-500 mb-1">備註 (選填)</label>
@@ -1833,6 +1841,11 @@ export class AdminPanelComponent {
   showGiveawayModal = signal(false);
   giveawayForm!: FormGroup;
   giveawaySelectedProduct = signal<Product | null>(null);
+
+  // 🧠 自動從現有的支出紀錄中，抓取所有不重複的「支出類別」，讓下拉選單永遠保持最新！
+  uniqueExpenseCategories = computed(() => {
+     return [...new Set(this.expenses().map(e => e.category))];
+  });
 
   filteredExpenses = computed(() => {
     let list = this.expenses();
