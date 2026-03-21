@@ -72,7 +72,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
              <button (click)="showProcurementModal.set(true); procureRange.set('all');" class="px-4 py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl font-bold hover:bg-yellow-200 flex items-center justify-center gap-2 shadow-sm transition-colors whitespace-nowrap">
              <span class="text-lg leading-none mt-0.5">📦</span> <span class="hidden sm:block leading-none mt-0.5">叫貨</span>
              </button>
-             <button class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm">↻</button>
+             <button (click)="forceRefresh()" class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm active:scale-95 transition-transform" title="強制重新整理">↻</button>
            </div>
          </div>
 
@@ -4023,5 +4023,9 @@ submitProduct() {
      const headers = ['日期', '支出項目', '類別', '金額', '幣別', '付款人', '備註'];
      const dataRows = this.filteredExpenses().map((e: any) => [ e.date, e.item, e.category, e.amount, e.currency, e.payer, e.note || '-' ]);
      this.pushToGoogleSheets('營業支出', [headers, ...dataRows]);
+  }
+
+  forceRefresh() {
+    window.location.reload(); // 強制重新整理整個網頁
   }
 }
