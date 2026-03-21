@@ -3673,7 +3673,7 @@ submitProduct() {
   // ==========================================
   openAddWalletModal() {
      // 確保所有欄位都被完整初始化，避免底層報錯
-     this.addWalletForm.reset({ name: '', currency: 'TWD', symbol: 'NT$', balance: 0 });
+     this.addWalletForm.reset({ name: '', currency: '', symbol: '', balance: null });
      this.showAddWalletModal.set(true);
   }
   
