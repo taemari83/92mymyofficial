@@ -3758,6 +3758,19 @@ submitProduct() {
      this.detailsWallet.set(null);
   }
 
+  // 👇 補回不小心被覆蓋掉的匯出 CSV 功能
+  exportWalletDetailsCSV() {
+     const w = this.detailsWallet();
+     if (!w) return;
+     const headers = ['日期', '類別', '項目說明', '操作人', '收支類型', '金額', '備註'];
+     const rows = this.walletTransactions().map(t => {
+        const type = t.amount < 0 ? '收入 (+)' : '支出 (-)';
+        const absAmount = Math.abs(t.amount);
+        return [t.date, t.category, t.item, t.payer, type, absAmount, t.note || ''];
+     });
+     this.downloadCSV(`${w.name}_資金流水帳_${new Date().toISOString().slice(0,10)}`, headers, rows);
+  }
+  
   syncWalletDetailsToGoogleSheets() {
      const w = this.detailsWallet();
      if (!w) return;
