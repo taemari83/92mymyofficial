@@ -560,7 +560,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto flex-1 justify-start xl:justify-end">
                      <div class="relative w-full sm:w-auto flex-1 min-w-[200px] max-w-full xl:max-w-[300px]">
                        <input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100">
-                       <span class="absolute left-ａ3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
                      </div>
                      <div class="flex flex-wrap gap-2 w-full sm:w-auto">
                        <button (click)="openBulkCustomerModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 whitespace-nowrap shadow-sm flex items-center justify-center transition-colors gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次 ({{ selectedCustomerIds().length }})</button>
@@ -779,7 +779,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         @if (activeTab() === 'purchases') {
           <div class="space-y-6 w-full animate-fade-in">
               <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4 w-full">
-                 <div class="flex items-center gap-2">
+               <div class="flex items-center gap-2 mr-auto flex-wrap sm:flex-nowrap">
+   <span class="text-sm font-bold text-gray-500">日期篩選:</span>
+   <input type="date" [ngModel]="purchaseStart()" (ngModelChange)="purchaseStart.set($event)" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2 outline-none">
+   <span class="text-gray-400">~</span>
+   <input type="date" [ngModel]="purchaseEnd()" (ngModelChange)="purchaseEnd.set($event)" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2 outline-none">
+</div>  
+              <div class="flex items-center gap-2">
                     <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出</button>
                     <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步</button>
                  </div>
@@ -903,7 +909,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
              <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <p class="text-sm font-bold text-gray-500">💡 記錄包材、機票、貨運費等公積金攤提</p>
                 <div class="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
-                   <select [ngModel]="expenseCategoryFilter()" (ngModelChange)="expenseCategoryFilter.set($event)" class="flex-1 sm:flex-none bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:border-brand-300">
+                   <div class="flex items-center gap-2 flex-1 sm:flex-none">
+                    <input type="date" [ngModel]="expenseStart()" (ngModelChange)="expenseStart.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2 outline-none">
+                    <span class="text-gray-400">~</span>
+                    <input type="date" [ngModel]="expenseEnd()" (ngModelChange)="expenseEnd.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2 outline-none">
+               </div>
+                 <select [ngModel]="expenseCategoryFilter()" (ngModelChange)="expenseCategoryFilter.set($event)" class="flex-1 sm:flex-none bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:border-brand-300">
                       <option value="all">全部類別</option>
                       <option value="商品採購">商品採購 (自動)</option>
                       <option value="儲值">資金流轉 (自動)</option>
@@ -1850,6 +1861,11 @@ export class AdminPanelComponent {
 
   expenseSearch = signal('');
   expenseCategoryFilter = signal('all');
+  expenseStart = signal(''); // 👈 新增：營業支出開始日
+  expenseEnd = signal('');   // 👈 新增：營業支出結束日
+
+  purchaseStart = signal(''); // 👈 新增：採購總帳開始日
+  purchaseEnd = signal('');   // 👈 新增：採購總帳結束日 
 
 // 新增支出與錢包的表單及彈窗控制
   showExpenseModal = signal(false);
@@ -1888,12 +1904,17 @@ export class AdminPanelComponent {
   });
 
   filteredExpenses = computed(() => {
-    let list = this.expenses();
-    if (this.expenseCategoryFilter() !== 'all') {
-        list = list.filter(e => e.category === this.expenseCategoryFilter());
-    }
-    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  });
+    let list = this.expenses();
+    if (this.expenseCategoryFilter() !== 'all') {
+        list = list.filter(e => e.category === this.expenseCategoryFilter());
+    }
+    const start = this.expenseStart();
+    const end = this.expenseEnd();
+    if (start) list = list.filter(e => new Date(e.date) >= new Date(start));
+    if (end) list = list.filter(e => new Date(e.date) <= new Date(end));
+
+    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  });
   // ===========================================
 
 // ===== 🎟️ 折扣碼管理系統 (進階版) =====
@@ -2901,18 +2922,22 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   
   // 🚀 核心升級：直接抓取資料庫裡的真實採購單，並依時間排序
   purchaseList = computed(() => {
-    const purchases = this.store.purchases();
+    const purchases = this.store.purchases();
     // 終極防呆：確保資料庫回傳的絕對是陣列，並過濾掉可能的壞檔
     if (!Array.isArray(purchases)) return [];
-    return [...purchases]
-      .filter(p => !!p)
-      .sort((a: any, b: any) => {
-         // 🛡️ 防呆：將字串轉為時間戳，如果無法轉換就當作 0，絕不報錯
+    let list = [...purchases].filter(p => !!p);
+    
+    const start = this.purchaseStart();
+    const end = this.purchaseEnd();
+    if (start) list = list.filter((p: any) => new Date(p.date) >= new Date(start));
+    if (end) list = list.filter((p: any) => new Date(p.date) <= new Date(end));
+
+    return list.sort((a: any, b: any) => {
          const timeA = new Date(a?.createdAt || 0).getTime() || 0;
          const timeB = new Date(b?.createdAt || 0).getTime() || 0;
          return timeB - timeA;
-      });
-  });
+    });
+  });
 
   openReceipts(images: string[]) {
     this.viewReceiptImages.set(images || []);
@@ -2938,28 +2963,20 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
   // 📥 匯出：採購總帳
   exportPurchasesCSV() {
-    const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '實際付現/刷卡總額', '付款人', '分潤模式', '狀態'];
+    const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '結帳幣別', '實際刷卡金額', '付款人', '分潤模式', '狀態'];
     
     const rows = this.purchaseList().map(p => {
-      // 將商品明細組裝成字串，並加上買手填寫的單價
       const itemsStr = (p.items || []).map((i: any) => {
         const curr = i.currency === 'KRW' ? '₩' : (i.currency === 'TWD' ? 'NT$' : (i.currency || p.currency || '$'));
         return `• ${i.productName} x${i.quantity} (@ ${curr}${i.price || 0})`;
       }).join('\n');
       
       return [
-        `\t${p.id}`, // 加 \t 防止 Excel 把編號轉成科學記號
-        p.date,
-        new Date(p.createdAt).toLocaleString('zh-TW', { hour12: false }),
-        p.country,
-        p.location,
-        itemsStr,
-        p.estimatedLocalCost,
-        p.localShipping,
-        p.totalLocalCost,
-        p.payer,
-        p.shareMode,
-        p.status === 'pending_sync' ? '待核銷' : '已核銷入帳'
+        `\t${p.id}`, p.date, new Date(p.createdAt).toLocaleString('zh-TW', { hour12: false }),
+        p.country, p.location, itemsStr,
+        p.estimatedLocalCost, p.localShipping,
+        p.currency || 'TWD', p.totalLocalCost, // 👈 這裡拆成了「幣別」與「金額」兩個獨立欄位
+        p.payer, p.shareMode, p.status === 'pending_sync' ? '待核銷' : '已核銷入帳'
       ];
     });
 
@@ -3377,19 +3394,19 @@ exportInventoryCSV() {
 
   async syncPurchasesToGoogleSheets() {
     const list = this.purchaseList();
-    const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '實際付現/刷卡總額', '付款人', '分潤模式', '狀態'];
+    const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '結帳幣別', '實際刷卡金額', '付款人', '分潤模式', '狀態'];
 
     const payloadRows = list.map(p => {
-      // 加上單價資訊
       const itemsStr = (p.items || []).map((i: any) => {
         const curr = i.currency === 'KRW' ? '₩' : (i.currency === 'TWD' ? 'NT$' : (i.currency || p.currency || '$'));
         return `• ${i.productName} x${i.quantity} (@ ${curr}${i.price || 0})`;
       }).join('\n');
 
-      // 這裡完整保留，確保狀態會正常匯出
       return [
         `'${p.id}`, p.date, new Date(p.createdAt).toLocaleString('zh-TW', { hour12: false }), p.country, p.location, itemsStr,
-        p.estimatedLocalCost, p.localShipping, p.totalLocalCost, p.payer, p.shareMode, p.status === 'pending_sync' ? '待核銷' : '已核銷入帳'
+        p.estimatedLocalCost, p.localShipping, 
+        p.currency || 'TWD', p.totalLocalCost, // 👈 同步雲端也拆成兩格
+        p.payer, p.shareMode, p.status === 'pending_sync' ? '待核銷' : '已核銷入帳'
       ];
     });
 
