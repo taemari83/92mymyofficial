@@ -4158,20 +4158,27 @@ submitProduct() {
      const finalNet = stats.profit - opExTwd;
      const realCompanyShare = stats.shares.company - opExTwd;
 
-     // 🔥 改版為「橫向單行格式」，加入時間與區間
+     // 💡 自動精準產生「年」、「月」與「區間標籤」
      const exportTime = now.toLocaleString('zh-TW', { hour12: false });
-     const rangeName = range === 'today' ? '今日' : (range === 'week' ? '本週' : (range === 'month' ? '本月' : (range === 'year' ? '本年' : '自訂區間')));
+     const reportYear = now.getFullYear() + '年';
+     const reportMonth = (now.getMonth() + 1) + '月';
      
-     const headers = ['結算匯出時間', '報表區間', '總營收 (Sales)', '總商品成本 (COGS)', '商品總毛利 (Gross Margin)', '總營業支出 (OpEx)', '🏆 最終淨利潤 (Net Income)', '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘'];
+     let rangeName = '';
+     if (range === 'today') rangeName = `今日 (${now.toLocaleDateString('zh-TW')})`;
+     else if (range === 'week') rangeName = '本週';
+     else if (range === 'month') rangeName = `${now.getFullYear()}年${now.getMonth() + 1}月`;
+     else if (range === 'year') rangeName = `${now.getFullYear()}年度`;
+     else rangeName = `自訂 (${this.accountingCustomStart() || ''} ~ ${this.accountingCustomEnd() || ''})`;
+     
+     const headers = ['結算匯出時間', '年份', '月份', '報表區間', '總營收 (Sales)', '總商品成本 (COGS)', '商品總毛利 (Gross Margin)', '總營業支出 (OpEx)', '🏆 最終淨利潤 (Net Income)', '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘'];
      
      const rowData = [
-        exportTime, rangeName,
+        exportTime, reportYear, reportMonth, rangeName,
         Math.round(stats.revenue), Math.round(stats.cost), Math.round(stats.profit),
         Math.round(opExTwd), Math.round(finalNet),
         Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare)
      ];
 
-     // 下載 CSV 時，還是會附上表頭方便閱讀
      this.downloadCSV(`終極會計總表_${range}_${now.toISOString().slice(0,10)}`, headers, [rowData]);
   }
 
@@ -4309,20 +4316,24 @@ submitProduct() {
      const finalNet = stats.profit - opExTwd;
      const realCompanyShare = stats.shares.company - opExTwd;
 
-     // 💡 抓取當下時間與區間名稱
      const exportTime = now.toLocaleString('zh-TW', { hour12: false });
-     const rangeName = range === 'today' ? '今日' : (range === 'week' ? '本週' : (range === 'month' ? '本月' : (range === 'year' ? '本年' : '自訂區間')));
+     const reportYear = now.getFullYear() + '年';
+     const reportMonth = (now.getMonth() + 1) + '月';
      
-     // 💡 把所有數字塞進「同一行」裡面！
+     let rangeName = '';
+     if (range === 'today') rangeName = `今日 (${now.toLocaleDateString('zh-TW')})`;
+     else if (range === 'week') rangeName = '本週';
+     else if (range === 'month') rangeName = `${now.getFullYear()}年${now.getMonth() + 1}月`;
+     else if (range === 'year') rangeName = `${now.getFullYear()}年度`;
+     else rangeName = `自訂 (${this.accountingCustomStart() || ''} ~ ${this.accountingCustomEnd() || ''})`;
+     
      const rowData = [
-        exportTime, rangeName,
+        exportTime, reportYear, reportMonth, rangeName,
         Math.round(stats.revenue), Math.round(stats.cost), Math.round(stats.profit),
         Math.round(opExTwd), Math.round(finalNet),
         Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare)
      ];
      
-     // 💡 關鍵：同步時，第三個參數傳入 `false`，啟動「不覆蓋、往下新增」模式！
-     // 我們只傳送純數字資料 (rowData)，不傳表頭！
      this.pushToGoogleSheets(`終極會計總表`, [rowData], false);
   }
 }
