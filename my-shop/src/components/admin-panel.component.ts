@@ -2993,7 +2993,11 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     if(confirm(`⚠️ 確定核准這筆支出 (實際刷卡總額: ${p.totalLocalCost}) 並入帳嗎？\n\n系統將會同步：\n1. 從對應幣別的【資金帳戶】扣除餘額\n2. 在【營業支出】自動建立一筆採購紀錄`)) {
       const currency = p.country === '韓國' ? 'KRW' : 'TWD';
       const targetWallet = this.wallets().find((w:any) => w.currency === currency);
-      if(targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - Number(p.totalLocalCost)); }
+      
+      if(targetWallet) { 
+         await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - Number(p.totalLocalCost)); 
+      }
+      // 🔥 確保乾淨寫入，不帶 remainingBalance
       await this.store.addExpense({ id: 'EXP-' + Date.now(), date: new Date().toISOString().slice(0,10), item: `採購單核銷: ${p.location || p.id}`, category: '商品採購', amount: Number(p.totalLocalCost), currency: currency, payer: p.payer, note: `系統自動拋轉` });
       await this.store.updatePurchaseStatus(p.id, 'completed');
       alert('✅ 已成功核准入帳！資金帳戶與支出報表已同步更新。');
@@ -3939,6 +3943,7 @@ submitProduct() {
     
     try {
         await this.store.updateWalletBalance(wallet.id, newBalance);
+        // 🔥 確保乾淨寫入，把後面的 remainingBalance: newBalance 拿掉
         await this.store.addExpense({ id: 'TRX-' + Date.now(), date: new Date().toISOString().slice(0, 10), item: `資金帳戶調整 (${this.walletAction() === 'add' ? '儲值' : '扣款'})`, category: '儲值', amount: this.walletAction() === 'add' ? -amount : amount, currency: wallet.currency, payer: this.store.currentUser()?.name || '系統操作', note: note });
         alert(`✅ 已成功${this.walletAction() === 'add' ? '儲值' : '扣款'} ${wallet.symbol} ${amount}`);
         this.closeWalletModal();
@@ -4043,14 +4048,29 @@ submitProduct() {
             const newWallet = this.wallets().find((w:any) => w.currency === val.currency);
             if (newWallet) await this.store.updateWalletBalance(newWallet.id, newWallet.balance - expAmount);
 
-            await this.store.addExpense({ ...oldExp, ...val, amount: expAmount });
+            // 🔥 終極防呆：把幽靈屬性過濾掉，只留下乾淨的資料存入 Firebase
+            const { remainingBalance, runningBalance, ...safeOldExp } = oldExp;
+
+            await this.store.addExpense({ ...safeOldExp, ...val, amount: expAmount });
             alert(`✅ 支出紀錄已完美修正，資金帳戶也已自動調整！`);
         } else {
             // 一般新增邏輯
             const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
             if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
             else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
-            await this.store.addExpense({ id: 'EXP-' + Date.now(), date: val.date, item: val.item, category: val.category, amount: expAmount, currency: val.currency, payer: val.payer, note: val.note || '', imageUrl: val.imageUrl || '' });
+            
+            // 🔥 確保這裡是最乾淨的，沒有 remainingBalance
+            await this.store.addExpense({ 
+               id: 'EXP-' + Date.now(), 
+               date: val.date, 
+               item: val.item, 
+               category: val.category, 
+               amount: expAmount, 
+               currency: val.currency, 
+               payer: val.payer, 
+               note: val.note || '', 
+               imageUrl: val.imageUrl || '' 
+            });
             alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
         }
         this.closeExpenseModal();
