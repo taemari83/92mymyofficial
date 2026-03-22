@@ -172,12 +172,13 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
 
           // 6. 加上該商品固定的「國際運費與包材成本」
           // (從國外運回來的秤重運費，不管買手花多少錢買都要加上去)
-          if (product) {
-             const costMat = Number(product.costMaterial) || 0;
-             const shipKg = Number(product.shippingCostPerKg) || 0;
-             const weight = Number(product.weight) || 0;
-             twdUnitCost += costMat + (weight * shipKg);
-          }
+          // 💡 [未來擴充：國際運費與包材] 若以後要加入計算，把下面這段的 // 拿掉即可
+          //if (product) {
+          //   const costMat = Number(product.costMaterial) || 0;
+          //   const shipKg = Number(product.shippingCostPerKg) || 0;
+          //   const weight = Number(product.weight) || 0;
+          //   twdUnitCost += costMat + (weight * shipKg);
+          // }
 
           // 7. 加到總成本池裡，用來算歷史平均單價
           if (!costData[key]) costData[key] = { totalCostTWD: 0, totalQty: 0 };
@@ -320,6 +321,9 @@ addToCart(product: Product, option: string, quantity: number) {
     // 🔥 成本計算
     const currentRate = product.exchangeRate || 1;
     const currentCost = (localCostToUse * currentRate) + (product.costMaterial || 0) + ((product.weight || 0) * (product.shippingCostPerKg || 0));
+    
+    // 💡 [未來擴充：國際運費與包材] 換成這行：
+    // const currentCost = (localCostToUse * currentRate) + (product.costMaterial || 0) + ((product.weight || 0) * (product.shippingCostPerKg || 0));
     
     this.cart.update(current => {
       const exist = current.find(i => i.productId === product.id && i.option === parsedOption);

@@ -2489,11 +2489,13 @@ try {
                       if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
                   }
                   if (currentLocalPrice > 0 || p.localPrice) {
-                      const costMat = p.costMaterial || 0;
-                      const weight = p.weight || 0;
-                      const shipKg = p.shippingCostPerKg || 0; 
-                      const rate = p.exchangeRate || 1;
-                      itemCost = ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
+                      const rate = Number(p.exchangeRate) || 1;
+itemCost = (currentLocalPrice * rate) * i.quantity; // 💡 目前只算商品進價
+// 💡 [未來擴充：國際運費與包材]
+// const costMat = Number(p.costMaterial) || 0;
+// const weight = Number(p.weight) || 0;
+// const shipKg = Number(p.shippingCostPerKg) || 0; 
+// itemCost = ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
                   } else { itemCost = (i.unitCost || 0) * i.quantity; }
               } else { itemCost = (i.unitCost || 0) * i.quantity; } 
 
@@ -2578,12 +2580,13 @@ try {
                   }
 
                   if (currentLocalPrice > 0 || stats.product.localPrice) {
-                      const costMat = stats.product.costMaterial || 0;
-                      const weight = stats.product.weight || 0;
-                      const shipKg = stats.product.shippingCostPerKg || 200;
-                      const rate = stats.product.exchangeRate || 1; 
-                      stats.cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * item.quantity;
-                  } else {
+const rate = stats.product.exchangeRate || 1; 
+stats.cost += (currentLocalPrice * rate) * item.quantity; // 💡 目前只算商品進價
+// 💡 [未來擴充：國際運費與包材]
+// const costMat = stats.product.costMaterial || 0;
+// const weight = stats.product.weight || 0;
+// const shipKg = stats.product.shippingCostPerKg || 200;
+// stats.cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * item.quantity;                  } else {
                       stats.cost += (item.unitCost || 0) * item.quantity;
                   }
               }
@@ -2638,11 +2641,13 @@ try {
                         const parts = fullOption.split('=');
                         if (parts.length >= 4 && !isNaN(Number(parts[3]))) currentLocalPrice = Number(parts[3]);
                     }
-                    const costMat = Number(p.costMaterial) || 0;
-                    const weight = Number(p.weight) || 0;
-                    const shipKg = Number(p.shippingCostPerKg) || 0; 
                     const rate = Number(p.exchangeRate) || 1; 
-                    monthCost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity; 
+                    monthCost += (currentLocalPrice * rate) * i.quantity; // 💡 目前只算商品進價
+                    // 💡 [未來擴充：國際運費與包材]
+                    // const costMat = Number(p.costMaterial) || 0;
+                    // const weight = Number(p.weight) || 0;
+                    // const shipKg = Number(p.shippingCostPerKg) || 0; 
+                    // monthCost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
                 } else {
                     monthCost += (i.unitCost || 0) * i.quantity;
                 }              
@@ -2910,7 +2915,11 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       .reduce((sum: number, o: Order) => sum + o.finalTotal, 0);
   }
 
-  estimatedCost = computed(() => { const v = this.formValues(); if (!v) return 0; return (v.localPrice * v.exchangeRate) + (v.weight * v.shippingCostPerKg) + v.costMaterial; }); 
+  estimatedCost = computed(() => { 
+  const v = this.formValues(); if (!v) return 0; 
+  return (v.localPrice * v.exchangeRate); // 💡 目前只算商品進價
+  // 💡 [未來擴充：國際運費與包材] return (v.localPrice * v.exchangeRate) + (v.weight * v.shippingCostPerKg) + v.costMaterial; 
+});
   estimatedProfit = computed(() => (this.formValues()?.priceGeneral || 0) - this.estimatedCost()); 
   estimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.estimatedProfit() / this.formValues().priceGeneral) * 100 : 0);
   
@@ -3182,7 +3191,8 @@ exportInventoryCSV() {
     const salesMap = this.productSalesMap();
     
     const dataRows = this.store.products().map((p: Product) => {
-      const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
+      const cost = (p.localPrice * p.exchangeRate); // 💡 目前只算商品進價
+// 💡 [未來擴充：國際運費與包材] const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
       const normalProfit = p.priceGeneral - cost; 
       const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
       const realSoldCount = salesMap[p.id] || 0; // 真實銷量
@@ -3272,7 +3282,8 @@ exportInventoryCSV() {
           if (actualCost) {
               costGen = actualCost; // 🎉 使用真實平均成本
           } else {
-              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) : (i.unitCost || 0); // 💡 目前只算商品進價
+// 💡 [未來擴充：國際運費與包材] costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
           }
           
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
@@ -3353,7 +3364,8 @@ exportInventoryCSV() {
           if (actualCost) {
               costGen = actualCost; // 🎉 使用真實平均成本
           } else {
-              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) : (i.unitCost || 0); // 💡 目前只算商品進價
+// 💡 [未來擴充：國際運費與包材] costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
           }
 
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
@@ -3418,7 +3430,8 @@ exportInventoryCSV() {
      const salesMap = this.productSalesMap();
      
      const rows = this.store.products().map((p: Product) => { 
-        const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
+        const cost = (p.localPrice * p.exchangeRate); // 💡 目前只算商品進價
+// 💡 [未來擴充：國際運費與包材] const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
         const normalProfit = p.priceGeneral - cost; 
         const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
         const realSoldCount = salesMap[p.id] || 0; // 取得真實銷量
@@ -4045,7 +4058,8 @@ submitProduct() {
     }
     const rate = p.exchangeRate || 1; 
     const shipKg = p.shippingCostPerKg || 0; 
-    const unitCost = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : 0;
+    const unitCost = (currentLocalPrice > 0) ? (currentLocalPrice * rate) : 0; // 💡 目前只算商品進價
+// 💡 [未來擴充：國際運費與包材] const unitCost = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : 0;
     const totalCost = unitCost * val.quantity;
 
     // 2. 準備要加入的贈品明細
