@@ -966,7 +966,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                             </td>
                             <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none md:text-right bg-gray-50/50 md:bg-transparent">
                                <span class="md:hidden text-xs text-gray-400 font-bold">結存餘額</span>
-                               <span class="font-mono text-gray-500 font-bold">{{ e.remainingBalance !== undefined ? (e.currency === 'KRW' ? '₩ ' : 'NT$ ') + (e.remainingBalance | number) : '-' }}</span>
+                               <span class="font-mono text-gray-500 font-bold">{{ e.runningBalance !== undefined ? (e.currency === 'KRW' ? '₩ ' : 'NT$ ') + (e.runningBalance | number) : '-' }}</span>
                             </td>
                             <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none md:text-center">
                                <span class="md:hidden text-xs text-gray-400 font-bold">付款人</span>
@@ -1909,8 +1909,38 @@ export class AdminPanelComponent {
      return [...new Set(this.expenses().map(e => e.category))];
   });
 
-  filteredExpenses = computed(() => {
-    let list = this.expenses();
+  // 🧠 動態結存餘額時光機：由最新餘額往前推算歷史餘額
+  expensesWithBalance = computed(() => {
+    // 1. 確保所有支出依時間(新到舊)完美排序
+    const allExp = [...this.expenses()].sort((a, b) => {
+        const timeDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (timeDiff !== 0) return timeDiff;
+        return b.id.localeCompare(a.id); // 同一天的話，依 ID (時間戳) 排序
+    });
+    
+    const wallets = this.wallets();
+    const currentBalances: Record<string, number> = {};
+    
+    // 2. 抓取每個錢包「現在」的真實餘額當作起點
+    wallets.forEach(w => {
+       currentBalances[w.currency] = w.balance;
+    });
+
+    // 3. 從最新的一筆開始往回推算歷史餘額
+    return allExp.map(exp => {
+        const curr = exp.currency;
+        let bal = undefined;
+        if (currentBalances[curr] !== undefined) {
+            bal = currentBalances[curr]; // 這筆交易完成後的餘額，就是當下的追蹤餘額
+            // 時光倒流：把這筆支出的錢「加回去」，還原成上一筆交易發生前的狀態
+            currentBalances[curr] += Number(exp.amount);
+        }
+        return { ...exp, runningBalance: bal }; // 把算好的餘額包裝成 runningBalance 屬性
+    });
+  });
+
+  filteredExpenses = computed(() => {
+    let list = this.expensesWithBalance(); // 👈 替換點：改用剛算好餘額的時光機列表
     if (this.expenseCategoryFilter() !== 'all') {
         list = list.filter(e => e.category === this.expenseCategoryFilter());
     }
@@ -1919,7 +1949,7 @@ export class AdminPanelComponent {
     if (start) list = list.filter(e => new Date(e.date) >= new Date(start));
     if (end) list = list.filter(e => new Date(e.date) <= new Date(end));
 
-    return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return list;
   });
   // ===========================================
 
@@ -3996,55 +4026,23 @@ submitProduct() {
     
     try {
         const oldExp = this.editingExpense();
-        let finalRemainingBalance: number | undefined = undefined; // 👈 準備紀錄最終餘額
         
         if (oldExp) {
             // 🧠 智慧編輯邏輯：先把舊的錢退回舊錢包，再從新錢包扣除新金額！
             const oldWallet = this.wallets().find((w:any) => w.currency === oldExp.currency);
+            if (oldWallet) await this.store.updateWalletBalance(oldWallet.id, oldWallet.balance + Number(oldExp.amount));
+            
             const newWallet = this.wallets().find((w:any) => w.currency === val.currency);
+            if (newWallet) await this.store.updateWalletBalance(newWallet.id, newWallet.balance - expAmount);
 
-            let currentNewWalletBalance = newWallet ? newWallet.balance : 0;
-
-            // 判斷：如果是同一個錢包，退回的錢要先加回去，再扣新的
-            if (oldWallet && newWallet && oldWallet.id === newWallet.id) {
-                currentNewWalletBalance = oldWallet.balance + Number(oldExp.amount);
-                finalRemainingBalance = currentNewWalletBalance - expAmount;
-                await this.store.updateWalletBalance(newWallet.id, finalRemainingBalance);
-            } else {
-                // 如果換了幣別(不同錢包)，就各自處理
-                if (oldWallet) await this.store.updateWalletBalance(oldWallet.id, oldWallet.balance + Number(oldExp.amount));
-                if (newWallet) {
-                    finalRemainingBalance = newWallet.balance - expAmount;
-                    await this.store.updateWalletBalance(newWallet.id, finalRemainingBalance);
-                }
-            }
-
-            // 存入資料庫時，多塞入 remainingBalance
-            await this.store.addExpense({ ...oldExp, ...val, amount: expAmount, remainingBalance: finalRemainingBalance });
+            await this.store.addExpense({ ...oldExp, ...val, amount: expAmount });
             alert(`✅ 支出紀錄已完美修正，資金帳戶也已自動調整！`);
         } else {
             // 一般新增邏輯
             const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
-            if (targetWallet) { 
-                finalRemainingBalance = targetWallet.balance - expAmount;
-                await this.store.updateWalletBalance(targetWallet.id, finalRemainingBalance); 
-            } else { 
-                alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); 
-            }
-            
-            // 存入資料庫時，多塞入 remainingBalance
-            await this.store.addExpense({ 
-                id: 'EXP-' + Date.now(), 
-                date: val.date, 
-                item: val.item, 
-                category: val.category, 
-                amount: expAmount, 
-                currency: val.currency, 
-                payer: val.payer, 
-                note: val.note || '', 
-                imageUrl: val.imageUrl || '',
-                remainingBalance: finalRemainingBalance // 👈 寫入當下餘額
-            });
+            if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
+            else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
+            await this.store.addExpense({ id: 'EXP-' + Date.now(), date: val.date, item: val.item, category: val.category, amount: expAmount, currency: val.currency, payer: val.payer, note: val.note || '', imageUrl: val.imageUrl || '' });
             alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
         }
         this.closeExpenseModal();
@@ -4351,7 +4349,7 @@ submitProduct() {
      const headers = ['日期', '支出項目', '類別', '金額', '幣別', '結存餘額', '付款人', '備註'];
      const rows = this.filteredExpenses().map((e: any) => [ 
         e.date, e.item, e.category, e.amount, e.currency, 
-        e.remainingBalance !== undefined ? e.remainingBalance : '', // 👈 新增餘額資料
+        e.runningBalance !== undefined ? e.runningBalance : '', // 👈 改為 runningBalance
         e.payer, e.note || '-' 
      ]);
      this.downloadCSV(`營業支出明細_${new Date().toISOString().slice(0,10)}`, headers, rows);
@@ -4361,7 +4359,7 @@ submitProduct() {
      const headers = ['日期', '支出項目', '類別', '金額', '幣別', '結存餘額', '付款人', '備註'];
      const dataRows = this.filteredExpenses().map((e: any) => [ 
         e.date, e.item, e.category, e.amount, e.currency, 
-        e.remainingBalance !== undefined ? e.remainingBalance : '', // 👈 新增餘額資料
+        e.runningBalance !== undefined ? e.runningBalance : '', // 👈 改為 runningBalance
         e.payer, e.note || '-' 
      ]);
      this.pushToGoogleSheets('營業支出', [headers, ...dataRows]);
