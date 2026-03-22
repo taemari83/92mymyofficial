@@ -3846,42 +3846,51 @@ submitProduct() {
     this.editingExpense.set(null);
   }
 
-  // 👇 新增：上傳到 Google Drive 的專屬函式
+  // 👇 新增：上傳到 Google Drive 的專屬函式 (升級 Promise 版)
   async uploadExpenseImage(event: any) {
     const file = event.target.files[0];
     if (!file) return;
     this.isUploadingExpImage.set(true);
 
+    // ⚠️ 檢查點 1：請確認這串網址，是你「最新發布」的 GAS 網址！
     const DRIVE_GAS_URL = 'https://script.google.com/macros/s/AKfycbzytxzY1L85rbpkFUgRsQz0g1Djt_Z3hxzvrK8a__aXZ3DBJgOz43tZ6EGEDa_OEd3K-A/exec';
 
     try {
-      const reader = new FileReader();
-      reader.onload = async (e: any) => {
-        const base64Data = e.target.result.split(',')[1]; 
-        const payload = { filename: file.name, mimeType: file.type, base64: base64Data };
+      // 1. 使用 Promise 等待檔案讀取完成
+      const base64Data: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e: any) => resolve(e.target.result.split(',')[1]);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
 
-        const response = await fetch(DRIVE_GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
+      // 2. 準備傳送資料
+      const payload = { filename: file.name, mimeType: file.type, base64: base64Data };
 
-        const result = await response.json();
-        if (result.success) {
-          this.expenseForm.patchValue({ imageUrl: result.url });
-        } else {
-          alert('❌ Google Drive 上傳失敗：' + result.error);
-        }
-        
-        this.isUploadingExpImage.set(false);
-        event.target.value = '';
-      };
-      reader.readAsDataURL(file); 
-    } catch(e) { 
-      alert('❌ 網路錯誤，無法上傳照片'); 
+      // 3. 發送至 GAS
+      const response = await fetch(DRIVE_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      
+      // 4. 判斷結果
+      if (result.success) {
+        this.expenseForm.patchValue({ imageUrl: result.url });
+      } else {
+        alert('❌ Google Drive 上傳失敗：' + result.error);
+      }
+
+    } catch(e: any) { 
+      console.error("照片上傳發生錯誤：", e);
+      alert('❌ 網路連線錯誤，或是 Google 權限遭拒絕，請按 F12 查看控制台錯誤訊息。'); 
+    } finally {
+      // 無論成功或失敗，都一定會執行這裡，解除轉圈圈動畫！
       this.isUploadingExpImage.set(false);
       event.target.value = ''; 
-    } 
+    }
   }
 
   async submitExpense() {
