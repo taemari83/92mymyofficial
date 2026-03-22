@@ -952,7 +952,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                             <td class="p-4 flex flex-col md:flex-row items-end md:items-center justify-between md:justify-start gap-2 md:table-cell border-b border-gray-50 md:border-none">
                                <span class="md:hidden text-xs text-gray-400 font-bold mb-1">收據/備註</span>
                                <div class="flex items-center gap-2">
-                                  @if(e.imageUrl) { <a [href]="e.imageUrl" target="_blank" title="查看收據照片" class="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 hover:border-brand-400 shrink-0"><img [src]="e.imageUrl" class="w-full h-full object-cover"></a> }
+                                  @if(e.imageUrl) { <a [href]="e.imageUrl" target="_blank" title="點擊查看原圖" class="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 hover:border-brand-400 shrink-0"><img [src]="getSafeDriveImage(e.imageUrl)" (error)="handleImageError($event)" class="w-full h-full object-cover"></a> }
                                   <span class="text-xs text-gray-400 truncate max-w-[150px] text-right md:text-left" [title]="e.note">{{ e.note || '-' }}</span>
                                </div>
                             </td>
@@ -1287,7 +1287,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                </div>
                <div class="p-4 overflow-y-auto max-h-[70vh] flex flex-col gap-4 bg-gray-100/50 custom-scrollbar">
                  @for(img of viewReceiptImages(); track $index) {
-                   <img [src]="img" class="w-full rounded-xl border border-gray-200 shadow-sm bg-white p-1">
+                   <img [src]="getSafeDriveImage(img)" (error)="handleImageError($event)" class="w-full rounded-xl border border-gray-200 shadow-sm bg-white p-1">
                  }
                  @if(viewReceiptImages().length === 0) {
                    <div class="text-center text-gray-400 py-10 font-bold bg-white rounded-xl border border-dashed border-gray-200">買手未附上收據照片</div>
@@ -1950,6 +1950,29 @@ export class AdminPanelComponent {
   handleImageError(event: any) { 
     event.target.src = 'https://placehold.co/100x100?text=No+Image'; 
   }
+
+// 📸 Google Drive 終極破圖修復器
+  getSafeDriveImage(url: string): string {
+    if (!url) return 'https://placehold.co/300x300?text=No+Image';
+    if (!url.includes('drive.google.com')) return url;
+
+    let fileId = '';
+    // 破解格式 1: https://drive.google.com/file/d/ID/view
+    const match1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (match1) fileId = match1[1];
+    
+    // 破解格式 2: https://drive.google.com/uc?id=ID 或 export=view&id=ID
+    const match2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (match2) fileId = match2[1];
+
+    if (fileId) {
+      // 使用 Google 官方的 Thumbnail API，保證不破圖，sz=w1000 代表最高解析度 1000px
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+    }
+    
+    return url;
+  }
+
   activeTab = signal('dashboard');
   productSearch = signal('');
   productCategoryFilter = signal<string>('all'); // 記錄選中的主分類
