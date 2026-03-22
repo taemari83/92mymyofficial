@@ -110,7 +110,14 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                       <span class="text-[10px] font-bold text-red-500 truncate pr-1">單價(必填)</span>
                       @if(referencePrice()) { <span class="text-[9px] font-bold text-gray-400 bg-gray-100 px-1 rounded truncate">參考:{{ referencePrice() | number }}</span> }
                     </label>
-                    <input type="number" [(ngModel)]="tempPrice" placeholder="填寫收據金額..." class="w-full p-2.5 bg-red-50/30 border border-red-200 rounded-xl text-sm font-black outline-none focus:border-red-400 focus:bg-red-50 transition-colors placeholder:text-gray-400 placeholder:font-normal" />
+                    <div class="flex gap-1">
+                      <select [(ngModel)]="tempCurrency" class="p-2.5 bg-red-50/30 border border-red-200 rounded-xl text-xs font-bold text-red-700 outline-none focus:border-red-400 shrink-0">
+                        <option value="KRW">KRW</option>
+                        <option value="TWD">TWD</option>
+                        <option value="JPY">JPY</option>
+                      </select>
+                      <input type="number" [(ngModel)]="tempPrice" placeholder="收據金額..." class="w-full p-2.5 bg-red-50/30 border border-red-200 rounded-xl text-sm font-black outline-none focus:border-red-400 focus:bg-red-50 transition-colors placeholder:text-gray-400 placeholder:font-normal" />
+                    </div>
                   </div>
                   <div class="w-20 sm:w-24 shrink-0 min-w-0">
                     <label class="block text-[10px] font-bold text-gray-400 mb-1 truncate">數量</label>
@@ -149,7 +156,7 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                       </div>
                       <div class="flex items-center gap-3 shrink-0">
                         <div class="text-right">
-                          <div class="text-xs font-black text-gray-800">{{ item.price | number }}</div>
+                          <div class="text-xs font-black text-gray-800">{{ item.currency === 'KRW' ? '₩' : (item.currency === 'TWD' ? 'NT$' : item.currency) }} {{ item.price | number }}</div>
                           <div class="text-[10px] text-gray-400">x {{ item.quantity }}</div>
                         </div>
                         <button (click)="removeItem($index)" class="w-7 h-7 bg-white text-red-400 hover:bg-red-50 hover:text-red-500 rounded-full border border-gray-200 flex items-center justify-center text-xs shadow-sm">🗑️</button>
@@ -213,7 +220,14 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                 
                 <div class="bg-red-50 rounded-xl p-3.5 border border-red-200 flex flex-col justify-center shadow-inner">
                   <label class="block text-[10px] font-black text-red-500 mb-1.5 tracking-widest">實際付現/刷卡總額 (必填) ⚠️</label>
-                  <input type="number" [(ngModel)]="formData.actualTotalCost" placeholder="請照著收據填寫數字" class="w-full p-3 bg-white border border-red-300 rounded-xl text-lg font-black text-red-600 outline-none focus:border-red-500 transition-colors placeholder:text-red-200 placeholder:text-xs placeholder:font-normal text-center" />
+                  <div class="flex gap-1">
+                    <select [(ngModel)]="formData.currency" class="p-3 bg-white border border-red-300 rounded-xl text-sm font-bold text-red-700 outline-none focus:border-red-500 shrink-0">
+                      <option value="KRW">KRW</option>
+                      <option value="TWD">TWD</option>
+                      <option value="JPY">JPY</option>
+                    </select>
+                    <input type="number" [(ngModel)]="formData.actualTotalCost" placeholder="照著收據填寫" class="w-full p-3 bg-white border border-red-300 rounded-xl text-lg font-black text-red-600 outline-none focus:border-red-500 transition-colors placeholder:text-red-200 placeholder:text-xs placeholder:font-normal text-center" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -300,6 +314,7 @@ export class BuyerFormComponent {
   
   referencePrice = signal<number | null>(null);
   tempPrice = signal<number | null>(null); 
+  tempCurrency = signal<string>('KRW'); // 👈 新增：單品幣別 (預設韓元)
   tempQty = signal<number>(1); 
   purchaseItems = signal<any[]>([]); 
 
@@ -309,6 +324,7 @@ export class BuyerFormComponent {
     location: '',
     localShipping: 0,
     actualTotalCost: null as number | null, 
+    currency: 'KRW', // 👈 新增：整張單據的結帳幣別
     payer: '藝辰',
     shareMode: '親帶',
   };
@@ -327,6 +343,20 @@ export class BuyerFormComponent {
 
         if (!listMap.has(key)) {
           const product = this.store.products().find((p: Product) => p.id === item.productId);
+          
+          // ✅ 新增解析邏輯：去規格陣列中尋找對應的當地原價
+          let currentLocalPrice = product?.localPrice || null;
+          if (product && product.options) {
+            const fullOption = product.options.find((opt: string) => opt.split('=')[0].trim() === optionName);
+            if (fullOption && fullOption.includes('=')) {
+              const parts = fullOption.split('=');
+              // parts[3] 就是設定的當地原價
+              if (parts.length >= 4) {
+                currentLocalPrice = Number(parts[3]) || currentLocalPrice;
+              }
+            }
+          }
+
           listMap.set(key, {
             productId: item.productId,
             productName: item.productName,
@@ -334,11 +364,13 @@ export class BuyerFormComponent {
             image: product?.image || item.productImage || 'https://placehold.co/150x150?text=No+Image',
             sku: product?.code || '',
             purchaseUrl: (product as any)?.purchaseUrl || '',
-            localPrice: product?.localPrice || null,
+            localPrice: currentLocalPrice, // ✅ 替換為解析後的正確原價
             needed: 0,
             procured: (product as any)?.procured?.[optionName] || 0
           });
         }
+        
+        // 👇 這行剛剛可能不小心被覆蓋掉了，這是累加待買數量的關鍵！
         listMap.get(key).needed += (item.quantity || 1);
       });
     });
@@ -434,7 +466,7 @@ export class BuyerFormComponent {
 
     this.purchaseItems.update(items => [
       ...items, 
-      { ...product, price: Number(price), quantity: Number(qty) }
+      { ...product, price: Number(price), currency: this.tempCurrency(), quantity: Number(qty) }
     ]);
 
     this.searchProductText = '';
@@ -531,6 +563,7 @@ export class BuyerFormComponent {
       purchaseUrl: item.purchaseUrl || '',
       option: item.option || '單一規格',   // 👈 手動搜尋漏掉的規格，這裡也會自動補上
       price: item.price || 0,
+      currency: item.currency || 'KRW', // 👈 確保清洗時保留幣別
       quantity: item.quantity || 1
     }));
 

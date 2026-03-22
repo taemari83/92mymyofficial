@@ -812,7 +812,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          </td>
          <td class="p-4 block md:table-cell border-b md:border-none border-gray-100">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">購買品項</span>
-            <div class="text-xs text-gray-600 font-bold mb-1">{{ p?.items?.length || 0 }} 項商品 (預估值: NT$ {{ p?.estimatedLocalCost || 0 }})</div>
+            <div class="text-xs text-gray-600 font-bold mb-1">{{ p?.items?.length || 0 }} 項商品 (預估值: {{ p?.currency === 'KRW' ? '₩' : (p?.currency === 'TWD' ? 'NT$' : (p?.currency || 'NT$')) }} {{ p?.estimatedLocalCost || 0 }})</div>
             <div class="flex flex-col gap-0.5">
               @for(item of (p?.items || []); track (item?.productId || '') + $index) {
                 <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item?.productName }} x{{ item?.quantity }}</div>
@@ -825,7 +825,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          </td>
          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實際刷卡總額</span>
-            <div class="font-black text-red-600 text-base">NT$ {{ p?.totalLocalCost || 0 }}</div>
+            <div class="font-black text-red-600 text-base">{{ p?.currency === 'KRW' ? '₩' : (p?.currency === 'TWD' ? 'NT$' : (p?.currency || 'NT$')) }} {{ p?.totalLocalCost || 0 }}</div>
          </td>
          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">付款人 / 分潤</span>
