@@ -850,7 +850,23 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          </td>
          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實拍收據</span>
-            <button (click)="openReceipts(p?.receiptImages)" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 md:mx-auto transition-transform active:scale-95 shadow-sm border border-blue-100"><span>📸</span> 查看 ({{ p?.receiptImages?.length || 0 }})</button>
+            <div class="flex items-center gap-1 justify-end md:justify-center flex-wrap">
+               @if(p?.receiptImages && p.receiptImages.length > 0) {
+                  @for(img of p.receiptImages.slice(0, 3); track $index) {
+                     <button (click)="openReceipts(p.receiptImages)" title="點擊放大查看全部" class="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 hover:border-brand-400 shrink-0 transition-transform active:scale-95 relative group">
+                        <img [src]="getSafeDriveImage(img)" (error)="handleImageError($event)" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+                     </button>
+                  }
+                  @if(p.receiptImages.length > 3) {
+                     <button (click)="openReceipts(p.receiptImages)" title="點擊放大查看全部" class="h-8 px-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 text-[10px] font-bold flex items-center transition-colors">
+                        +{{ p.receiptImages.length - 3 }}
+                     </button>
+                  }
+               } @else {
+                  <span class="text-gray-300 font-bold">-</span>
+               }
+            </div>
          </td>
          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">狀態</span>
