@@ -653,10 +653,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             
             <div class="mt-4 w-full animate-fade-in flex flex-col sm:flex-row gap-3">
                 <button (click)="exportFinalMonthlyReport()" class="flex-1 py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-lg shadow-xl hover:bg-black transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
-                   <span class="text-2xl">📥</span> 匯出
+                   <span class="text-2xl">📥</span> 總結算匯出
                 </button>
                 <button (click)="syncFinalMonthlyReportToGoogleSheets()" class="flex-1 py-4 bg-[#E5B5B5] text-white rounded-[1.5rem] font-black text-lg shadow-xl hover:bg-[#D4A0A0] transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
-                   <span class="text-2xl">☁️</span> 同步
+                   <span class="text-2xl">☁️</span> 總結算同步
                 </button>
              </div>
             
@@ -3110,13 +3110,18 @@ exportInventoryCSV() {
   // ==========================================
   private readonly SHEETS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwCBQjv_aHhgRQhyAnSkddhapYHiwgzkEBDxnxTgItJZsmku5uPRC0IYscHfo7mdCs2/exec';
 
-  private async pushToGoogleSheets(sheetName: string, rows: any[]) {
-    // 扣除表頭，如果長度 <= 1 代表沒有真實資料
-    if (rows.length <= 1) return alert('目前沒有資料可以同步！');
-    if (!confirm(`⏳ 準備將資料同步至 Google Sheets 的「${sheetName}」分頁\n(系統將會自動清空舊資料再寫入最新資料)\n\n按下「確定」開始傳送。`)) return;
+  private async pushToGoogleSheets(sheetName: string, rows: any[], clearSheet: boolean = true) {
+    if (rows.length === 0) return alert('目前沒有資料可以同步！');
+    
+    // 根據是否覆蓋，顯示不同的提示文字
+    const confirmMsg = clearSheet 
+       ? `⏳ 準備將資料同步至 Google Sheets 的「${sheetName}」分頁\n(系統將會自動清空舊資料再寫入最新資料)\n\n按下「確定」開始傳送。`
+       : `⏳ 準備將結算資料【新增】至 Google Sheets 的「${sheetName}」分頁\n(新資料會往下增加，不會覆蓋舊紀錄，方便追蹤進退步！)\n\n按下「確定」開始傳送。`;
+       
+    if (!confirm(confirmMsg)) return;
+    
     try {
-      // 🔥 加入 clearSheet: true，通知 GAS 覆蓋舊資料
-      const res = await fetch(this.SHEETS_GAS_URL, { method: 'POST', body: JSON.stringify({ sheetName, rows, clearSheet: true }) });
+      const res = await fetch(this.SHEETS_GAS_URL, { method: 'POST', body: JSON.stringify({ sheetName, rows, clearSheet }) });
       const result = await res.json();
       if (result.success) alert(`✅ 同步成功！\n已更新至「${sheetName}」分頁。`);
       else alert('❌ 同步失敗: ' + result.error);
@@ -4141,7 +4146,6 @@ submitProduct() {
      else if (range === 'custom') { if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart()); if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd()); }
 
      const validExpenses = this.expenses().filter(e => {
-        // 🔥 [會計防呆] 排除「商品採購」與「資金流轉(儲值)」，因為商品成本已在銷售時扣除(COGS)，不能重複扣抵淨利！
         if (e.category === '商品採購' || e.category === '儲值') return false; 
         const d = new Date(e.date);
         if (startDate && d < startDate) return false;
@@ -4154,20 +4158,21 @@ submitProduct() {
      const finalNet = stats.profit - opExTwd;
      const realCompanyShare = stats.shares.company - opExTwd;
 
-     const headers = ['項目', '金額 (NT$)', '詳細說明'];
-     const rows = [
-        ['總營收 (Sales)', Math.round(stats.revenue), '當期所有已收款訂單之實收總額'],
-        ['總商品成本 (COGS)', Math.round(stats.cost), '當期售出商品之進價、關稅與運費總和'],
-        ['商品總毛利 (Gross Margin)', Math.round(stats.profit), '總營收 - 總商品成本'],
-        ['總營業支出 (OpEx)', Math.round(opExTwd), '當期紀錄之包材、機票、行銷等雜支 (韓元以40概算)'],
-        ['🏆 最終淨利潤 (Net Income)', Math.round(finalNet), '商品毛利 - 營業支出 (最真實的淨賺)'],
-        ['-----------------', '------', '-----------------'],
-        ['合夥人：藝辰 應匯款', Math.round(stats.shares.yichen), '親帶淨利 25%'],
-        ['合夥人：子婷 應匯款', Math.round(stats.shares.ziting), '親帶 25% + 批發 40%'],
-        ['合夥人：小芸 應匯款', Math.round(stats.shares.xiaoyun), '親帶 25% + 批發 40%'],
-        ['🏢 公司保留真實盈餘', Math.round(realCompanyShare), '公司毛利分潤 (親帶25%/批發20%) 扣除 總營業支出']
+     // 🔥 改版為「橫向單行格式」，加入時間與區間
+     const exportTime = now.toLocaleString('zh-TW', { hour12: false });
+     const rangeName = range === 'today' ? '今日' : (range === 'week' ? '本週' : (range === 'month' ? '本月' : (range === 'year' ? '本年' : '自訂區間')));
+     
+     const headers = ['結算匯出時間', '報表區間', '總營收 (Sales)', '總商品成本 (COGS)', '商品總毛利 (Gross Margin)', '總營業支出 (OpEx)', '🏆 最終淨利潤 (Net Income)', '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘'];
+     
+     const rowData = [
+        exportTime, rangeName,
+        Math.round(stats.revenue), Math.round(stats.cost), Math.round(stats.profit),
+        Math.round(opExTwd), Math.round(finalNet),
+        Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare)
      ];
-     this.downloadCSV(`終極會計總表_${range}_${new Date().toISOString().slice(0,10)}`, headers, rows);
+
+     // 下載 CSV 時，還是會附上表頭方便閱讀
+     this.downloadCSV(`終極會計總表_${range}_${now.toISOString().slice(0,10)}`, headers, [rowData]);
   }
 
   // ✂️ 開關拆單模式，並清空勾選紀錄
@@ -4304,21 +4309,20 @@ submitProduct() {
      const finalNet = stats.profit - opExTwd;
      const realCompanyShare = stats.shares.company - opExTwd;
 
-     const headers = ['項目', '金額 (NT$)', '詳細說明'];
-     const rows = [
-        ['總營收 (Sales)', Math.round(stats.revenue), '當期所有已收款訂單之實收總額'],
-        ['總商品成本 (COGS)', Math.round(stats.cost), '當期售出商品之進價、關稅與運費總和'],
-        ['商品總毛利 (Gross Margin)', Math.round(stats.profit), '總營收 - 總商品成本'],
-        ['總營業支出 (OpEx)', Math.round(opExTwd), '當期紀錄之包材、機票、行銷等雜支 (韓元以40概算)'],
-        ['🏆 最終淨利潤 (Net Income)', Math.round(finalNet), '商品毛利 - 營業支出 (最真實的淨賺)'],
-        ['-----------------', '------', '-----------------'],
-        ['合夥人：藝辰 應匯款', Math.round(stats.shares.yichen), '親帶淨利 25%'],
-        ['合夥人：子婷 應匯款', Math.round(stats.shares.ziting), '親帶 25% + 批發 40%'],
-        ['合夥人：小芸 應匯款', Math.round(stats.shares.xiaoyun), '親帶 25% + 批發 40%'],
-        ['🏢 公司保留真實盈餘', Math.round(realCompanyShare), '公司毛利分潤 (親帶25%/批發20%) 扣除 總營業支出']
+     // 💡 抓取當下時間與區間名稱
+     const exportTime = now.toLocaleString('zh-TW', { hour12: false });
+     const rangeName = range === 'today' ? '今日' : (range === 'week' ? '本週' : (range === 'month' ? '本月' : (range === 'year' ? '本年' : '自訂區間')));
+     
+     // 💡 把所有數字塞進「同一行」裡面！
+     const rowData = [
+        exportTime, rangeName,
+        Math.round(stats.revenue), Math.round(stats.cost), Math.round(stats.profit),
+        Math.round(opExTwd), Math.round(finalNet),
+        Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare)
      ];
      
-     // 拋轉到雲端
-     this.pushToGoogleSheets(`終極會計總表`, [headers, ...rows]);
+     // 💡 關鍵：同步時，第三個參數傳入 `false`，啟動「不覆蓋、往下新增」模式！
+     // 我們只傳送純數字資料 (rowData)，不傳表頭！
+     this.pushToGoogleSheets(`終極會計總表`, [rowData], false);
   }
 }
