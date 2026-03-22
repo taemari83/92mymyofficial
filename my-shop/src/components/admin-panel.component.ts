@@ -542,27 +542,27 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="space-y-6 w-full">
               <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full">
                 
-                <div class="flex flex-col 2xl:flex-row justify-between items-start 2xl:items-center gap-4">
+                <div class="flex flex-wrap justify-between items-center gap-4">
                   
-                  <div class="flex flex-wrap items-center gap-3 w-full 2xl:w-auto">
-                     <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 w-full sm:w-auto">
+                  <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                     <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 flex-1 sm:flex-none">
                         <span class="text-xs text-gray-400 font-bold whitespace-nowrap shrink-0">註冊:</span>
                         <input type="date" [ngModel]="memberStart()" (ngModelChange)="memberStart.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none flex-1 min-w-[110px]">
                         <span class="text-gray-300 hidden sm:block shrink-0">-</span>
                         <input type="date" [ngModel]="memberEnd()" (ngModelChange)="memberEnd.set($event)" class="bg-transparent text-sm font-bold text-gray-700 outline-none flex-1 min-w-[110px]">
                      </div>
-                     <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 w-full sm:w-auto">
+                     <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 flex-1 sm:flex-none">
                         <span class="text-xs text-gray-400 font-bold whitespace-nowrap shrink-0">消費額 ≥</span>
-                        <input type="number" [ngModel]="minSpendFilter()" (ngModelChange)="minSpendFilter.set($event)" class="bg-transparent text-sm font-bold text-brand-900 outline-none flex-1 sm:w-20" placeholder="0">
+                        <input type="number" [ngModel]="minSpendFilter()" (ngModelChange)="minSpendFilter.set($event)" class="bg-transparent text-sm font-bold text-brand-900 outline-none w-full sm:w-20" placeholder="0">
                      </div>
                   </div>
 
-                  <div class="flex flex-wrap lg:flex-nowrap items-center gap-3 w-full 2xl:w-auto mt-2 2xl:mt-0">
-                     <div class="relative w-full lg:w-64 shrink-0">
+                  <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto flex-1 justify-start xl:justify-end">
+                     <div class="relative w-full sm:w-auto flex-1 min-w-[200px] max-w-full xl:max-w-[300px]">
                        <input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100">
                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
                      </div>
-                     <div class="flex flex-wrap sm:flex-nowrap gap-2 w-full lg:w-auto shrink-0">
+                     <div class="flex flex-wrap gap-2 w-full sm:w-auto">
                        <button (click)="openBulkCustomerModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 whitespace-nowrap shadow-sm flex items-center justify-center transition-colors gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次 ({{ selectedCustomerIds().length }})</button>
                        <button (click)="exportCustomersCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">📥 匯出</button>
                        <button (click)="syncCustomersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-lg font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex items-center justify-center transition-colors">☁️ 同步</button>
