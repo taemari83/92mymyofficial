@@ -220,6 +220,8 @@ async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), 
   async addWallet(w: Wallet) { await setDoc(doc(this.firestore, 'wallets', w.id), w); }
   async updateWalletBalance(id: string, newBalance: number) { await updateDoc(doc(this.firestore, 'wallets', id), { balance: newBalance }); }
   async addExpense(e: Expense) { await setDoc(doc(this.firestore, 'expenses', e.id), e); }
+  async deleteExpense(id: string) { await deleteDoc(doc(this.firestore, 'expenses', id)); } // 👈 補上這行
+  
 
   // 🧾 新增：寫入採購單，並自動同步商品的「已買到」數量
   async addPurchaseBatch(data: any) { 

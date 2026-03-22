@@ -651,11 +651,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full"><div class="bg-brand-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div><div class="relative z-10"><div class="text-brand-200 text-xs font-bold uppercase tracking-widest mb-1">總營收 (已扣除折扣)</div><div class="text-3xl font-black">NT$ {{ accountingStats().revenue | number }}</div></div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">淨利潤</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().profit | number:'1.0-0' }}</div><div class="mt-2 inline-block px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">淨利率 {{ accountingStats().margin | number:'1.1-1' }}%</div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">總成本 (商品+物流)</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().cost | number:'1.0-0' }}</div></div><div class="lg:col-span-3 bg-blue-50/50 p-4 rounded-[2rem] border border-blue-50 flex items-center text-blue-800/70 text-xs leading-relaxed">💡 報表說明：<br>• 只要有下單(包含未付款)，皆會計入上方「總營收/淨利」方便追蹤。<br>• 僅排除「已退款」與「已取消」的訂單。<br>• 下方「收款狀態分析」方便對帳實際入帳的現金流。</div></div>
             
-            <div class="mt-4 w-full animate-fade-in">
-               <button (click)="exportFinalMonthlyReport()" class="w-full py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-xl shadow-xl hover:bg-black transition-transform active:scale-[0.98] flex items-center justify-center gap-3">
-                  <span class="text-3xl">🏆</span> 會計結算總表(扣除營業支出與分潤)
-               </button>
-            </div>
+            <div class="mt-4 w-full animate-fade-in flex flex-col sm:flex-row gap-3">
+                <button (click)="exportFinalMonthlyReport()" class="flex-1 py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-lg shadow-xl hover:bg-black transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
+                   <span class="text-2xl">📥</span> 匯出
+                </button>
+                <button (click)="syncFinalMonthlyReportToGoogleSheets()" class="flex-1 py-4 bg-[#E5B5B5] text-white rounded-[1.5rem] font-black text-lg shadow-xl hover:bg-[#D4A0A0] transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
+                   <span class="text-2xl">☁️</span> 同步
+                </button>
+             </div>
             
             <div class="mt-8 w-full animate-fade-in">
                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -959,9 +962,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                   <span class="text-xs text-gray-400 truncate max-w-[150px] text-right md:text-left" [title]="e.note">{{ e.note || '-' }}</span>
                                </div>
                             </td>
-                            <td class="p-4 flex items-center justify-end md:table-cell md:text-center">
-                               <button (click)="editExpense(e)" class="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg text-xs font-bold transition-colors shadow-sm">編輯</button>
-                            </td>
+                            <td class="p-4 flex items-center justify-end md:table-cell md:text-center gap-2">
+                             <button (click)="editExpense(e)" class="px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg text-xs font-bold transition-colors shadow-sm">編輯</button>
+                            <button (click)="deleteExpenseRecord(e)" class="px-3 py-1.5 bg-white text-red-400 border border-red-100 hover:bg-red-50 hover:text-red-600 rounded-lg text-xs font-bold transition-colors shadow-sm">刪除</button>
+                           </td>
                          </tr>
                       } @empty {
                          <tr><td colspan="7" class="p-8 text-center text-gray-400 font-bold block md:table-cell">目前無支出紀錄</td></tr>
@@ -3891,6 +3895,12 @@ submitProduct() {
     this.editingExpense.set(null);
   }
 
+  async deleteExpenseRecord(e: any) {
+    if(confirm(`⚠️ 確定要刪除這筆支出嗎？\n項目：${e.item}\n金額：${e.amount}\n\n(註：刪除支出不會自動退還錢包餘額，若有需要請手動補回帳戶)`)) {
+       await this.store.deleteExpense(e.id);
+    }
+  }
+
   // 👇 新增：上傳到 Google Drive 的專屬函式 (升級 Promise 版)
   async uploadExpenseImage(event: any) {
     const file = event.target.files[0];
@@ -4269,5 +4279,46 @@ submitProduct() {
 
   forceRefresh() {
     window.location.reload(); // 強制重新整理整個網頁
+  }
+
+  // ☁️ 終極大絕招：一鍵同步【終極會計結算總表】至 Google Sheets
+  async syncFinalMonthlyReportToGoogleSheets() {
+     const stats = this.accountingStats(); const range = this.accountingRange(); const now = new Date(); 
+     let startDate: Date | null = null; let endDate: Date | null = null;
+     if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
+     else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+     else if (range === 'year') startDate = new Date(now.getFullYear(), 0, 1); 
+     else if (range === 'custom') { if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart()); if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd()); }
+
+     const validExpenses = this.expenses().filter(e => {
+        if (e.category === '商品採購' || e.category === '儲值') return false; 
+        const d = new Date(e.date);
+        if (startDate && d < startDate) return false;
+        if (endDate) { const ed = new Date(endDate); ed.setHours(23,59,59,999); if (d > ed) return false; }
+        return true;
+     });
+
+     let opExTwd = 0;
+     validExpenses.forEach(e => { opExTwd += (e.currency === 'KRW') ? (e.amount / 40) : e.amount; });
+     const finalNet = stats.profit - opExTwd;
+     const realCompanyShare = stats.shares.company - opExTwd;
+
+     const headers = ['項目', '金額 (NT$)', '詳細說明'];
+     const rows = [
+        ['總營收 (Sales)', Math.round(stats.revenue), '當期所有已收款訂單之實收總額'],
+        ['總商品成本 (COGS)', Math.round(stats.cost), '當期售出商品之進價、關稅與運費總和'],
+        ['商品總毛利 (Gross Margin)', Math.round(stats.profit), '總營收 - 總商品成本'],
+        ['總營業支出 (OpEx)', Math.round(opExTwd), '當期紀錄之包材、機票、行銷等雜支 (韓元以40概算)'],
+        ['🏆 最終淨利潤 (Net Income)', Math.round(finalNet), '商品毛利 - 營業支出 (最真實的淨賺)'],
+        ['-----------------', '------', '-----------------'],
+        ['合夥人：藝辰 應匯款', Math.round(stats.shares.yichen), '親帶淨利 25%'],
+        ['合夥人：子婷 應匯款', Math.round(stats.shares.ziting), '親帶 25% + 批發 40%'],
+        ['合夥人：小芸 應匯款', Math.round(stats.shares.xiaoyun), '親帶 25% + 批發 40%'],
+        ['🏢 公司保留真實盈餘', Math.round(realCompanyShare), '公司毛利分潤 (親帶25%/批發20%) 扣除 總營業支出']
+     ];
+     
+     // 拋轉到雲端
+     this.pushToGoogleSheets(`終極會計總表`, [headers, ...rows]);
   }
 }
