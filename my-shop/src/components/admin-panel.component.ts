@@ -836,7 +836,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          </td>
          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實拍收據</span>
-            <button (click)="openReceipts(p?.receiptImages)" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 mx-auto transition-transform active:scale-95 shadow-sm border border-blue-100"><span>📸</span> 查看 ({{ p?.receiptImages?.length || 0 }})</button>
+            <button (click)="openReceipts(p?.receiptImages)" class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 flex items-center gap-1 md:mx-auto transition-transform active:scale-95 shadow-sm border border-blue-100"><span>📸</span> 查看 ({{ p?.receiptImages?.length || 0 }})</button>
          </td>
          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-center">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">狀態</span>
