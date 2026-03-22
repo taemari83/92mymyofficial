@@ -932,9 +932,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 </div>
              </div>
 
-             <div class="bg-transparent md:bg-white md:rounded-[2rem] md:shadow-sm md:border md:border-gray-50 overflow-hidden overflow-x-auto w-full custom-scrollbar pb-2">
+             <div class="bg-transparent md:bg-white md:rounded-[2rem] md:shadow-sm md:border md:border-gray-50 overflow-x-auto overflow-y-auto max-h-[70vh] w-full custom-scrollbar pb-2 relative">
                 <table class="w-full text-sm text-left whitespace-nowrap block md:table md:min-w-[700px]">
-                   <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200 hidden md:table-header-group">
+                   <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200 hidden md:table-header-group sticky top-0 z-[40] shadow-sm">
                       <tr>
                          <th class="p-4 pl-6">日期</th>
                          <th class="p-4">支出項目</th>
