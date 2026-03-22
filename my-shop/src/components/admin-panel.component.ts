@@ -1613,10 +1613,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="grid grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-100">
                     <div>
                       <label class="block text-xs font-bold text-red-600 mb-1">扣款幣別 (錢包)</label>
-                      <select formControlName="currency" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 text-sm font-bold bg-white">
-                        <option value="TWD">台幣 (TWD)</option>
-                        <option value="KRW">韓元 (KRW)</option>
-                      </select>
+                      <select formControlName="currency" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 text-sm font-bold bg-white cursor-pointer">
+                      <option value="" disabled selected>請選擇幣別...</option>
+                      <option value="TWD">台幣 (TWD)</option>
+                      <option value="KRW">韓元 (KRW)</option>
+                      <option value="JPY">日幣 (JPY)</option>
+                  </select>
                     </div>
                     <div>
                       <label class="block text-xs font-bold text-red-600 mb-1">金額</label>
@@ -3828,7 +3830,7 @@ submitProduct() {
 
   openExpenseModal() {
     this.editingExpense.set(null);
-    this.expenseForm.reset({ date: new Date().toISOString().slice(0, 10), category: '包材費', currency: 'TWD', payer: '公司', imageUrl: '' });
+    this.expenseForm.reset({ date: new Date().toISOString().slice(0, 10), category: '', currency: '', payer: '', imageUrl: '' });
     this.showExpenseModal.set(true);
   }
 

@@ -206,29 +206,29 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
               <div class="flex items-center gap-2 border-b border-gray-100 pb-2">
                 <span class="text-lg">💵</span><h2 class="font-bold text-gray-800">總花費結算</h2>
               </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="space-y-2">
-                  <div>
-                    <label class="block text-[10px] font-bold text-gray-400 mb-1">整筆單據當地運費 (無則免填)</label>
-                    <input type="number" [(ngModel)]="formData.localShipping" placeholder="0" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-brand-400" />
-                  </div>
-                  <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-200 flex justify-between items-center mt-2">
-                    <span class="text-[10px] font-bold text-gray-500">預估合計 (商品+運費)</span>
-                    <span class="text-sm font-black text-gray-400">{{ getCalculatedTotal() | number }}</span>
-                  </div>
-                </div>
-                
-                <div class="bg-red-50 rounded-xl p-3.5 border border-red-200 flex flex-col justify-center shadow-inner">
-                  <label class="block text-[10px] font-black text-red-500 mb-1.5 tracking-widest">實際付現/刷卡總額 (必填) ⚠️</label>
-                  <div class="flex gap-1">
-                    <select [(ngModel)]="formData.currency" class="p-3 bg-white border border-red-300 rounded-xl text-sm font-bold text-red-700 outline-none focus:border-red-500 shrink-0">
-                      <option value="KRW">KRW</option>
-                      <option value="TWD">TWD</option>
-                      <option value="JPY">JPY</option>
-                    </select>
-                    <input type="number" [(ngModel)]="formData.actualTotalCost" placeholder="照著收據填寫" class="w-full p-3 bg-white border border-red-300 rounded-xl text-lg font-black text-red-600 outline-none focus:border-red-500 transition-colors placeholder:text-red-200 placeholder:text-xs placeholder:font-normal text-center" />
-                  </div>
-                </div>
+              <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+  <div class="space-y-2 sm:col-span-2">
+    <div>
+      <label class="block text-[10px] font-bold text-gray-400 mb-1">整筆單據當地運費 (無則免填)</label>
+      <input type="number" [(ngModel)]="formData.localShipping" placeholder="0" class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-brand-400" />
+    </div>
+    <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-200 flex justify-between items-center mt-2">
+      <span class="text-[10px] font-bold text-gray-500">預估合計 (商品+運費)</span>
+      <span class="text-sm font-black text-gray-400">{{ getCalculatedTotal() | number }}</span>
+    </div>
+  </div>
+  
+  <div class="bg-red-50 rounded-xl p-3.5 border border-red-200 flex flex-col justify-center shadow-inner sm:col-span-3">
+    <label class="block text-[10px] font-black text-red-500 mb-1.5 tracking-widest">實際付現/刷卡總額 (必填) ⚠️</label>
+    <div class="flex gap-1">
+      <select [(ngModel)]="formData.currency" class="p-3 bg-white border border-red-300 rounded-xl text-sm font-bold text-red-700 outline-none focus:border-red-500 shrink-0">
+        <option value="KRW">KRW</option>
+        <option value="TWD">TWD</option>
+        <option value="JPY">JPY</option>
+      </select>
+      <input type="number" [(ngModel)]="formData.actualTotalCost" placeholder="照著收據填寫" class="w-full p-3 bg-white border border-red-300 rounded-xl text-lg font-black text-red-600 outline-none focus:border-red-500 transition-colors placeholder:text-red-200 placeholder:text-xs placeholder:font-normal text-center" />
+    </div>
+  </div>
               </div>
             </div>
 
