@@ -2418,14 +2418,10 @@ try {
           payUnpaid += o.finalTotal;
       }
 
-      let isReceived = false;
-      if (['payment_confirmed', 'shipped', 'completed', 'picked_up'].includes(o.status)) {
-          if (o.paymentMethod !== 'cod' || o.status === 'completed') {
-              isReceived = true;
-          }
-      }
+      // 💡 統一邏輯：只要不是取消或退款，皆計入營收與成本計算！
+      const isValidOrder = !['cancelled', 'refunded'].includes(o.status);
       
-      if (isReceived) {
+      if (isValidOrder) {
           if ((o.paymentMethod as string) === 'giveaway') return; // 👈 神級防呆：抽獎單不計入銷售成本
 
           revenue += o.finalTotal;
@@ -2581,37 +2577,48 @@ try {
     const orders = this.store.orders(); 
     const today = new Date().toDateString(); 
     const thisMonth = new Date().getMonth(); 
+    const thisYear = new Date().getFullYear(); // 跨年防呆
     let todayRev = 0; let monthSales = 0; let monthCost = 0; 
     
     orders.forEach((o: Order) => {
         const dStr = new Date(o.createdAt).toDateString();
         const dMonth = new Date(o.createdAt).getMonth();
+        const dYear = new Date(o.createdAt).getFullYear();
 
-        if(!['pending_payment', 'unpaid_alert', 'cancelled', 'refunded'].includes(o.status)) { 
+        // 💡 統一邏輯：只要不是取消或退款，皆計入營業額！
+        if(!['cancelled', 'refunded'].includes(o.status) && (o.paymentMethod as string) !== 'giveaway') {
           if (dStr === today) todayRev += o.finalTotal; 
-          if (dMonth === thisMonth) {
+          if (dMonth === thisMonth && dYear === thisYear) {
               monthSales += o.finalTotal; 
-              (o.items || []).forEach((i: CartItem) => { // 🛡️ 加上神盾
+              (o.items || []).forEach((i: CartItem) => { 
                 const p = this.store.products().find((x: Product) => x.id === i.productId); 
-if(p) {
+                
+                // 🧠 接上最精準的「採購真實成本大腦」
+                const key = `${i.productId}_${i.option || '單一規格'}`;
+                const actualCost = this.store.averageActualCostMap().get(key);
+                
+                if (actualCost) {
+                    monthCost += actualCost * i.quantity;
+                } else if (p) {
                     let currentLocalPrice = p.localPrice || 0;
-                    const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+                    let fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+                    // 🛡️ 模糊比對防呆：如果老闆後來加了 (售完)
+                    if (!fullOption && p.options) {
+                        fullOption = p.options.find((opt: string) => opt.includes(i.option) || i.option.includes(opt.split('=')[0].trim())) || '';
+                    }
                     if (fullOption.includes('=')) {
                         const parts = fullOption.split('=');
-                        if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+                        if (parts.length >= 4 && !isNaN(Number(parts[3]))) currentLocalPrice = Number(parts[3]);
                     }
-                    if (currentLocalPrice > 0 || p.localPrice) {
-                        const costMat = p.costMaterial || 0;
-                        const weight = p.weight || 0;
-                        const shipKg = p.shippingCostPerKg || 200;
-                        const rate = p.exchangeRate || 1; // 🔥 抓取動態匯率
-                        monthCost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity; 
-                    } else {
-                        monthCost += (i.unitCost || 0) * i.quantity;
-                    }
+                    const costMat = Number(p.costMaterial) || 0;
+                    const weight = Number(p.weight) || 0;
+                    const shipKg = Number(p.shippingCostPerKg) || 0; 
+                    const rate = Number(p.exchangeRate) || 1; 
+                    monthCost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity; 
                 } else {
                     monthCost += (i.unitCost || 0) * i.quantity;
-                }              }); 
+                }              
+              }); 
           }
         } 
     }); 
@@ -3212,15 +3219,18 @@ exportInventoryCSV() {
           currentPriceGeneral = p.priceGeneral || 0;
           currentPriceVip = p.priceVip || 0;
 
-          const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
-          if (fullOption.includes('=')) {
-              const parts = fullOption.split('=');
-              if (parts.length >= 4) {
-                  currentPriceGeneral = Number(parts[1]) || currentPriceGeneral;
-                  currentPriceVip = Number(parts[2]) || currentPriceVip;
-                  currentLocalPrice = Number(parts[3]) || currentLocalPrice;
-              }
-          }
+          let fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+        // 🛡️ 模糊比對防呆：如果老闆後來在後台加上 (售完)，歷史訂單依然能對應到正確價格！
+        if (!fullOption && p.options) {
+            fullOption = p.options.find((opt: string) => opt.includes(i.option) || i.option.includes(opt.split('=')[0].trim())) || '';
+        }
+
+        if (fullOption.includes('=')) {
+            const parts = fullOption.split('=');
+            if (parts.length >= 2 && !isNaN(Number(parts[1]))) currentPriceGeneral = Number(parts[1]);
+            if (parts.length >= 3 && !isNaN(Number(parts[2]))) currentPriceVip = Number(parts[2]);
+            if (parts.length >= 4 && !isNaN(Number(parts[3]))) currentLocalPrice = Number(parts[3]);
+        }
           const rate = p.exchangeRate || 1; const shipKg = p.shippingCostPerKg || 0; 
           
           // 🧠 呼叫大腦
