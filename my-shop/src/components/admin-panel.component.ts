@@ -627,25 +627,25 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'accounting') {
            <div class="space-y-6 pt-2 w-full">
-            <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 w-full">
-               <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1 custom-scrollbar">
+            <div class="flex flex-col xl:flex-row gap-4 justify-between xl:items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 w-full">
+               <div class="flex gap-2 overflow-x-auto w-full xl:w-auto pb-1 custom-scrollbar">
                  @for(r of ['today', 'week', 'month', 'year', 'custom']; track r) { 
-                   <button (click)="accountingRange.set(r)" class="px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap" [class.bg-brand-900]="accountingRange() === r" [class.text-white]="accountingRange() === r" [class.bg-gray-100]="accountingRange() !== r" [class.text-gray-500]="accountingRange() !== r"> 
+                   <button (click)="accountingRange.set(r)" class="px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap shrink-0" [class.bg-brand-900]="accountingRange() === r" [class.text-white]="accountingRange() === r" [class.bg-gray-100]="accountingRange() !== r" [class.text-gray-500]="accountingRange() !== r"> 
                      @switch(r) { @case('today') { 今日 } @case('week') { 本週 } @case('month') { 本月 } @case('year') { 本年 } @case('custom') { 自訂 } } 
                    </button> 
                  }
                </div>
                
-               <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap mt-3 sm:mt-0 w-full sm:w-auto">
+               <div class="flex items-center gap-2 flex-wrap mt-2 xl:mt-0 w-full xl:w-auto justify-start xl:justify-end">
                  @if(accountingRange() === 'custom') { 
-                   <div class="flex items-center gap-2 animate-fade-in"> 
-                     <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
+                   <div class="flex items-center gap-2 animate-fade-in flex-1 sm:flex-none min-w-[220px]"> 
+                     <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event)" class="w-full border border-gray-200 rounded-xl px-2 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
                      <span class="text-gray-400">~</span> 
-                     <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="border border-gray-200 rounded-lg px-3 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
+                     <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="w-full border border-gray-200 rounded-xl px-2 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
                    </div> 
                  }
-                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap flex items-center justify-center gap-1 transition-colors"><span>📥</span> 匯出</button>
-                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap flex items-center justify-center gap-1 shadow-md transition-transform active:scale-95"><span>☁️</span> 同步</button>
+                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap flex items-center justify-center gap-1 transition-colors"><span>📥</span> 匯出</button>
+                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap flex items-center justify-center gap-1 shadow-sm transition-transform active:scale-95"><span>☁️</span> 同步</button>
                </div>
             </div>
 
@@ -778,16 +778,18 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'purchases') {
           <div class="space-y-6 w-full animate-fade-in">
-              <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col lg:flex-row justify-between lg:items-center gap-4 w-full">
-               <div class="flex items-center gap-2 mr-auto flex-wrap sm:flex-nowrap">
-   <span class="text-sm font-bold text-gray-500">日期篩選:</span>
-   <input type="date" [ngModel]="purchaseStart()" (ngModelChange)="purchaseStart.set($event)" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2 outline-none">
-   <span class="text-gray-400">~</span>
-   <input type="date" [ngModel]="purchaseEnd()" (ngModelChange)="purchaseEnd.set($event)" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2 outline-none">
-</div>  
-              <div class="flex items-center gap-2">
-                    <button (click)="exportPurchasesCSV()" class="px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] transition-colors shadow-sm flex items-center gap-1"><span>📥</span> 匯出</button>
-                    <button (click)="syncPurchasesToGoogleSheets()" class="px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] transition-colors shadow-sm flex items-center gap-1"><span>☁️</span> 同步</button>
+              <div class="bg-white p-4 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row justify-between xl:items-center gap-4 w-full">
+                 <div class="flex items-center gap-2 flex-wrap w-full xl:w-auto">
+                    <span class="text-sm font-bold text-gray-500 shrink-0">日期篩選:</span>
+                    <div class="flex items-center gap-2 flex-1 sm:flex-none min-w-[220px]">
+                       <input type="date" [ngModel]="purchaseStart()" (ngModelChange)="purchaseStart.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-2 py-2 outline-none">
+                       <span class="text-gray-400">~</span>
+                       <input type="date" [ngModel]="purchaseEnd()" (ngModelChange)="purchaseEnd.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-2 py-2 outline-none">
+                    </div>
+                 </div>
+                 <div class="flex items-center gap-2 w-full xl:w-auto">
+                    <button (click)="exportPurchasesCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] transition-colors shadow-sm flex items-center justify-center gap-1"><span>📥</span> 匯出</button>
+                    <button (click)="syncPurchasesToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] transition-colors shadow-sm flex items-center justify-center gap-1"><span>☁️</span> 同步</button>
                  </div>
               </div>
 
@@ -906,15 +908,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'expenses') {
           <div class="space-y-6 w-full animate-fade-in">
-             <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <p class="text-sm font-bold text-gray-500">💡 記錄包材、機票、貨運費等公積金攤提</p>
-                <div class="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
-                   <div class="flex items-center gap-2 flex-1 sm:flex-none">
-                    <input type="date" [ngModel]="expenseStart()" (ngModelChange)="expenseStart.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2 outline-none">
-                    <span class="text-gray-400">~</span>
-                    <input type="date" [ngModel]="expenseEnd()" (ngModelChange)="expenseEnd.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2 outline-none">
-               </div>
-                 <select [ngModel]="expenseCategoryFilter()" (ngModelChange)="expenseCategoryFilter.set($event)" class="flex-1 sm:flex-none bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:border-brand-300">
+             <div class="bg-white p-4 sm:p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row justify-between xl:items-center gap-4">
+                <p class="text-sm font-bold text-gray-500 shrink-0 whitespace-nowrap">💡 記錄包材、機票、貨運費等公積金攤提</p>
+                <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+                   <div class="flex items-center gap-2 flex-1 sm:flex-none min-w-[220px]">
+                      <input type="date" [ngModel]="expenseStart()" (ngModelChange)="expenseStart.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-2 py-2.5 outline-none">
+                      <span class="text-gray-400">~</span>
+                      <input type="date" [ngModel]="expenseEnd()" (ngModelChange)="expenseEnd.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-2 py-2.5 outline-none">
+                   </div>
+                   <select [ngModel]="expenseCategoryFilter()" (ngModelChange)="expenseCategoryFilter.set($event)" class="flex-1 sm:flex-none min-w-[120px] bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-3 py-2.5 outline-none focus:border-brand-300">
                       <option value="all">全部類別</option>
                       <option value="商品採購">商品採購 (自動)</option>
                       <option value="儲值">資金流轉 (自動)</option>
@@ -928,7 +930,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    <button (click)="syncExpensesToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] transition-colors whitespace-nowrap flex items-center justify-center gap-1"><span>☁️</span> 同步</button>
                    <button (click)="openExpenseModal()" class="flex-1 sm:flex-none px-6 py-2.5 bg-brand-900 text-white rounded-xl font-bold shadow-sm hover:bg-black transition-transform active:scale-95 whitespace-nowrap">+ 記一筆</button>
                 </div>
-              </div>
+             </div>
 
              <div class="bg-transparent md:bg-white md:rounded-[2rem] md:shadow-sm md:border md:border-gray-50 overflow-hidden overflow-x-auto w-full custom-scrollbar pb-2">
                 <table class="w-full text-sm text-left whitespace-nowrap block md:table md:min-w-[700px]">
@@ -938,7 +940,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          <th class="p-4">支出項目</th>
                          <th class="p-4">類別</th>
                          <th class="p-4 text-right">金額</th>
-                         <th class="p-4 text-center">付款人</th>
+                         <th class="p-4 text-right">結存餘額</th> <th class="p-4 text-center">付款人</th>
                          <th class="p-4">收據/備註</th>
                          <th class="p-4 text-center">操作</th>
                       </tr>
@@ -961,6 +963,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                             <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none md:text-right">
                                <span class="md:hidden text-xs text-gray-400 font-bold">金額</span>
                                <span class="font-black text-lg md:text-sm" [class.text-red-500]="e.category !== '儲值'">{{ e.currency === 'KRW' ? '₩' : 'NT$' }} {{ e.amount | number }}</span>
+                            </td>
+                            <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none md:text-right bg-gray-50/50 md:bg-transparent">
+                               <span class="md:hidden text-xs text-gray-400 font-bold">結存餘額</span>
+                               <span class="font-mono text-gray-500 font-bold">{{ e.remainingBalance !== undefined ? (e.currency === 'KRW' ? '₩ ' : 'NT$ ') + (e.remainingBalance | number) : '-' }}</span>
                             </td>
                             <td class="p-4 flex items-center justify-between md:table-cell border-b border-gray-50 md:border-none md:text-center">
                                <span class="md:hidden text-xs text-gray-400 font-bold">付款人</span>
@@ -3990,22 +3996,55 @@ submitProduct() {
     
     try {
         const oldExp = this.editingExpense();
+        let finalRemainingBalance: number | undefined = undefined; // 👈 準備紀錄最終餘額
+        
         if (oldExp) {
             // 🧠 智慧編輯邏輯：先把舊的錢退回舊錢包，再從新錢包扣除新金額！
             const oldWallet = this.wallets().find((w:any) => w.currency === oldExp.currency);
-            if (oldWallet) await this.store.updateWalletBalance(oldWallet.id, oldWallet.balance + Number(oldExp.amount));
-            
             const newWallet = this.wallets().find((w:any) => w.currency === val.currency);
-            if (newWallet) await this.store.updateWalletBalance(newWallet.id, newWallet.balance - expAmount);
 
-            await this.store.addExpense({ ...oldExp, ...val, amount: expAmount });
+            let currentNewWalletBalance = newWallet ? newWallet.balance : 0;
+
+            // 判斷：如果是同一個錢包，退回的錢要先加回去，再扣新的
+            if (oldWallet && newWallet && oldWallet.id === newWallet.id) {
+                currentNewWalletBalance = oldWallet.balance + Number(oldExp.amount);
+                finalRemainingBalance = currentNewWalletBalance - expAmount;
+                await this.store.updateWalletBalance(newWallet.id, finalRemainingBalance);
+            } else {
+                // 如果換了幣別(不同錢包)，就各自處理
+                if (oldWallet) await this.store.updateWalletBalance(oldWallet.id, oldWallet.balance + Number(oldExp.amount));
+                if (newWallet) {
+                    finalRemainingBalance = newWallet.balance - expAmount;
+                    await this.store.updateWalletBalance(newWallet.id, finalRemainingBalance);
+                }
+            }
+
+            // 存入資料庫時，多塞入 remainingBalance
+            await this.store.addExpense({ ...oldExp, ...val, amount: expAmount, remainingBalance: finalRemainingBalance });
             alert(`✅ 支出紀錄已完美修正，資金帳戶也已自動調整！`);
         } else {
             // 一般新增邏輯
             const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
-            if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
-            else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
-            await this.store.addExpense({ id: 'EXP-' + Date.now(), date: val.date, item: val.item, category: val.category, amount: expAmount, currency: val.currency, payer: val.payer, note: val.note || '', imageUrl: val.imageUrl || '' });
+            if (targetWallet) { 
+                finalRemainingBalance = targetWallet.balance - expAmount;
+                await this.store.updateWalletBalance(targetWallet.id, finalRemainingBalance); 
+            } else { 
+                alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); 
+            }
+            
+            // 存入資料庫時，多塞入 remainingBalance
+            await this.store.addExpense({ 
+                id: 'EXP-' + Date.now(), 
+                date: val.date, 
+                item: val.item, 
+                category: val.category, 
+                amount: expAmount, 
+                currency: val.currency, 
+                payer: val.payer, 
+                note: val.note || '', 
+                imageUrl: val.imageUrl || '',
+                remainingBalance: finalRemainingBalance // 👈 寫入當下餘額
+            });
             alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
         }
         this.closeExpenseModal();
@@ -4309,14 +4348,22 @@ submitProduct() {
   }
 
   exportExpensesCSV() {
-     const headers = ['日期', '支出項目', '類別', '金額', '幣別', '付款人', '備註'];
-     const rows = this.filteredExpenses().map((e: any) => [ e.date, e.item, e.category, e.amount, e.currency, e.payer, e.note || '-' ]);
+     const headers = ['日期', '支出項目', '類別', '金額', '幣別', '結存餘額', '付款人', '備註'];
+     const rows = this.filteredExpenses().map((e: any) => [ 
+        e.date, e.item, e.category, e.amount, e.currency, 
+        e.remainingBalance !== undefined ? e.remainingBalance : '', // 👈 新增餘額資料
+        e.payer, e.note || '-' 
+     ]);
      this.downloadCSV(`營業支出明細_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
 
   syncExpensesToGoogleSheets() {
-     const headers = ['日期', '支出項目', '類別', '金額', '幣別', '付款人', '備註'];
-     const dataRows = this.filteredExpenses().map((e: any) => [ e.date, e.item, e.category, e.amount, e.currency, e.payer, e.note || '-' ]);
+     const headers = ['日期', '支出項目', '類別', '金額', '幣別', '結存餘額', '付款人', '備註'];
+     const dataRows = this.filteredExpenses().map((e: any) => [ 
+        e.date, e.item, e.category, e.amount, e.currency, 
+        e.remainingBalance !== undefined ? e.remainingBalance : '', // 👈 新增餘額資料
+        e.payer, e.note || '-' 
+     ]);
      this.pushToGoogleSheets('營業支出', [headers, ...dataRows]);
   }
 
