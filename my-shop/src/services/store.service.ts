@@ -137,42 +137,59 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
   cartDiscount = computed(() => this.cartBulkDiscount() + this.cartVipDiscount());
 
   cartTotal = computed(() => this.cart().reduce((sum, item) => sum + (item.price * item.quantity), 0) - this.cartDiscount());  
-  // 🧠 真實採購平均成本大腦
+  // 🧠 真實採購平均成本大腦 (終極精準版)
   averageActualCostMap = computed(() => {
-    const costData: Record<string, { totalCost: number, totalQty: number }> = {};
+    const costData: Record<string, { totalCostTWD: number, totalQty: number }> = {};
     const allPurchases = this.purchases() || [];
 
     allPurchases.forEach(p => {
        const actualTotal = Number(p.totalLocalCost) || 0;
        if (actualTotal <= 0) return; // 沒填寫真實花費的跳過
 
-       const estTotal = Number(p.estimatedLocalCost) || 1; // 避免除以 0
-       const costRatio = actualTotal / estTotal; // 算出現實比預估貴/便宜多少比例
+       // 1. 算出這張單買手手填的單價總額 (圖一的 單價 × 數量 的總和)
+       const itemsTotalLocal = (p.items || []).reduce((sum: number, i: any) => sum + ((Number(i.price) || 0) * (Number(i.quantity) || 1)), 0);
+
+       // 2. 均攤當地運費與尾數的比例 (實際總刷卡額 / 商品單價總和)
+       const costRatio = itemsTotalLocal > 0 ? (actualTotal / itemsTotalLocal) : 1;
 
        (p.items || []).forEach((item: any) => {
           const key = `${item.productId}_${item.option || '單一規格'}`;
           const product = this.products().find((prod: Product) => prod.id === item.productId);
           
-          // 抓取原本的預估當地成本
-          let estUnitCost = 0;
-          if (product) {
-              const exRate = product.exchangeRate || 1;
-              estUnitCost = (product.localPrice || 0) * exRate;
+          // 3. 抓取買手手動輸入的「當地貨幣單價」(圖一填寫的)
+          const buyerUnitPrice = Number(item.price) || 0;
+
+          // 4. 乘上落差比例 (把當地運費均攤進單價裡)
+          const adjustedLocalUnitPrice = buyerUnitPrice * costRatio;
+
+          // 5. 轉換為台幣 (TWD) 成本
+          let twdUnitCost = adjustedLocalUnitPrice;
+          if (p.currency === 'KRW' || p.currency === 'JPY') {
+             // 若為外幣，必須乘上該商品設定的匯率，轉成台幣
+             const exRate = product?.exchangeRate || 1;
+             twdUnitCost = adjustedLocalUnitPrice * exRate;
           }
-          if (estUnitCost === 0) estUnitCost = actualTotal / p.items.reduce((s:number, i:any) => s + i.quantity, 0); // 兜底均分
 
-          // 真實成本 = 預估成本 × 整張單的溢價/折價比例
-          const actualUnitCost = estUnitCost * costRatio;
+          // 6. 加上該商品固定的「國際運費與包材成本」
+          // (從國外運回來的秤重運費，不管買手花多少錢買都要加上去)
+          if (product) {
+             const costMat = Number(product.costMaterial) || 0;
+             const shipKg = Number(product.shippingCostPerKg) || 0;
+             const weight = Number(product.weight) || 0;
+             twdUnitCost += costMat + (weight * shipKg);
+          }
 
-          if (!costData[key]) costData[key] = { totalCost: 0, totalQty: 0 };
-          costData[key].totalCost += (actualUnitCost * item.quantity);
+          // 7. 加到總成本池裡，用來算歷史平均單價
+          if (!costData[key]) costData[key] = { totalCostTWD: 0, totalQty: 0 };
+          costData[key].totalCostTWD += (twdUnitCost * item.quantity);
           costData[key].totalQty += item.quantity;
        });
     });
 
+    // 8. 輸出每個商品的「真實平均單件成本」
     const result = new Map<string, number>();
     Object.keys(costData).forEach(key => {
-       result.set(key, costData[key].totalCost / costData[key].totalQty); // 算出歷史平均單價
+       result.set(key, Math.round(costData[key].totalCostTWD / costData[key].totalQty)); 
     });
     return result;
   });

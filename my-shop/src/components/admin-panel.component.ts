@@ -952,7 +952,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                             <td class="p-4 flex flex-col md:flex-row items-end md:items-center justify-between md:justify-start gap-2 md:table-cell border-b border-gray-50 md:border-none">
                                <span class="md:hidden text-xs text-gray-400 font-bold mb-1">收據/備註</span>
                                <div class="flex items-center gap-2">
-                                  @if(e.imageUrl) { <a [href]="e.imageUrl" target="_blank" title="點擊查看原圖" class="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 hover:border-brand-400 shrink-0"><img [src]="getSafeDriveImage(e.imageUrl)" (error)="handleImageError($event)" class="w-full h-full object-cover"></a> }
+                                  @if(e.imageUrl) { <button (click)="openReceipts([e.imageUrl])" title="點擊放大查看" class="w-8 h-8 rounded-lg overflow-hidden border border-gray-200 hover:border-brand-400 shrink-0 transition-transform active:scale-95"><img [src]="getSafeDriveImage(e.imageUrl)" (error)="handleImageError($event)" class="w-full h-full object-cover"></button> }
                                   <span class="text-xs text-gray-400 truncate max-w-[150px] text-right md:text-left" [title]="e.note">{{ e.note || '-' }}</span>
                                </div>
                             </td>
