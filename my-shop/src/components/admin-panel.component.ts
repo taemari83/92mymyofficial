@@ -3990,8 +3990,16 @@ submitProduct() {
         reader.readAsDataURL(file);
       });
 
-      // 2. 準備傳送資料
-      const payload = { filename: file.name, mimeType: file.type, base64: base64Data };
+      // 💡 取得「支出項目」作為檔名，如果沒填就給個預設值
+      let customFileName = this.expenseForm.get('item')?.value?.trim();
+      if (!customFileName) customFileName = '未命名支出收據';
+      
+      // 抓取副檔名，並加上時間戳記防止雲端檔名重複衝突
+      const ext = file.name.split('.').pop();
+      const finalFileName = `${customFileName}_${Date.now()}.${ext}`;
+
+      // 2. 準備傳送資料 (把 filename 替換成我們自訂的 finalFileName)
+      const payload = { filename: finalFileName, mimeType: file.type, base64: base64Data };
 
       // 3. 發送至 GAS
       const response = await fetch(DRIVE_GAS_URL, {
