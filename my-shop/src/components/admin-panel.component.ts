@@ -817,7 +817,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               @for(item of (p?.items || []); track (item?.productId || '') + $index) {
                 <div class="text-[10px] text-gray-600 break-words whitespace-normal leading-snug">
                   • {{ item?.productName }} x{{ item?.quantity }} 
-                  <span class="text-brand-600 font-bold ml-1">(@ {{ item?.currency === 'KRW' ? '₩' : (item?.currency === 'TWD' ? 'NT$' : (item?.currency || p?.currency || '$')) }}{{ item?.price || 0 | number }})</span>
+                  <span class="text-brand-600 font-bold ml-1">(&#64; {{ item?.currency === 'KRW' ? '₩' : (item?.currency === 'TWD' ? 'NT$' : (item?.currency || p?.currency || '$')) }}{{ item?.price || 0 | number }})</span>
                 </div>
               }
             </div>
