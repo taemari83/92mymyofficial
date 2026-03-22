@@ -813,9 +813,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          <td class="p-4 block md:table-cell border-b md:border-none border-gray-100">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">購買品項</span>
             <div class="text-xs text-gray-600 font-bold mb-1">{{ p?.items?.length || 0 }} 項商品 (預估值: {{ p?.currency === 'KRW' ? '₩' : (p?.currency === 'TWD' ? 'NT$' : (p?.currency || 'NT$')) }} {{ p?.estimatedLocalCost || 0 }})</div>
-            <div class="flex flex-col gap-0.5">
+            <div class="flex flex-col gap-1">
               @for(item of (p?.items || []); track (item?.productId || '') + $index) {
-                <div class="text-[10px] text-gray-500 truncate max-w-full md:max-w-[200px]">• {{ item?.productName }} x{{ item?.quantity }}</div>
+                <div class="text-[10px] text-gray-600 break-words whitespace-normal leading-snug">
+                  • {{ item?.productName }} x{{ item?.quantity }} 
+                  <span class="text-brand-600 font-bold ml-1">(@ {{ item?.currency === 'KRW' ? '₩' : (item?.currency === 'TWD' ? 'NT$' : (item?.currency || p?.currency || '$')) }}{{ item?.price || 0 | number }})</span>
+                </div>
               }
             </div>
          </td>
@@ -2934,8 +2937,11 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '實際付現/刷卡總額', '付款人', '分潤模式', '狀態'];
     
     const rows = this.purchaseList().map(p => {
-      // 將商品明細組裝成字串
-      const itemsStr = (p.items || []).map((i: any) => `• ${i.productName} x${i.quantity}`).join('\n');
+      // 將商品明細組裝成字串，並加上買手填寫的單價
+      const itemsStr = (p.items || []).map((i: any) => {
+        const curr = i.currency === 'KRW' ? '₩' : (i.currency === 'TWD' ? 'NT$' : (i.currency || p.currency || '$'));
+        return `• ${i.productName} x${i.quantity} (@ ${curr}${i.price || 0})`;
+      }).join('\n');
       
       return [
         `\t${p.id}`, // 加 \t 防止 Excel 把編號轉成科學記號
@@ -3365,7 +3371,13 @@ exportInventoryCSV() {
     const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '實際付現/刷卡總額', '付款人', '分潤模式', '狀態'];
 
     const payloadRows = list.map(p => {
-      const itemsStr = (p.items || []).map((i: any) => `• ${i.productName} x${i.quantity}`).join('\n');
+      // 加上單價資訊
+      const itemsStr = (p.items || []).map((i: any) => {
+        const curr = i.currency === 'KRW' ? '₩' : (i.currency === 'TWD' ? 'NT$' : (i.currency || p.currency || '$'));
+        return `• ${i.productName} x${i.quantity} (@ ${curr}${i.price || 0})`;
+      }).join('\n');
+
+      // 這裡完整保留，確保狀態會正常匯出
       return [
         `'${p.id}`, p.date, new Date(p.createdAt).toLocaleString('zh-TW', { hour12: false }), p.country, p.location, itemsStr,
         p.estimatedLocalCost, p.localShipping, p.totalLocalCost, p.payer, p.shareMode, p.status === 'pending_sync' ? '待核銷' : '已核銷入帳'
