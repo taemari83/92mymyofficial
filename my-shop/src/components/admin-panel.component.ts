@@ -560,7 +560,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto flex-1 justify-start xl:justify-end">
                      <div class="relative w-full sm:w-auto flex-1 min-w-[200px] max-w-full xl:max-w-[300px]">
                        <input type="text" [(ngModel)]="customerSearch" placeholder="搜尋姓名/手機/編號..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 transition-all focus:ring-1 focus:ring-brand-100">
-                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                       <span class="absolute left-ａ3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
                      </div>
                      <div class="flex flex-wrap gap-2 w-full sm:w-auto">
                        <button (click)="openBulkCustomerModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-blue-500 text-white rounded-xl font-bold hover:bg-blue-600 whitespace-nowrap shadow-sm flex items-center justify-center transition-colors gap-1 disabled:opacity-50" [disabled]="selectedCustomerIds().length === 0"><span>⚡️</span> 批次 ({{ selectedCustomerIds().length }})</button>
@@ -629,9 +629,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
            <div class="space-y-6 pt-2 w-full">
             <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 w-full">
                <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1 custom-scrollbar">
-                 @for(r of ['today', 'week', 'month', 'custom']; track r) { 
+                 @for(r of ['today', 'week', 'month', 'year', 'custom']; track r) { 
                    <button (click)="accountingRange.set(r)" class="px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap" [class.bg-brand-900]="accountingRange() === r" [class.text-white]="accountingRange() === r" [class.bg-gray-100]="accountingRange() !== r" [class.text-gray-500]="accountingRange() !== r"> 
-                     @switch(r) { @case('today') { 今日 } @case('week') { 本週 } @case('month') { 本月 } @case('custom') { 自訂 } } 
+                     @switch(r) { @case('today') { 今日 } @case('week') { 本週 } @case('month') { 本月 } @case('year') { 本年 } @case('custom') { 自訂 } } 
                    </button> 
                  }
                </div>
@@ -843,7 +843,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             @if(p?.status === 'pending_sync') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold border border-yellow-200 w-fit">待核銷</span> }
             @else { <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold border border-green-200 w-fit">已入帳</span> }
          </td>
-         <td class="p-4 flex items-center justify-end gap-2">
+         <td class="p-4 flex flex-wrap items-center justify-end gap-2 min-w-[160px]">
             @if(p?.status === 'pending_sync') { 
               <button (click)="approvePurchase(p)" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors shadow-sm active:scale-95 whitespace-nowrap">✅ 核准</button> 
             } @else {
@@ -1692,7 +1692,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     </div>
                   </div>
                   <div class="border-t border-gray-100 pt-4 mt-2">
-                    <label class="block text-xs font-bold text-gray-500 mb-1">中獎者 / 收件人姓名</label>
+                   <label class="block text-xs font-bold text-brand-600 mb-1">併入現有訂單 (選填)</label>
+                   <input type="text" formControlName="targetOrderId" class="w-full p-3 border border-brand-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold mb-4" placeholder="例如：240315123456 (若填寫，將直接把贈品加入該單)">
+
+                  <label class="block text-xs font-bold text-gray-500 mb-1">中獎者 / 收件人姓名</label>
                     <input type="text" formControlName="winnerName" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm font-bold" placeholder="例如：王小明 或 IG 帳號">
                   </div>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2358,6 +2361,7 @@ try {
     if (range === 'today') startDate = new Date(now.setHours(0,0,0,0));
     else if (range === 'week') startDate = new Date(now.setHours(0,0,0,0) - ((now.getDay() || 7) - 1) * 24 * 60 * 60 * 1000);
     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    else if (range === 'year') startDate = new Date(now.getFullYear(), 0, 1);
     else if (range === 'custom' && this.accountingCustomStart()) { startDate = new Date(this.accountingCustomStart()); if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd()); }
 
     return orders.filter((o: Order) => {
@@ -2818,6 +2822,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     });
 
     this.giveawayForm = this.fb.group({
+      targetOrderId: [''], // 👈 新增這行：目標訂單編號
       productId: ['', Validators.required],
       option: ['單一規格'],
       quantity: [1, [Validators.required, Validators.min(1)]],
@@ -3161,6 +3166,7 @@ exportInventoryCSV() {
     if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
     else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+    else if (range === 'year') startDate = new Date(now.getFullYear(), 0, 1);
     
     let list = this.accountingFilteredOrders(); 
     const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%', '藝辰分潤', '子婷分潤', '小芸分潤', '公司保留'];
@@ -3245,6 +3251,7 @@ exportInventoryCSV() {
     if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
     else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+    else if (range === 'year') startDate = new Date(now.getFullYear(), 0, 1); 
     else if (range === 'custom') {
       if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart());
       if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd());
@@ -3953,28 +3960,8 @@ submitProduct() {
     const unitCost = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : 0;
     const totalCost = unitCost * val.quantity;
 
-    // 2. 建立 0 元訂單
-    const newOrder: Order = {
-      id: 'GW-' + Date.now(),
-      userId: 'GIVEAWAY',
-      userName: val.winnerName,
-      userPhone: val.winnerPhone,
-      userEmail: '',
-      shippingName: val.winnerName,
-      shippingPhone: val.winnerPhone,
-      shippingAddress: val.shippingAddress,
-      paymentMethod: 'giveaway' as any, 
-      shippingMethod: 'delivery',
-      subtotal: 0,        // 👈 補上：訂單小計 0 元
-      shippingFee: 0,     // 👈 補上：運費 0 元
-      discount: 0,
-      usedCredits: 0,
-      finalTotal: 0,
-      depositPaid: 0,     // 👈 補上：已付訂金 0 元
-      balanceDue: 0,      // 👈 補上：剩餘尾款 0 元
-      status: 'completed', // 預設完成
-      createdAt: Date.now(),
-      items: [{
+    // 2. 準備要加入的贈品明細
+    const newItem = {
       productId: p.id,
       productName: p.name,
       productImage: p.image,
@@ -3982,8 +3969,7 @@ submitProduct() {
       quantity: val.quantity,
       price: 0, // 售價 0 元
       unitCost: unitCost,
-      isPreorder: p.isPreorder || false  // 👈 補上這個屬性，滿足系統嚴格格式
-      }]
+      isPreorder: p.isPreorder || false
     };
 
     // 3. 自動建立對應的營業支出
@@ -3999,31 +3985,79 @@ submitProduct() {
     };
 
     try {
-      // 1. 扣庫存 (使用與商品管理一致的同步方法)
+      // 1. 扣庫存
       if (p.stock !== 99999) {
          this.store.updateProduct({ ...p, stock: p.stock - val.quantity });
       }
       
-      // 2. 神級寫入版：繞過凍結限制將訂單寫入畫面
-      const storeAny = this.store as any;
-      if (typeof storeAny.addOrder === 'function') {
-         storeAny.addOrder(newOrder);
-      } else {
-         // 暴力破解法：複製一份新的陣列，把訂單塞到最前面，然後直接覆蓋原本的資料來源
-         try {
-            const currentOrders = [...this.store.orders()];
-            currentOrders.unshift(newOrder);
-            // 直接蓋掉原本的 Getters，讓 Angular 讀到最新訂單
-            storeAny.orders = () => currentOrders; 
-         } catch(e) {
-            console.warn('強制寫入陣列時遭遇保護', e);
+      const targetOrderId = val.targetOrderId?.trim();
+
+      // 2. 判斷是要「併入舊單」還是「開新單」
+      if (targetOrderId) {
+         // 🔍 併入現有訂單
+         const existingOrder = this.store.orders().find(o => o.id === targetOrderId);
+         if (!existingOrder) {
+            alert(`❌ 找不到訂單編號 #${targetOrderId}，請確認是否輸入正確！`);
+            return;
          }
+         
+         const updatedItems = [...existingOrder.items, newItem];
+         const newNote = (existingOrder as any).note ? `${(existingOrder as any).note}\n(系統: 已新增抽獎贈品)` : '(系統: 已新增抽獎贈品)';
+         
+         await this.store.updateOrderStatus(targetOrderId, existingOrder.status, { 
+            items: updatedItems,
+            note: newNote
+         });
+         
+         // 3. 自動記帳：拋轉至營業支出
+         await this.store.addExpense(newExpense as any);
+         
+         alert(`✅ 抽獎贈品已成功併入訂單 #${targetOrderId} 中！\n商品庫存已扣除 ${val.quantity} 件。\n成本 NT$ ${Math.round(totalCost)} 已認列至「營業支出」。`);
+         
+      } else {
+         // 🆕 建立全新 0 元訂單 (維持原本邏輯)
+         const newOrder: Order = {
+           id: 'GW-' + Date.now(),
+           userId: 'GIVEAWAY',
+           userName: val.winnerName,
+           userPhone: val.winnerPhone,
+           userEmail: '',
+           shippingName: val.winnerName,
+           shippingPhone: val.winnerPhone,
+           shippingAddress: val.shippingAddress,
+           paymentMethod: 'giveaway' as any, 
+           shippingMethod: 'delivery',
+           subtotal: 0,
+           shippingFee: 0,
+           discount: 0,
+           usedCredits: 0,
+           finalTotal: 0,
+           depositPaid: 0,
+           balanceDue: 0,
+           status: 'completed',
+           createdAt: Date.now(),
+           items: [newItem] // 👈 放入剛做好的贈品明細
+         };
+
+         const storeAny = this.store as any;
+         if (typeof storeAny.addOrder === 'function') {
+            storeAny.addOrder(newOrder);
+         } else {
+            try {
+               const currentOrders = [...this.store.orders()];
+               currentOrders.unshift(newOrder);
+               storeAny.orders = () => currentOrders; 
+            } catch(e) {
+               console.warn('強制寫入陣列時遭遇保護', e);
+            }
+         }
+
+         // 3. 自動記帳：拋轉至營業支出
+         await this.store.addExpense(newExpense as any);
+
+         alert(`✅ 全新抽獎單已成功建立！\n商品庫存已扣除 ${val.quantity} 件。\n成本 NT$ ${Math.round(totalCost)} 已認列至「營業支出」。`);
       }
 
-      // 3. 自動記帳：完美拋轉至營業支出
-      await this.store.addExpense(newExpense as any);
-
-      alert(`✅ 抽獎單已成功建立！\n商品庫存已扣除 ${val.quantity} 件。\n成本 NT$ ${Math.round(totalCost)} 已自動認列至「營業支出-行銷抽獎」。`);
       this.closeGiveawayModal();
     } catch(err: any) {
       alert('❌ 建立失敗: ' + (err?.message || err));
@@ -4037,6 +4071,7 @@ submitProduct() {
      if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
      else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
      else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+     else if (range === 'year') startDate = new Date(now.getFullYear(), 0, 1); 
      else if (range === 'custom') { if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart()); if (this.accountingCustomEnd()) endDate = new Date(this.accountingCustomEnd()); }
 
      const validExpenses = this.expenses().filter(e => {
