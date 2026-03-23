@@ -1228,11 +1228,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> 
                         </div> 
                         <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> 
-                          <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> 
                           <div class="text-xs text-gray-500"> 
                              換算台幣成本: <span class="font-bold text-gray-800">$ {{ estimatedCost() | number:'1.0-0' }}</span> 
                              <span class="text-[10px] text-gray-400 ml-1">({{ formValues()?.localPrice || 0 }} × {{ formValues()?.exchangeRate || 1 }})</span>
-                          </div> 
+                          </div>
                           <div class="text-right"> 
                             <div class="text-xs text-gray-400">預估毛利 / 毛利率</div> 
                             <div class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> $ {{ estimatedProfit() | number:'1.0-0' }} <span class="text-xs ml-1 bg-gray-200 px-1 rounded text-gray-600"> {{ estimatedMargin() | number:'1.1-1' }}% </span> </div> 
