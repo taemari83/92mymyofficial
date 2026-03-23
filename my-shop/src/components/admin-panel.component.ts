@@ -1249,8 +1249,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                             </div>
                           </div> 
                         </div> 
-
-                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4"> 
+                     </div> <div class="grid grid-cols-1 sm:grid-cols-3 gap-4"> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> </div> 
                         <div> <label class="block text-xs font-bold text-blue-500 mb-1">批發價 (NT$)</label> <input type="number" formControlName="priceWholesale" class="w-full p-3 border border-blue-200 rounded-xl focus:outline-none focus:border-blue-400 bg-blue-50/30"> </div> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU)</label> <input formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl font-mono bg-gray-50 text-gray-500" [placeholder]="'自動: ' + generatedSkuPreview()"> </div> 
