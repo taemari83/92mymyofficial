@@ -35,7 +35,11 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                 <div class="flex items-center gap-2">
                   <span class="text-lg">📋</span><h2 class="font-bold text-brand-900">系統待買任務</h2>
                 </div>
-                <span class="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded-md font-bold tracking-wider">尚缺 {{ pendingTasks().length }} 項</span>
+                @if (pendingTasks().length > 0) {
+                  <span class="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded-md font-bold tracking-wider animate-pulse shadow-sm">尚缺 {{ pendingTasks().length }} 項</span>
+                } @else {
+                  <span class="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded-md font-bold tracking-wider">✅ 全部買齊</span>
+                }
               </div>
               
               <div class="space-y-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
