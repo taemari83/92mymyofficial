@@ -28,8 +28,7 @@ export interface CartItem {
 }
 
 export interface Wallet { id: string; name: string; currency: string; symbol: string; balance: number; }
-export interface Expense { id: string; date: string; item: string; category: string; amount: number; currency: string; payer: string; note: string; imageUrl?: string; remainingBalance?: number; }
-export interface User {
+export interface Expense { id: string; date: string; item: string; category: string; amount: number; currency: string; payer: string; note: string; imageUrl?: string; remainingBalance?: number; isHistorical?: boolean; }export interface User {
   id: string; memberId?: string; memberNo?: string; phone?: string; email?: string; name: string; photoURL?: string; 
   totalSpend: number; isAdmin: boolean; 
   tier: 'general' | 'v1' | 'v2' | 'v3' | 'wholesale' | string; // 👈 放寬 tier 支援多階級

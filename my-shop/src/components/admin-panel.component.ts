@@ -1723,6 +1723,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <input type="text" formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm" placeholder="其他說明">
                     </div>
                   </div>
+
+                  <label class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200 cursor-pointer mt-4">
+                    <input type="checkbox" formControlName="isHistorical" class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500">
+                    <div class="flex flex-col">
+                      <span class="font-bold text-blue-900">純紀錄 / 歷史補登</span>
+                      <span class="text-[10px] text-blue-600">打勾後，這筆支出僅列入報表，不會扣除資金帳戶餘額</span>
+                    </div>
+                  </label>
                 </form>
               </div>
               <div class="p-6 border-t border-gray-100 bg-white shrink-0">
@@ -3015,7 +3023,8 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       currency: [''],
       payer: ['', Validators.required],
       note: [''],
-      imageUrl: [''] // 👈 這裡用來存 Google Drive 回傳的照片網址
+      imageUrl: [''], // 👈 這裡用來存 Google Drive 回傳的照片網址
+      isHistorical: [false] // 👈 新增純紀錄預設值
     });
 
     this.walletForm = this.fb.group({
@@ -4074,11 +4083,10 @@ submitProduct() {
 
   openExpenseModal() {
     this.editingExpense.set(null);
-    this.expenseForm.reset({ date: new Date().toISOString().slice(0, 10), category: '', currency: '', payer: '', imageUrl: '' });
+    this.expenseForm.reset({ date: new Date().toISOString().slice(0, 10), category: '', currency: '', payer: '', imageUrl: '', isHistorical: false });
     this.showExpenseModal.set(true);
   }
 
-  // 👇 新增：點擊編輯時觸發
   editExpense(e: any) {
     this.editingExpense.set(e);
     this.expenseForm.patchValue(e);
@@ -4091,15 +4099,17 @@ submitProduct() {
   }
 
   async deleteExpenseRecord(e: any) {
-    if(confirm(`⚠️ 確定要刪除這筆紀錄嗎？\n項目：${e.item}\n金額：${e.amount}\n\n系統將會自動把這筆金額退回/扣除對應的資金帳戶！`)) {
-       // 🧠 智慧還原大腦：自動把錢加回去 (或扣回來)
-       const targetWallet = this.wallets().find((w:any) => w.currency === e.currency);
-       if (targetWallet) {
-           // 原本花掉的加回來，原本存進去的扣回來
-           await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance + Number(e.amount));
+    const isHist = !!e.isHistorical;
+    if(confirm(`⚠️ 確定要刪除這筆紀錄嗎？\n項目：${e.item}\n金額：${e.amount}\n\n${isHist ? '此為純紀錄，不會影響資金帳戶餘額。' : '系統將自動把這筆金額退回資金帳戶！'}`)) {
+       
+       if (!isHist) {
+           const targetWallet = this.wallets().find((w:any) => w.currency === e.currency);
+           if (targetWallet) {
+               await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance + Number(e.amount));
+           }
        }
        await this.store.deleteExpense(e.id);
-       alert('✅ 紀錄已刪除，資金帳戶餘額已自動還原！');
+       alert(`✅ 紀錄已刪除！${isHist ? '' : '資金帳戶餘額已自動還原。'}`);
     }
   }
 
@@ -4162,30 +4172,38 @@ submitProduct() {
     if (this.expenseForm.invalid) return;
     const val = this.expenseForm.value;
     const expAmount = Number(val.amount);
+    const isHistorical = !!val.isHistorical; // 👈 抓取是否為純紀錄
     
     try {
         const oldExp = this.editingExpense();
         
         if (oldExp) {
-            // 🧠 智慧編輯邏輯：先把舊的錢退回舊錢包，再從新錢包扣除新金額！
-            const oldWallet = this.wallets().find((w:any) => w.currency === oldExp.currency);
-            if (oldWallet) await this.store.updateWalletBalance(oldWallet.id, oldWallet.balance + Number(oldExp.amount));
+            // 🧠 智慧編輯邏輯：先把舊的錢退回舊錢包 (如果舊的不是純紀錄)
+            if (!oldExp.isHistorical) {
+                const oldWallet = this.wallets().find((w:any) => w.currency === oldExp.currency);
+                if (oldWallet) await this.store.updateWalletBalance(oldWallet.id, oldWallet.balance + Number(oldExp.amount));
+            }
             
-            const newWallet = this.wallets().find((w:any) => w.currency === val.currency);
-            if (newWallet) await this.store.updateWalletBalance(newWallet.id, newWallet.balance - expAmount);
+            // 再從新錢包扣除新金額 (如果新的不是純紀錄)
+            if (!isHistorical) {
+                const newWallet = this.wallets().find((w:any) => w.currency === val.currency);
+                if (newWallet) await this.store.updateWalletBalance(newWallet.id, newWallet.balance - expAmount);
+            }
 
-            // 🔥 終極防呆：把幽靈屬性過濾掉，只留下乾淨的資料存入 Firebase
             const { remainingBalance, runningBalance, ...safeOldExp } = oldExp;
-
-            await this.store.addExpense({ ...safeOldExp, ...val, amount: expAmount });
-            alert(`✅ 支出紀錄已完美修正，資金帳戶也已自動調整！`);
+            await this.store.addExpense({ ...safeOldExp, ...val, amount: expAmount, isHistorical });
+            alert(`✅ 支出紀錄已完美修正！`);
         } else {
             // 一般新增邏輯
-            const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
-            if (targetWallet) { await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); } 
-            else { alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); }
+            if (!isHistorical) {
+                const targetWallet = this.wallets().find((w:any) => w.currency === val.currency);
+                if (targetWallet) { 
+                    await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance - expAmount); 
+                } else { 
+                    alert(`⚠️ 系統找不到 ${val.currency} 的資金帳戶，無法自動扣款，但仍會記錄此筆支出。`); 
+                }
+            }
             
-            // 🔥 確保這裡是最乾淨的，沒有 remainingBalance
             await this.store.addExpense({ 
                id: 'EXP-' + Date.now(), 
                date: val.date, 
@@ -4195,9 +4213,10 @@ submitProduct() {
                currency: val.currency, 
                payer: val.payer, 
                note: val.note || '', 
-               imageUrl: val.imageUrl || '' 
+               imageUrl: val.imageUrl || '',
+               isHistorical: isHistorical // 👈 存入資料庫
             });
-            alert(`✅ 已成功記帳並扣除 ${val.currency} 錢包餘額！`);
+            alert(`✅ 已成功記帳！\n${isHistorical ? '(📌 此為歷史補登/純紀錄，資金餘額未變動)' : `(💸 已扣除 ${val.currency} 錢包餘額)`}`);
         }
         this.closeExpenseModal();
     } catch (e: any) {
