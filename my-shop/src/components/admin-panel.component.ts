@@ -1201,10 +1201,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          @if(isAddingNewSubCategory()) {
                             <input type="text" formControlName="subCategory" placeholder="輸入新名稱" class="w-full p-3 border border-brand-300 rounded-xl bg-white focus:outline-none focus:border-brand-500 animate-fade-in text-sm font-bold">
                          }
-                      </div>
+                     </div>
                     </div>
-
-                  <div> 
+                  </div> <div>
                      <label class="block text-xs font-bold text-gray-500 mb-1">標籤 <span class="text-[10px] text-gray-400 font-normal">(可換行或逗號分隔)</span></label> 
                      <textarea formControlName="tagsStr" rows="2" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar resize-none" placeholder="例如：品牌, 團體"></textarea>
                   </div>
