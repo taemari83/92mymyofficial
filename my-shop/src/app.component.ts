@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { StoreService } from './services/store.service';
@@ -60,8 +60,11 @@ import { environment } from './environments/environment';
      <a routerLink="/admin" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
       後台
     </a>
-     <a routerLink="/buyer" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
+     <a routerLink="/buyer" routerLinkActive="bg-brand-900 text-white" class="relative px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
       採購
+      @if(hasPendingProcurements()) {
+         <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white animate-pulse"></span>
+      }
     </a>
   }
 </div>
@@ -78,6 +81,13 @@ import { environment } from './environments/environment';
 export class AppComponent implements OnInit {
   store = inject(StoreService);
   showKeyWarning = false;
+
+  // 🚨 買手紅點大腦：只要有待處理的訂單，就亮紅點！
+  hasPendingProcurements = computed(() => {
+     const orders = this.store.orders();
+     // 只要有已付款/待對帳/待出貨的訂單，就代表有東西要買/要處理
+     return orders.some(o => ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status));
+  });
 
   constructor() {
     if (environment.firebase.apiKey.includes('請在此填入')) {
