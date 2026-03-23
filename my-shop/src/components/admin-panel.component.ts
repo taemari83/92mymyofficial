@@ -2812,10 +2812,19 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
 // 🚨 叫貨與採購提醒紅點大腦
   hasPendingProcurements = computed(() => {
-     return this.procurementList().some(item => item.procured < item.needed);
+      return this.procurementList().some(item => item.procured < item.needed);
   });
+  
+  // 原本的：用來提醒老闆「採購總帳」有單據待核銷
   hasPendingPurchases = computed(() => {
-     return this.purchaseList().some(p => p.status === 'pending_sync');
+      return this.purchaseList().some(p => p.status === 'pending_sync');
+  });
+
+  // 🌟 新增：專屬給「買手系統」用的紅點大腦！
+  // 邏輯跟買手系統裡面一模一樣：只要有任何一個商品的 (需買數量 > 已買數量)，就亮紅點
+  hasPendingBuyerTasks = computed(() => {
+      // 這裡直接借用你剛剛寫好的超強 procurementList 大腦
+      return this.procurementList().some(item => item.needed > item.procured);
   });
 
   // 📝 儲存訂單內部備註
