@@ -494,9 +494,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         <div class="flex justify-between items-end mt-2"> 
                            <div class="text-xs text-gray-400 truncate"> {{ (p.options || []).join(', ') }} </div> 
                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 pl-2"> 
-                              <button (click)="editProduct(p)" class="px-3 py-1 rounded-full bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200 whitespace-nowrap">Edit</button> 
-                              <button (click)="store.deleteProduct(p.id)" class="px-3 py-1 rounded-full bg-red-50 text-xs font-bold text-red-400 hover:bg-red-100 whitespace-nowrap">Del</button> 
-                           </div> 
+                              <button (click)="editProduct(p)" class="px-4 py-1.5 rounded-full bg-brand-50 text-xs font-bold text-brand-700 hover:bg-brand-100 whitespace-nowrap transition-colors shadow-sm">✏️ 編輯 / 下架</button> 
+                           </div>
                         </div> 
                      </div> 
                   </div> 
@@ -525,8 +524,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                               <div class="text-[10px] text-gray-400">庫存 {{ p.stock >= 9999 ? '無限' : p.stock }}</div>
                            </div>
                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button (click)="editProduct(p)" class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors" title="編輯">✎</button>
-                              <button (click)="store.deleteProduct(p.id)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors" title="刪除">✕</button>
+                              <button (click)="editProduct(p)" class="w-8 h-8 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center hover:bg-brand-100 transition-colors shadow-sm" title="編輯商品">✏️</button>
                            </div>
                         </div>
                      </div>
@@ -1292,12 +1290,22 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 </form>
                </div> 
               
-              <div class="p-4 sm:p-6 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0"> 
-                <button (click)="closeProductModal()" class="px-5 sm:px-6 py-2.5 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-colors">取消</button> 
-                <button (click)="submitProduct()" class="px-5 sm:px-6 py-2.5 rounded-xl bg-brand-900 text-white font-bold hover:bg-black transition-transform active:scale-95 flex items-center gap-2">
-                  <span class="text-lg"></span> 確認儲存
-                </button> 
-              </div> 
+              <div class="p-4 sm:p-6 border-t border-gray-100 bg-white flex justify-between items-center shrink-0 w-full"> 
+                <div>
+                  @if(editingProduct()) {
+                    <button type="button" (click)="deleteProduct(editingProduct()!)" class="px-4 py-2 rounded-xl text-red-400 font-bold hover:bg-red-50 hover:text-red-600 transition-colors text-sm flex items-center gap-1">
+                      永久刪除此商品
+                    </button>
+                  }
+                </div>
+                
+                <div class="flex gap-3">
+                  <button type="button" (click)="closeProductModal()" class="px-5 sm:px-6 py-2.5 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-colors">取消</button> 
+                  <button type="button" (click)="submitProduct()" class="px-5 sm:px-6 py-2.5 rounded-xl bg-brand-900 text-white font-bold hover:bg-black transition-transform active:scale-95 flex items-center gap-2">
+                    確認儲存
+                  </button> 
+                </div>
+              </div>
             </div> 
           </div> 
         }
@@ -3639,6 +3647,23 @@ openProductForm() {
   }
 
   closeProductModal() { this.showProductModal.set(false); } 
+
+  async deleteProduct(p: Product) {
+    // 🛡️ 第一道防線
+    if(confirm(`⚠️ 警告！確定要刪除商品「${p.name}」嗎？\n刪除後無法復原！`)) {
+       // 🛡️ 第二道防線 (提醒帳務連動問題)
+       if(confirm(`🚨 最終確認！\n若此商品曾被客人購買過，刪除將導致過去的「訂單」與「採購報表」抓不到資料而出現異常！\n\n強烈建議使用【取消打勾: 確認上架】來隱藏商品即可。\n\n您真的確定要永久刪除嗎？`)) {
+           try {
+               await this.store.deleteProduct(p.id);
+               this.closeProductModal(); // 刪除成功後，自動關閉編輯視窗
+               alert('✅ 已永久刪除該商品。');
+           } catch(e) {
+               alert('❌ 刪除失敗，請檢查權限或網路狀態！');
+           }
+       }
+    }
+  }
+  
   onCategoryChange() { const cat = this.productForm.get('category')?.value; if (cat && !this.editingProduct()) { const codeMap = this.categoryCodes(); const foundCode = codeMap[cat] || ''; this.currentCategoryCode.set(foundCode); this.updateSkuPreview(foundCode); } } 
   onCodeInput(e: any) { const val = e.target.value.toUpperCase(); this.currentCategoryCode.set(val); if (!this.editingProduct()) { this.updateSkuPreview(val); } } 
   updateSkuPreview(prefix: string) { if (prefix) { const sku = this.store.generateProductCode(prefix); this.generatedSkuPreview.set(sku); this.productForm.patchValue({ code: sku }); } }
