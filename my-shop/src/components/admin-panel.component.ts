@@ -689,7 +689,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   </div>
                </div>
 
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 mt-10 pt-8 border-t border-gray-100">
                  <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                    <span>🎯</span> 行銷預算與折讓追蹤 
                    <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold shadow-sm">隱形成本大數據</span>
@@ -4368,12 +4368,27 @@ submitProduct() {
         return true;
      });
 
-     let opExTwd = 0;
-     validExpenses.forEach(e => { opExTwd += (e.currency === 'KRW') ? (e.amount / 40) : e.amount; });
-     const finalNet = stats.profit - opExTwd;
-     const realCompanyShare = stats.shares.company - opExTwd;
+     // 🧠 財務長大腦：將不同幣別的營業支出獨立計算
+     let expTWD = 0; let expKRW = 0; let expJPY = 0;
+     validExpenses.forEach(e => { 
+        if (e.currency === 'TWD') expTWD += e.amount;
+        else if (e.currency === 'KRW') expKRW += e.amount;
+        else if (e.currency === 'JPY') expJPY += e.amount;
+        else expTWD += e.amount; // 防呆
+     });
 
-     // 💡 自動精準產生「年」、「月」與「區間標籤」
+     // 為了算出一個「參考用」的最終台幣淨利，我們將外幣依真實底價匯率(1/43)換算回台幣
+     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22); // 若有日幣抓0.22
+     const estimatedTotalOpExTWD = expTWD + foreignToTWD;
+
+     const finalNet = stats.profit - estimatedTotalOpExTWD;
+     const realCompanyShare = stats.shares.company - estimatedTotalOpExTWD;
+
+     // 🏦 結算當下的各幣別「資金帳戶」總餘額
+     const allWallets = this.wallets();
+     const balanceTWD = allWallets.filter((w:any) => w.currency === 'TWD').reduce((sum, w) => sum + w.balance, 0);
+     const balanceKRW = allWallets.filter((w:any) => w.currency === 'KRW').reduce((sum, w) => sum + w.balance, 0);
+
      const exportTime = now.toLocaleString('zh-TW', { hour12: false });
      const reportYear = now.getFullYear() + '年';
      const reportMonth = (now.getMonth() + 1) + '月';
@@ -4385,13 +4400,22 @@ submitProduct() {
      else if (range === 'year') rangeName = `${now.getFullYear()}年度`;
      else rangeName = `自訂 (${this.accountingCustomStart() || ''} ~ ${this.accountingCustomEnd() || ''})`;
      
-     const headers = ['結算匯出時間', '年份', '月份', '報表區間', '總營收 (Sales)', '總商品成本 (COGS)', '商品總毛利 (Gross Margin)', '總營業支出 (OpEx)', '🏆 最終淨利潤 (Net Income)', '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘'];
+     const headers = [
+        '結算匯出時間', '年份', '月份', '報表區間', 
+        '總營收(TWD)', '總商品成本(TWD)', '商品總毛利(TWD)', 
+        '台幣營業支出(TWD)', '韓幣營業支出(KRW)', '外幣支出折合台幣估算', 
+        '🏆 最終淨利潤(TWD)', 
+        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(TWD)',
+        '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
+     ];
      
      const rowData = [
         exportTime, reportYear, reportMonth, rangeName,
         Math.round(stats.revenue), Math.round(stats.cost), Math.round(stats.profit),
-        Math.round(opExTwd), Math.round(finalNet),
-        Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare)
+        expTWD, expKRW, Math.round(foreignToTWD), 
+        Math.round(finalNet),
+        Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare),
+        balanceTWD, balanceKRW
      ];
 
      this.downloadCSV(`終極會計總表_${range}_${now.toISOString().slice(0,10)}`, headers, [rowData]);
@@ -4534,10 +4558,25 @@ submitProduct() {
         return true;
      });
 
-     let opExTwd = 0;
-     validExpenses.forEach(e => { opExTwd += (e.currency === 'KRW') ? (e.amount / 40) : e.amount; });
-     const finalNet = stats.profit - opExTwd;
-     const realCompanyShare = stats.shares.company - opExTwd;
+     // 🧠 財務長大腦：將不同幣別的營業支出獨立計算
+     let expTWD = 0; let expKRW = 0; let expJPY = 0;
+     validExpenses.forEach(e => { 
+        if (e.currency === 'TWD') expTWD += e.amount;
+        else if (e.currency === 'KRW') expKRW += e.amount;
+        else if (e.currency === 'JPY') expJPY += e.amount;
+        else expTWD += e.amount; 
+     });
+
+     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22);
+     const estimatedTotalOpExTWD = expTWD + foreignToTWD;
+
+     const finalNet = stats.profit - estimatedTotalOpExTWD;
+     const realCompanyShare = stats.shares.company - estimatedTotalOpExTWD;
+
+     // 🏦 結算當下的各幣別「資金帳戶」總餘額
+     const allWallets = this.wallets();
+     const balanceTWD = allWallets.filter((w:any) => w.currency === 'TWD').reduce((sum, w) => sum + w.balance, 0);
+     const balanceKRW = allWallets.filter((w:any) => w.currency === 'KRW').reduce((sum, w) => sum + w.balance, 0);
 
      const exportTime = now.toLocaleString('zh-TW', { hour12: false });
      const reportYear = now.getFullYear() + '年';
@@ -4550,14 +4589,26 @@ submitProduct() {
      else if (range === 'year') rangeName = `${now.getFullYear()}年度`;
      else rangeName = `自訂 (${this.accountingCustomStart() || ''} ~ ${this.accountingCustomEnd() || ''})`;
      
+     const headers = [
+        '結算匯出時間', '年份', '月份', '報表區間', 
+        '總營收(TWD)', '總商品成本(TWD)', '商品總毛利(TWD)', 
+        '台幣營業支出(TWD)', '韓幣營業支出(KRW)', '外幣支出折合台幣估算', 
+        '🏆 最終淨利潤(TWD)', 
+        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(TWD)',
+        '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
+     ];
+     
      const rowData = [
         exportTime, reportYear, reportMonth, rangeName,
         Math.round(stats.revenue), Math.round(stats.cost), Math.round(stats.profit),
-        Math.round(opExTwd), Math.round(finalNet),
-        Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare)
+        expTWD, expKRW, Math.round(foreignToTWD), 
+        Math.round(finalNet),
+        Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare),
+        balanceTWD, balanceKRW
      ];
      
-     this.pushToGoogleSheets(`終極會計總表`, [rowData], false);
+     // Google Sheets 我們會連同 headers 一起傳，確保表單標頭也是最新的
+     this.pushToGoogleSheets(`終極會計總表`, [headers, rowData], false);
   }
 
   // 🤫 員工專屬隱形資料庫
