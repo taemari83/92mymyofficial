@@ -295,7 +295,18 @@ addToCart(product: Product, option: string, quantity: number) {
     const user = this.currentUser(); 
     let finalPrice = product.priceGeneral;
     let parsedOption = option;
-    let localCostToUse = product.localPrice; // 🔥 預設使用母體當地原價
+    let localCostToUse = product.localPrice; // 預設使用母體當地原價
+
+    // 🤫 ==========================================
+    // 🤫 內部員工專屬：真實匯率過濾器
+    // 🤫 ==========================================
+    let employeeRate = product.exchangeRate || 1; // 預設跟商品表單填的一樣
+    
+    // 💡 判斷如果是韓國商品，強制套用「真實底價匯率」
+    if (product.country === 'Korea' || product.country === '韓國') {
+        employeeRate = 1 / 43; // 👈 修正：員工結帳直接除以 43 (約 0.0232)
+    } 
+    // ==========================================
 
     if (option.includes('=')) {
        const parts = option.split('=');
@@ -304,26 +315,33 @@ addToCart(product: Product, option: string, quantity: number) {
        const optGenPrice = parseInt(parts[1]?.trim(), 10) || product.priceGeneral;
        localCostToUse = parseInt(parts[3]?.trim(), 10) || product.localPrice;
 
-       // 🔥 這裡只處理「批發客」的獨立價格，一般 VIP 的全館打折交給結帳區動態計算
-       if (user?.tier === 'wholesale') {
+       // 🧠 終極智慧定價大腦 (多規格版)
+       if (user?.tier === 'employee') {
+          // 🤫 內部員工：當地原價 * 員工專屬真實匯率 (無條件進位到整數)
+          const localCost = localCostToUse * employeeRate;
+          finalPrice = localCost > 0 ? Math.ceil(localCost) : optGenPrice;
+       } else if (user?.tier === 'wholesale') {
+          // 📦 批發客：批發價 (如果商品沒填批發價，防呆退回規格一般價)
           finalPrice = product.priceWholesale > 0 ? product.priceWholesale : optGenPrice;
        } else {
+          // 🌟 一般與 VIP (VIP 全館折扣由結帳區計算)
           finalPrice = optGenPrice;
        }
     } else {
-       if (user?.tier === 'wholesale' && product.priceWholesale > 0) {
-           finalPrice = product.priceWholesale; 
+       // 🧠 終極智慧定價大腦 (單一規格版)
+       if (user?.tier === 'employee') {
+           const localCost = (product.localPrice || 0) * employeeRate;
+           finalPrice = localCost > 0 ? Math.ceil(localCost) : product.priceGeneral;
+       } else if (user?.tier === 'wholesale') {
+           finalPrice = product.priceWholesale > 0 ? product.priceWholesale : product.priceGeneral;
        } else {
            finalPrice = product.priceGeneral;
        }
     }
 
-    // 🔥 成本計算
-    const currentRate = product.exchangeRate || 1;
-    const currentCost = (localCostToUse * currentRate) + (product.costMaterial || 0) + ((product.weight || 0) * (product.shippingCostPerKg || 0));
-    
-    // 💡 [未來擴充：國際運費與包材] 換成這行：
-    // const currentCost = (localCostToUse * currentRate) + (product.costMaterial || 0) + ((product.weight || 0) * (product.shippingCostPerKg || 0));
+    // 🔥 單位成本計算 (紀錄於訂單明細，供未來報表對帳用)
+    // 這裡的底價成本，我們統一用真實匯率 (employeeRate) 來記錄，報表才會準確！
+    const currentCost = (localCostToUse * employeeRate) + (product.costMaterial || 0) + ((product.weight || 0) * (product.shippingCostPerKg || 0));
     
     this.cart.update(current => {
       const exist = current.find(i => i.productId === product.id && i.option === parsedOption);

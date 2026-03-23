@@ -45,10 +45,11 @@ import { StoreService } from '../services/store.service';
                   'bg-blue-100 text-blue-800': storeService.currentUser()?.tier === 'wholesale',
                   'bg-gray-100 text-gray-800': storeService.currentUser()?.tier === 'general'
                 }">
-                @if(storeService.currentUser()?.tier === 'v1') { ✨ V1.95折貴賓 }
-                @else if(storeService.currentUser()?.tier === 'v2') { ✨ V2.9折貴賓 }
-                @else if(storeService.currentUser()?.tier === 'v3') { ✨ V3.85折貴賓 }
+                @if(storeService.currentUser()?.tier === 'v1') { V1.95折貴賓 }
+                @else if(storeService.currentUser()?.tier === 'v2') { V2.9折貴賓 }
+                @else if(storeService.currentUser()?.tier === 'v3') { V3.85折貴賓 }
                 @else if(storeService.currentUser()?.tier === 'wholesale') { 批發會員 }
+                @else if(storeService.currentUser()?.tier === 'employee') { 內部員工 }
                 @else { 一般會員 }
               </div>
             </div>

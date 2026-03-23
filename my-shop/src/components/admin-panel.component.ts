@@ -602,7 +602,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                   </div>
                                </td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
-                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'v1') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">V1.95折</span> }@else if(u.tier === 'v2') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-xs font-bold border border-yellow-200">V2.9折</span> }@else if(u.tier === 'v3') { <span class="bg-red-100 text-red-600 px-2 py-1 rounded-md text-xs font-bold border border-red-200">V3.85折</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'v1') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">V1.95折</span> }@else if(u.tier === 'v2') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-xs font-bold border border-yellow-200">V2.9折</span> }@else if(u.tier === 'v3') { <span class="bg-red-100 text-red-600 px-2 py-1 rounded-md text-xs font-bold border border-red-200">V3.85折</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else if(u.tier === 'employee') { <span class="bg-gray-800 text-white px-2 py-1 rounded-md text-xs font-bold border border-gray-700">內部員工</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-900 md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">累積消費</span><div class="text-right">NT$ {{ calculateUserTotalSpend(u.id) | number }}</div></td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 text-brand-600 font-bold md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">購物金</span><div class="text-right">{{ u.credits }}</div></td>
                                <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-600 md:text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-4 py-2 md:px-3 md:py-1 rounded-lg transition-colors bg-white md:bg-transparent shadow-sm md:shadow-none">編輯</button></td>
@@ -1226,22 +1226,35 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">國際運費/kg</label> <input type="number" formControlName="shippingCostPerKg" class="w-full p-2 border rounded-lg bg-white"> </div> 
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> 
                         </div> 
-                        <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> 
-                          <div class="text-xs text-gray-500"> 
-                             換算台幣成本: <span class="font-bold text-gray-800">$ {{ estimatedCost() | number:'1.0-0' }}</span> 
-                             <span class="text-[10px] text-gray-400 ml-1">({{ formValues()?.localPrice || 0 }} × {{ formValues()?.exchangeRate || 1 }})</span>
-                          </div>
-                          <div class="text-right"> 
-                            <div class="text-xs text-gray-400">預估毛利 / 毛利率</div> 
-                            <div class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> $ {{ estimatedProfit() | number:'1.0-0' }} <span class="text-xs ml-1 bg-gray-200 px-1 rounded text-gray-600"> {{ estimatedMargin() | number:'1.1-1' }}% </span> </div> 
+                        <div class="flex items-center justify-between pt-3 mt-2 border-t border-gray-200/50"> 
+                          <div class="text-xs text-gray-500 space-y-2"> 
+                             <div>
+                                客用預估成本: <span class="font-bold text-gray-800">$ {{ estimatedCost() | number:'1.0-0' }}</span> 
+                                <span class="text-[10px] text-gray-400 ml-1">({{ formValues()?.exchangeRate || 1 }})</span>
+                             </div>
+                             <div class="text-brand-700">
+                                真實底價(員工): <span class="font-bold">$ {{ realEstimatedCost() | number:'1.0-0' }}</span> 
+                                <span class="text-[10px] opacity-70 ml-1">(1/43)</span>
+                             </div>
                           </div> 
-                        </div>
-                      </div> 
+                          <div class="text-right space-y-2"> 
+                            <div>
+                               <span class="text-xs text-gray-400 mr-2">客用預估毛利</span> 
+                               <span class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> $ {{ estimatedProfit() | number:'1.0-0' }} </span>
+                               <span class="text-[10px] ml-1 bg-gray-100 px-1 rounded text-gray-500"> {{ estimatedMargin() | number:'1.1-1' }}% </span>
+                            </div> 
+                            <div class="text-brand-700 font-bold">
+                               <span class="text-xs opacity-80 mr-2">真實底價毛利</span> 
+                               $ {{ realEstimatedProfit() | number:'1.0-0' }} 
+                            </div>
+                          </div> 
+                        </div> 
 
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4"> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> </div> 
-                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU) <span class="text-xs font-normal text-gray-400 ml-1">自動: {{ generatedSkuPreview() }}</span></label> <input formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl font-mono bg-gray-50 text-gray-500"> </div> 
-                      </div> 
+                        <div> <label class="block text-xs font-bold text-blue-500 mb-1">批發價 (NT$)</label> <input type="number" formControlName="priceWholesale" class="w-full p-3 border border-blue-200 rounded-xl focus:outline-none focus:border-blue-400 bg-blue-50/30"> </div> 
+                        <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU)</label> <input formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl font-mono bg-gray-50 text-gray-500" [placeholder]="'自動: ' + generatedSkuPreview()"> </div> 
+                      </div>
 
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-200">
                         <div class="col-span-1 sm:col-span-2 flex items-center justify-between border-b border-red-200 pb-2">
@@ -1894,6 +1907,13 @@ export class AdminPanelComponent {
   sanitizer = inject(DomSanitizer);
   fb: FormBuilder = inject(FormBuilder);
   now = new Date();
+// 🧠 統一取得「真實底價匯率」的大腦 (供報表預估成本使用)
+  getRealExchangeRate(p: any): number {
+     const rate = Number(p.exchangeRate) || 1;
+     // 💡 如果是韓國商品，強制套用真實底價匯率 (1/43)
+     if (p.country === 'Korea' || p.country === '韓國' || !p.country) return 1 / 43;
+     return rate;
+  }
 
   // ===== 👛 Phase 2: 資金帳戶與營業支出 (正式連動 Firebase) =====
   wallets = computed(() => this.store.wallets() || []);
@@ -2578,12 +2598,12 @@ try {
                   }
                   if (currentLocalPrice > 0 || p.localPrice) {
                       const rate = Number(p.exchangeRate) || 1;
-itemCost = (currentLocalPrice * rate) * i.quantity; // 💡 目前只算商品進價
-// 💡 [未來擴充：國際運費與包材]
-// const costMat = Number(p.costMaterial) || 0;
-// const weight = Number(p.weight) || 0;
-// const shipKg = Number(p.shippingCostPerKg) || 0; 
-// itemCost = ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
+                      itemCost = (currentLocalPrice * rate) * i.quantity; // 💡 目前只算商品進價
+                      // 💡 [未來擴充：國際運費與包材]
+                      // const costMat = Number(p.costMaterial) || 0;
+                      // const weight = Number(p.weight) || 0;
+                      // const shipKg = Number(p.shippingCostPerKg) || 0; 
+                      // itemCost = ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
                   } else { itemCost = (i.unitCost || 0) * i.quantity; }
               } else { itemCost = (i.unitCost || 0) * i.quantity; } 
 
@@ -2668,13 +2688,13 @@ itemCost = (currentLocalPrice * rate) * i.quantity; // 💡 目前只算商品�
                   }
 
                   if (currentLocalPrice > 0 || stats.product.localPrice) {
-const rate = stats.product.exchangeRate || 1; 
-stats.cost += (currentLocalPrice * rate) * item.quantity; // 💡 目前只算商品進價
-// 💡 [未來擴充：國際運費與包材]
-// const costMat = stats.product.costMaterial || 0;
-// const weight = stats.product.weight || 0;
-// const shipKg = stats.product.shippingCostPerKg || 200;
-// stats.cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * item.quantity;                  } else {
+                  const rate = this.getRealExchangeRate(stats.product); 
+                  stats.cost += (currentLocalPrice * rate) * item.quantity; // 💡 目前只算商品進價
+                  // 💡 [未來擴充：國際運費與包材]
+                  // const costMat = stats.product.costMaterial || 0;
+                  // const weight = stats.product.weight || 0;
+                  // const shipKg = stats.product.shippingCostPerKg || 200;
+                  // stats.cost += ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * item.quantity;                  } else {
                       stats.cost += (item.unitCost || 0) * item.quantity;
                   }
               }
@@ -2729,7 +2749,7 @@ stats.cost += (currentLocalPrice * rate) * item.quantity; // 💡 目前只算�
                         const parts = fullOption.split('=');
                         if (parts.length >= 4 && !isNaN(Number(parts[3]))) currentLocalPrice = Number(parts[3]);
                     }
-                    const rate = Number(p.exchangeRate) || 1; 
+                    const rate = this.getRealExchangeRate(p); 
                     monthCost += (currentLocalPrice * rate) * i.quantity; // 💡 目前只算商品進價
                     // 💡 [未來擴充：國際運費與包材]
                     // const costMat = Number(p.costMaterial) || 0;
@@ -2932,6 +2952,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       code: [''], 
       priceGeneral: [0], 
       priceVip: [0], 
+      priceWholesale: [0],
       localPrice: [0], 
       exchangeRate: [1], 
       weight: [0], 
@@ -3009,13 +3030,22 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       .reduce((sum: number, o: Order) => sum + o.finalTotal, 0);
   }
 
+// 💡 1. 客用預估 (維持你的 1/40 或表單手填匯率，用來抓定價緩衝)
   estimatedCost = computed(() => { 
     const v = this.formValues(); if (!v) return 0; 
-    return (v.localPrice * v.exchangeRate); // 💡 即時動態換算 (目前只算商品進價)
-    // 💡 [未來擴充：國際運費與包材] return (v.localPrice * v.exchangeRate) + (v.weight * v.shippingCostPerKg) + v.costMaterial; 
+    return (v.localPrice * v.exchangeRate); 
   });
   estimatedProfit = computed(() => (this.formValues()?.priceGeneral || 0) - this.estimatedCost()); 
   estimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.estimatedProfit() / this.formValues().priceGeneral) * 100 : 0);
+
+  // 🧠 2. 真實底價預估 (強制用 1/43 算，給老闆看真實利潤與員工價參考)
+  realEstimatedCost = computed(() => {
+    const v = this.formValues(); if (!v) return 0; 
+    const rate = (v.country === 'Korea' || v.country === '韓國' || !v.country) ? (1/43) : (v.exchangeRate || 1);
+    return (v.localPrice * rate);
+  });
+  realEstimatedProfit = computed(() => (this.formValues()?.priceGeneral || 0) - this.realEstimatedCost());
+  realEstimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.realEstimatedProfit() / this.formValues().priceGeneral) * 100 : 0);  
   
   navClass(tab: string) { return `w-full text-left p-3 rounded-xl flex items-center gap-3 transition-all mb-1 ${this.activeTab() === tab ? 'bg-brand-900 text-white font-bold shadow-md' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'}`; } 
   getTabTitle() { const map: any = { dashboard: '主控台 Dashboard', orders: '訂單管理 Orders', products: '商品管理 Products', customers: '客戶管理 Customers', accounting: '銷售報表 Accounting', inventory: '庫存盤點 Inventory', purchases: '採購總帳 Purchases', settings: '商店設定 Settings', wallets: '資金帳戶 Wallets', expenses: '營業支出 Expenses' }; return map[this.activeTab()] || ''; }  
@@ -3289,7 +3319,7 @@ exportInventoryCSV() {
     const salesMap = this.productSalesMap();
     
     const dataRows = this.store.products().map((p: Product) => {
-      const cost = (p.localPrice * p.exchangeRate); // 💡 目前只算商品進價
+      const cost = (p.localPrice * this.getRealExchangeRate(p)); // 💡 目前只算商品進價
 // 💡 [未來擴充：國際運費與包材] const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
       const normalProfit = p.priceGeneral - cost; 
       const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
@@ -3371,7 +3401,7 @@ exportInventoryCSV() {
             if (parts.length >= 3 && !isNaN(Number(parts[2]))) currentPriceVip = Number(parts[2]);
             if (parts.length >= 4 && !isNaN(Number(parts[3]))) currentLocalPrice = Number(parts[3]);
         }
-          const rate = p.exchangeRate || 1; const shipKg = p.shippingCostPerKg || 0; 
+          const rate = this.getRealExchangeRate(p); const shipKg = p.shippingCostPerKg || 0; 
           
           // 🧠 呼叫大腦
           const key = `${i.productId}_${i.option || '單一規格'}`;
@@ -3453,7 +3483,7 @@ exportInventoryCSV() {
               const parts = fullOption.split('=');
               if (parts.length >= 4) { currentPriceGeneral = Number(parts[1]) || currentPriceGeneral; currentPriceVip = Number(parts[2]) || currentPriceVip; currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
           }
-          const rate = p.exchangeRate || 1; const shipKg = p.shippingCostPerKg || 0; 
+          const rate = this.getRealExchangeRate(p); const shipKg = p.shippingCostPerKg || 0; 
           
           // 🧠 呼叫大腦
           const key = `${i.productId}_${i.option || '單一規格'}`;
@@ -3528,7 +3558,7 @@ exportInventoryCSV() {
      const salesMap = this.productSalesMap();
      
      const rows = this.store.products().map((p: Product) => { 
-        const cost = (p.localPrice * p.exchangeRate); // 💡 目前只算商品進價
+        const cost = (p.localPrice * this.getRealExchangeRate(p)); // 💡 目前只算商品進價
 // 💡 [未來擴充：國際運費與包材] const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
         const normalProfit = p.priceGeneral - cost; 
         const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
@@ -3551,7 +3581,7 @@ openProductForm() {
     this.productForm.patchValue({ 
       purchaseUrl: '', 
       shareMode: '親帶', // 👈 新增預設值
-      exchangeRate: 1, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' 
+      exchangeRate: 1, priceWholesale: 0, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' 
     }); 
     this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
   } 
@@ -3562,7 +3592,7 @@ openProductForm() {
       ...p, 
       purchaseUrl: (p as any).purchaseUrl || '', 
       shareMode: (p as any).shareMode || '親帶', // 👈 讀取舊資料防呆
-      optionsStr: (p.options || []).join('\n'), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 
+      optionsStr: (p.options || []).join('\n'), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, priceWholesale: (p as any).priceWholesale || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 
     }); 
     this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
   }
@@ -3683,8 +3713,7 @@ submitProduct() {
          category: val.category, 
          subCategory: val.subCategory || '',
          tags: val.tagsStr ? val.tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [],
-         image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock, 
-         options: val.optionsStr ? val.optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [], 
+         image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: val.priceWholesale || 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock,         options: val.optionsStr ? val.optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [], 
          note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed 
      };        
      if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
