@@ -37,7 +37,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">數據分析</div>
           <button (click)="activeTab.set('accounting'); isSidebarOpen.set(false)" [class]="navClass('accounting')"><span class="text-xl md:text-lg">📊</span> <span class="inline">銷售報表</span></button>
           <button (click)="activeTab.set('inventory'); isSidebarOpen.set(false)" [class]="navClass('inventory')"><span class="text-xl md:text-lg">🏭</span> <span class="inline">庫存管理</span></button>
-          <button (click)="activeTab.set('purchases'); isSidebarOpen.set(false)" [class]="navClass('purchases')"><span class="text-xl md:text-lg">🧾</span> <span class="inline">採購總帳</span></button>
+          <button (click)="activeTab.set('purchases'); isSidebarOpen.set(false)" [class]="navClass('purchases')">
+            <span class="text-xl md:text-lg relative">🧾@if(hasPendingPurchases()) {<span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>}</span> 
+            <span class="inline">採購總帳</span>
+          </button>
           
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">資金與支出</div>
           <button (click)="activeTab.set('wallets'); isSidebarOpen.set(false)" [class]="navClass('wallets')"><span class="text-xl md:text-lg">👛</span> <span class="inline">資金帳戶</span></button>
@@ -69,8 +72,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <h2 class="text-2xl font-bold text-gray-800 whitespace-nowrap">{{ getTabTitle() }}</h2>
            </div>
           <div class="flex gap-2 items-center">
-             <button (click)="showProcurementModal.set(true); procureRange.set('all');" class="px-4 py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl font-bold hover:bg-yellow-200 flex items-center justify-center gap-2 shadow-sm transition-colors whitespace-nowrap">
-             <span class="text-lg leading-none mt-0.5">📦</span> <span class="hidden sm:block leading-none mt-0.5">叫貨</span>
+             <button (click)="showProcurementModal.set(true); procureRange.set('all');" class="relative px-4 py-2 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl font-bold hover:bg-yellow-200 flex items-center justify-center gap-2 shadow-sm transition-colors whitespace-nowrap">
+               @if(hasPendingProcurements()) { <span class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span> }
+               <span class="text-lg leading-none mt-0.5">📦</span> <span class="hidden sm:block leading-none mt-0.5">叫貨</span>
              </button>
              <button (click)="forceRefresh()" class="w-8 h-8 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-400 hover:text-brand-900 shadow-sm active:scale-95 transition-transform" title="強制重新整理">↻</button>
            </div>
@@ -934,9 +938,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'expenses') {
           <div class="space-y-6 w-full animate-fade-in">
-             <div class="bg-white p-4 sm:p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row justify-between xl:items-center gap-4">
-                <p class="text-sm font-bold text-gray-500 shrink-0 whitespace-nowrap">💡 記錄包材、機票、貨運費等公積金攤提</p>
-                <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+             <div class="bg-white p-4 sm:p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4">
+                <p class="text-sm font-bold text-gray-500 whitespace-nowrap border-b border-gray-100 pb-2">💡 記錄包材、機票、貨運費等公積金攤提</p>
+                <div class="flex flex-wrap items-center gap-2 w-full">
                    <div class="flex items-center gap-2 flex-1 sm:flex-none min-w-[220px]">
                       <input type="date" [ngModel]="expenseStart()" (ngModelChange)="expenseStart.set($event)" class="w-full bg-gray-50 border border-gray-200 text-gray-700 text-sm font-bold rounded-xl px-2 py-2.5 outline-none">
                       <span class="text-gray-400">~</span>
@@ -1406,6 +1410,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     }
                  </div>
 
+                 <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                       <span class="text-sm font-bold text-yellow-800 flex items-center gap-1"><span>📝</span> 內部備註 (僅管理員可見)</span>
+                       <button (click)="saveOrderNote(o, orderNoteInput.value)" class="text-xs bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm transition-colors active:scale-95">儲存備註</button>
+                    </div>
+                    <textarea #orderNoteInput [value]="$any(o).note || ''" rows="2" placeholder="例如：出貨需退款 20 元賣貨便運費給客人..." class="w-full p-2 border border-yellow-300 rounded-lg focus:outline-none focus:border-yellow-500 text-sm custom-scrollbar bg-white"></textarea>
+                 </div>
+                 
                  <div class="flex justify-between items-center mb-3">
                     <div class="text-sm font-bold text-gray-700 border-l-4 border-brand-400 pl-2">訂單明細</div>
                     @if(o.items.length > 1) {
@@ -2775,6 +2787,25 @@ try {
   });
 
 pendingCount = computed(() => this.dashboardMetrics().toConfirm);
+
+// 🚨 叫貨與採購提醒紅點大腦
+  hasPendingProcurements = computed(() => {
+     return this.procurementList().some(item => item.procured < item.needed);
+  });
+  hasPendingPurchases = computed(() => {
+     return this.purchaseList().some(p => p.status === 'pending_sync');
+  });
+
+  // 📝 儲存訂單內部備註
+  async saveOrderNote(o: Order, newNote: string) {
+     try {
+        await this.store.updateOrderStatus(o.id, o.status, { note: newNote });
+        this.actionModalOrder.set({ ...o, note: newNote } as any); // 👈 加上 as any 繞過 TS 嚴格檢查
+        alert('✅ 訂單內部備註已成功儲存！包貨時請務必留意！');
+     } catch (e) {
+        alert('❌ 儲存失敗，請檢查網路狀態。');
+     }
+  }
 
 // 🚨 第二關：庫存告急預警大腦 (非預購、有上架、且庫存小於 5 的商品)
   lowStockAlerts = computed(() => {

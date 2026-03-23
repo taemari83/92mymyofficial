@@ -11,6 +11,7 @@ export const routes: Routes = [
   { path: 'checkout', component: CartComponent },
   { path: 'member', component: MemberAreaComponent },
   { path: 'admin', component: AdminPanelComponent },
+  { path: 'cart', component: CartComponent },
   // 👇 2. 設定隱藏路徑 (買手只要輸入 網址/buyer 就可以直接打開手機版表單)
   { path: 'buyer', component: BuyerFormComponent }, 
   { path: '**', redirectTo: '' }

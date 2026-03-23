@@ -391,7 +391,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
                   <div class="text-gray-500 leading-relaxed text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <h4 class="font-bold text-gray-800 mb-2 text-xs uppercase tracking-wide">商品介紹</h4>
-                    <p class="whitespace-pre-wrap">{{ selectedProduct()!.note || '這是一個非常棒的商品，來自我們精選的 Winter Collection。' }}</p>
+                    <p class="whitespace-pre-wrap">{{ selectedProduct()!.note }}</p>
                   </div>
                </div>
 

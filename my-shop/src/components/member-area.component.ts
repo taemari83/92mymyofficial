@@ -43,6 +43,7 @@ import { StoreService } from '../services/store.service';
                   'bg-yellow-100 text-yellow-800': storeService.currentUser()?.tier === 'v2',
                   'bg-red-100 text-red-800': storeService.currentUser()?.tier === 'v3',
                   'bg-blue-100 text-blue-800': storeService.currentUser()?.tier === 'wholesale',
+                  'bg-gray-800 text-white': storeService.currentUser()?.tier === 'employee',
                   'bg-gray-100 text-gray-800': storeService.currentUser()?.tier === 'general'
                 }">
                 @if(storeService.currentUser()?.tier === 'v1') { V1.95折貴賓 }
