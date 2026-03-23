@@ -2480,25 +2480,34 @@ try {
            // ✨ 升級：規格現在同時支援 Excel 裡的換行或逗號
            const options = optionsStr ? optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [];
           
-           // 自動生成貨號
+           // 1️⃣ 先判斷：如果沒有貨號，就自動生成
            if (!code) {
              const codeMap = this.store.settings().categoryCodes || {};
              const prefix = codeMap[category] || 'Z'; 
              const now = new Date();
              const datePart = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-             
-             // 🔥 修改：改用 validProductCount 來補零，不再使用會被表頭影響的 i
              code = `${prefix}${datePart}${String(validProductCount).padStart(3, '0')}`;
            }
 
-           const existingProduct = this.store.products().find(p => p.code === code);
+           // 2️⃣ 再用確定的貨號去資料庫找商品 (這裡只宣告一次 existingProduct！)
+           const existingProduct = this.store.products().find((p: any) => p.code === code);
            const uniqueId = existingProduct?.id || (Date.now().toString() + '-' + i + '-' + Math.random().toString(36).substring(2, 7));
 
-           const p: any = {
+           // 3️⃣ 智慧判斷：檢查第 25 格是不是真的「購買網址」
+           let purchaseUrl = '';
+           if (rows[0] && rows[0][25] === '購買網址') {
+               purchaseUrl = String(row[25] || '').trim();
+           } else {
+               // 若為舊版表單，保留資料庫原有網址
+               purchaseUrl = existingProduct ? (existingProduct as any).purchaseUrl : '';
+           }
+
+           // 4️⃣ 組合最終要存入資料庫的商品資料
+           const p: any = { 
              id: uniqueId, 
              code, name, category, subCategory, tags, image: mainImage, images: allImages,
              priceGeneral, priceVip, priceWholesale: 0, localPrice, exchangeRate,        
-             weight, shippingCostPerKg, costMaterial, stock, options, note, priceType: 'normal',
+             weight, shippingCostPerKg, costMaterial, stock, options, note, purchaseUrl, priceType: 'normal',
              soldCount: existingProduct?.soldCount || 0, country: 'Korea',
              allowPayment: { cash: true, bankTransfer: true, cod: true },
              allowShipping: { meetup: true, myship: true, family: true, delivery: true },
@@ -3364,21 +3373,21 @@ exportInventoryCSV() {
   }
 
   syncProductsToGoogleSheets() {
-    const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ];
+    // 1. 表頭同步新增「購買網址」
+    const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '購買網址', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ];
     const salesMap = this.productSalesMap();
     
     const dataRows = this.store.products().map((p: Product) => {
-      const cost = (p.localPrice * this.getRealExchangeRate(p)); // 💡 目前只算商品進價
-// 💡 [未來擴充：國際運費與包材] const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
+      const cost = (p.localPrice * this.getRealExchangeRate(p)); 
       const normalProfit = p.priceGeneral - cost; 
       const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
-      const realSoldCount = salesMap[p.id] || 0; // 真實銷量
+      const realSoldCount = salesMap[p.id] || 0; 
       
       return [
         '', '', '', `'${p.code}`, '', p.name, p.category, p.subCategory || '', (p.tags || []).join(','), p.priceGeneral, p.priceVip,
         p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '',
         (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE',
-        p.isListed ? 'TRUE' : 'FALSE', '', p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, realSoldCount
+        p.isListed ? 'TRUE' : 'FALSE', '', p.note || '', (p as any).purchaseUrl || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, realSoldCount
       ];
     });
     this.pushToGoogleSheets('商品總表', [headers, ...dataRows]);
@@ -3603,22 +3612,22 @@ exportInventoryCSV() {
   }
 
   exportProductsCSV() { 
-     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
+     // 1. 表頭新增「購買網址」
+     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '購買網址', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
      const salesMap = this.productSalesMap();
      
      const rows = this.store.products().map((p: Product) => { 
-        const cost = (p.localPrice * this.getRealExchangeRate(p)); // 💡 目前只算商品進價
-// 💡 [未來擴充：國際運費與包材] const cost = (p.localPrice * p.exchangeRate) + p.costMaterial + (p.weight * p.shippingCostPerKg); 
+        const cost = (p.localPrice * this.getRealExchangeRate(p)); 
         const normalProfit = p.priceGeneral - cost; 
         const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
-        const realSoldCount = salesMap[p.id] || 0; // 取得真實銷量
+        const realSoldCount = salesMap[p.id] || 0; 
         
         return [ 
           '', '', '', `\t${p.code}`, '', p.name, p.category, p.subCategory || '', (p.tags || []).join(','), p.priceGeneral, p.priceVip, 
           p.localPrice, p.exchangeRate, p.weight, p.shippingCostPerKg, p.costMaterial, p.bulkDiscount?.count || '', p.bulkDiscount?.total || '', 
           (p.images && p.images.length > 0) ? p.images.join(',') : p.image, p.options.join(','), p.stock, p.isPreorder ? 'TRUE' : 'FALSE', p.isListed ? 'TRUE' : 'FALSE', 
-          '', // 👈 自訂貨號 (R欄) 強制給空字串，防止後面欄位往前遞補
-          p.note || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, realSoldCount 
+          '', 
+          p.note || '', (p as any).purchaseUrl || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, realSoldCount 
         ]; 
      }); 
      this.downloadCSV(`商品總表_對齊格式_${new Date().toISOString().slice(0,10)}`, headers, rows); 
@@ -3663,7 +3672,7 @@ openProductForm() {
        }
     }
   }
-  
+
   onCategoryChange() { const cat = this.productForm.get('category')?.value; if (cat && !this.editingProduct()) { const codeMap = this.categoryCodes(); const foundCode = codeMap[cat] || ''; this.currentCategoryCode.set(foundCode); this.updateSkuPreview(foundCode); } } 
   onCodeInput(e: any) { const val = e.target.value.toUpperCase(); this.currentCategoryCode.set(val); if (!this.editingProduct()) { this.updateSkuPreview(val); } } 
   updateSkuPreview(prefix: string) { if (prefix) { const sku = this.store.generateProductCode(prefix); this.generatedSkuPreview.set(sku); this.productForm.patchValue({ code: sku }); } }
