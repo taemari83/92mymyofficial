@@ -221,6 +221,13 @@ import { StoreService, CartItem } from '../services/store.service';
                   <span class="font-bold">NT$ {{ selectedOriginalSubtotal() }}</span>
                </div>
                
+               @if(storeService.currentUser()?.tier === 'employee') {
+                 <div class="flex justify-between text-sm text-gray-800 font-bold bg-gray-100 px-3 py-2 rounded-lg my-2 border border-gray-200">
+                    <span> 員購專屬優惠</span>
+                    <span class="text-gray-500 text-xs">(已自動折抵於商品單價)</span>
+                 </div>
+               }
+               
                @if(storeService.cartBulkDiscount() > 0) {
                  <div class="flex justify-between text-sm text-red-500 font-bold">
                     <span>🔥 任選多入優惠折扣</span>
@@ -391,7 +398,9 @@ export class CartComponent {
      if (settings.paymentMethods.cod) pay.add('cod');
 
      let ship = new Set<string>();
-     if (settings.shipping.methods.meetup.enabled) ship.add('meetup');
+     const isEmployee = this.storeService.currentUser()?.tier === 'employee';
+     // 💡 員工無視開關強制享有面交，一般客則看後台設定
+     if (settings.shipping.methods.meetup.enabled || isEmployee) ship.add('meetup');
      if (settings.shipping.methods.myship.enabled) ship.add('myship');
      if (settings.shipping.methods.family.enabled) ship.add('family');
      if (settings.shipping.methods.delivery.enabled) ship.add('delivery');
@@ -455,7 +464,10 @@ export class CartComponent {
   });
 
   // 4. 平台物流補貼 (開單預扣)
-  currentDiscount = computed(() => (this.selectedShippingMethod() === 'myship' || this.selectedShippingMethod() === 'family') ? 20 : 0);
+  currentDiscount = computed(() => {
+     if (this.storeService.currentUser()?.tier === 'employee') return 0; // 內部員工結帳不扣物流補助
+     return (this.selectedShippingMethod() === 'myship' || this.selectedShippingMethod() === 'family') ? 20 : 0;
+  });
 
   // 5. 計算可使用的購物金 (不能超過「扣完折扣碼與運費後」的剩餘應付金額)
   calculatedCredits = computed(() => {

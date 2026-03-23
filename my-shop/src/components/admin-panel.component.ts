@@ -1162,9 +1162,34 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     </div> 
                   </div> 
 
+                  <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-2 mb-4">
+                    <div class="flex items-center justify-between"> 
+                      <div class="text-xs text-gray-500 space-y-2"> 
+                         <div>
+                            客用預估成本: <span class="font-bold text-gray-800">$ {{ estimatedCost() | number:'1.0-0' }}</span> 
+                            <span class="text-[10px] text-gray-400 ml-1">({{ formValues()?.exchangeRate || 1 }})</span>
+                         </div>
+                         <div class="text-brand-700">
+                            真實底價(員工): <span class="font-bold">$ {{ realEstimatedCost() | number:'1.0-0' }}</span> 
+                            <span class="text-[10px] opacity-70 ml-1">(1/43)</span>
+                         </div>
+                      </div> 
+                      <div class="text-right space-y-2"> 
+                        <div>
+                           <span class="text-xs text-gray-400 mr-2">客用預估毛利</span> 
+                           <span class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> $ {{ estimatedProfit() | number:'1.0-0' }} </span>
+                           <span class="text-[10px] ml-1 bg-gray-100 px-1 rounded text-gray-500"> {{ estimatedMargin() | number:'1.1-1' }}% </span>
+                        </div> 
+                        <div class="text-brand-700 font-bold">
+                           <span class="text-xs opacity-80 mr-2">真實底價毛利</span> 
+                           $ {{ realEstimatedProfit() | number:'1.0-0' }} 
+                        </div>
+                      </div> 
+                    </div>
+                  </div>
+
                   <div> 
-                    <label class="block text-xs font-bold text-gray-500 mb-1">商品規格 <span class="text-[10px] text-gray-400 font-normal">格式：名稱[圖X]=售價=VIP=當地 (可換行或逗號分隔)</span></label> 
-                    <textarea formControlName="optionsStr" rows="4" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar leading-relaxed" placeholder="例如：&#10;燕麥色[圖2]=2580=2500=85000&#10;海軍藍[圖3]=2580=2500=85000&#10;單一顏色不換圖=2580"></textarea> 
+                    <label class="block text-xs font-bold text-gray-500 mb-1">商品規格 <span class="text-[10px] text-gray-400 font-normal">格式：名稱[圖X]=售價=VIP=當地 (可換行或逗號分隔)</span></label>                    <textarea formControlName="optionsStr" rows="4" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar leading-relaxed" placeholder="例如：&#10;燕麥色[圖2]=2580=2500=85000&#10;海軍藍[圖3]=2580=2500=85000&#10;單一顏色不換圖=2580"></textarea> 
                   </div>
 
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-blue-50 p-4 rounded-xl border border-blue-200 mb-4">
@@ -1220,36 +1245,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       </div>
 
                       <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-4"> 
-                        <h4 class="font-bold text-gray-700 text-sm border-b border-gray-200 pb-2">💰 進階成本與獲利分析</h4> 
+                        <h4 class="font-bold text-gray-700 text-sm border-b border-gray-200 pb-2">💰 進階成本 (國際運費/包材)</h4> 
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4"> 
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">重量 kg</label> <input type="number" formControlName="weight" step="0.1" class="w-full p-2 border rounded-lg bg-white"> </div> 
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">國際運費/kg</label> <input type="number" formControlName="shippingCostPerKg" class="w-full p-2 border rounded-lg bg-white"> </div> 
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> 
                         </div> 
-                        <div class="flex items-center justify-between pt-3 mt-2 border-t border-gray-200/50"> 
-                          <div class="text-xs text-gray-500 space-y-2"> 
-                             <div>
-                                客用預估成本: <span class="font-bold text-gray-800">$ {{ estimatedCost() | number:'1.0-0' }}</span> 
-                                <span class="text-[10px] text-gray-400 ml-1">({{ formValues()?.exchangeRate || 1 }})</span>
-                             </div>
-                             <div class="text-brand-700">
-                                真實底價(員工): <span class="font-bold">$ {{ realEstimatedCost() | number:'1.0-0' }}</span> 
-                                <span class="text-[10px] opacity-70 ml-1">(1/43)</span>
-                             </div>
-                          </div> 
-                          <div class="text-right space-y-2"> 
-                            <div>
-                               <span class="text-xs text-gray-400 mr-2">客用預估毛利</span> 
-                               <span class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> $ {{ estimatedProfit() | number:'1.0-0' }} </span>
-                               <span class="text-[10px] ml-1 bg-gray-100 px-1 rounded text-gray-500"> {{ estimatedMargin() | number:'1.1-1' }}% </span>
-                            </div> 
-                            <div class="text-brand-700 font-bold">
-                               <span class="text-xs opacity-80 mr-2">真實底價毛利</span> 
-                               $ {{ realEstimatedProfit() | number:'1.0-0' }} 
-                            </div>
-                          </div> 
-                        </div> 
-                     </div> <div class="grid grid-cols-1 sm:grid-cols-3 gap-4"> 
+                      </div> <div class="grid grid-cols-1 sm:grid-cols-3 gap-4"> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">VIP價 (NT$)</label> <input type="number" formControlName="priceVip" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> </div> 
                         <div> <label class="block text-xs font-bold text-blue-500 mb-1">批發價 (NT$)</label> <input type="number" formControlName="priceWholesale" class="w-full p-3 border border-blue-200 rounded-xl focus:outline-none focus:border-blue-400 bg-blue-50/30"> </div> 
                         <div> <label class="block text-xs font-bold text-gray-500 mb-1">商品貨號 (SKU)</label> <input formControlName="code" class="w-full p-3 border border-gray-200 rounded-xl font-mono bg-gray-50 text-gray-500" [placeholder]="'自動: ' + generatedSkuPreview()"> </div> 
