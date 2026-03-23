@@ -37,10 +37,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">數據分析</div>
           <button (click)="activeTab.set('accounting'); isSidebarOpen.set(false)" [class]="navClass('accounting')"><span class="text-xl md:text-lg">📊</span> <span class="inline">銷售報表</span></button>
           <button (click)="activeTab.set('inventory'); isSidebarOpen.set(false)" [class]="navClass('inventory')"><span class="text-xl md:text-lg">🏭</span> <span class="inline">庫存管理</span></button>
-          <button (click)="activeTab.set('purchases'); isSidebarOpen.set(false)" [class]="navClass('purchases')">
-            <span class="text-xl md:text-lg relative">🧾@if(hasPendingPurchases()) {<span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>}</span> 
-            <span class="inline">採購總帳</span>
-          </button>
+          <button (click)="activeTab.set('purchases'); isSidebarOpen.set(false)" [class]="navClass('purchases')"><span class="text-xl md:text-lg">🧾</span> <span class="inline">採購總帳</span></button>
           
           <div class="px-2 md:px-3 text-[10px] md:text-xs font-bold text-gray-400 mb-2 mt-6 text-center md:text-left">資金與支出</div>
           <button (click)="activeTab.set('wallets'); isSidebarOpen.set(false)" [class]="navClass('wallets')"><span class="text-xl md:text-lg">👛</span> <span class="inline">資金帳戶</span></button>
