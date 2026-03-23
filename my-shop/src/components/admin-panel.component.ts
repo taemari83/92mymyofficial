@@ -761,6 +761,16 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  </table>
                </div>
             </div>
+
+            <div class="mt-12 w-full animate-fade-in bg-gray-50 p-6 rounded-[2rem] border border-gray-200">
+               <h4 class="text-xl font-bold text-gray-800 mb-2 flex items-center gap-2"><span>🤫</span> 員工內部自購獨立帳本</h4>
+               <p class="text-sm text-gray-500 mb-4">設定為「內部員工」的會員訂單，已從上方正式報表中完全剔除，避免影響稅務與營收。請在此獨立下載對帳。</p>
+               <div class="flex flex-wrap gap-3">
+                  <button (click)="exportEmployeeCSV()" class="px-5 py-3 bg-gray-800 text-white rounded-xl font-bold shadow-md hover:bg-black transition-colors flex items-center gap-2"><span class="text-lg">📥</span> 匯出員工總帳 CSV</button>
+                  <button (click)="syncEmployeeToGoogleSheets()" class="px-5 py-3 bg-gray-400 text-white rounded-xl font-bold shadow-md hover:bg-gray-500 transition-colors flex items-center gap-2"><span class="text-lg">☁️</span> 同步至雲端表單</button>
+               </div>
+            </div>
+
          </div>
         }
 
@@ -1181,13 +1191,18 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       </select>
                     </div>
                     <div> 
-                      <label class="block text-xs font-bold text-gray-500 mb-1">次分類 <span class="text-[10px] text-gray-400 font-normal">(選單點選或手填新增)</span></label> 
-                      <input type="text" list="formSubCatList" formControlName="subCategory" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 transition-colors" placeholder="選擇或輸入新次分類">
-                      <datalist id="formSubCatList">
-                         @for(sub of formSubCategories(); track sub) { <option [value]="sub">{{ sub }}</option> }
-                      </datalist>
+                      <label class="block text-xs font-bold text-gray-500 mb-1">次分類</label> 
+                      <div class="flex gap-2">
+                         <select [ngModel]="productForm.get('subCategory')?.value" (ngModelChange)="onSubCategoryChange($event)" [ngModelOptions]="{standalone: true}" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 cursor-pointer font-bold text-sm text-gray-700">
+                            <option value="" disabled selected>選擇現有次分類...</option>
+                            @for(sub of formSubCategories(); track sub) { <option [value]="sub">{{ sub }}</option> }
+                            <option value="NEW">➕ 自訂新次分類</option>
+                         </select>
+                         @if(isAddingNewSubCategory()) {
+                            <input type="text" formControlName="subCategory" placeholder="輸入新名稱" class="w-full p-3 border border-brand-300 rounded-xl bg-white focus:outline-none focus:border-brand-500 animate-fade-in text-sm font-bold">
+                         }
+                      </div>
                     </div>
-                  </div>
 
                   <div> 
                      <label class="block text-xs font-bold text-gray-500 mb-1">標籤 <span class="text-[10px] text-gray-400 font-normal">(可換行或逗號分隔)</span></label> 
@@ -1213,12 +1228,16 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                           <div> <label class="block text-xs font-bold text-gray-500 mb-1">額外成本</label> <input type="number" formControlName="costMaterial" class="w-full p-2 border rounded-lg bg-white"> </div> 
                         </div> 
                         <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> 
-                          <div class="text-xs text-gray-500"> 預估總成本: <span class="font-bold text-gray-800">$ {{ estimatedCost() | number:'1.0-0' }}</span> </div> 
+                          <div class="flex items-center justify-between pt-2 border-t border-gray-200/50"> 
+                          <div class="text-xs text-gray-500"> 
+                             換算台幣成本: <span class="font-bold text-gray-800">$ {{ estimatedCost() | number:'1.0-0' }}</span> 
+                             <span class="text-[10px] text-gray-400 ml-1">({{ formValues()?.localPrice || 0 }} × {{ formValues()?.exchangeRate || 1 }})</span>
+                          </div> 
                           <div class="text-right"> 
                             <div class="text-xs text-gray-400">預估毛利 / 毛利率</div> 
                             <div class="font-bold" [class.text-green-600]="estimatedProfit() > 0" [class.text-red-500]="estimatedProfit() <= 0"> $ {{ estimatedProfit() | number:'1.0-0' }} <span class="text-xs ml-1 bg-gray-200 px-1 rounded text-gray-600"> {{ estimatedMargin() | number:'1.1-1' }}% </span> </div> 
                           </div> 
-                        </div> 
+                        </div>
                       </div> 
 
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"> 
@@ -1293,10 +1312,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <label class="block text-xs font-bold text-gray-500 mb-1">會員等級</label> 
                       <select formControlName="tier" class="w-full p-3 border border-gray-200 rounded-xl bg-white"> 
                         <option value="general">一般會員</option>
-                        <option value="v1">✨ V1.95折貴賓</option>
-                        <option value="v2">✨ V2.9折貴賓</option>
-                        <option value="v3">✨ V3.85折貴賓</option>
+                        <option value="v1">V1 95折貴賓</option>
+                        <option value="v2">V2 9折貴賓</option>
+                        <option value="v3">V3 85折貴賓</option>
                         <option value="wholesale">批發會員</option>
+                        <option value="employee">內部員工</option>
                       </select> 
                     </div> 
                   </div> 
@@ -2057,7 +2077,20 @@ export class AdminPanelComponent {
   productSearch = signal('');
   productCategoryFilter = signal<string>('all'); // 記錄選中的主分類
   productSubCategoryFilter = signal<string>('all'); // 記錄選中的次分類
-
+  
+  // 👇👇👇 貼在這裡（處理新增次分類的邏輯） 👇👇👇
+  isAddingNewSubCategory = signal(false);
+  onSubCategoryChange(val: string) {
+     if (val === 'NEW') {
+        this.isAddingNewSubCategory.set(true);
+        this.productForm.patchValue({ subCategory: '' });
+     } else {
+        this.isAddingNewSubCategory.set(false);
+        this.productForm.patchValue({ subCategory: val });
+     }
+  }
+  // 👆👆👆 =================================== 👆👆👆
+  
   // 自動抓取：當前選中主分類底下的所有次分類
   adminSubCategories = computed(() => {
     const cat = this.productCategoryFilter();
@@ -2474,6 +2507,11 @@ try {
       if (startDate && d < startDate) return false;
       if (endDate) { const e = new Date(endDate); e.setHours(23,59,59,999); if (d > e) return false; }
       if (['cancelled', 'refunded'].includes(o.status)) return false;
+      
+      // 🛡️ 隱形結界：如果是員工的訂單，絕對不計入正式營收報表！
+      const user = this.store.users().find(u => u.id === o.userId);
+      if (user?.tier === 'employee') return false;
+
       return true;
     });
   });
@@ -2910,6 +2948,12 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       bulkTotal: [0],
       shareMode: ['親帶'] // 👈 新增這行：預設為親帶
     });
+
+// 👇 在這裡加上這段：啟動表單即時監聽大腦 👇
+    this.productForm.valueChanges.subscribe(val => {
+       this.formValues.set(val);
+    });
+
     const s = this.store.settings();
     this.settingsForm = this.fb.group({ enableCash: [s.paymentMethods.cash], enableBank: [s.paymentMethods.bankTransfer], enableCod: [s.paymentMethods.cod], birthdayGiftGeneral: [s.birthdayGiftGeneral], birthdayGiftVip: [s.birthdayGiftVip], shipping: this.fb.group({ freeThreshold: [s.shipping.freeThreshold], methods: this.fb.group({ meetup: this.fb.group({ enabled: [s.shipping.methods.meetup.enabled], fee: [s.shipping.methods.meetup.fee] }), myship: this.fb.group({ enabled: [s.shipping.methods.myship.enabled], fee: [s.shipping.methods.myship.fee] }), family: this.fb.group({ enabled: [s.shipping.methods.family.enabled], fee: [s.shipping.methods.family.fee] }), delivery: this.fb.group({ enabled: [s.shipping.methods.delivery.enabled], fee: [s.shipping.methods.delivery.fee] }) }) }) });
     this.userForm = this.fb.group({ name: ['', Validators.required], phone: [''], birthday: [''], tier: ['general'], credits: [0], totalSpend: [0], note: [''] });
@@ -2968,10 +3012,10 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   }
 
   estimatedCost = computed(() => { 
-  const v = this.formValues(); if (!v) return 0; 
-  return (v.localPrice * v.exchangeRate); // 💡 目前只算商品進價
-  // 💡 [未來擴充：國際運費與包材] return (v.localPrice * v.exchangeRate) + (v.weight * v.shippingCostPerKg) + v.costMaterial; 
-});
+    const v = this.formValues(); if (!v) return 0; 
+    return (v.localPrice * v.exchangeRate); // 💡 即時動態換算 (目前只算商品進價)
+    // 💡 [未來擴充：國際運費與包材] return (v.localPrice * v.exchangeRate) + (v.weight * v.shippingCostPerKg) + v.costMaterial; 
+  });
   estimatedProfit = computed(() => (this.formValues()?.priceGeneral || 0) - this.estimatedCost()); 
   estimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.estimatedProfit() / this.formValues().priceGeneral) * 100 : 0);
   
@@ -4455,5 +4499,67 @@ submitProduct() {
      ];
      
      this.pushToGoogleSheets(`終極會計總表`, [rowData], false);
+  }
+
+  // 🤫 員工專屬隱形資料庫
+  employeeOrders = computed(() => {
+     const orders = this.store.orders();
+     return orders.filter(o => {
+        const user = this.store.users().find(u => u.id === o.userId);
+        // 抓出員工，且排除取消/退款的單
+        return user?.tier === 'employee' && !['cancelled', 'refunded'].includes(o.status);
+     }).sort((a: any, b: any) => b.createdAt - a.createdAt);
+  });
+
+  exportEmployeeCSV() {
+     const headers = ['購買日期', '品牌(分類)', '商品名稱', '規格', '購買者', '數量', '購買單價', '商品總計', '付款方式', '訂單狀態'];
+     const rows: any[] = [];
+     
+     this.employeeOrders().forEach((o: Order) => {
+        o.items.forEach((i: any) => {
+           const p = this.store.products().find((x: Product) => x.id === i.productId);
+           rows.push([
+              new Date(o.createdAt).toLocaleDateString('zh-TW'),
+              p?.category || '未分類',
+              i.productName,
+              i.option || '單一規格',
+              this.getUserName(o.userId),
+              i.quantity,
+              i.price,
+              i.price * i.quantity,
+              this.getPaymentLabel(o.paymentMethod),
+              this.getPaymentStatusLabel(o.status, o.paymentMethod)
+           ]);
+        });
+     });
+     
+     if(rows.length === 0) return alert('目前沒有任何員工自購紀錄！');
+     this.downloadCSV(`員工內部自購明細_${new Date().toISOString().slice(0,10)}`, headers, rows);
+  }
+
+  syncEmployeeToGoogleSheets() {
+     const headers = ['購買日期', '品牌(分類)', '商品名稱', '規格', '購買者', '數量', '購買單價', '商品總計', '付款方式', '訂單狀態'];
+     const dataRows: any[] = [];
+     
+     this.employeeOrders().forEach((o: Order) => {
+        o.items.forEach((i: any) => {
+           const p = this.store.products().find((x: Product) => x.id === i.productId);
+           dataRows.push([
+              new Date(o.createdAt).toLocaleDateString('zh-TW'),
+              p?.category || '未分類',
+              i.productName,
+              i.option || '單一規格',
+              this.getUserName(o.userId),
+              i.quantity,
+              i.price,
+              i.price * i.quantity,
+              this.getPaymentLabel(o.paymentMethod),
+              this.getPaymentStatusLabel(o.status, o.paymentMethod)
+           ]);
+        });
+     });
+     
+     if(dataRows.length === 0) return alert('目前沒有任何員工自購紀錄！');
+     this.pushToGoogleSheets('員工自購帳', [headers, ...dataRows]);
   }
 }
