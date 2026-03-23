@@ -4091,8 +4091,15 @@ submitProduct() {
   }
 
   async deleteExpenseRecord(e: any) {
-    if(confirm(`⚠️ 確定要刪除這筆支出嗎？\n項目：${e.item}\n金額：${e.amount}\n\n(註：刪除支出不會自動退還錢包餘額，若有需要請手動補回帳戶)`)) {
+    if(confirm(`⚠️ 確定要刪除這筆紀錄嗎？\n項目：${e.item}\n金額：${e.amount}\n\n系統將會自動把這筆金額退回/扣除對應的資金帳戶！`)) {
+       // 🧠 智慧還原大腦：自動把錢加回去 (或扣回來)
+       const targetWallet = this.wallets().find((w:any) => w.currency === e.currency);
+       if (targetWallet) {
+           // 原本花掉的加回來，原本存進去的扣回來
+           await this.store.updateWalletBalance(targetWallet.id, targetWallet.balance + Number(e.amount));
+       }
        await this.store.deleteExpense(e.id);
+       alert('✅ 紀錄已刪除，資金帳戶餘額已自動還原！');
     }
   }
 
