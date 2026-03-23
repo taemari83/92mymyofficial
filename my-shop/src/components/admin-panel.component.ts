@@ -3219,9 +3219,10 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
   exportOrdersCSV() { 
-    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)']; 
-    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 抽獎' }; 
-    const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
+     // 👇 1. 表頭加上內部備註
+     const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)', '內部備註']; 
+     const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 抽獎' }; 
+     const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' };
 
     const rows = this.filteredOrders().map((o: Order) => { 
       const u = this.store.users().find((user: User) => user.id === o.userId);
@@ -3258,9 +3259,10 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
         o.finalTotal, 
         this.getPaymentStatusLabel(o.status, o.paymentMethod), 
         o.shippingLink || '', 
-        itemDetails
+        itemDetails,
+        (o as any).note || '' // 👈 2. 印出我們存的內部備註 (用 as any 繞過檢查)
       ]; 
-    }); 
+    });
     this.downloadCSV(`訂單報表_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }
   
@@ -3312,10 +3314,11 @@ exportInventoryCSV() {
   }
 
   syncOrdersToGoogleSheets() {
-    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 抽獎'}; 
-    const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
-    
-    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)'];
+    const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 抽獎'}; 
+    const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
+    
+    // 👇 1. 表頭加上內部備註
+    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)', '內部備註'];
     const dataRows = this.filteredOrders().map((o: Order) => {
       // 👇 在這裡組裝帶有叫貨狀態的明細
       const itemDetails = o.items.map((i: CartItem) => {
@@ -3332,11 +3335,11 @@ exportInventoryCSV() {
       }).join('\n');
 
       return [
-        `'${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId),
-        payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `'${o.paymentLast5}` : '',
-        shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod),
-        o.shippingLink || '', itemDetails
-      ];
+        `'${o.id}`, new Date(o.createdAt).toLocaleString('zh-TW', { hour12: false }), this.getUserName(o.userId),
+        payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `'${o.paymentLast5}` : '',
+        shipMap[o.shippingMethod] || o.shippingMethod, o.finalTotal, this.getPaymentStatusLabel(o.status, o.paymentMethod),
+        o.shippingLink || '', itemDetails, (o as any).note || '' // 👈 2. 加入內部備註
+      ];
     });
     
     // 把表頭放在第一行送出
