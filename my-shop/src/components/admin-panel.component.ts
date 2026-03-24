@@ -4751,8 +4751,8 @@ submitProduct() {
         balanceTWD, balanceKRW
      ];
      
-     // Google Sheets 我們會連同 headers 一起傳，確保表單標頭也是最新的
-     this.pushToGoogleSheets(`終極會計總表`, [headers, rowData], false);
+     // 💡 修正：因為是「新增(Append)」模式，所以不要把 headers 一起傳進去，只傳 rowData 即可！
+     this.pushToGoogleSheets(`終極會計總表`, [rowData], false);
   }
 
   // 🤫 員工專屬隱形資料庫
