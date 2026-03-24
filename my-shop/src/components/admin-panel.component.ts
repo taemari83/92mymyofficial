@@ -470,7 +470,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 @for (p of filteredAdminProducts(); track p.id) { 
                   <div class="bg-white rounded-[1.5rem] p-4 flex items-center gap-5 hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full"> 
                      <div class="w-20 h-20 rounded-xl overflow-hidden bg-white flex-shrink-0 relative border border-gray-100"> 
-                        <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-contain mix-blend-multiply p-1"> 
+                        <img [src]="p.image" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-contain mix-blend-multiply p-1"> 
                         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-0.5"> {{ p.code }} </div> 
                      </div>
                      <div class="flex-1 min-w-0"> 
@@ -512,7 +512,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 @for (p of filteredAdminProducts(); track p.id) {
                   <div class="bg-white rounded-[1.5rem] p-3 flex flex-col hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full">
                      <div class="w-full aspect-square rounded-xl overflow-hidden bg-white relative mb-3 border border-gray-100">
-                        <img [src]="p.image" (error)="handleImageError($event)" class="w-full h-full object-contain mix-blend-multiply p-2">
+                        <img [src]="p.image" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-contain mix-blend-multiply p-2">
                         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-1"> {{ p.code }} </div>
                         <div class="absolute top-2 left-2 flex flex-col gap-1">
                            @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm w-fit">預購</span> }
@@ -1121,7 +1121,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                              <video [src]="img" autoplay muted loop playsinline class="w-full h-full object-cover pointer-events-none"></video>
                              <div class="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1 rounded z-10">短影音</div>
                           } @else {
-                             <img [src]="img" (error)="handleImageError($event)" class="w-full h-full object-cover pointer-events-none"> 
+                             <img [src]="img" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-cover pointer-events-none"> 
                           }
                           <button type="button" (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/50 hover:bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">✕</button> 
                           @if($index === 0) { <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold pointer-events-none z-10">主圖</div> } 
