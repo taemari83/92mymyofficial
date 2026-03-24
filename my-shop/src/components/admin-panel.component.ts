@@ -652,7 +652,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full"><div class="bg-brand-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div><div class="relative z-10"><div class="text-brand-200 text-xs font-bold uppercase tracking-widest mb-1">總營收 (已扣除折扣)</div><div class="text-3xl font-black">NT$ {{ accountingStats().revenue | number }}</div></div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">淨利潤</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().profit | number:'1.0-0' }}</div><div class="mt-2 inline-block px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">淨利率 {{ accountingStats().margin | number:'1.1-1' }}%</div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">總成本 (商品+物流)</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().cost | number:'1.0-0' }}</div></div><div class="lg:col-span-3 bg-blue-50/50 p-4 rounded-[2rem] border border-blue-50 flex items-center text-blue-800/70 text-xs leading-relaxed">💡 報表說明：<br>• 只要有下單(包含未付款)，皆會計入上方「總營收/淨利」方便追蹤。<br>• 僅排除「已退款」與「已取消」的訂單。<br>• 下方「收款狀態分析」方便對帳實際入帳的現金流。</div></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full"><div class="bg-brand-900 text-white p-6 rounded-[2rem] shadow-lg relative overflow-hidden group"><div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors"></div><div class="relative z-10"><div class="text-brand-200 text-xs font-bold uppercase tracking-widest mb-1">總營收 (已扣除折扣)</div><div class="flex flex-col gap-1 mt-1"><div class="text-3xl font-black leading-none">NT$ {{ accountingStats().revenueTWD | number }}</div><div class="text-xl font-bold text-brand-300 leading-none">₩ {{ accountingStats().revenueKRW | number }}</div></div></div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-green-600 text-xs font-bold uppercase tracking-widest mb-1">淨利潤</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().profit | number:'1.0-0' }}</div><div class="mt-2 inline-block px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">淨利率 {{ accountingStats().margin | number:'1.1-1' }}%</div></div><div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden"><div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">總成本 (商品+物流)</div><div class="text-3xl font-black text-gray-800">NT$ {{ accountingStats().cost | number:'1.0-0' }}</div></div><div class="lg:col-span-3 bg-blue-50/50 p-4 rounded-[2rem] border border-blue-50 flex items-center text-blue-800/70 text-xs leading-relaxed">💡 報表說明：<br>• 只要有下單(包含未付款)，皆會計入上方「總營收/淨利」方便追蹤。<br>• 僅排除「已退款」與「已取消」的訂單。<br>• 下方「收款狀態分析」方便對帳實際入帳的現金流。</div></div>
             
             <div class="mt-4 w-full animate-fade-in flex flex-col sm:flex-row gap-3">
                 <button (click)="exportFinalMonthlyReport()" class="flex-1 py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-lg shadow-xl hover:bg-black transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
@@ -2607,13 +2607,15 @@ try {
 
   accountingStats = computed(() => {
     const filteredOrders = this.accountingFilteredOrders();
-    let revenue = 0; let cost = 0; let discounts = 0;
+    // 🧠 營收雙幣別分流大腦
+    let revenueTWD = 0; let revenueKRW = 0; 
+    let cost = 0; let discounts = 0;
     let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
     
     // 🤝 合夥人分潤累加器
     let shareYichen = 0; let shareZiting = 0; let shareXiaoyun = 0; let shareCompany = 0;
 
-    // 🎯 行銷成本累加器 (新增)
+    // 🎯 行銷成本累加器
     let promoTotal = 0; let bundleTotal = 0; let creditsTotal = 0;
 
     filteredOrders.forEach((o: Order) => {
@@ -2631,14 +2633,21 @@ try {
       if (isValidOrder) {
           if ((o.paymentMethod as string) === 'giveaway') return; // 👈 神級防呆：抽獎單不計入銷售成本
 
-          revenue += o.finalTotal;
+          // 🌟 就是這裡剛剛沒換到！雙幣別營收分流！
+          const orderCurrency = (o as any).currency || 'TWD';
+          if (orderCurrency === 'KRW') {
+              revenueKRW += o.finalTotal;
+          } else {
+              revenueTWD += o.finalTotal;
+          }
+
           let orderCost = 0;
           let totalRawProfit = 0; // 紀錄原始未扣折扣的總利潤
 
-          // 🔥 統計行銷預算 (新增)
+          // 🔥 統計行銷預算
           promoTotal += (o as any).promoDiscount || 0;
           
-          // 💡 自動濾掉賣貨便/好賣家的 20 元物流開單預扣，還原真實的「多入組優惠」
+          // 💡 自動濾掉賣貨便/好賣家的 20 元物流開單預扣
           let platformSubsidy = (o.shippingMethod === 'myship' || o.shippingMethod === 'family') ? 20 : 0;
           let pureBundle = (o.discount || 0) - platformSubsidy;
           bundleTotal += (pureBundle > 0 ? pureBundle : 0);
@@ -2646,11 +2655,11 @@ try {
           creditsTotal += (o.usedCredits || 0);
 
           // 第一圈：精算這筆訂單的成本，與每項商品的「原始毛利」
-          const itemsItems = o.items || []; // 🛡️ 加上神盾：如果是舊資料或 undefined 則轉為空陣列
+          const itemsItems = o.items || [];
           const itemsData = itemsItems.map((i: CartItem) => {
               const p = this.store.products().find((x: Product) => x.id === i.productId);
               let itemCost = 0;
-              let shareMode = (p as any)?.shareMode || '親帶'; // 抓取分潤模式
+              let shareMode = (p as any)?.shareMode || '親帶';
 
               // 🧠 呼叫大腦：查詢是否有採購單回填的「真實單件平均成本」
               const key = `${i.productId}_${i.option || '單一規格'}`;
@@ -2660,7 +2669,7 @@ try {
                   // 🎉 成功！採用採購單回填的真實平均成本 × 購買數量
                   itemCost = actualCost * i.quantity;
               } else if (p) {
-                  // 原本的預估公式 (如果這件商品還沒被採購核銷過，先用預估值墊著)
+                  // 原本的預估公式
                   let currentLocalPrice = p.localPrice || 0;
                   const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
                   if (fullOption.includes('=')) {
@@ -2669,12 +2678,7 @@ try {
                   }
                   if (currentLocalPrice > 0 || p.localPrice) {
                       const rate = Number(p.exchangeRate) || 1;
-                      itemCost = (currentLocalPrice * rate) * i.quantity; // 💡 目前只算商品進價
-                      // 💡 [未來擴充：國際運費與包材]
-                      // const costMat = Number(p.costMaterial) || 0;
-                      // const weight = Number(p.weight) || 0;
-                      // const shipKg = Number(p.shippingCostPerKg) || 0; 
-                      // itemCost = ((currentLocalPrice * rate) + costMat + (weight * shipKg)) * i.quantity;
+                      itemCost = (currentLocalPrice * rate) * i.quantity; 
                   } else { itemCost = (i.unitCost || 0) * i.quantity; }
               } else { itemCost = (i.unitCost || 0) * i.quantity; } 
 
@@ -2692,7 +2696,6 @@ try {
           const orderRealProfit = o.finalTotal - orderCost;
           
           itemsData.forEach(item => {
-              // 依比例分攤整筆訂單的真實淨利 (就算有折價卷也能公平分攤)
               const actualItemProfit = totalRawProfit !== 0 ? orderRealProfit * (item.rawItemProfit / totalRawProfit) : 0;
               
               if (item.shareMode === '親帶') {
@@ -2701,7 +2704,6 @@ try {
                   shareXiaoyun += actualItemProfit * 0.25;
                   shareCompany += actualItemProfit * 0.25;
               } else {
-                  // 批發：藝辰0%, 子婷40%, 小芸40%, 公司20%
                   shareZiting += actualItemProfit * 0.40;
                   shareXiaoyun += actualItemProfit * 0.40;
                   shareCompany += actualItemProfit * 0.20;
@@ -2710,14 +2712,23 @@ try {
       }
     });
 
+    // 💡 將韓幣營收依匯率 (1/43) 折合為台幣，用來估算整體的利潤與毛利率
+    const totalRevenueEstTWD = revenueTWD + (revenueKRW / 43);
+
     return { 
-        revenue, cost, profit: revenue - cost, margin: revenue ? ((revenue-cost)/revenue)*100 : 0, discounts, count: filteredOrders.length, 
+        revenue: totalRevenueEstTWD, // 相容舊系統的總預估營收
+        revenueTWD,                  // 🟢 新增：純台幣營收
+        revenueKRW,                  // 🟢 新增：純韓幣營收
+        cost, 
+        profit: totalRevenueEstTWD - cost, 
+        margin: totalRevenueEstTWD ? ((totalRevenueEstTWD - cost) / totalRevenueEstTWD) * 100 : 0, 
+        discounts, count: filteredOrders.length, 
         maxOrder: filteredOrders.length > 0 ? Math.max(...filteredOrders.map(o=>o.finalTotal)) : 0, 
         minOrder: filteredOrders.length > 0 ? Math.min(...filteredOrders.map(o=>o.finalTotal)) : 0, 
-        avgOrder: filteredOrders.length > 0 ? revenue / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, 
-        marketing: { promo: promoTotal, bundle: bundleTotal, credits: creditsTotal, total: promoTotal + bundleTotal + creditsTotal }, // 👈 新增行銷數據
+        avgOrder: filteredOrders.length > 0 ? totalRevenueEstTWD / (filteredOrders.filter((o: Order) => o.status !== 'pending_payment').length || 1) : 0, 
+        marketing: { promo: promoTotal, bundle: bundleTotal, credits: creditsTotal, total: promoTotal + bundleTotal + creditsTotal },
         payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal },
-        shares: { yichen: shareYichen, ziting: shareZiting, xiaoyun: shareXiaoyun, company: shareCompany } // 👈 匯出分潤結果
+        shares: { yichen: shareYichen, ziting: shareZiting, xiaoyun: shareXiaoyun, company: shareCompany } 
     };
   });
 
@@ -4535,16 +4546,16 @@ submitProduct() {
      
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
-        '總營收(TWD)', '總商品成本(TWD)', '商品總毛利(TWD)', 
+        '台幣總營收(TWD)', '韓幣總營收(KRW)', '總商品成本(TWD)', '商品總毛利(估算TWD)', 
         '台幣營業支出(TWD)', '韓幣營業支出(KRW)', '外幣支出折合台幣估算', 
-        '🏆 最終淨利潤(TWD)', 
-        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(TWD)',
+        '🏆 最終淨利潤(估算TWD)', 
+        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(估算TWD)',
         '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
      ];
      
      const rowData = [
         exportTime, reportYear, reportMonth, rangeName,
-        Math.round(stats.revenue), Math.round(stats.cost), Math.round(stats.profit),
+        Math.round(stats.revenueTWD), Math.round(stats.revenueKRW), Math.round(stats.cost), Math.round(stats.profit),
         expTWD, expKRW, Math.round(foreignToTWD), 
         Math.round(finalNet),
         Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare),
@@ -4724,16 +4735,16 @@ submitProduct() {
      
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
-        '總營收(TWD)', '總商品成本(TWD)', '商品總毛利(TWD)', 
+        '台幣總營收(TWD)', '韓幣總營收(KRW)', '總商品成本(TWD)', '商品總毛利(估算TWD)', 
         '台幣營業支出(TWD)', '韓幣營業支出(KRW)', '外幣支出折合台幣估算', 
-        '🏆 最終淨利潤(TWD)', 
-        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(TWD)',
+        '🏆 最終淨利潤(估算TWD)', 
+        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(估算TWD)',
         '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
      ];
      
      const rowData = [
         exportTime, reportYear, reportMonth, rangeName,
-        Math.round(stats.revenue), Math.round(stats.cost), Math.round(stats.profit),
+        Math.round(stats.revenueTWD), Math.round(stats.revenueKRW), Math.round(stats.cost), Math.round(stats.profit),
         expTWD, expKRW, Math.round(foreignToTWD), 
         Math.round(finalNet),
         Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare),
