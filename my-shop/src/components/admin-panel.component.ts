@@ -1928,7 +1928,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <img [src]="p.image" (error)="handleImageError($event)" class="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0 mix-blend-multiply">
                       <div class="min-w-0">
                         <div class="font-bold text-gray-800 truncate text-sm" [title]="p.name">{{ p.name }}</div>
-                        <div class="text-[10px] text-red-400 font-mono mt-0.5 font-bold">刪除於: {{ p.deletedAt | date:'yyyy/MM/dd' }}</div>
+                        <div class="text-[10px] text-red-400 font-mono mt-0.5 font-bold">刪除於: {{ $any(p).deletedAt | date:'yyyy/MM/dd' }}</div>
                       </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
