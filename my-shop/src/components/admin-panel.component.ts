@@ -444,6 +444,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="flex w-full sm:w-auto gap-2">
                     <button (click)="exportProductsCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white border border-transparent rounded-xl font-bold hover:bg-[#7a9180] shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
                     <button (click)="syncProductsToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white border border-transparent rounded-xl font-bold hover:bg-[#D4A0A0] shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
+                    <button (click)="openTrashModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-gray-100 text-gray-600 border border-transparent rounded-xl font-bold hover:bg-gray-200 shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors relative">
+                      <span>🗑️</span> 回收站 
+                      @if(deletedProducts().length > 0) { <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">{{ deletedProducts().length }}</span> }
+                    </button>
                   </div>
                   <label class="w-full sm:w-auto px-5 py-2.5 bg-white border border-gray-200 text-brand-900 rounded-xl font-bold shadow-sm hover:bg-gray-50 cursor-pointer transition-colors hover:shadow-md flex items-center justify-center gap-2 whitespace-nowrap shrink-0"> 
                     <span class="text-lg"></span> <span class="text-sm">批量新增</span> 
@@ -781,7 +785,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                    <button (click)="syncInventoryToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex justify-center items-center gap-1 transition-colors">☁️ 同步</button>
                 </div>
               </div>
-             <div class="overflow-x-auto w-full"><table class="w-full text-sm text-left whitespace-nowrap"><thead class="bg-gray-50 text-gray-500"><tr><th class="p-4">貨號</th><th class="p-4">商品名稱</th><th class="p-4">規格</th><th class="p-4 text-right">剩餘庫存</th><th class="p-4 text-right">已售出</th><th class="p-4">狀態</th></tr></thead><tbody class="divide-y divide-gray-100">@for (p of store.products(); track p.id) {<tr class="hover:bg-gray-50"><td class="p-4 font-mono text-gray-400 text-xs">{{ p.code }}</td><td class="p-4 font-bold text-gray-800">{{ p.name }}</td><td class="p-4 text-gray-500">{{ (p.options || []).join(', ') || '單一規格' }}</td><td class="p-4 text-right font-mono font-bold" [class.text-red-500]="p.stock < 5">{{ p.stock >= 9999 ? '無限' : p.stock }}</td><td class="p-4 text-right text-gray-500">{{ p.soldCount }}</td><td class="p-4">@if(p.stock <= 0) { <span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs font-bold">缺貨</span> }@else if(p.stock < 5) { <span class="bg-red-100 text-red-500 px-2 py-1 rounded text-xs font-bold">低庫存</span> }@else { <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-bold">充足</span> }</td></tr>}</tbody></table></div>
+             <div class="overflow-x-auto w-full"><table class="w-full text-sm text-left whitespace-nowrap"><thead class="bg-gray-50 text-gray-500"><tr><th class="p-4">貨號</th><th class="p-4">商品名稱</th><th class="p-4">規格</th><th class="p-4 text-right">剩餘庫存</th><th class="p-4 text-right">已售出</th><th class="p-4">狀態</th></tr></thead><tbody class="divide-y divide-gray-100">@for (p of activeProducts(); track p.id) {<tr class="hover:bg-gray-50"><td class="p-4 font-mono text-gray-400 text-xs">{{ p.code }}</td><td class="p-4 font-bold text-gray-800">{{ p.name }}</td><td class="p-4 text-gray-500">{{ (p.options || []).join(', ') || '單一規格' }}</td><td class="p-4 text-right font-mono font-bold" [class.text-red-500]="p.stock < 5">{{ p.stock >= 9999 ? '無限' : p.stock }}</td><td class="p-4 text-right text-gray-500">{{ p.soldCount }}</td><td class="p-4">@if(p.stock <= 0) { <span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs font-bold">缺貨</span> }@else if(p.stock < 5) { <span class="bg-red-100 text-red-500 px-2 py-1 rounded text-xs font-bold">低庫存</span> }@else { <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-bold">充足</span> }</td></tr>}</tbody></table></div>
           </div>
         }
 
@@ -1766,7 +1770,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <label class="block text-xs font-bold text-gray-500 mb-1">選擇贈品 / 商品</label>
                     <select formControlName="productId" (change)="onGiveawayProductChange($event)" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 text-sm font-bold bg-gray-50 cursor-pointer">
                       <option value="" disabled selected>請選擇商品...</option>
-                      @for(p of store.products(); track p.id) {
+                      @for(p of activeProducts(); track p.id) {
                         <option [value]="p.id">{{ p.name }} (庫存: {{ p.stock >= 9999 ? '無限' : p.stock }})</option>
                       }
                     </select>
@@ -1906,6 +1910,38 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 <button type="button" (click)="savePromo()" [disabled]="promoForm.invalid" class="w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-lg hover:bg-pink-700 transition-transform active:scale-95 disabled:opacity-50">
                   確認儲存
                 </button>
+              </div>
+            </div>
+          </div>
+        }
+          @if (showTrashModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="showTrashModal.set(false)">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-bounce-in" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>🗑️</span> 垃圾桶 (保留 30 天)</h3>
+                <button (click)="showTrashModal.set(false)" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300 flex items-center justify-center">✕</button>
+              </div>
+              <div class="p-4 overflow-y-auto flex-1 custom-scrollbar space-y-3 bg-gray-50/50">
+                @for(p of deletedProducts(); track p.id) {
+                  <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-gray-300 transition-colors">
+                    <div class="flex items-center gap-3 min-w-0 flex-1">
+                      <img [src]="p.image" (error)="handleImageError($event)" class="w-12 h-12 rounded-lg object-cover border border-gray-100 shrink-0 mix-blend-multiply">
+                      <div class="min-w-0">
+                        <div class="font-bold text-gray-800 truncate text-sm" [title]="p.name">{{ p.name }}</div>
+                        <div class="text-[10px] text-red-400 font-mono mt-0.5 font-bold">刪除於: {{ p.deletedAt | date:'yyyy/MM/dd' }}</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                      <button (click)="restoreProduct(p)" class="px-4 py-2 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg text-xs font-bold transition-colors shadow-sm">↩️ 復原</button>
+                      <button (click)="forceDeleteProduct(p)" class="px-4 py-2 bg-white text-red-400 hover:text-red-600 hover:bg-red-50 border border-red-100 rounded-lg text-xs font-bold transition-colors shadow-sm">永久抹除</button>
+                    </div>
+                  </div>
+                } @empty {
+                  <div class="text-center py-12 flex flex-col items-center justify-center">
+                    <span class="text-5xl mb-3 opacity-30">🗑️</span>
+                    <span class="text-gray-400 font-bold">垃圾桶目前是空的 ✨</span>
+                  </div>
+                }
               </div>
             </div>
           </div>
@@ -2141,7 +2177,7 @@ export class AdminPanelComponent {
     if (cat === 'all') return [];
     
     // 篩選出該主分類的商品，並收集所有不重複的次分類
-    const productsInCat = this.store.products().filter((p: Product) => p.category === cat);
+    const productsInCat = this.activeProducts().filter((p: Product) => p.category === cat);
     const subs = productsInCat.map((p: any) => p.subCategory).filter((sub): sub is string => !!sub);
     return [...new Set(subs)];
   });
@@ -2354,7 +2390,7 @@ export class AdminPanelComponent {
   // =====================================
 
   filteredAdminProducts = computed(() => {
-    let list = [...this.store.products()];
+    let list = [...this.activeProducts()];
     const q = this.productSearch().toLowerCase();
     const cat = this.productCategoryFilter();
     const subCat = this.productSubCategoryFilter();
@@ -2840,7 +2876,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
 // 🚨 第二關：庫存告急預警大腦 (非預購、有上架、且庫存小於 5 的商品)
   lowStockAlerts = computed(() => {
-     return this.store.products()
+     return this.activeProducts()
         .filter((p: Product) => !p.isPreorder && p.isListed && p.stock < 5)
         .sort((a: Product, b: Product) => a.stock - b.stock); // 庫存越少排越前面
   });
@@ -2862,7 +2898,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   // 🔥 修正：主控台熱銷排行改為使用剛算好的真實銷量大腦
   topProducts = computed(() => {
     const salesMap = this.productSalesMap();
-    return [...this.store.products()]
+    return [...this.activeProducts()]
       .map(p => ({
         ...p,
         soldCount: salesMap[p.id] || 0 
@@ -2977,6 +3013,38 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
   showProductModal = signal(false); editingProduct = signal<Product | null>(null); productForm: FormGroup;
   isQuickMode = signal(true); // ⚡️ 控制連線快閃模式的開關 
+  
+  // 🗑️ 垃圾桶系統大腦
+  showTrashModal = signal(false);
+  deletedProducts = computed(() => this.store.products().filter((p: any) => p.isDeleted));
+  // 🟢 活著的商品大腦 (過濾掉垃圾桶裡的)
+  activeProducts = computed(() => this.store.products().filter((p: any) => !p.isDeleted));
+
+  openTrashModal() {
+    const now = Date.now();
+    const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+    // 打開垃圾桶時，自動徹底刪除超過 30 天的垃圾
+    this.deletedProducts().forEach(async (p: any) => {
+       if (p.deletedAt && (now - p.deletedAt > THIRTY_DAYS)) {
+           try { await this.store.deleteProduct(p.id); } catch(e) {}
+       }
+    });
+    this.showTrashModal.set(true);
+  }
+
+  async restoreProduct(p: any) {
+    if(confirm(`確定要將「${p.name}」從垃圾桶救回來嗎？`)) {
+       await this.store.updateProduct({ ...p, isDeleted: false, deletedAt: null, isListed: false } as any);
+       alert('✅ 商品已成功復原！\n(系統已預設為「未上架」狀態，請您確認無誤後再手動上架)');
+    }
+  }
+
+  async forceDeleteProduct(p: any) {
+    if(confirm(`🚨 警告：徹底刪除將無法復原，且會導致包含此商品的歷史訂單報錯！\n您確定要永久抹除嗎？`)) {
+       await this.store.deleteProduct(p.id);
+    }
+  }
+
   tempImages = signal<string[]>([]); formValues = signal<any>({}); categoryCodes = computed(() => this.store.settings().categoryCodes); 
   currentCategoryCode = signal(''); generatedSkuPreview = signal(''); settingsForm: FormGroup;
 
@@ -3318,7 +3386,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
 exportInventoryCSV() { 
       const headers = ['SKU貨號', '商品名稱', '分類', '次分類', '庫存數量', '狀態']; 
-      const rows = this.store.products().map((p: Product) => [ 
+      const rows = this.activeProducts().map((p: Product) => [ 
         `\t${p.code}`, p.name, p.category, p.subCategory || '', p.stock, 
         p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') 
       ]); 
@@ -3386,7 +3454,7 @@ exportInventoryCSV() {
     const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '購買網址', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ];
     const salesMap = this.productSalesMap();
     
-    const dataRows = this.store.products().map((p: Product) => {
+    const dataRows = this.activeProducts().map((p: Product) => {
       const cost = (p.localPrice * this.getRealExchangeRate(p)); 
       const normalProfit = p.priceGeneral - cost; 
       const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
@@ -3413,7 +3481,7 @@ exportInventoryCSV() {
 
   syncInventoryToGoogleSheets() {
     const headers = ['SKU貨號', '商品名稱', '分類', '次分類', '庫存數量', '狀態']; 
-    const dataRows = this.store.products().map((p: Product) => [
+    const dataRows = this.activeProducts().map((p: Product) => [
       `'${p.code}`, p.name, p.category, p.subCategory || '', p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足')
     ]);
     this.pushToGoogleSheets('庫存盤點表', [headers, ...dataRows]);
@@ -3625,7 +3693,7 @@ exportInventoryCSV() {
      const headers = [ '匯率換算/40', '匯率換算/43', '常數150', '貨號(註記用)', '表頭說明範例(A)', '商品名稱(B)', '分類(C)', '次分類', '標籤(逗號分隔)', '售價(D)', 'VIP價(E)', '當地原價(F)', '匯率(G)', '重量(H)', '國際運費/kg(I)', '額外成本(J)', '任選數量(K)', '優惠總價(L)', '圖片網址(M)', '規格(N)', '庫存(O)', '是否預購(P)', '是否上架(Q)', '自訂貨號SKU(R)', '備註介紹(S)', '購買網址', '【參考】單件成本', '【參考】一般單件毛利', '【參考】優惠單件毛利', '【參考】已售出' ]; 
      const salesMap = this.productSalesMap();
      
-     const rows = this.store.products().map((p: Product) => { 
+     const rows = this.activeProducts().map((p: Product) => { 
         const cost = (p.localPrice * this.getRealExchangeRate(p)); 
         const normalProfit = p.priceGeneral - cost; 
         const bulkProfit = (p.bulkDiscount?.count && p.bulkDiscount?.total) ? ((p.bulkDiscount.total / p.bulkDiscount.count) - cost).toFixed(0) : '無優惠'; 
@@ -3667,18 +3735,14 @@ openProductForm() {
   closeProductModal() { this.showProductModal.set(false); } 
 
   async deleteProduct(p: Product) {
-    // 🛡️ 第一道防線
-    if(confirm(`⚠️ 警告！確定要刪除商品「${p.name}」嗎？\n刪除後無法復原！`)) {
-       // 🛡️ 第二道防線 (提醒帳務連動問題)
-       if(confirm(`🚨 最終確認！\n若此商品曾被客人購買過，刪除將導致過去的「訂單」與「採購報表」抓不到資料而出現異常！\n\n強烈建議使用【取消打勾: 確認上架】來隱藏商品即可。\n\n您真的確定要永久刪除嗎？`)) {
-           try {
-               await this.store.deleteProduct(p.id);
-               this.closeProductModal(); // 刪除成功後，自動關閉編輯視窗
-               alert('✅ 已永久刪除該商品。');
-           } catch(e) {
-               alert('❌ 刪除失敗，請檢查權限或網路狀態！');
-           }
-       }
+    if(confirm(`⚠️ 確定要將商品「${p.name}」移至垃圾桶嗎？\n\n(商品將保留 30 天，不會影響過去的帳務與訂單紀錄，隨時可復原！)`)) {
+        try {
+            await this.store.updateProduct({ ...p, isDeleted: true, deletedAt: Date.now(), isListed: false } as any);
+            this.closeProductModal(); 
+            alert('✅ 已安全移至垃圾桶！');
+        } catch(e) {
+            alert('❌ 移至垃圾桶失敗，請檢查網路狀態！');
+        }
     }
   }
 
