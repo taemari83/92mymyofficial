@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { StoreService } from './services/store.service';
+import { StoreService, Product, Order, CartItem } from './services/store.service';
 import { environment } from './environments/environment';
 
 @Component({
@@ -40,34 +40,36 @@ import { environment } from './environments/environment';
             </a>
 
             <div class="flex items-center gap-1 bg-white p-1.5 rounded-full border border-gray-100 shadow-sm">
-  <a routerLink="/" routerLinkActive="bg-brand-900 text-white" [routerLinkActiveOptions]="{exact: true}" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
-    首頁
-  </a>
-  
-  <a routerLink="/member" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 relative">
-    會員
-    @if(store.currentUser()) { <span class="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full border border-white"></span> }
-  </a>
+              <a routerLink="/" routerLinkActive="bg-brand-900 text-white" [routerLinkActiveOptions]="{exact: true}" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
+                首頁
+              </a>
+              
+              <a routerLink="/member" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 relative">
+                會員
+                @if(store.currentUser()) { <span class="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full border border-white"></span> }
+              </a>
 
-  @if (!store.currentUser()?.isAdmin) {
-     <a routerLink="/cart" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 flex items-center gap-2">
-      購物車
-      @if (store.cartCount() > 0) { <span class="bg-brand-900 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ store.cartCount() }}</span> }
-    </a>
-  }
+              @if (!store.currentUser()?.isAdmin) {
+                 <a routerLink="/cart" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 flex items-center gap-2">
+                  購物車
+                  @if (store.cartCount() > 0) { <span class="bg-brand-900 text-white text-[10px] px-1.5 py-0.5 rounded-full">{{ store.cartCount() }}</span> }
+                </a>
+              }
 
-  @if (store.currentUser()?.isAdmin) {
-     <a routerLink="/admin" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
-      後台
-    </a>
-     <a routerLink="/buyer" routerLinkActive="bg-brand-900 text-white" class="relative px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
-      採購
-      @if(hasPendingProcurements()) {
-         <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white animate-pulse"></span>
-      }
-    </a>
-  }
-</div>
+              @if (store.currentUser()?.isAdmin) {
+                 <a routerLink="/admin" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
+                  後台
+                </a>
+                 <a routerLink="/buyer" routerLinkActive="bg-brand-900 text-white" class="relative px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
+                  採購
+                  @if(hasPendingBuyerTasks()) {
+                     <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white animate-pulse"></span>
+                  } @else {
+                     <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-green-400 rounded-full border border-white"></span>
+                  }
+                </a>
+              }
+            </div>
         </div>
       </nav>
 
@@ -82,11 +84,40 @@ export class AppComponent implements OnInit {
   store = inject(StoreService);
   showKeyWarning = false;
 
-  // 🚨 買手紅點大腦：只要有待處理的訂單，就亮紅點！
-  hasPendingProcurements = computed(() => {
-     const orders = this.store.orders();
-     // 只要有已付款/待對帳/待出貨的訂單，就代表有東西要買/要處理
-     return orders.some(o => ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status));
+  // 🧠 買手紅綠燈終極大腦：只有在「需買 > 已買」時才亮紅燈，買齊就亮綠燈！
+  hasPendingBuyerTasks = computed(() => {
+    const allOrders = this.store.orders() || [];
+    const allProducts = this.store.products() || [];
+
+    // 抓出「客人已付款 / 待對帳」需要叫貨的訂單
+    const activeOrders = allOrders.filter((o: Order) => 
+      ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status)
+    );
+
+    const listMap = new Map();
+
+    // 重新精算現在總共缺什麼
+    activeOrders.forEach((order: Order) => {
+      (order.items || []).forEach((item: CartItem) => {
+        const optionName = item.option || '單一規格';
+        const key = `${item.productId}_${optionName}`;
+
+        if (!listMap.has(key)) {
+          const product = allProducts.find((p: Product) => p.id === item.productId);
+          listMap.set(key, {
+            needed: 0,
+            procured: (product as any)?.procured?.[optionName] || 0
+          });
+        }
+        listMap.get(key).needed += (item.quantity || 1);
+      });
+    });
+
+    const procurementList = Array.from(listMap.values());
+    
+    // 只要有任何一個商品的「需買數量 > 已買數量」，就回傳 true (亮紅燈)
+    if (!procurementList || procurementList.length === 0) return false;
+    return procurementList.some((item: any) => item.needed > item.procured);
   });
 
   constructor() {
