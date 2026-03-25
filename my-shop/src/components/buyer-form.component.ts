@@ -108,6 +108,17 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                   </div>
                 }
 
+                @if(p.options && p.options.length > 0) {
+                  <div class="w-full bg-gray-50 p-2.5 rounded-xl border border-gray-200 mb-3">
+                    <label class="block text-[10px] font-bold text-gray-500 mb-1">請選擇購買規格</label>
+                    <select [(ngModel)]="tempOption" class="w-full p-2 text-sm font-bold text-brand-900 bg-white border border-gray-200 rounded-lg outline-none focus:border-brand-400">
+                       @for(opt of p.options; track opt) {
+                          <option [value]="opt.split('=')[0].trim()">{{ opt.split('=')[0].trim() }}</option>
+                       }
+                    </select>
+                  </div>
+                }
+
                 <div class="flex gap-2 w-full">
                   <div class="flex-1 min-w-0">
                     <label class="flex justify-between items-end mb-1">
@@ -320,6 +331,7 @@ export class BuyerFormComponent {
   tempPrice = signal<number | null>(null); 
   tempCurrency = signal<string>('KRW'); // 👈 新增：單品幣別 (預設韓元)
   tempQty = signal<number>(1); 
+  tempOption = signal<string>('單一規格');
   purchaseItems = signal<any[]>([]); 
 
   formData = {
@@ -411,6 +423,7 @@ export class BuyerFormComponent {
     this.referencePrice.set(task.localPrice || null);
     this.tempPrice.set(null); 
     this.tempQty.set(task.needed - task.procured); 
+    this.tempOption.set(task.option); // 👈 新增：把任務的規格存起來
     this.searchProductText = '';
   }
 
@@ -453,6 +466,12 @@ export class BuyerFormComponent {
       this.referencePrice.set(found.localPrice || null);
       this.tempPrice.set(null);
       this.tempQty.set(1);
+      // 🔥 新增：抓取商品的第一個規格當預設值
+      if (found.options && found.options.length > 0) {
+         this.tempOption.set(found.options[0].split('=')[0].trim());
+      } else {
+         this.tempOption.set('單一規格');
+      }
     } else {
       this.clearSelection();
     }
@@ -470,7 +489,8 @@ export class BuyerFormComponent {
 
     this.purchaseItems.update(items => [
       ...items, 
-      { ...product, price: Number(price), currency: this.tempCurrency(), quantity: Number(qty) }
+     // 🔥 新增 option: this.tempOption() 確保規格寫入資料庫
+      { ...product, option: this.tempOption(), price: Number(price), currency: this.tempCurrency(), quantity: Number(qty) }
     ]);
 
     this.searchProductText = '';

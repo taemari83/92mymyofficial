@@ -880,7 +880,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <div class="flex flex-col gap-1">
               @for(item of (p?.items || []); track (item?.productId || '') + $index) {
                 <div class="text-[10px] text-gray-600 break-words whitespace-normal leading-snug">
-                  • {{ item?.productName }} x{{ item?.quantity }} 
+                  • {{ item?.productName }} <span class="bg-gray-200 text-gray-600 px-1 py-0.5 rounded mx-1 font-bold">[{{ item?.option || '單一規格' }}]</span> x{{ item?.quantity }} 
                   <span class="text-brand-600 font-bold ml-1">(&#64; {{ item?.currency === 'KRW' ? '₩' : (item?.currency === 'TWD' ? 'NT$' : (item?.currency || p?.currency || '$')) }}{{ item?.price || 0 | number }})</span>
                 </div>
               }
@@ -2026,19 +2026,20 @@ export class AdminPanelComponent {
   now = new Date();
 // 🧠 統一取得「真實底價匯率」的大腦 (供報表預估成本使用)
   getRealExchangeRate(p: any): number {
-     // 優先讀取我們新設定的幣別，舊商品沒有就預設當成韓幣
-     const curr = p.localCurrency || 'KRW';
+     let curr = p.localCurrency || '';
+     const rate = Number(p.exchangeRate) || 1;
      
-     // 💡 完全依照老闆設定的各國真實底價 (可依實際狀況修改數字)
+     // 🛡️ 終極防呆：如果舊資料沒選幣別，但匯率是1，絕對是台幣！
+     if (!curr) curr = (rate === 1) ? 'TWD' : 'KRW';
+     if (rate === 1) curr = 'TWD';
+     
      if (curr === 'TWD') return 1;
      if (curr === 'KRW') return 1 / 43; 
      if (curr === 'JPY') return 0.22;
      if (curr === 'CNY') return 4.5;
      if (curr === 'THB') return 0.9;
-     if (curr === 'USD') return 32.0; // 👈 新增美金真實匯率
+     if (curr === 'USD') return 32.0;
 
-     // 備用防呆：如果有填客用匯率就用客用匯率
-     const rate = Number(p.exchangeRate);
      if (rate && rate > 0) return rate;
      return 1 / 43;
   }
