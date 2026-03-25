@@ -114,17 +114,17 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
     return discounted; 
   });
 
-  // 2. 專門算「VIP 全館折扣」
+  // 2. VIP 全館折扣
   cartVipDiscount = computed(() => {
     const items = this.cart(); let original = 0;
     items.forEach(item => { original += item.price * item.quantity; });
     const bulkAmount = this.cartBulkDiscount();
-    
     const user = this.currentUser();
     const vipDiscounts = this.settings().vipDiscounts || { v1: 0.95, v2: 0.9, v3: 0.85 };
     const userTier = user?.tier || 'general';
     
-    if (userTier !== 'general' && userTier !== 'wholesale') {
+    // 💡 排除批發與員工，避免重複打折
+    if (userTier !== 'general' && userTier !== 'wholesale' && userTier !== 'employee') {
         const discountRate = vipDiscounts[userTier] || 1;
         const amountAfterBulk = original - bulkAmount;
         const amountAfterVip = Math.round(amountAfterBulk * discountRate);
@@ -133,8 +133,49 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
     return 0;
   });
 
-  // 3. 總折扣 (維持原本變數名稱，確保系統不報錯)
-  cartDiscount = computed(() => this.cartBulkDiscount() + this.cartVipDiscount());
+  // 3. 員工專屬折扣計算 (原價 - 真實底價)
+  cartEmployeeDiscount = computed(() => {
+    const user = this.currentUser();
+    if (user?.tier !== 'employee') return 0;
+    let discount = 0;
+    this.cart().forEach(item => {
+        const p = this.products().find(x => x.id === item.productId);
+        if (!p) return;
+        let locP = p.localPrice || 0;
+        if (item.option && p.options) {
+            const fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === item.option) || '';
+            if (fOpt.includes('=')) {
+                const parts = fOpt.split('=');
+                if (parts.length >= 4 && !isNaN(Number(parts[3]))) locP = Number(parts[3]);
+            }
+        }
+        const rate = this.getRealExchangeRate(p);
+        const empPrice = locP > 0 ? Math.ceil(locP * rate) : item.price;
+        if (item.price > empPrice) {
+            discount += (item.price - empPrice) * item.quantity;
+        }
+    });
+    return discount;
+  });
+
+  // 4. 批發專屬折扣計算 (原價 - 批發價)
+  cartWholesaleDiscount = computed(() => {
+    const user = this.currentUser();
+    if (user?.tier !== 'wholesale') return 0;
+    let discount = 0;
+    this.cart().forEach(item => {
+        const p = this.products().find(x => x.id === item.productId);
+        if (!p) return;
+        const wsPrice = p.priceWholesale > 0 ? p.priceWholesale : item.price;
+        if (item.price > wsPrice) {
+            discount += (item.price - wsPrice) * item.quantity;
+        }
+    });
+    return discount;
+  });
+
+  // 5. 總折扣大集合
+  cartDiscount = computed(() => this.cartBulkDiscount() + this.cartVipDiscount() + this.cartEmployeeDiscount() + this.cartWholesaleDiscount());
 
   cartTotal = computed(() => this.cart().reduce((sum, item) => sum + (item.price * item.quantity), 0) - this.cartDiscount());  
   // 🧠 真實採購平均成本大腦 (終極精準版)
@@ -291,56 +332,34 @@ async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), 
   }
   generateNextProductCode(): string { return this.generateProductCode('P'); }
 
-addToCart(product: Product, option: string, quantity: number) {
-    const user = this.currentUser(); 
-    let finalPrice = product.priceGeneral;
-    let parsedOption = option;
-    let localCostToUse = product.localPrice; // 預設使用母體當地原價
+// 🧠 統一取得「真實底價匯率」的大腦
+  getRealExchangeRate(p: any): number {
+     const curr = p.localCurrency || 'KRW';
+     if (curr === 'TWD') return 1;
+     if (curr === 'KRW') return 1 / 43; 
+     if (curr === 'JPY') return 0.22;
+     if (curr === 'CNY') return 4.5;
+     if (curr === 'THB') return 0.9;
+     if (curr === 'USD') return 32.0;
+     const rate = Number(p.exchangeRate);
+     if (rate && rate > 0) return rate;
+     return 1 / 43;
+  }
 
-    // 🤫 ==========================================
-    // 🤫 內部員工專屬：真實匯率過濾器
-    // 🤫 ==========================================
-    let employeeRate = product.exchangeRate || 1; // 預設跟商品表單填的一樣
-    
-    // 💡 判斷如果是韓國商品，強制套用「真實底價匯率」
-    if (product.country === 'Korea' || product.country === '韓國') {
-        employeeRate = 1 / 43; // 👈 修正：員工結帳直接除以 43 (約 0.0232)
-    } 
-    // ==========================================
+addToCart(product: Product, option: string, quantity: number) {
+    let finalPrice = product.priceGeneral; // 💡 統一使用一般售價(原價)進購物車
+    let parsedOption = option;
+    let localCostToUse = product.localPrice;
 
     if (option.includes('=')) {
        const parts = option.split('=');
        parsedOption = parts[0].trim();
-       
-       const optGenPrice = parseInt(parts[1]?.trim(), 10) || product.priceGeneral;
+       finalPrice = parseInt(parts[1]?.trim(), 10) || product.priceGeneral;
        localCostToUse = parseInt(parts[3]?.trim(), 10) || product.localPrice;
-
-       // 🧠 終極智慧定價大腦 (多規格版)
-       if (user?.tier === 'employee') {
-          // 🤫 內部員工：當地原價 * 員工專屬真實匯率 (無條件進位到整數)
-          const localCost = localCostToUse * employeeRate;
-          finalPrice = localCost > 0 ? Math.ceil(localCost) : optGenPrice;
-       } else if (user?.tier === 'wholesale') {
-          // 📦 批發客：批發價 (如果商品沒填批發價，防呆退回規格一般價)
-          finalPrice = product.priceWholesale > 0 ? product.priceWholesale : optGenPrice;
-       } else {
-          // 🌟 一般與 VIP (VIP 全館折扣由結帳區計算)
-          finalPrice = optGenPrice;
-       }
-    } else {
-       // 🧠 終極智慧定價大腦 (單一規格版)
-       if (user?.tier === 'employee') {
-           const localCost = (product.localPrice || 0) * employeeRate;
-           finalPrice = localCost > 0 ? Math.ceil(localCost) : product.priceGeneral;
-       } else if (user?.tier === 'wholesale') {
-           finalPrice = product.priceWholesale > 0 ? product.priceWholesale : product.priceGeneral;
-       } else {
-           finalPrice = product.priceGeneral;
-       }
     }
 
-    // 🔥 單位成本計算 (紀錄於訂單明細，供未來報表對帳用)
-    // 這裡的底價成本，我們統一用真實匯率 (employeeRate) 來記錄，報表才會準確！
+    // 💡 單位成本計算：這裡呼叫跨國大腦，確保報表的進貨成本超級精準！
+    const employeeRate = this.getRealExchangeRate(product);
     const currentCost = (localCostToUse * employeeRate) + (product.costMaterial || 0) + ((product.weight || 0) * (product.shippingCostPerKg || 0));
     
     this.cart.update(current => {

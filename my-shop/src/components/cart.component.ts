@@ -221,10 +221,17 @@ import { StoreService, CartItem } from '../services/store.service';
                   <span class="font-bold">NT$ {{ selectedOriginalSubtotal() }}</span>
                </div>
                
-               @if(storeService.currentUser()?.tier === 'employee') {
+               @if(storeService.cartEmployeeDiscount() > 0) {
                  <div class="flex justify-between text-sm text-gray-800 font-bold bg-gray-100 px-3 py-2 rounded-lg my-2 border border-gray-200">
-                    <span> 員購專屬優惠</span>
-                    <span class="text-gray-500 text-xs">(已自動折抵於商品單價)</span>
+                    <span>🤫 員購專屬折扣</span>
+                    <span class="font-black text-gray-800">- NT$ {{ storeService.cartEmployeeDiscount() | number }}</span>
+                 </div>
+               }
+
+               @if(storeService.cartWholesaleDiscount() > 0) {
+                 <div class="flex justify-between text-sm text-orange-600 font-bold">
+                    <span>📦 批發專屬折扣</span>
+                    <span>- NT$ {{ storeService.cartWholesaleDiscount() | number }}</span>
                  </div>
                }
                
