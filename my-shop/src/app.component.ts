@@ -44,9 +44,8 @@ import { environment } from './environments/environment';
                 首頁
               </a>
               
-              <a routerLink="/member" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900 relative">
-                會員
-                @if(store.currentUser()) { <span class="absolute top-2 right-2 w-2 h-2 bg-green-400 rounded-full border border-white"></span> }
+              <a routerLink="/member" routerLinkActive="bg-brand-900 text-white" class="px-5 py-2 rounded-full text-sm font-bold transition-all hover:bg-brand-50 text-brand-900">
+               會員
               </a>
 
               @if (!store.currentUser()?.isAdmin) {
