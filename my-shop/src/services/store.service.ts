@@ -13,6 +13,7 @@ export interface Product {
   subCategory?: string; // 🔥 新增：第二層分類
   tags?: string[];      // 🔥 新增：多重標籤
   options: string[]; country: string; localPrice: number; exchangeRate: number; costMaterial: number; 
+  localCurrency?: string;
   weight: number; shippingCostPerKg: number; priceGeneral: number; priceVip: number; priceWholesale: number; 
   priceType?: 'normal' | 'event' | 'clearance'; stock: number; note: string; soldCount: number;
   isPreorder: boolean; isListed: boolean;

@@ -1190,18 +1190,29 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <textarea formControlName="purchaseUrl" rows="3" class="w-full p-2.5 bg-white border border-blue-200 rounded-lg text-sm outline-none focus:border-brand-400 custom-scrollbar resize-y" placeholder="貼上韓國官網或店家網址...&#10;如果有多個網址，請換行貼上"></textarea> 
                   </div>
 
-                  <div class="grid grid-cols-3 gap-2 sm:gap-4 mt-4"> 
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mt-4"> 
                     <div class="bg-brand-50 p-2 sm:p-3 rounded-xl border border-brand-100"> 
                       <label class="block text-[10px] sm:text-xs font-bold text-brand-700 mb-1">售價 (NT$)</label> 
                       <input type="number" formControlName="priceGeneral" class="w-full p-1.5 sm:p-2 border border-brand-200 rounded-lg focus:outline-none focus:border-brand-500 font-bold text-brand-900 text-sm sm:text-lg"> 
                     </div> 
                     <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200"> 
+                      <label class="block text-[10px] sm:text-xs font-bold text-gray-600 mb-1">原價幣別</label> 
+                      <select formControlName="localCurrency" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-brand-900 text-sm sm:text-base bg-white cursor-pointer">
+                        <option value="KRW">韓幣 (KRW)</option>
+                        <option value="TWD">台幣 (TWD)</option>
+                        <option value="JPY">日幣 (JPY)</option>
+                        <option value="CNY">人民幣 (CNY)</option>
+                        <option value="THB">泰銖 (THB)</option>
+                      </select>
+                    </div> 
+                    <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200"> 
                       <label class="block text-[10px] sm:text-xs font-bold text-gray-600 mb-1">當地原價</label> 
                       <input type="number" formControlName="localPrice" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-gray-700 text-sm sm:text-lg"> 
                     </div> 
-                    <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200"> 
-                      <label class="block text-[10px] sm:text-xs font-bold text-gray-600 mb-1">當前匯率</label> 
+                    <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200 relative group"> 
+                      <label class="block text-[10px] sm:text-xs font-bold text-gray-600 mb-1 flex items-center gap-1">客用匯率 <span class="text-gray-400 cursor-help rounded-full border border-gray-300 w-3 h-3 flex items-center justify-center text-[8px]">?</span></label> 
                       <input type="number" formControlName="exchangeRate" step="0.001" class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-500 font-bold text-gray-700 text-sm sm:text-lg"> 
+                      <div class="absolute bottom-full left-0 mb-2 w-48 bg-gray-800 text-white text-[10px] p-2 rounded shadow-lg hidden group-hover:block z-50">填寫給客人的緩衝定價匯率。<br>員工後台的「真實底價利潤」系統會依照您選擇的幣別自動帶入真實匯率計算。</div>
                     </div> 
                   </div> 
 
@@ -1214,7 +1225,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          </div>
                          <div class="text-brand-700">
                             真實底價(員工): <span class="font-bold">$ {{ realEstimatedCost() | number:'1.0-0' }}</span> 
-                            <span class="text-[10px] opacity-70 ml-1">(1/43)</span>
+                            <span class="text-[10px] opacity-70 ml-1">({{ getRealExchangeRate(formValues()) | number:'1.2-4' }})</span>
                          </div>
                       </div> 
                       <div class="text-right space-y-2"> 
@@ -2011,10 +2022,20 @@ export class AdminPanelComponent {
   now = new Date();
 // 🧠 統一取得「真實底價匯率」的大腦 (供報表預估成本使用)
   getRealExchangeRate(p: any): number {
-     const rate = Number(p.exchangeRate) || 1;
-     // 💡 如果是韓國商品，強制套用真實底價匯率 (1/43)
-     if (p.country === 'Korea' || p.country === '韓國' || !p.country) return 1 / 43;
-     return rate;
+     // 優先讀取我們新設定的幣別，舊商品沒有就預設當成韓幣
+     const curr = p.localCurrency || 'KRW';
+     
+     // 💡 完全依照老闆設定的各國真實底價 (可依實際狀況修改數字)
+     if (curr === 'TWD') return 1;
+     if (curr === 'KRW') return 1 / 43; 
+     if (curr === 'JPY') return 0.22;
+     if (curr === 'CNY') return 4.5;
+     if (curr === 'THB') return 0.9;
+     
+     // 備用防呆：如果有填客用匯率就用客用匯率
+     const rate = Number(p.exchangeRate);
+     if (rate && rate > 0) return rate;
+     return 1 / 43;
   }
 
   // ===== 👛 Phase 2: 資金帳戶與營業支出 (正式連動 Firebase) =====
@@ -2724,24 +2745,32 @@ try {
               const rawItemProfit = (i.price * i.quantity) - itemCost;
               totalRawProfit += rawItemProfit;
 
-              // 🟢 精準拆分商品成本幣別 (判斷是跟韓國叫貨還是台灣叫貨)
-              const isKRW = p ? (p.country === 'Korea' || p.country === '韓國' || !p.country) : true;
-              if (isKRW) {
-                  let kCost = 0;
-                  if (p && p.localPrice > 0) {
-                      let locP = p.localPrice;
-                      const fOpt = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
-                      if (fOpt.includes('=')) {
-                          const parts = fOpt.split('=');
-                          if (parts.length >= 4 && !isNaN(Number(parts[3]))) locP = Number(parts[3]);
-                      }
-                      kCost = locP * i.quantity;
-                  } else {
-                      kCost = itemCost * (p?.exchangeRate ? (1/p.exchangeRate) : 43); // 反推
+              // 🟢 終極精準拆分商品成本幣別 (多幣別架構)
+              let locP = p?.localPrice || 0;
+              if (p && p.options) {
+                  const fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+                  if (fOpt.includes('=')) {
+                      const parts = fOpt.split('=');
+                      if (parts.length >= 4 && !isNaN(Number(parts[3]))) locP = Number(parts[3]);
                   }
-                  costKRW += kCost;
-              } else {
-                  costTWD += itemCost;
+              }
+
+              // 讀取商品的幣別設定 (舊資料防呆預設為 KRW)
+              const itemCurr = p?.localCurrency || 'KRW';
+
+              // 🔥 老闆專屬 CFO 神邏輯：
+              // 韓國貨：保留韓幣成本，以利對帳與付款給當地買手。
+              if (itemCurr === 'KRW' && locP > 0) {
+                  costKRW += (locP * i.quantity);
+              } 
+              // 台灣貨：直接加總台幣
+              else if (itemCurr === 'TWD') {
+                  costTWD += locP > 0 ? (locP * i.quantity) : itemCost;
+              } 
+              // 🇯🇵 🇨🇳 🇹🇭 其他外國貨：自動依照內部真實底價匯率，轉換成台幣成本結算！
+              else {
+                  const realRate = this.getRealExchangeRate(p);
+                  costTWD += locP > 0 ? (locP * realRate * i.quantity) : itemCost;
               }
 
               return { itemCost, shareMode, rawItemProfit };
@@ -3193,6 +3222,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       priceGeneral: [0], 
       priceVip: [0], 
       priceWholesale: [0],
+      localCurrency: ['KRW'], // 👈 新增這行：預設幣別為韓幣
       localPrice: [0], 
       exchangeRate: [1], 
       weight: [0], 
@@ -3282,8 +3312,8 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   // 🧠 2. 真實底價預估 (強制用 1/43 算，給老闆看真實利潤與員工價參考)
   realEstimatedCost = computed(() => {
     const v = this.formValues(); if (!v) return 0; 
-    const rate = (v.country === 'Korea' || v.country === '韓國' || !v.country) ? (1/43) : (v.exchangeRate || 1);
-    return (v.localPrice * rate);
+    // 💡 直接呼叫剛剛寫好的大腦，不再重複寫邏輯！
+    return v.localPrice * this.getRealExchangeRate(v);
   });
   realEstimatedProfit = computed(() => (this.formValues()?.priceGeneral || 0) - this.realEstimatedCost());
   realEstimatedMargin = computed(() => this.formValues()?.priceGeneral ? (this.realEstimatedProfit() / this.formValues().priceGeneral) * 100 : 0);  
@@ -3825,6 +3855,7 @@ openProductForm() {
     this.productForm.patchValue({ 
       purchaseUrl: '', 
       shareMode: '親帶', // 👈 新增預設值
+      localCurrency: 'KRW', // 👈 新增這行
       exchangeRate: 1, priceWholesale: 0, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' 
     }); 
     this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
@@ -3836,7 +3867,9 @@ openProductForm() {
       ...p, 
       purchaseUrl: (p as any).purchaseUrl || '', 
       shareMode: (p as any).shareMode || '親帶', // 👈 讀取舊資料防呆
-      optionsStr: (p.options || []).join('\n'), tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, priceWholesale: (p as any).priceWholesale || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 
+      localCurrency: (p as any).localCurrency || 'KRW', // 👈 新增這行
+      optionsStr: (p.options || []).join('\n'), 
+      tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, priceWholesale: (p as any).priceWholesale || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 
     }); 
     this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
   }
@@ -3967,6 +4000,7 @@ submitProduct() {
          name: val.name, 
          purchaseUrl: val.purchaseUrl || '', 
          shareMode: val.shareMode, // 👈 儲存分潤模式
+         localCurrency: val.localCurrency, // 👈 新增這行存進資料庫
          category: val.category, 
          subCategory: val.subCategory || '',
          tags: val.tagsStr ? val.tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [],
