@@ -2778,13 +2778,19 @@ try {
 
               // --- 1. 抓取商品建檔的預設資料 (防呆備用) ---
               let locP = p?.localPrice || 0;
-              if (p && p.options) {
-                  const fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
-                  if (fOpt.includes('=')) {
-                      const parts = fOpt.split('=');
-                      if (parts.length >= 4 && !isNaN(Number(parts[3]))) locP = Number(parts[3]);
-                  }
-              }
+if (p && p.options) {
+    let fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+    
+    // 🛡️ 補上模糊比對防呆：如果精準比對找不到，有可能是後來加上了 (售完)
+    if (!fOpt && p.options) {
+        fOpt = p.options.find((opt: string) => opt.includes(i.option) || i.option.includes(opt.split('=')[0].trim())) || '';
+    }
+
+    if (fOpt.includes('=')) {
+        const parts = fOpt.split('=');
+        if (parts.length >= 4 && !isNaN(Number(parts[3]))) locP = Number(parts[3]);
+    }
+}
               let definedCurr = (p as any)?.localCurrency || '';
               const actualRate = p ? (Number(p.exchangeRate) || 1) : 1;
               if (!definedCurr) definedCurr = (actualRate === 1) ? 'TWD' : 'KRW';
@@ -2954,11 +2960,17 @@ try {
               } else {
                   // 沒採購過，用預估公式墊著
                   let currentLocalPrice = stats.product.localPrice || 0;
-                  const fullOption = stats.product.options?.find((opt: string) => opt.split('=')[0].trim() === item.option) || '';
-                  if (fullOption.includes('=')) {
-                      const parts = fullOption.split('=');
-                      if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
-                  }
+let fullOption = stats.product.options?.find((opt: string) => opt.split('=')[0].trim() === item.option) || '';
+
+// 🛡️ 補上模糊比對防呆：確保單品毛利排行也能抓到加了 (售完) 的成本
+if (!fullOption && stats.product.options) {
+    fullOption = stats.product.options.find((opt: string) => opt.includes(item.option) || item.option.includes(opt.split('=')[0].trim())) || '';
+}
+
+if (fullOption.includes('=')) {
+    const parts = fullOption.split('=');
+    if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
+}
 
                   if (currentLocalPrice > 0 || stats.product.localPrice) {
                   const rate = this.getRealExchangeRate(stats.product); 
