@@ -2650,21 +2650,27 @@ try {
      const map = new Map<string, { totalCost: number, totalQty: number, currency: string }>();
      
      this.purchaseList().forEach((p: any) => {
+        // 🛡️ 終極防呆：強制抓取這張採購單的幣別，沒填就預設 KRW
         const defaultCurrency = p.currency || 'KRW';
         
         (p.items || []).forEach((item: any) => {
            const key = `${item.productId}_${item.option || '單一規格'}`;
            
            if (!map.has(key)) {
-              map.set(key, { totalCost: 0, totalQty: 0, currency: item.currency || defaultCurrency });
+              map.set(key, { totalCost: 0, totalQty: 0, currency: defaultCurrency });
            }
            
            const record = map.get(key)!;
-           const qty = item.quantity || 1;
-           const price = Number(item.price) || 0; // 👈 精準抓取買手手填的 (@ xxxx) 單價
+           const qty = Number(item.quantity) || 1;
+           const price = Number(item.price) || 0; 
            
            record.totalQty += qty;
            record.totalCost += (price * qty);
+
+           // 🔒 強制校正：如果採購單是 TWD，不論之前怎樣都鎖定為 TWD！
+           if (defaultCurrency === 'TWD' || defaultCurrency === 'USD') {
+               record.currency = defaultCurrency;
+           }
         });
      });
      
