@@ -127,10 +127,13 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
                     </label>
                     <div class="flex gap-1">
                       <select [(ngModel)]="tempCurrency" class="p-2.5 bg-red-50/30 border border-red-200 rounded-xl text-xs font-bold text-red-700 outline-none focus:border-red-400 shrink-0">
-                        <option value="KRW">KRW</option>
-                        <option value="TWD">TWD</option>
-                        <option value="JPY">JPY</option>
-                      </select>
+  <option value="KRW">KRW</option>
+  <option value="TWD">TWD</option>
+  <option value="JPY">JPY</option>
+  <option value="CNY">CNY</option>
+  <option value="THB">THB</option>
+  <option value="USD">USD</option>
+</select>
                       <input type="number" [(ngModel)]="tempPrice" placeholder="收據金額..." class="w-full p-2.5 bg-red-50/30 border border-red-200 rounded-xl text-sm font-black outline-none focus:border-red-400 focus:bg-red-50 transition-colors placeholder:text-gray-400 placeholder:font-normal" />
                     </div>
                   </div>
@@ -237,10 +240,13 @@ import { StoreService, Product, Order, CartItem } from '../services/store.servic
     <label class="block text-[10px] font-black text-red-500 mb-1.5 tracking-widest">實際付現/刷卡總額 (必填) ⚠️</label>
     <div class="flex gap-1">
       <select [(ngModel)]="formData.currency" class="p-3 bg-white border border-red-300 rounded-xl text-sm font-bold text-red-700 outline-none focus:border-red-500 shrink-0">
-        <option value="KRW">KRW</option>
-        <option value="TWD">TWD</option>
-        <option value="JPY">JPY</option>
-      </select>
+  <option value="KRW">KRW</option>
+  <option value="TWD">TWD</option>
+  <option value="JPY">JPY</option>
+  <option value="CNY">CNY</option>
+  <option value="THB">THB</option>
+  <option value="USD">USD</option>
+</select>
       <input type="number" [(ngModel)]="formData.actualTotalCost" placeholder="照著收據填寫" class="w-full p-3 bg-white border border-red-300 rounded-xl text-lg font-black text-red-600 outline-none focus:border-red-500 transition-colors placeholder:text-red-200 placeholder:text-xs placeholder:font-normal text-center" />
     </div>
   </div>
