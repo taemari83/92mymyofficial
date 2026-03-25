@@ -4648,9 +4648,11 @@ submitProduct() {
 
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
-        '🇹🇼 台幣淨結算(TWD)', '🇰🇷 韓幣淨結算(KRW)',
-        '台幣總營收', '韓幣總營收', '台幣商品成本', '韓幣商品成本',
+        '🇹🇼 台幣淨結算', '🇰🇷 韓幣淨結算',
+        '台幣總營收', '韓幣總營收', 
+        '台幣商品成本', '韓幣商品成本',
         '台幣營業支出', '韓幣營業支出', 
+        '商品總毛利(估算TWD)', '外幣支出折合台幣估算', 
         '🏆 最終淨利潤(估算TWD)', 
         '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(估算TWD)',
         '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
@@ -4659,8 +4661,10 @@ submitProduct() {
      const rowData = [
         exportTime, reportYear, reportMonth, rangeName,
         Math.round(netTWD), Math.round(netKRW),
-        Math.round(stats.revenueTWD), Math.round(stats.revenueKRW), Math.round(stats.costTWD), Math.round(stats.costKRW),
+        Math.round(stats.revenueTWD), Math.round(stats.revenueKRW), 
+        Math.round(stats.costTWD), Math.round(stats.costKRW),
         expTWD, expKRW, 
+        Math.round(stats.profit), Math.round(foreignToTWD),
         Math.round(finalNet),
         Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare),
         balanceTWD, balanceKRW
@@ -4843,9 +4847,11 @@ submitProduct() {
 
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
-        '🇹🇼 台幣淨結算(TWD)', '🇰🇷 韓幣淨結算(KRW)',
-        '台幣總營收', '韓幣總營收', '台幣商品成本', '韓幣商品成本',
+        '🇹🇼 台幣淨結算', '🇰🇷 韓幣淨結算',
+        '台幣總營收', '韓幣總營收', 
+        '台幣商品成本', '韓幣商品成本',
         '台幣營業支出', '韓幣營業支出', 
+        '商品總毛利(估算TWD)', '外幣支出折合台幣估算', 
         '🏆 最終淨利潤(估算TWD)', 
         '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(估算TWD)',
         '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
@@ -4854,8 +4860,10 @@ submitProduct() {
      const rowData = [
         exportTime, reportYear, reportMonth, rangeName,
         Math.round(netTWD), Math.round(netKRW),
-        Math.round(stats.revenueTWD), Math.round(stats.revenueKRW), Math.round(stats.costTWD), Math.round(stats.costKRW),
+        Math.round(stats.revenueTWD), Math.round(stats.revenueKRW), 
+        Math.round(stats.costTWD), Math.round(stats.costKRW),
         expTWD, expKRW, 
+        Math.round(stats.profit), Math.round(foreignToTWD),
         Math.round(finalNet),
         Math.round(stats.shares.yichen), Math.round(stats.shares.ziting), Math.round(stats.shares.xiaoyun), Math.round(realCompanyShare),
         balanceTWD, balanceKRW
