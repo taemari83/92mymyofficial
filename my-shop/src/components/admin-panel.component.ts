@@ -5054,12 +5054,27 @@ submitProduct() {
   });
 
   exportEmployeeCSV() {
-     const headers = ['購買日期', '品牌(分類)', '商品名稱', '規格', '購買者', '數量', '購買單價', '商品總計', '付款方式', '訂單狀態'];
+     // 🚀 修正 1：表頭補齊，增加「當地單價」與「原始幣別」
+     const headers = ['購買日期', '品牌(分類)', '商品名稱', '規格', '購買者', '數量', '當地單價', '原始幣別', '台幣單價', '台幣總計', '付款方式', '訂單狀態'];
      const rows: any[] = [];
      
      this.employeeOrders().forEach((o: Order) => {
         o.items.forEach((i: any) => {
            const p = this.store.products().find((x: Product) => x.id === i.productId);
+
+           // 🚀 修正 2：核心邏輯！解析這件商品的「原始韓幣成本」
+           let localP = p?.localPrice || 0;
+           if (p && p.options) {
+               // 這裡處理 "名稱=售價=VIP=成本" 格式，抓出最後一格的數字
+               const fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+               if (fOpt.includes('=')) {
+                   const parts = fOpt.split('=');
+                   if (parts.length >= 4) localP = Number(parts[3]) || localP;
+               }
+           }
+           // 🚀 修正 3：自動判斷幣別 (如果有寫 localCurrency 就抓，沒有就看匯率)
+           const localCurr = (p as any)?.localCurrency || ((p?.exchangeRate === 1) ? 'TWD' : 'KRW');
+
            rows.push([
               new Date(o.createdAt).toLocaleDateString('zh-TW'),
               p?.category || '未分類',
@@ -5067,41 +5082,64 @@ submitProduct() {
               i.option || '單一規格',
               this.getUserName(o.userId),
               i.quantity,
-              i.price,
+              localP,         // 🆕 補上：當地單價 (讓你對 ₩35,000 用的)
+              localCurr,      // 🆕 補上：原始幣別
+              i.price,        // 這是原本的台幣單價
               i.price * i.quantity,
               this.getPaymentLabel(o.paymentMethod),
               this.getPaymentStatusLabel(o.status, o.paymentMethod)
            ]);
         });
      });
-     
+
      if(rows.length === 0) return alert('目前沒有任何員工自購紀錄！');
      this.downloadCSV(`員工內部自購明細_${new Date().toISOString().slice(0,10)}`, headers, rows);
-  }
+}
 
   syncEmployeeToGoogleSheets() {
-     const headers = ['購買日期', '品牌(分類)', '商品名稱', '規格', '購買者', '數量', '購買單價', '商品總計', '付款方式', '訂單狀態'];
-     const dataRows: any[] = [];
-     
-     this.employeeOrders().forEach((o: Order) => {
+      // 🚀 1. 更新表頭：加入「當地單價」與「原始幣別」這兩個欄位
+      const headers = ['購買日期', '品牌(分類)', '商品名稱', '規格', '購買者', '數量', '當地單價', '原始幣別', '台幣單價', '台幣總計', '付款方式', '訂單狀態'];
+      const dataRows: any[] = [];
+      
+      this.employeeOrders().forEach((o: Order) => {
         o.items.forEach((i: any) => {
-           const p = this.store.products().find((x: Product) => x.id === i.productId);
-           dataRows.push([
-              new Date(o.createdAt).toLocaleDateString('zh-TW'),
-              p?.category || '未分類',
-              i.productName,
-              i.option || '單一規格',
-              this.getUserName(o.userId),
-              i.quantity,
-              i.price,
-              i.price * i.quantity,
-              this.getPaymentLabel(o.paymentMethod),
-              this.getPaymentStatusLabel(o.status, o.paymentMethod)
-           ]);
+            const p = this.store.products().find((x: Product) => x.id === i.productId);
+            
+            // 🧠 2. 解析該規格對應的當地原始進價（解決 ₩35,000 價差的關鍵）
+            let localP = p?.localPrice || 0;
+            if (p && p.options) {
+                // 從 "名稱=售價=VIP=成本" 格式中抓出第 4 個位置的數字
+                const fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
+                if (fOpt.includes('=')) {
+                    const parts = fOpt.split('=');
+                    if (parts.length >= 4) localP = Number(parts[3]) || localP;
+                }
+            }
+            
+            // 🧠 3. 自動辨識幣別：有設定就抓設定，沒設定的話匯率為 1 即台幣，否則預設韓幣
+            const localCurr = (p as any)?.localCurrency || ((p?.exchangeRate === 1) ? 'TWD' : 'KRW');
+
+            // 🚀 4. 依照表頭順序推入資料
+            dataRows.push([
+               new Date(o.createdAt).toLocaleDateString('zh-TW'),
+               p?.category || '未分類',
+               i.productName,
+               i.option || '單一規格',
+               this.getUserName(o.userId),
+               i.quantity,
+               localP,         // 🆕 欄位 7：當地單價 (如 27000)
+               localCurr,      // 🆕 欄位 8：原始幣別 (如 KRW)
+               i.price,        // 欄位 9：台幣結算單價
+               i.price * i.quantity,
+               this.getPaymentLabel(o.paymentMethod),
+               this.getPaymentStatusLabel(o.status, o.paymentMethod)
+            ]);
         });
-     });
-     
-     if(dataRows.length === 0) return alert('目前沒有任何員工自購紀錄！');
-     this.pushToGoogleSheets('員工自購帳', [headers, ...dataRows]);
+      });
+      
+      if(dataRows.length === 0) return alert('目前沒有任何員工自購紀錄！');
+      
+      // 🚀 5. 調用雲端發射器傳送到 Google Sheets
+      this.pushToGoogleSheets('員工自購帳', [headers, ...dataRows]);
   }
 }
