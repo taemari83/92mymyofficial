@@ -2646,17 +2646,46 @@ try {
   accountingCustomStart = signal(''); 
   accountingCustomEnd = signal('');
 
-// 🧠 採購總帳真實成本大腦 (動態掃描所有採購單，算出最真實的平均進價與幣別)
+// 🧠 採購總帳真實成本大腦 (進化版：精準過濾區間 + 幣別防呆洗淨)
   purchaseAverageCostMap = computed(() => {
      const map = new Map<string, { totalCost: number, totalQty: number, currency: string }>();
      
-     this.purchaseList().forEach((p: any) => {
-        // 🛡️ 終極防呆：強制抓取這張採購單的幣別，沒填就預設 KRW
-        const defaultCurrency = p.currency || 'KRW';
+     // 1. 抓取目前報表選擇的日期區間
+     const range = this.accountingRange(); 
+     const now = new Date(); 
+     let startDate: Date | null = null; let endDate: Date | null = null;
+     
+     if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
+     else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+     else if (range === 'year') startDate = new Date(now.getFullYear(), 0, 1); 
+     else if (range === 'custom') { 
+         if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart()); 
+         if (this.accountingCustomEnd()) { endDate = new Date(this.accountingCustomEnd()); endDate.setHours(23,59,59,999); }
+     }
+
+     const allPurchases = this.store.purchases();
+     if (!Array.isArray(allPurchases)) return map;
+
+     // 2. 依照報表選擇的時間區間，精準篩選採購單 (完美解決歷史成本被未來進價干擾的問題！)
+     const validPurchases = allPurchases.filter((p: any) => {
+        if (!p) return false;
+        const d = new Date(p.date || p.createdAt);
+        if (startDate && d < startDate) return false;
+        if (endDate && d > endDate) return false;
+        return true;
+     });
+
+     validPurchases.forEach((p: any) => {
+        // 🚀 關鍵除蟲：強制將買手端傳來的幣別「轉大寫並去除空白」！防止 "twd" 或 "TWD " 造成判斷失敗
+        const safeCurrency = String(p.currency || '').trim().toUpperCase();
+        
+        // 🛡️ 終極防呆：如果沒選幣別，在「台灣」買的就是 TWD，否則預設 KRW
+        const defaultCurrency = safeCurrency || (String(p.country).trim() === '台灣' ? 'TWD' : 'KRW');
         
         (p.items || []).forEach((item: any) => {
            const exactKey = `${item.productId}_${item.option || '單一規格'}`;
-           const productKey = `${item.productId}_ALL`; // 🔥 忽略規格的總平均 (防呆用)
+           const productKey = `${item.productId}_ALL`;
            
            if (!map.has(exactKey)) map.set(exactKey, { totalCost: 0, totalQty: 0, currency: defaultCurrency });
            if (!map.has(productKey)) map.set(productKey, { totalCost: 0, totalQty: 0, currency: defaultCurrency });
@@ -2667,15 +2696,13 @@ try {
            const qty = Number(item.quantity) || 1;
            const price = Number(item.price) || 0; 
            
-           // 1. 累加精確規格
            record.totalQty += qty;
            record.totalCost += (price * qty);
-           if (defaultCurrency === 'TWD' || defaultCurrency === 'USD') record.currency = defaultCurrency;
+           record.currency = defaultCurrency; // 確保幣別標記正確
 
-           // 2. 累加商品總體 (買手沒選規格時的救命稻草)
            prodRecord.totalQty += qty;
            prodRecord.totalCost += (price * qty);
-           if (defaultCurrency === 'TWD' || defaultCurrency === 'USD') prodRecord.currency = defaultCurrency;
+           prodRecord.currency = defaultCurrency;
         });
      });
      
