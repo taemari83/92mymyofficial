@@ -2654,23 +2654,27 @@ try {
         const defaultCurrency = p.currency || 'KRW';
         
         (p.items || []).forEach((item: any) => {
-           const key = `${item.productId}_${item.option || '單一規格'}`;
+           const exactKey = `${item.productId}_${item.option || '單一規格'}`;
+           const productKey = `${item.productId}_ALL`; // 🔥 忽略規格的總平均 (防呆用)
            
-           if (!map.has(key)) {
-              map.set(key, { totalCost: 0, totalQty: 0, currency: defaultCurrency });
-           }
+           if (!map.has(exactKey)) map.set(exactKey, { totalCost: 0, totalQty: 0, currency: defaultCurrency });
+           if (!map.has(productKey)) map.set(productKey, { totalCost: 0, totalQty: 0, currency: defaultCurrency });
            
-           const record = map.get(key)!;
+           const record = map.get(exactKey)!;
+           const prodRecord = map.get(productKey)!;
+           
            const qty = Number(item.quantity) || 1;
            const price = Number(item.price) || 0; 
            
+           // 1. 累加精確規格
            record.totalQty += qty;
            record.totalCost += (price * qty);
+           if (defaultCurrency === 'TWD' || defaultCurrency === 'USD') record.currency = defaultCurrency;
 
-           // 🔒 強制校正：如果採購單是 TWD，不論之前怎樣都鎖定為 TWD！
-           if (defaultCurrency === 'TWD' || defaultCurrency === 'USD') {
-               record.currency = defaultCurrency;
-           }
+           // 2. 累加商品總體 (買手沒選規格時的救命稻草)
+           prodRecord.totalQty += qty;
+           prodRecord.totalCost += (price * qty);
+           if (defaultCurrency === 'TWD' || defaultCurrency === 'USD') prodRecord.currency = defaultCurrency;
         });
      });
      
@@ -2760,8 +2764,12 @@ try {
               const p = this.store.products().find((x: Product) => x.id === i.productId);
               let shareMode = (p as any)?.shareMode || '親帶';
 
-              const key = `${i.productId}_${i.option || '單一規格'}`;
-              const actualPurchase = purchaseCostMap.get(key);
+              const exactKey = `${i.productId}_${i.option || '單一規格'}`;
+              const baseKey = `${i.productId}_單一規格`;
+              const productKey = `${i.productId}_ALL`;
+
+              // 💡 終極防呆匹配：1. 找精確規格 2. 找單一規格 3. 找商品總平均 (解決買手沒選規格的問題)
+              const actualPurchase = purchaseCostMap.get(exactKey) || purchaseCostMap.get(baseKey) || purchaseCostMap.get(productKey);
 
               let finalItemCost = 0; // 當地幣別的「單件」成本
               let finalCurrency = 'TWD';
@@ -2921,13 +2929,27 @@ try {
               stats.sold += item.quantity;
               stats.revenue += item.price * item.quantity; 
 
-              // 🧠 計算成本：優先呼叫採購大腦
-              const key = `${item.productId}_${item.option || '單一規格'}`;
-              const actualCost = this.store.averageActualCostMap().get(key);
+              // 🧠 計算成本：優先呼叫最新採購大腦，並支援無規格防呆
+              const exactKey = `${item.productId}_${item.option || '單一規格'}`;
+              const baseKey = `${item.productId}_單一規格`;
+              const productKey = `${item.productId}_ALL`;
+              const actualPurchase = this.purchaseAverageCostMap().get(exactKey) || 
+                                     this.purchaseAverageCostMap().get(baseKey) || 
+                                     this.purchaseAverageCostMap().get(productKey);
 
-              if (actualCost) {
+              if (actualPurchase && actualPurchase.totalQty > 0 && actualPurchase.totalCost > 0) {
                   // 🎉 成功！採用真實平均成本
-                  stats.cost += actualCost * item.quantity;
+                  const avgCost = actualPurchase.totalCost / actualPurchase.totalQty;
+                  // 判斷幣別轉換台幣
+                  if (actualPurchase.currency === 'KRW') {
+                      stats.cost += (avgCost / 43) * item.quantity;
+                  } else if (actualPurchase.currency === 'TWD') {
+                      stats.cost += avgCost * item.quantity;
+                  } else {
+                      const pData = this.store.products().find((x:Product) => x.id === item.productId);
+                      const realRate = pData ? this.getRealExchangeRate(pData) : 1;
+                      stats.cost += (avgCost * realRate) * item.quantity;
+                  }
               } else {
                   // 沒採購過，用預估公式墊著
                   let currentLocalPrice = stats.product.localPrice || 0;
@@ -3417,7 +3439,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     const rows = this.purchaseList().map(p => {
       const itemsStr = (p.items || []).map((i: any) => {
         const curr = i.currency === 'KRW' ? '₩' : (i.currency === 'TWD' ? 'NT$' : (i.currency || p.currency || '$'));
-        return `• ${i.productName} x${i.quantity} (@ ${curr}${i.price || 0})`;
+        return `• ${i.productName} [${i.option || '單一規格'}] x${i.quantity} (@ ${curr}${i.price || 0})`;
       }).join('\n');
       
       return [
@@ -3718,16 +3740,28 @@ exportInventoryCSV() {
         }
           const rate = this.getRealExchangeRate(p); const shipKg = p.shippingCostPerKg || 0; 
           
-          // 🧠 呼叫大腦
-          const key = `${i.productId}_${i.option || '單一規格'}`;
-          const actualCost = this.store.averageActualCostMap().get(key);
+          // 🧠 呼叫新大腦 (支援無規格防呆)
+          const exactKey = `${i.productId}_${i.option || '單一規格'}`;
+          const baseKey = `${i.productId}_單一規格`;
+          const productKey = `${i.productId}_ALL`;
+          const actualPurchase = this.purchaseAverageCostMap().get(exactKey) || 
+                                 this.purchaseAverageCostMap().get(baseKey) || 
+                                 this.purchaseAverageCostMap().get(productKey);
           
-          if (actualCost) {
-              costGen = actualCost; // 🎉 使用真實平均成本
+          if (actualPurchase && actualPurchase.totalQty > 0 && actualPurchase.totalCost > 0) {
+              const avgCost = actualPurchase.totalCost / actualPurchase.totalQty;
+              // 換算回台幣
+              if (actualPurchase.currency === 'KRW') {
+                  costGen = avgCost / 43;
+              } else if (actualPurchase.currency === 'TWD') {
+                  costGen = avgCost;
+              } else {
+                  costGen = avgCost * rate;
+              }
           } else {
-              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) : (i.unitCost || 0); // 💡 目前只算商品進價
-// 💡 [未來擴充：國際運費與包材] costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) : (i.unitCost || 0);
           }
+          // 💡 [未來擴充：國際運費與包材] costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
           
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
         } else {
@@ -3800,16 +3834,28 @@ exportInventoryCSV() {
           }
           const rate = this.getRealExchangeRate(p); const shipKg = p.shippingCostPerKg || 0; 
           
-          // 🧠 呼叫大腦
-          const key = `${i.productId}_${i.option || '單一規格'}`;
-          const actualCost = this.store.averageActualCostMap().get(key);
-
-          if (actualCost) {
-              costGen = actualCost; // 🎉 使用真實平均成本
+          // 🧠 呼叫新大腦 (支援無規格防呆)
+          const exactKey = `${i.productId}_${i.option || '單一規格'}`;
+          const baseKey = `${i.productId}_單一規格`;
+          const productKey = `${i.productId}_ALL`;
+          const actualPurchase = this.purchaseAverageCostMap().get(exactKey) || 
+                                 this.purchaseAverageCostMap().get(baseKey) || 
+                                 this.purchaseAverageCostMap().get(productKey);
+          
+          if (actualPurchase && actualPurchase.totalQty > 0 && actualPurchase.totalCost > 0) {
+              const avgCost = actualPurchase.totalCost / actualPurchase.totalQty;
+              // 換算回台幣
+              if (actualPurchase.currency === 'KRW') {
+                  costGen = avgCost / 43;
+              } else if (actualPurchase.currency === 'TWD') {
+                  costGen = avgCost;
+              } else {
+                  costGen = avgCost * rate;
+              }
           } else {
-              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) : (i.unitCost || 0); // 💡 目前只算商品進價
-// 💡 [未來擴充：國際運費與包材] costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
+              costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) : (i.unitCost || 0);
           }
+          // 💡 [未來擴充：國際運費與包材] costGen = (currentLocalPrice > 0) ? (currentLocalPrice * rate) + (p.costMaterial || 0) + ((p.weight || 0) * shipKg) : (i.unitCost || 0);
 
           detailString += ` [售價:$${currentPriceGeneral} / VIP:$${currentPriceVip} / 實收:$${i.price}]`;
         } else {
@@ -3854,7 +3900,7 @@ exportInventoryCSV() {
     const payloadRows = list.map(p => {
       const itemsStr = (p.items || []).map((i: any) => {
         const curr = i.currency === 'KRW' ? '₩' : (i.currency === 'TWD' ? 'NT$' : (i.currency || p.currency || '$'));
-        return `• ${i.productName} x${i.quantity} (@ ${curr}${i.price || 0})`;
+        return `• ${i.productName} [${i.option || '單一規格'}] x${i.quantity} (@ ${curr}${i.price || 0})`;
       }).join('\n');
 
       return [
