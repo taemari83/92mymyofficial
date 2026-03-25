@@ -206,8 +206,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                            現貨告急 
                            <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">{{ lowStockAlerts().length }}</span>
                         </h3>
-                        <button (click)="showProcurementModal.set(true); procureRange.set('all');" class="w-full mt-2 py-2 bg-red-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-red-700 transition-colors active:scale-95 relative z-10 flex justify-center items-center gap-1">
-                           <span>📦</span> 查看叫貨單
+                        <button (click)="activeTab.set('inventory')" class="w-full mt-2 py-2 bg-red-600 text-white rounded-xl text-sm font-bold shadow-md hover:bg-red-700 transition-colors active:scale-95 relative z-10 flex justify-center items-center gap-1">
+                           <span></span> 前往庫存盤點
                         </button>
                      </div>
                   } @else {
@@ -2789,6 +2789,45 @@ try {
         payment: { total: payReceived + payVerifying + payUnpaid + payRefund, received: payReceived, verifying: payVerifying, unpaid: payUnpaid, refund: payRefund, refundedTotal: payRefundedTotal },
         shares: { yichen: shareYichen, ziting: shareZiting, xiaoyun: shareXiaoyun, company: shareCompany } 
     };
+  });
+
+  // 🧠 營業支出大腦：根據會計報表的區間，自動計算台幣與外幣的支出總額
+  accountingExpenses = computed(() => {
+     const range = this.accountingRange(); 
+     const now = new Date(); 
+     let startDate: Date | null = null; let endDate: Date | null = null;
+     if (range === 'today') startDate = new Date(now.setHours(0,0,0,0)); 
+     else if (range === 'week') startDate = new Date(now.setDate(now.getDate() - now.getDay())); 
+     else if (range === 'month') startDate = new Date(now.getFullYear(), now.getMonth(), 1); 
+     else if (range === 'year') startDate = new Date(now.getFullYear(), 0, 1); 
+     else if (range === 'custom') { 
+         if (this.accountingCustomStart()) startDate = new Date(this.accountingCustomStart()); 
+         if (this.accountingCustomEnd()) { endDate = new Date(this.accountingCustomEnd()); endDate.setHours(23,59,59,999); }
+     }
+
+     const validExpenses = this.expenses().filter((e: any) => {
+        if (e.category === '商品採購' || e.category === '儲值') return false; 
+        const d = new Date(e.date);
+        if (startDate && d < startDate) return false;
+        if (endDate) { const ed = new Date(endDate); ed.setHours(23,59,59,999); if (d > ed) return false; }
+        return true;
+     });
+
+     let expTWD = 0; let expKRW = 0; let expJPY = 0;
+     validExpenses.forEach((e: any) => { 
+        if (e.currency === 'TWD') expTWD += e.amount;
+        else if (e.currency === 'KRW') expKRW += e.amount;
+        else if (e.currency === 'JPY') expJPY += e.amount;
+        else expTWD += e.amount; 
+     });
+
+     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22);
+     return {
+        twd: expTWD,
+        krw: expKRW,
+        jpy: expJPY,
+        totalTwdEst: expTWD + foreignToTWD
+     };
   });
 
   productPerformance = computed(() => { 
