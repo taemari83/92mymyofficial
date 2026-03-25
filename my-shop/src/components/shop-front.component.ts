@@ -578,8 +578,33 @@ export class ShopFrontComponent {
   getOptPrice(opt: string): number {
     const p = this.selectedProduct();
     if (!p) return 0;
+    const user = this.store.currentUser();
+
     if (opt.includes('=')) {
-      return parseInt(opt.split('=')[1].trim(), 10) || this.getPrice(p);
+       const parts = opt.split('=');
+       // 格式解析：名稱[圖X] = 售價 = VIP價 = 當地原價
+       
+       // 💼 員工專屬：自動抓取規格中的「當地原價 (parts[3])」換算底價
+       if (user?.tier === 'employee') {
+           let locP = p.localPrice || 0;
+           if (parts.length >= 4 && !isNaN(Number(parts[3]))) {
+               locP = Number(parts[3]);
+           }
+           if (locP > 0) {
+               const rate = this.getRealExchangeRate(p);
+               return Math.round(locP * rate);
+           }
+       }
+
+       // 🌟 VIP 專屬：自動抓取規格中的「VIP價 (parts[2])」
+       if (user?.tier === 'vip' && parts.length >= 3 && !isNaN(Number(parts[2]))) {
+           return parseInt(parts[2].trim(), 10);
+       }
+
+       // 一般售價 (parts[1])
+       if (parts.length >= 2 && !isNaN(Number(parts[1]))) {
+           return parseInt(parts[1].trim(), 10);
+       }
     }
     return this.getPrice(p);
   }
@@ -648,8 +673,28 @@ export class ShopFrontComponent {
     return list;
   });
 
+  // 🧠 統一取得「真實底價匯率」的大腦 (供員工價自動換算)
+  getRealExchangeRate(p: any): number {
+     const curr = p.localCurrency || 'KRW';
+     if (curr === 'TWD') return 1;
+     if (curr === 'KRW') return 1 / 43; 
+     if (curr === 'JPY') return 0.22;
+     if (curr === 'CNY') return 4.5;
+     if (curr === 'THB') return 0.9;
+     if (curr === 'USD') return 32.0;
+     
+     const rate = Number(p.exchangeRate);
+     if (rate && rate > 0) return rate;
+     return 1 / 43;
+  }
+
   getPrice(p: Product): number {
      const user = this.store.currentUser();
+     // 💼 員工專屬：自動抓取當地原價並換算真實底價！
+     if (user?.tier === 'employee' && p.localPrice > 0) {
+         const rate = this.getRealExchangeRate(p);
+         return Math.round(p.localPrice * rate);
+     }
      if (user?.tier === 'wholesale' && p.priceWholesale > 0) return p.priceWholesale;
      if (user?.tier === 'vip' && p.priceVip > 0) return p.priceVip;
      return p.priceGeneral;
@@ -657,6 +702,7 @@ export class ShopFrontComponent {
   
   getTierBadge(p: Product): string {
      const user = this.store.currentUser();
+     if (user?.tier === 'employee') return '內部員工價';
      if (user?.tier === 'wholesale' && p.priceWholesale > 0) return '批發價';
      if (user?.tier === 'vip' && p.priceVip > 0) return 'VIP價';
      return '';

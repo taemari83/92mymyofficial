@@ -2645,6 +2645,32 @@ try {
   accountingCustomStart = signal(''); 
   accountingCustomEnd = signal('');
 
+// 🧠 採購總帳真實成本大腦 (動態掃描所有採購單，算出最真實的平均進價與幣別)
+  purchaseAverageCostMap = computed(() => {
+     const map = new Map<string, { totalCost: number, totalQty: number, currency: string }>();
+     
+     this.purchaseList().forEach((p: any) => {
+        const defaultCurrency = p.currency || 'KRW';
+        
+        (p.items || []).forEach((item: any) => {
+           const key = `${item.productId}_${item.option || '單一規格'}`;
+           
+           if (!map.has(key)) {
+              map.set(key, { totalCost: 0, totalQty: 0, currency: item.currency || defaultCurrency });
+           }
+           
+           const record = map.get(key)!;
+           const qty = item.quantity || 1;
+           const price = Number(item.price) || 0; // 👈 精準抓取買手手填的 (@ xxxx) 單價
+           
+           record.totalQty += qty;
+           record.totalCost += (price * qty);
+        });
+     });
+     
+     return map;
+  });
+
   accountingFilteredOrders = computed(() => {
     const orders = this.store.orders(); 
     const range = this.accountingRange(); 
@@ -2722,35 +2748,20 @@ try {
 
           // 第一圈：精算這筆訂單的成本，與每項商品的「原始毛利」
           const itemsItems = o.items || [];
+          const purchaseCostMap = this.purchaseAverageCostMap(); // 呼叫最新採購真實大腦
+
           const itemsData = itemsItems.map((i: CartItem) => {
               const p = this.store.products().find((x: Product) => x.id === i.productId);
-              let itemCost = 0;
               let shareMode = (p as any)?.shareMode || '親帶';
 
-              // 🧠 呼叫大腦：查詢是否有採購單回填的「真實單件平均成本」
               const key = `${i.productId}_${i.option || '單一規格'}`;
-              const actualCost = this.store.averageActualCostMap().get(key);
+              const actualPurchase = purchaseCostMap.get(key);
 
-              if (actualCost) {
-                  itemCost = actualCost * i.quantity;
-              } else if (p) {
-                  let currentLocalPrice = p.localPrice || 0;
-                  const fullOption = p.options?.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
-                  if (fullOption.includes('=')) {
-                      const parts = fullOption.split('=');
-                      if (parts.length >= 4) { currentLocalPrice = Number(parts[3]) || currentLocalPrice; }
-                  }
-                  if (currentLocalPrice > 0 || p.localPrice) {
-                      const rate = Number(p.exchangeRate) || 1;
-                      itemCost = (currentLocalPrice * rate) * i.quantity; 
-                  } else { itemCost = (i.unitCost || 0) * i.quantity; }
-              } else { itemCost = (i.unitCost || 0) * i.quantity; } 
+              let finalItemCost = 0; // 當地幣別的「單件」成本
+              let finalCurrency = 'TWD';
+              let itemTwdTotalCost = 0; // 換算成台幣的「總」成本
 
-              orderCost += itemCost;
-              const rawItemProfit = (i.price * i.quantity) - itemCost;
-              totalRawProfit += rawItemProfit;
-
-              // 🟢 終極精準拆分商品成本幣別 (多幣別架構 + 終極防呆校正)
+              // --- 1. 抓取商品建檔的預設資料 (防呆備用) ---
               let locP = p?.localPrice || 0;
               if (p && p.options) {
                   const fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
@@ -2759,40 +2770,43 @@ try {
                       if (parts.length >= 4 && !isNaN(Number(parts[3]))) locP = Number(parts[3]);
                   }
               }
-
-              // 🛡️ 讀取幣別與匯率
-              let itemCurr = (p as any)?.localCurrency || '';
+              let definedCurr = (p as any)?.localCurrency || '';
               const actualRate = p ? (Number(p.exchangeRate) || 1) : 1;
+              if (!definedCurr) definedCurr = (actualRate === 1) ? 'TWD' : 'KRW';
+              if (actualRate === 1) definedCurr = 'TWD';
 
-              // ⚠️ 舊資料校正與人為填寫防呆：
-              // 1. 如果沒選幣別，但匯率是 1 -> 絕對是台幣 (TWD)
-              // 2. 如果匯率是 1 -> 強制校正為台幣 (TWD)
-              // 3. 都不是，就預設給買手的韓幣 (KRW)
-              if (!itemCurr) itemCurr = (actualRate === 1) ? 'TWD' : 'KRW';
-              if (actualRate === 1) itemCurr = 'TWD';
-
-              // 🔥 CFO 神邏輯分流：
-              if (itemCurr === 'KRW') {
-                  // 韓國貨：保留韓幣成本，給買手對帳
-                  if (locP > 0) {
-                      costKRW += (locP * i.quantity);
-                  } else {
-                      // 沒填當地原價？用系統台幣成本反推回韓幣
-                      const r = actualRate !== 1 ? actualRate : (1/43);
-                      costKRW += (itemCost / r);
-                  }
-              } 
-              else if (itemCurr === 'TWD') {
-                  // 台灣貨：直接加進台幣成本
-                  costTWD += locP > 0 ? (locP * i.quantity) : itemCost;
-              } 
-              else {
-                  // 🇯🇵 🇨🇳 🇹🇭 其他外國貨：老闆直接刷卡/結匯，直接換算成「台幣成本」結算！
-                  const realRate = this.getRealExchangeRate(p);
-                  costTWD += locP > 0 ? (locP * realRate * i.quantity) : itemCost;
+              // --- 2. 決定採用「買手真實採購價」還是「商品預估價」 ---
+              if (actualPurchase && actualPurchase.totalQty > 0 && actualPurchase.totalCost > 0) {
+                  // 🎉 成功！無條件使用採購總帳中，買手輸入的真實平均單價！
+                  finalItemCost = actualPurchase.totalCost / actualPurchase.totalQty;
+                  finalCurrency = actualPurchase.currency;
+              } else {
+                  // ⚠️ 退回使用商品建檔預估資料 (可能尚未採購)
+                  finalCurrency = definedCurr;
+                  if (finalCurrency === 'TWD') finalItemCost = locP > 0 ? locP : (i.unitCost || 0);
+                  else if (finalCurrency === 'KRW') finalItemCost = locP > 0 ? locP : ((i.unitCost || 0) * 43);
+                  else finalItemCost = locP > 0 ? locP : 0;
               }
 
-              return { itemCost, shareMode, rawItemProfit };
+              // --- 3. 成本歸位與台幣真實淨利轉換 ---
+              if (finalCurrency === 'KRW') {
+                  costKRW += (finalItemCost * i.quantity);
+                  itemTwdTotalCost = (finalItemCost / 43) * i.quantity; 
+              } else if (finalCurrency === 'TWD') {
+                  costTWD += (finalItemCost * i.quantity);
+                  itemTwdTotalCost = finalItemCost * i.quantity;
+              } else {
+                  // 🇯🇵 🇨🇳 🇹🇭 🇺🇸 其他外幣：依內部真實底價匯率直接轉台幣成本
+                  const realRate = p ? this.getRealExchangeRate(p) : 1;
+                  costTWD += (finalItemCost * realRate * i.quantity);
+                  itemTwdTotalCost = (finalItemCost * realRate) * i.quantity;
+              }
+
+              orderCost += itemTwdTotalCost;
+              const rawItemProfit = (i.price * i.quantity) - itemTwdTotalCost;
+              totalRawProfit += rawItemProfit;
+
+              return { itemTwdTotalCost, shareMode, rawItemProfit };
           });
 
           cost += orderCost;
@@ -4704,15 +4718,17 @@ submitProduct() {
      const netTWD = stats.revenueTWD - stats.costTWD - expTWD;
      const netKRW = stats.revenueKRW - stats.costKRW - expKRW;
 
+     // 🔥 完美對齊的 21 欄表頭
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
-        '🇹🇼 台幣淨結算(TWD)', '🇰🇷 韓幣淨結算(KRW)',
+        '台幣淨結算(TWD)', '韓幣淨結算(KRW)',
         '台幣總營收', '韓幣總營收', 
-        '商品成本(含其他外幣換算TWD)', '韓國商品成本(KRW)', // 👈 改了這裡讓語意更精確
+        '商品成本(含外幣換算TWD)', '韓國商品成本(KRW)',
         '台幣營業支出', '韓幣營業支出', 
-        '🏆 最終淨利潤(估算TWD)', 
-        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(估算TWD)',
-        '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
+        '商品總毛利(估算TWD)', '外幣支出折合台幣估算', 
+        '最終淨利潤(估算TWD)', 
+        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '公司保留盈餘(估算TWD)',
+        '目前台幣帳戶總餘額', '目前韓幣帳戶總餘額'
      ];
      
      const rowData = [
@@ -4906,15 +4922,17 @@ submitProduct() {
      const netTWD = stats.revenueTWD - stats.costTWD - expTWD;
      const netKRW = stats.revenueKRW - stats.costKRW - expKRW;
 
+     // 🔥 完美對齊的 21 欄表頭
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
-        '🇹🇼 台幣淨結算(TWD)', '🇰🇷 韓幣淨結算(KRW)',
+        '台幣淨結算(TWD)', '韓幣淨結算(KRW)',
         '台幣總營收', '韓幣總營收', 
-        '商品成本(含其他外幣換算TWD)', '韓國商品成本(KRW)', // 👈 改了這裡讓語意更精確
+        '商品成本(含外幣換算TWD)', '韓國商品成本(KRW)',
         '台幣營業支出', '韓幣營業支出', 
-        '🏆 最終淨利潤(估算TWD)', 
-        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(估算TWD)',
-        '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
+        '商品總毛利(估算TWD)', '外幣支出折合台幣估算', 
+        '最終淨利潤(估算TWD)', 
+        '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '公司保留盈餘(估算TWD)',
+        '目前台幣帳戶總餘額', '目前韓幣帳戶總餘額'
      ];
      
      const rowData = [
