@@ -1203,6 +1203,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         <option value="JPY">日幣 (JPY)</option>
                         <option value="CNY">人民幣 (CNY)</option>
                         <option value="THB">泰銖 (THB)</option>
+                        <option value="USD">美金 (USD)</option>
                       </select>
                     </div> 
                     <div class="bg-gray-50 p-2 sm:p-3 rounded-xl border border-gray-200"> 
@@ -1762,6 +1763,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <option value="TWD">台幣 (TWD)</option>
                       <option value="KRW">韓元 (KRW)</option>
                       <option value="JPY">日幣 (JPY)</option>
+                      <option value="CNY">人民幣 (CNY)</option>
+                      <option value="THB">泰銖 (THB)</option>
+                      <option value="USD">美金 (USD)</option>
                   </select>
                     </div>
                     <div>
@@ -2031,7 +2035,8 @@ export class AdminPanelComponent {
      if (curr === 'JPY') return 0.22;
      if (curr === 'CNY') return 4.5;
      if (curr === 'THB') return 0.9;
-     
+     if (curr === 'USD') return 32.0; // 👈 新增美金真實匯率
+
      // 備用防呆：如果有填客用匯率就用客用匯率
      const rate = Number(p.exchangeRate);
      if (rate && rate > 0) return rate;
@@ -2745,7 +2750,7 @@ try {
               const rawItemProfit = (i.price * i.quantity) - itemCost;
               totalRawProfit += rawItemProfit;
 
-              // 🟢 終極精準拆分商品成本幣別 (多幣別架構)
+              // 🟢 終極精準拆分商品成本幣別 (多幣別架構 + 終極防呆校正)
               let locP = p?.localPrice || 0;
               if (p && p.options) {
                   const fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === i.option) || '';
@@ -2755,20 +2760,34 @@ try {
                   }
               }
 
-              // 讀取商品的幣別設定 (舊資料防呆預設為 KRW)
-              const itemCurr = p?.localCurrency || 'KRW';
+              // 🛡️ 讀取幣別與匯率
+              let itemCurr = (p as any)?.localCurrency || '';
+              const actualRate = p ? (Number(p.exchangeRate) || 1) : 1;
 
-              // 🔥 老闆專屬 CFO 神邏輯：
-              // 韓國貨：保留韓幣成本，以利對帳與付款給當地買手。
-              if (itemCurr === 'KRW' && locP > 0) {
-                  costKRW += (locP * i.quantity);
+              // ⚠️ 舊資料校正與人為填寫防呆：
+              // 1. 如果沒選幣別，但匯率是 1 -> 絕對是台幣 (TWD)
+              // 2. 如果匯率是 1 -> 強制校正為台幣 (TWD)
+              // 3. 都不是，就預設給買手的韓幣 (KRW)
+              if (!itemCurr) itemCurr = (actualRate === 1) ? 'TWD' : 'KRW';
+              if (actualRate === 1) itemCurr = 'TWD';
+
+              // 🔥 CFO 神邏輯分流：
+              if (itemCurr === 'KRW') {
+                  // 韓國貨：保留韓幣成本，給買手對帳
+                  if (locP > 0) {
+                      costKRW += (locP * i.quantity);
+                  } else {
+                      // 沒填當地原價？用系統台幣成本反推回韓幣
+                      const r = actualRate !== 1 ? actualRate : (1/43);
+                      costKRW += (itemCost / r);
+                  }
               } 
-              // 台灣貨：直接加總台幣
               else if (itemCurr === 'TWD') {
+                  // 台灣貨：直接加進台幣成本
                   costTWD += locP > 0 ? (locP * i.quantity) : itemCost;
               } 
-              // 🇯🇵 🇨🇳 🇹🇭 其他外國貨：自動依照內部真實底價匯率，轉換成台幣成本結算！
               else {
+                  // 🇯🇵 🇨🇳 🇹🇭 其他外國貨：老闆直接刷卡/結匯，直接換算成「台幣成本」結算！
                   const realRate = this.getRealExchangeRate(p);
                   costTWD += locP > 0 ? (locP * realRate * i.quantity) : itemCost;
               }
@@ -2842,19 +2861,21 @@ try {
         return true;
      });
 
-     let expTWD = 0; let expKRW = 0; let expJPY = 0;
+     let expTWD = 0; let expKRW = 0; let expJPY = 0; let expUSD = 0; let expCNY = 0; let expTHB = 0;
      validExpenses.forEach((e: any) => { 
         if (e.currency === 'TWD') expTWD += e.amount;
         else if (e.currency === 'KRW') expKRW += e.amount;
         else if (e.currency === 'JPY') expJPY += e.amount;
+        else if (e.currency === 'USD') expUSD += e.amount;
+        else if (e.currency === 'CNY') expCNY += e.amount;
+        else if (e.currency === 'THB') expTHB += e.amount;
         else expTWD += e.amount; 
      });
 
-     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22);
+     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22) + (expUSD * 32.0) + (expCNY * 4.5) + (expTHB * 0.9);
      return {
         twd: expTWD,
         krw: expKRW,
-        jpy: expJPY,
         totalTwdEst: expTWD + foreignToTWD
      };
   });
@@ -4645,16 +4666,19 @@ submitProduct() {
      });
 
      // 🧠 財務長大腦：將不同幣別的營業支出獨立計算
-     let expTWD = 0; let expKRW = 0; let expJPY = 0;
+     let expTWD = 0; let expKRW = 0; let expJPY = 0; let expUSD = 0; let expCNY = 0; let expTHB = 0;
      validExpenses.forEach(e => { 
         if (e.currency === 'TWD') expTWD += e.amount;
         else if (e.currency === 'KRW') expKRW += e.amount;
         else if (e.currency === 'JPY') expJPY += e.amount;
+        else if (e.currency === 'USD') expUSD += e.amount;
+        else if (e.currency === 'CNY') expCNY += e.amount;
+        else if (e.currency === 'THB') expTHB += e.amount;
         else expTWD += e.amount; // 防呆
      });
 
-     // 為了算出一個「參考用」的最終台幣淨利，我們將外幣依真實底價匯率(1/43)換算回台幣
-     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22); // 若有日幣抓0.22
+     // 為了算出一個「參考用」的最終台幣淨利，我們將外幣依真實底價匯率換算回台幣
+     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22) + (expUSD * 32.0) + (expCNY * 4.5) + (expTHB * 0.9);
      const estimatedTotalOpExTWD = expTWD + foreignToTWD;
 
      const finalNet = stats.profit - estimatedTotalOpExTWD;
@@ -4682,11 +4706,10 @@ submitProduct() {
 
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
-        '🇹🇼 台幣淨結算', '🇰🇷 韓幣淨結算',
+        '🇹🇼 台幣淨結算(TWD)', '🇰🇷 韓幣淨結算(KRW)',
         '台幣總營收', '韓幣總營收', 
-        '台幣商品成本', '韓幣商品成本',
+        '商品成本(含其他外幣換算TWD)', '韓國商品成本(KRW)', // 👈 改了這裡讓語意更精確
         '台幣營業支出', '韓幣營業支出', 
-        '商品總毛利(估算TWD)', '外幣支出折合台幣估算', 
         '🏆 最終淨利潤(估算TWD)', 
         '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(估算TWD)',
         '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
@@ -4845,15 +4868,19 @@ submitProduct() {
      });
 
      // 🧠 財務長大腦：將不同幣別的營業支出獨立計算
-     let expTWD = 0; let expKRW = 0; let expJPY = 0;
+     let expTWD = 0; let expKRW = 0; let expJPY = 0; let expUSD = 0; let expCNY = 0; let expTHB = 0;
      validExpenses.forEach(e => { 
         if (e.currency === 'TWD') expTWD += e.amount;
         else if (e.currency === 'KRW') expKRW += e.amount;
         else if (e.currency === 'JPY') expJPY += e.amount;
-        else expTWD += e.amount; 
+        else if (e.currency === 'USD') expUSD += e.amount;
+        else if (e.currency === 'CNY') expCNY += e.amount;
+        else if (e.currency === 'THB') expTHB += e.amount;
+        else expTWD += e.amount; // 防呆
      });
 
-     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22);
+     // 為了算出一個「參考用」的最終台幣淨利，我們將外幣依真實底價匯率換算回台幣
+     const foreignToTWD = (expKRW / 43) + (expJPY * 0.22) + (expUSD * 32.0) + (expCNY * 4.5) + (expTHB * 0.9);
      const estimatedTotalOpExTWD = expTWD + foreignToTWD;
 
      const finalNet = stats.profit - estimatedTotalOpExTWD;
@@ -4881,11 +4908,10 @@ submitProduct() {
 
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
-        '🇹🇼 台幣淨結算', '🇰🇷 韓幣淨結算',
+        '🇹🇼 台幣淨結算(TWD)', '🇰🇷 韓幣淨結算(KRW)',
         '台幣總營收', '韓幣總營收', 
-        '台幣商品成本', '韓幣商品成本',
+        '商品成本(含其他外幣換算TWD)', '韓國商品成本(KRW)', // 👈 改了這裡讓語意更精確
         '台幣營業支出', '韓幣營業支出', 
-        '商品總毛利(估算TWD)', '外幣支出折合台幣估算', 
         '🏆 最終淨利潤(估算TWD)', 
         '合夥人：藝辰', '合夥人：子婷', '合夥人：小芸', '🏢 公司保留盈餘(估算TWD)',
         '🏦 目前台幣帳戶總餘額', '🏦 目前韓幣帳戶總餘額'
