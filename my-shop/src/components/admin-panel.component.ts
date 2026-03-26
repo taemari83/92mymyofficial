@@ -706,6 +706,25 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                
                <div class="col-span-2 lg:col-span-2 bg-red-50 p-5 rounded-[2rem] border border-red-200 shadow-sm relative z-40">
                  <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇰🇷</div></div>
+                 <div class="relative z<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+               
+               <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative z-10 hover:z-[60] transition-all">
+                 <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div></div>
+                 <div class="relative z-10">
+                   <div class="text-blue-600 text-xs font-bold uppercase tracking-widest mb-1 relative group cursor-help w-fit">
+                     <div class="flex items-center gap-1">🇹🇼 台幣淨結算 <span class="w-3.5 h-3.5 rounded-full border border-blue-600 flex items-center justify-center text-[9px] opacity-70">?</span></div>
+                     <div class="text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
+                     <div class="absolute top-full left-0 mt-2 w-64 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
+                      結算完，台灣銀行戶頭裡實質增加了多少現金。<br>(通常是正數，因為錢都在台灣收)
+                      <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：台幣總營收 - 台幣商品成本 - 台幣營業雜支。</span>
+                     </div>
+                   </div>
+                   <div class="text-3xl sm:text-4xl font-black text-blue-800 mt-3">NT$ {{ (accountingStats().revenueTWD - accountingStats().costTWD - accountingExpenses().twd) | number:'1.0-0' }}</div>
+                 </div>
+               </div>
+               
+               <div class="col-span-2 lg:col-span-2 bg-red-50 p-5 rounded-[2rem] border border-red-200 shadow-sm relative z-10 hover:z-[60] transition-all">
+                 <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇰🇷</div></div>
                  <div class="relative z-10">
                    <div class="text-red-600 text-xs font-bold uppercase tracking-widest mb-1 relative group cursor-help w-fit">
                      <div class="flex items-center gap-1">🇰🇷 韓幣淨結算 <span class="w-3.5 h-3.5 rounded-full border border-red-600 flex items-center justify-center text-[9px] opacity-70">?</span></div>
@@ -719,7 +738,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  </div>
                </div>
                
-               <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-30">
+               <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all">
                   <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
                     <div class="flex items-center gap-1">總營收 <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span></div>
                     <div class="text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
@@ -732,7 +751,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingStats().revenueKRW | number:'1.0-0' }}</div>
                </div>
 
-               <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-30">
+               <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all">
                   <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
                     <div class="flex items-center gap-1">總商品成本 <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span></div>
                     <div class="text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
@@ -745,7 +764,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingStats().costKRW | number:'1.0-0' }}</div>
                </div>
 
-               <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-30">
+               <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all">
                   <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
                     <div class="flex items-center gap-1">營業雜支 <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span></div>
                     <div class="absolute bottom-full left-0 md:-left-16 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
@@ -757,7 +776,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingExpenses().krw | number:'1.0-0' }}</div>
                </div>
 
-               <div class="col-span-1 bg-brand-900 text-white p-5 rounded-[2rem] shadow-lg relative flex flex-col justify-center z-30">
+               <div class="col-span-1 bg-brand-900 text-white p-5 rounded-[2rem] shadow-lg relative flex flex-col justify-center z-10 hover:z-[60] transition-all">
                   <div class="text-brand-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1 relative group cursor-help w-fit">
                     <div class="flex items-center gap-1">估算總盈餘 <span class="w-3.5 h-3.5 rounded-full bg-brand-200/20 text-brand-200 flex items-center justify-center text-[9px]">?</span></div>
                     <div class="text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
@@ -851,7 +870,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 <div class="mt-10 pt-8 border-t border-gray-100 w-full">
                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                 <span>💰 收款狀態分析</span>
+                 <span>收款狀態分析</span>
                  <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-normal">Cash Flow</span>
                </h4>
                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
@@ -887,7 +906,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   </div>
                </div>
             </div>
-                        
+
             <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>期間商品銷售分析</span></h4>
@@ -939,14 +958,48 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         }
 
         @if (activeTab() === 'inventory') {
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full custom-scrollbar">
-             <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><h3 class="font-bold text-lg text-gray-800">庫存總覽</h3>
-              <div class="flex gap-2 w-full sm:w-auto">
+          <div class="bg-white rounded-[2rem] shadow-sm border border-gray-200 overflow-hidden w-full relative">
+             
+             <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white relative z-50">
+                <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2"><span>🏭</span> 庫存總覽</h3>
+                <div class="flex gap-2 w-full sm:w-auto">
                    <button (click)="exportInventoryCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap shadow-sm flex justify-center items-center gap-1 transition-colors">📥 匯出</button>
                    <button (click)="syncInventoryToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap shadow-sm flex justify-center items-center gap-1 transition-colors">☁️ 同步</button>
                 </div>
-              </div>
-             <div class="overflow-x-auto w-full"><table class="w-full text-sm text-left whitespace-nowrap"><thead class="bg-gray-50 text-gray-500"><tr><th class="p-4">貨號</th><th class="p-4">商品名稱</th><th class="p-4">規格</th><th class="p-4 text-right">剩餘庫存</th><th class="p-4 text-right">已售出</th><th class="p-4">狀態</th></tr></thead><tbody class="divide-y divide-gray-100">@for (p of activeProducts(); track p.id) {<tr class="hover:bg-gray-50"><td class="p-4 font-mono text-gray-400 text-xs">{{ p.code }}</td><td class="p-4 font-bold text-gray-800">{{ p.name }}</td><td class="p-4 text-gray-500">{{ (p.options || []).join(', ') || '單一規格' }}</td><td class="p-4 text-right font-mono font-bold" [class.text-red-500]="p.stock < 5">{{ p.stock >= 9999 ? '無限' : p.stock }}</td><td class="p-4 text-right text-gray-500">{{ p.soldCount }}</td><td class="p-4">@if(p.stock <= 0) { <span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs font-bold">缺貨</span> }@else if(p.stock < 5) { <span class="bg-red-100 text-red-500 px-2 py-1 rounded text-xs font-bold">低庫存</span> }@else { <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-bold">充足</span> }</td></tr>}</tbody></table></div>
+             </div>
+
+             <div class="overflow-auto w-full max-h-[65vh] custom-scrollbar relative">
+                <table class="w-full text-sm text-left whitespace-nowrap">
+                   
+                   <thead class="bg-gray-50 text-gray-500 sticky top-0 z-40 shadow-sm">
+                      <tr>
+                         <th class="p-4 sticky left-0 z-50 bg-gray-50 border-r border-b border-gray-200 w-[120px] min-w-[120px]">貨號</th>
+                         <th class="p-4 sticky left-[120px] z-50 bg-gray-50 border-r border-b border-gray-200 w-[200px] min-w-[200px] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)]">商品名稱</th>
+                         <th class="p-4 border-b border-gray-200">規格</th>
+                         <th class="p-4 text-right border-b border-gray-200">剩餘庫存</th>
+                         <th class="p-4 text-right border-b border-gray-200">已售出</th>
+                         <th class="p-4 border-b border-gray-200">狀態</th>
+                      </tr>
+                   </thead>
+
+                   <tbody class="divide-y divide-gray-100">
+                      @for (p of activeProducts(); track p.id) {
+                      <tr class="hover:bg-gray-50 group transition-colors">
+                         <td class="p-4 font-mono text-gray-400 text-xs sticky left-0 z-20 bg-white group-hover:bg-gray-50 border-r border-gray-100 w-[120px] min-w-[120px] transition-colors truncate">{{ p.code }}</td>
+                         <td class="p-4 font-bold text-gray-800 sticky left-[120px] z-20 bg-white group-hover:bg-gray-50 border-r border-gray-100 w-[200px] min-w-[200px] shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors truncate" [title]="p.name">{{ p.name }}</td>
+                         <td class="p-4 text-gray-500">{{ (p.options || []).join(', ') || '單一規格' }}</td>
+                         <td class="p-4 text-right font-mono font-bold" [class.text-red-500]="p.stock < 5">{{ p.stock >= 9999 ? '無限' : p.stock }}</td>
+                         <td class="p-4 text-right text-gray-500 font-mono">{{ p.soldCount }}</td>
+                         <td class="p-4">
+                            @if(p.stock <= 0) { <span class="bg-gray-200 text-gray-500 px-2 py-1 rounded text-xs font-bold">缺貨</span> }
+                            @else if(p.stock < 5) { <span class="bg-red-100 text-red-500 px-2 py-1 rounded text-xs font-bold">低庫存</span> }
+                            @else { <span class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-bold">充足</span> }
+                         </td>
+                      </tr>
+                      }
+                   </tbody>
+                </table>
+             </div>
           </div>
         }
 
