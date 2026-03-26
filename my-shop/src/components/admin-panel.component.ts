@@ -663,50 +663,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           </div>
         }
 
-        @if (activeTab() === 'accounting') {
-           <div class="space-y-6 pt-2 w-full">
-            <div class="flex flex-col xl:flex-row gap-4 justify-between xl:items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 w-full">
-               <div class="flex gap-2 overflow-x-auto w-full xl:w-auto pb-1 custom-scrollbar">
-                 @for(r of ['today', 'week', 'month', 'year', 'custom']; track r) { 
-                   <button (click)="accountingRange.set(r)" class="px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap shrink-0" [class.bg-brand-900]="accountingRange() === r" [class.text-white]="accountingRange() === r" [class.bg-gray-100]="accountingRange() !== r" [class.text-gray-500]="accountingRange() !== r"> 
-                     @switch(r) { @case('today') { 今日 } @case('week') { 本週 } @case('month') { 本月 } @case('year') { 本年 } @case('custom') { 自訂 } } 
-                   </button> 
-                 }
-               </div>
-               
-               <div class="flex items-center gap-2 flex-wrap mt-2 xl:mt-0 w-full xl:w-auto justify-start xl:justify-end">
-                 @if(accountingRange() === 'custom') { 
-                   <div class="flex items-center gap-2 animate-fade-in flex-1 sm:flex-none min-w-[220px]"> 
-                     <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event)" class="w-full border border-gray-200 rounded-xl px-2 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
-                     <span class="text-gray-400">~</span> 
-                     <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event)" class="w-full border border-gray-200 rounded-xl px-2 py-2 text-sm font-bold text-gray-600 outline-none focus:border-brand-300"> 
-                   </div> 
-                 }
-                 <button (click)="exportToCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white rounded-xl font-bold hover:bg-[#7a9180] whitespace-nowrap flex items-center justify-center gap-1 transition-colors"><span>📥</span> 匯出</button>
-                 <button (click)="syncToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white rounded-xl font-bold hover:bg-[#D4A0A0] whitespace-nowrap flex items-center justify-center gap-1 shadow-sm transition-transform active:scale-95"><span>☁️</span> 同步</button>
-               </div>
-            </div>
-
-              <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-               
-               <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative z-50">
-                 <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div></div>
-                 <div class="relative z-10">
-                   <div class="text-blue-600 text-xs font-bold uppercase tracking-widest mb-1 relative group cursor-help w-fit">
-                     <div class="flex items-center gap-1">🇹🇼 台幣淨結算 <span class="w-3.5 h-3.5 rounded-full border border-blue-600 flex items-center justify-center text-[9px] opacity-70">?</span></div>
-                     <div class="text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
-                     <div class="absolute top-full left-0 mt-2 w-64 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
-                      結算完，台灣銀行戶頭裡實質增加了多少現金。<br>(通常是正數，因為錢都在台灣收)
-                      <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：台幣總營收 - 台幣商品成本 - 台幣營業雜支。</span>
-                     </div>
-                   </div>
-                   <div class="text-3xl sm:text-4xl font-black text-blue-800 mt-3">NT$ {{ (accountingStats().revenueTWD - accountingStats().costTWD - accountingExpenses().twd) | number:'1.0-0' }}</div>
-                 </div>
-               </div>
-               
-               <div class="col-span-2 lg:col-span-2 bg-red-50 p-5 rounded-[2rem] border border-red-200 shadow-sm relative z-40">
-                 <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇰🇷</div></div>
-                 <div class="relative z<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                
                <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative z-10 hover:z-[60] transition-all">
                  <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div></div>
