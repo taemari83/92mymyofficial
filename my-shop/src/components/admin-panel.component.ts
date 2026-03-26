@@ -576,7 +576,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           </div> 
         }
 
-        @if (activeTab() === 'customers') { 
+@if (activeTab() === 'customers') { 
           <div class="space-y-6 w-full">
               <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full">
                 
@@ -663,8 +663,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           </div>
         }
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-               
+        @if (activeTab() === 'accounting') {
+          <div class="space-y-6 w-full">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">               
                <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative z-10 hover:z-[60] transition-all">
                  <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div></div>
                  <div class="relative z-10">
