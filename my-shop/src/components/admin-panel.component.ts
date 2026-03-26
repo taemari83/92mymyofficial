@@ -179,14 +179,26 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
               <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group w-full"><div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div><div class="relative z-10"><div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2"><span>📅 今日營業額</span></div><div class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().todayRevenue | number)">NT$ {{ dashboardMetrics().todayRevenue | number }}</div><div class="mt-4 text-sm text-white/50">截至目前為止</div></div></div>
               <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center w-full">
-               <div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">
-                 本月銷售總額 <span class="text-[10px] opacity-70">(含員購)</span>
+               <div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2 flex items-center gap-1 relative group cursor-help w-fit z-50">
+                本月銷售總額 <span class="text-[10px] opacity-70">(含員購)</span>
+                 <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span>
+                 <div class="absolute top-full left-0 mt-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                  這個月從 1 號到今天，客人總共貢獻了多少業績。
+                   <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：本月所有有效訂單的 (最終結帳金額) 加總。</span>
                 </div>
+              </div>
               <div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">
                 NT$ {{ dashboardMetrics().monthSales | number }}
                </div>
               </div>
-              <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center w-full"><div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2">本月預估利潤</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-[#2D5B46] break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthProfit | number)">NT$ {{ dashboardMetrics().monthProfit | number:'1.0-0' }}</div><div class="mt-2 text-xs text-[#5A8C74]">已扣除商品成本</div></div>
+              <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center w-full">
+              <div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2 flex items-center gap-1 relative group cursor-help w-fit z-50">
+               本月預估利潤
+                <span class="w-3.5 h-3.5 rounded-full border border-[#5A8C74] flex items-center justify-center text-[9px] opacity-70">?</span>
+                 <div class="absolute top-full left-0 mt-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                  扣掉進貨成本跟公司的營業雜支後，這個月「粗估」賺了多少錢。
+                <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：本月銷售總額 - 本月商品總成本 - 本月營業雜支。</span>
+             </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2 w-full custom-scrollbar">
               <div (click)="goToOrders('verifying')" class="bg-white p-6 rounded-[1.5rem] border border-yellow-100 shadow-sm flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:scale-105 transition-all cursor-pointer group min-w-[140px]"><div class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl mb-1 group-hover:bg-yellow-200">📝</div><div class="text-2xl md:text-3xl font-black text-yellow-600">{{ dashboardMetrics().toConfirm }}</div><div class="text-sm font-bold text-yellow-800 whitespace-nowrap">未對帳訂單</div></div>
@@ -661,17 +673,27 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
               <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative overflow-hidden group">
-                  <div class="text-blue-600 text-xs font-bold uppercase tracking-widest mb-1">
+                  <div class="text-blue-600 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1 relative group cursor-help w-fit z-50">
                    🇹🇼 台幣淨結算 <span class="text-[9px] opacity-60">(不含員購)</span>
-                   </div>
+                    <span class="w-3.5 h-3.5 rounded-full border border-blue-600 flex items-center justify-center text-[9px] opacity-70">?</span>
+                     <div class="absolute top-full left-0 mt-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                     結算完，台灣銀行戶頭裡實質增加了多少現金。
+                    <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：台幣總營收 - 台幣商品成本 - 台幣營業雜支。</span>
+                  </div>
+                 </div>
                   <div class="text-3xl sm:text-4xl font-black text-blue-800">NT$ {{ (accountingStats().revenueTWD - accountingStats().costTWD - accountingExpenses().twd) | number:'1.0-0' }}</div>
                   <div class="mt-2 text-[10px] text-blue-500 opacity-80">算法：台幣營收 - 台幣商品成本 - 台幣雜支</div>
                   <div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div>
                </div>
                
                <div class="col-span-2 lg:col-span-2 bg-red-50 p-5 rounded-[2rem] border border-red-200 shadow-sm relative overflow-hidden group">
-                  <div class="text-red-600 text-xs font-bold uppercase tracking-widest mb-1">
-                    🇰🇷 韓幣淨結算 <span class="text-[9px] opacity-60">(不含員購)</span>
+                  <div class="text-red-600 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1 relative group cursor-help w-fit z-50">
+                   🇰🇷 韓幣淨結算 <span class="text-[9px] opacity-60">(不含員購)</span>
+                    <span class="w-3.5 h-3.5 rounded-full border border-red-600 flex items-center justify-center text-[9px] opacity-70">?</span>
+                     <div class="absolute top-full left-0 mt-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                      結算完，總共欠韓國買手/廠商多少韓幣。
+                    <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：韓幣總營收 - 韓幣商品成本 - 韓幣營業雜支。</span>
+                  </div>
                  </div>
                   <div class="text-3xl sm:text-4xl font-black text-red-800">₩ {{ (accountingStats().revenueKRW - accountingStats().costKRW - accountingExpenses().krw) | number:'1.0-0' }}</div>
                   <div class="mt-2 text-[10px] text-red-500 opacity-80">算法：韓幣營收 - 韓幣商品成本 - 韓幣雜支</div>
@@ -679,27 +701,49 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                </div>
                
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100">
-                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">
-                    總營收 <span class="text-[9px] opacity-60">(不含員購)</span>
-                  </div>
+                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-1 relative group cursor-help w-fit z-50">
+                   總營收 <span class="text-[9px] opacity-60">(不含員購)</span>
+                     <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span>
+                     <div class="absolute bottom-full left-0 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                       客人實際付給我們的錢。<br>因為賣台灣客人，韓幣營收通常為 0。
+                       <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：期間內所有有效訂單的 (最終結帳金額) 加總。</span>
+                     </div>
+                   </div>
                   <div class="text-lg font-black text-gray-800">NT$ {{ accountingStats().revenueTWD | number:'1.0-0' }}</div>
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingStats().revenueKRW | number:'1.0-0' }}</div>
                </div>
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100">
-                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">
+                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-1 relative group cursor-help w-fit z-50">
                     總商品成本 <span class="text-[9px] opacity-60">(不含員購)</span>
+                    <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span>
+                    <div class="absolute bottom-full left-0 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                      賣掉的商品，當初買手進貨花了多少錢。
+                      <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：優先抓取「採購總帳」實刷均價；若無則用「當地原價」。</span>
+                    </div>
                   </div>
                   <div class="text-lg font-black text-gray-800">NT$ {{ accountingStats().costTWD | number:'1.0-0' }}</div>
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingStats().costKRW | number:'1.0-0' }}</div>
                </div>
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100">
-                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">💸 營業雜支</div>
+                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-1 relative group cursor-help w-fit z-50">
+                    營業雜支
+                    <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span>
+                    <div class="absolute bottom-full left-0 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                      進貨以外的營運費用 (如：國際運費、包材)。
+                      <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：手動於「營業支出」記帳的項目 (依錢包分台/韓幣)。</span>
+                    </div>
+                  </div>
                   <div class="text-lg font-black text-gray-800">NT$ {{ accountingExpenses().twd | number:'1.0-0' }}</div>
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingExpenses().krw | number:'1.0-0' }}</div>
                </div>
                <div class="col-span-1 bg-brand-900 text-white p-5 rounded-[2rem] shadow-lg relative overflow-hidden flex flex-col justify-center">
-                  <div class="text-brand-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">
-                   估算總盈餘 <span class="text-[9px] opacity-60">(不含員購)</span>
+                  <div class="text-brand-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1 relative group cursor-help w-fit z-50">
+                    估算總盈餘 <span class="text-[9px] opacity-60">(不含員購)</span>
+                    <span class="w-3.5 h-3.5 rounded-full bg-brand-200/20 text-brand-200 flex items-center justify-center text-[9px]">?</span>
+                    <div class="absolute bottom-full left-0 mb-2 w-64 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                      將所有花掉的外幣，統一換算回台幣後的「公司最終參考淨利」。
+                      <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：總營收 - (台幣成本+外幣成本依匯率換算) - 總雜支。</span>
+                    </div>
                   </div>
                   <div class="text-xl sm:text-2xl font-black">NT$ {{ accountingStats().profit - accountingExpenses().totalTwdEst | number:'1.0-0' }}</div>
                </div>
@@ -721,9 +765,17 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
              </div>
             
             <div class="mt-8 w-full animate-fade-in">
-               <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+               <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 relative group w-fit cursor-help z-50">
                  <span>🤝</span> 合夥人分潤結算 
                  <span class="text-xs bg-brand-100 text-brand-600 px-2 py-1 rounded-full font-normal shadow-sm">依「已入帳」真實淨利自動拆分</span>
+                 <span class="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs ml-1 hover:bg-gray-300 transition-colors">?</span>
+  
+                 <div class="absolute bottom-full left-0 mb-2 w-72 bg-gray-800 text-white text-[10px] p-4 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed">
+                   根據商品來源 (親帶/批發)，將真實淨利精準切分。<br>
+                   • <span class="text-brand-200 font-bold">親帶</span> (藝25/子25/芸25/公25)<br>
+                   • <span class="text-brand-200 font-bold">批發</span> (藝0/子40/芸40/公20)
+                   <span class="opacity-50 font-mono text-[9px] mt-2 block pt-2 border-t border-gray-600">已自動扣除客人折扣碼、購物金與免運補貼後的真實淨利。</span>
+                 </div>
                </h4>
                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
                   <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group hover:border-brand-300 transition-colors">
