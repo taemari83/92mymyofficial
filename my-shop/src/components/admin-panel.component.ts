@@ -181,15 +181,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group w-full">
                 <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
                 <div class="relative z-10">
-                  <div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2"><span>📅 今日營業額</span></div>
-                  <div class="text-3xl sm@if (activeTab() === 'dashboard') {
-          <div class="space-y-8 w-full overflow-x-hidden">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-              
-              <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group w-full">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                <div class="relative z-10">
-                  <div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2"><span>📅 今日營業額</span></div>
+                  <div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2"><span>今日營業額</span></div>
                   <div class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().todayRevenue | number)">NT$ {{ dashboardMetrics().todayRevenue | number }}</div>
                   <div class="mt-4 text-sm text-white/50">截至目前為止</div>
                 </div>
@@ -697,14 +689,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
               <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                
-               <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative group">
-                 <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div></div>
-                 <div class="relative z-10">
-                   <div class="text-blue-600 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1 relative group/tip cursor-help w-fit z-50">
-                    🇹🇼 台幣淨結算 <span class="text-[9px] opacity-60">(不含員購)</span>
-                     <span class="w-3.5 h-3.5 rounded-full border border-blue-600 flex items-center justify-center text-[9px] opacity-70">?</span>
-                      <div class="ab<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-               
                <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative z-50">
                  <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div></div>
                  <div class="relative z-10">
@@ -795,9 +779,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 </button>
              </div>
             
-            <div class="mt-8 w-full animate-fade-in">
+            <div class="mt-10 pt-8 border-t border-gray-100 w-full animate-fade-in">
                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2 relative group w-fit cursor-help z-50">
-                 <span>🤝</span> 合夥人分潤結算 
+                 <span></span> 合夥人分潤結算 
                  <span class="text-xs bg-brand-100 text-brand-600 px-2 py-1 rounded-full font-normal shadow-sm">依「已入帳」真實淨利自動拆分</span>
                  <span class="w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-xs ml-1 hover:bg-gray-300 transition-colors">?</span>
   
@@ -833,7 +817,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 mt-10 pt-8 border-t border-gray-100">
                  <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                   <span>🎯</span> 行銷預算與折讓追蹤 
+                   <span></span> 行銷預算與折讓追蹤 
                    <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold shadow-sm">隱形成本大數據</span>
                  </h4>
                  <div class="flex gap-2 w-full sm:w-auto">
@@ -865,8 +849,45 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                </div>
             </div>
 
-            <div class="mt-4 w-full"><h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><span>💰 收款狀態分析</span><span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-normal">Cash Flow</span></h4><div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full"><div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">應收總額</div><div class="text-lg font-black text-gray-800 whitespace-nowrap">\${{ accountingStats().payment.total | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🧾</div></div><div class="bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm relative overflow-hidden"><div class="text-xs text-green-600 font-bold mb-1 uppercase">已實收 (入帳)</div><div class="text-lg font-black text-green-700 whitespace-nowrap">\${{ accountingStats().payment.received | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">💰</div></div><div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm relative overflow-hidden"><div class="text-xs text-yellow-600 font-bold mb-1 uppercase">對帳中</div><div class="text-lg font-black text-yellow-700 whitespace-nowrap">\${{ accountingStats().payment.verifying | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">🔍</div></div><div class="bg-red-50 p-4 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden"><div class="text-xs text-red-600 font-bold mb-1 uppercase">未收款(含貨到付款)</div><div class="text-lg font-black text-red-700 whitespace-nowrap">\${{ accountingStats().payment.unpaid | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">⚠️</div></div><div class="bg-gray-100 p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden opacity-75"><div class="text-xs text-gray-500 font-bold mb-1 uppercase">待退款</div><div class="text-lg font-black text-gray-600 whitespace-nowrap">\${{ accountingStats().payment.refund | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">↩️</div></div><div class="bg-gray-800 text-white p-4 rounded-2xl border border-gray-700 shadow-sm relative overflow-hidden"><div class="text-xs text-gray-400 font-bold mb-1 uppercase">已退款 (結案)</div><div class="text-lg font-black text-white whitespace-nowrap">\${{ accountingStats().payment.refundedTotal | number }}</div><div class="absolute bottom-0 right-0 p-2 opacity-20 text-4xl">💸</div></div></div></div>
-            
+<div class="mt-10 pt-8 border-t border-gray-100 w-full">
+               <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                 <span>💰 收款狀態分析</span>
+                 <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-normal">Cash Flow</span>
+               </h4>
+               <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 w-full">
+                  <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+                     <div class="text-xs text-gray-500 font-bold mb-1 uppercase">應收總額</div>
+                     <div class="text-lg font-black text-gray-800 whitespace-nowrap">\${{ accountingStats().payment.total | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-5 text-4xl">🧾</div>
+                  </div>
+                  <div class="bg-green-50 p-4 rounded-2xl border border-green-100 shadow-sm relative overflow-hidden">
+                     <div class="text-xs text-green-600 font-bold mb-1 uppercase">已實收 (入帳)</div>
+                     <div class="text-lg font-black text-green-700 whitespace-nowrap">\${{ accountingStats().payment.received | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">💰</div>
+                  </div>
+                  <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 shadow-sm relative overflow-hidden">
+                     <div class="text-xs text-yellow-600 font-bold mb-1 uppercase">對帳中</div>
+                     <div class="text-lg font-black text-yellow-700 whitespace-nowrap">\${{ accountingStats().payment.verifying | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">🔍</div>
+                  </div>
+                  <div class="bg-red-50 p-4 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden">
+                     <div class="text-xs text-red-600 font-bold mb-1 uppercase">未收款(含貨到付款)</div>
+                     <div class="text-lg font-black text-red-700 whitespace-nowrap">\${{ accountingStats().payment.unpaid | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">⚠️</div>
+                  </div>
+                  <div class="bg-gray-100 p-4 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden opacity-75">
+                     <div class="text-xs text-gray-500 font-bold mb-1 uppercase">待退款</div>
+                     <div class="text-lg font-black text-gray-600 whitespace-nowrap">\${{ accountingStats().payment.refund | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-10 text-4xl">↩️</div>
+                  </div>
+                  <div class="bg-gray-800 text-white p-4 rounded-2xl border border-gray-700 shadow-sm relative overflow-hidden">
+                     <div class="text-xs text-gray-400 font-bold mb-1 uppercase">已退款 (結案)</div>
+                     <div class="text-lg font-black text-white whitespace-nowrap">\${{ accountingStats().payment.refundedTotal | number }}</div>
+                     <div class="absolute bottom-0 right-0 p-2 opacity-20 text-4xl">💸</div>
+                  </div>
+               </div>
+            </div>
+                        
             <div class="mt-8 bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden w-full">
                <div class="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <h4 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>期間商品銷售分析</span></h4>
