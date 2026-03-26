@@ -178,7 +178,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <div class="space-y-8 w-full overflow-x-hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
               <div class="bg-brand-900 text-white rounded-[2rem] p-8 shadow-xl relative overflow-hidden group w-full"><div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div><div class="relative z-10"><div class="flex items-center gap-2 text-white/60 text-sm font-bold uppercase tracking-widest mb-2"><span>📅 今日營業額</span></div><div class="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().todayRevenue | number)">NT$ {{ dashboardMetrics().todayRevenue | number }}</div><div class="mt-4 text-sm text-white/50">截至目前為止</div></div></div>
-              <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center w-full"><div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">本月銷售總額</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">NT$ {{ dashboardMetrics().monthSales | number }}</div><div class="mt-2 text-xs text-green-500 font-bold bg-green-50 px-2 py-1 rounded w-fit">持續成長中 📈</div></div>
+              <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center w-full">
+               <div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">
+                 本月銷售總額 <span class="text-[10px] opacity-70">(含員購)</span>
+                </div>
+              <div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-gray-800 break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthSales | number)">
+                NT$ {{ dashboardMetrics().monthSales | number }}
+               </div>
+              </div>
               <div class="bg-[#F0F7F4] rounded-[2rem] p-8 shadow-sm border border-[#E1EFE8] flex flex-col justify-center w-full"><div class="text-[#5A8C74] text-sm font-bold uppercase tracking-widest mb-2">本月預估利潤</div><div class="text-2xl sm:text-3xl xl:text-4xl font-bold text-[#2D5B46] break-words whitespace-normal leading-tight" [title]="'NT$ ' + (dashboardMetrics().monthProfit | number)">NT$ {{ dashboardMetrics().monthProfit | number:'1.0-0' }}</div><div class="mt-2 text-xs text-[#5A8C74]">已扣除商品成本</div></div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-x-auto pb-2 w-full custom-scrollbar">
@@ -654,26 +661,34 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
               <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">
                <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative overflow-hidden group">
-                  <div class="text-blue-600 text-xs font-bold uppercase tracking-widest mb-1">🇹🇼 台幣最終淨結算 (通常為正)</div>
+                  <div class="text-blue-600 text-xs font-bold uppercase tracking-widest mb-1">
+                   🇹🇼 台幣淨結算 <span class="text-[9px] opacity-60">(不含員購)</span>
+                   </div>
                   <div class="text-3xl sm:text-4xl font-black text-blue-800">NT$ {{ (accountingStats().revenueTWD - accountingStats().costTWD - accountingExpenses().twd) | number:'1.0-0' }}</div>
                   <div class="mt-2 text-[10px] text-blue-500 opacity-80">算法：台幣營收 - 台幣商品成本 - 台幣雜支</div>
                   <div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div>
                </div>
                
                <div class="col-span-2 lg:col-span-2 bg-red-50 p-5 rounded-[2rem] border border-red-200 shadow-sm relative overflow-hidden group">
-                  <div class="text-red-600 text-xs font-bold uppercase tracking-widest mb-1">🇰🇷 韓幣最終淨結算 (付給買手)</div>
+                  <div class="text-red-600 text-xs font-bold uppercase tracking-widest mb-1">
+                    🇰🇷 韓幣淨結算 <span class="text-[9px] opacity-60">(不含員購)</span>
+                 </div>
                   <div class="text-3xl sm:text-4xl font-black text-red-800">₩ {{ (accountingStats().revenueKRW - accountingStats().costKRW - accountingExpenses().krw) | number:'1.0-0' }}</div>
                   <div class="mt-2 text-[10px] text-red-500 opacity-80">算法：韓幣營收 - 韓幣商品成本 - 韓幣雜支</div>
                   <div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇰🇷</div>
                </div>
                
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100">
-                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">💰 總營收明細</div>
+                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">
+                    總營收 <span class="text-[9px] opacity-60">(不含員購)</span>
+                  </div>
                   <div class="text-lg font-black text-gray-800">NT$ {{ accountingStats().revenueTWD | number:'1.0-0' }}</div>
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingStats().revenueKRW | number:'1.0-0' }}</div>
                </div>
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100">
-                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">📦 總商品成本</div>
+                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2">
+                    總商品成本 <span class="text-[9px] opacity-60">(不含員購)</span>
+                  </div>
                   <div class="text-lg font-black text-gray-800">NT$ {{ accountingStats().costTWD | number:'1.0-0' }}</div>
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingStats().costKRW | number:'1.0-0' }}</div>
                </div>
@@ -683,7 +698,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingExpenses().krw | number:'1.0-0' }}</div>
                </div>
                <div class="col-span-1 bg-brand-900 text-white p-5 rounded-[2rem] shadow-lg relative overflow-hidden flex flex-col justify-center">
-                  <div class="text-brand-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">🏆 估算總盈餘</div>
+                  <div class="text-brand-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1">
+                   估算總盈餘 <span class="text-[9px] opacity-60">(不含員購)</span>
+                  </div>
                   <div class="text-xl sm:text-2xl font-black">NT$ {{ accountingStats().profit - accountingExpenses().totalTwdEst | number:'1.0-0' }}</div>
                </div>
 
