@@ -188,9 +188,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               </div>
 
               <div class="bg-white rounded-[2rem] p-8 shadow-sm border border-brand-100 flex flex-col justify-center w-full relative z-40">
-               <div class="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
-                 <div class="flex items-center gap-1">本月銷售總額 <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span></div>
-                 <div class="text-[10px] opacity-70 mt-1 leading-none normal-case">(含員購)</div>
+               <div class="text-gray-500 text-sm font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
+               <div class="flex items-center gap-1">本月銷售總額 <span class="w-3.5 h-3.5 rounded-full border border-gray-500 flex items-center justify-center text-[9px] opacity-70">?</span></div>
+               <div class="text-gray-400 text-[10px] opacity-70 mt-1 leading-none normal-case">(含員購)</div>
                  <div class="absolute top-full left-0 mt-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
                   這個月從 1 號到今天，客人總共貢獻了多少業績。
                    <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：本月所有有效訂單的 (最終結帳金額) 加總。</span>
@@ -697,9 +697,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                </div>
                
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all">
-                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
-                    <div class="flex items-center gap-1">總營收 <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span></div>
-                    <div class="text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
+                  <div class="text-gray-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
+                    <div class="flex items-center gap-1">總營收 <span class="w-3.5 h-3.5 rounded-full border border-gray-500 flex items-center justify-center text-[9px] opacity-70">?</span></div>
+                    <div class="text-gray-400 text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
                     <div class="absolute bottom-full left-0 md:-left-4 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
                       客人實際付給我們的錢。<br>因為賣台灣客人，韓幣營收通常為 0。
                       <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：期間內所有有效訂單的 (最終結帳金額) 加總。</span>
@@ -710,9 +710,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                </div>
 
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all">
-                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
-                    <div class="flex items-center gap-1">總商品成本 <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span></div>
-                    <div class="text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
+                  <div class="text-gray-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
+                    <div class="flex items-center gap-1">總商品成本 <span class="w-3.5 h-3.5 rounded-full border border-gray-500 flex items-center justify-center text-[9px] opacity-70">?</span></div>
+                    <div class="text-gray-400 text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
                     <div class="absolute bottom-full left-0 md:-left-10 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
                       賣掉的商品，當初買手進貨花了多少錢。
                       <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：優先抓取「採購總帳」實刷均價；若無則用「當地原價」。</span>
@@ -723,8 +723,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                </div>
 
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all">
-                  <div class="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
-                    <div class="flex items-center gap-1">營業雜支 <span class="w-3.5 h-3.5 rounded-full border border-gray-400 flex items-center justify-center text-[9px] opacity-70">?</span></div>
+                  <div class="text-gray-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
+                    <div class="flex items-center gap-1">營業雜支 <span class="w-3.5 h-3.5 rounded-full border border-gray-500 flex items-center justify-center text-[9px] opacity-70">?</span></div>
                     <div class="absolute bottom-full left-0 md:-left-16 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
                       進貨以外的營運費用 (如：國際運費、包材)。
                       <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：手動於「營業支出」記帳的項目 (依錢包分台/韓幣)。</span>
