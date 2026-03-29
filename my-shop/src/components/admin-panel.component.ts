@@ -2379,26 +2379,37 @@ export class AdminPanelComponent {
     event.target.src = 'https://placehold.co/100x100?text=No+Image'; 
   }
 
-// 📸 Google Drive 終極破圖修復器
-  getSafeDriveImage(url: string): string {
+// 📸 Google Drive 終極破圖修復器 (強化防呆版)
+  getSafeDriveImage(url: any): string {
     if (!url) return 'https://placehold.co/300x300?text=No+Image';
-    if (!url.includes('drive.google.com')) return url;
+    
+    // 🛡️ 防呆 1：如果傳進來的是物件 (例如買手系統可能存成 { url: '...' })
+    let safeUrl = '';
+    if (typeof url === 'object') {
+       safeUrl = url.url || url.link || url.src || '';
+    } else {
+       // 🛡️ 防呆 2：移除買手系統可能殘留的引號、陣列括號與多餘空白
+       safeUrl = String(url).replace(/['"\[\]]/g, '').trim(); 
+    }
+
+    if (!safeUrl) return 'https://placehold.co/300x300?text=No+Image';
+    if (!safeUrl.includes('drive.google.com')) return safeUrl;
 
     let fileId = '';
     // 破解格式 1: https://drive.google.com/file/d/ID/view
-    const match1 = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    const match1 = safeUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (match1) fileId = match1[1];
     
     // 破解格式 2: https://drive.google.com/uc?id=ID 或 export=view&id=ID
-    const match2 = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    const match2 = safeUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
     if (match2) fileId = match2[1];
 
     if (fileId) {
-      // 使用 Google 官方的 Thumbnail API，保證不破圖，sz=w1000 代表最高解析度 1000px
+      // 使用 Google 官方的 Thumbnail API
       return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
     }
     
-    return url;
+    return safeUrl;
   }
 
   activeTab = signal('dashboard');
@@ -3608,7 +3619,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   showReceiptModal = signal(false);
   viewReceiptImages = signal<string[]>([]);
   
-  // 🚀 核心升級：直接抓取資料庫裡的真實採購單，並依時間排序 (加上圖片格式防呆清洗)
+// 🚀 核心升級：直接抓取資料庫裡的真實採購單，並依時間排序 (加上圖片格式除垢清洗)
   purchaseList = computed(() => {
     const purchases = this.store.purchases();
     // 終極防呆：確保資料庫回傳的絕對是陣列，並過濾掉可能的壞檔
@@ -3621,23 +3632,33 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     if (end) list = list.filter((p: any) => new Date(p.date) <= new Date(end));
 
     return list.map((p: any) => {
-        // 🛡️ 核心修復：強制將買手系統傳來的文字，洗成標準陣列！
-        // 避免 Angular 把字串當成陣列切成單一字母 (h, t, t, p) 導致破圖
         let validImages: string[] = [];
         
+        // 🛡️ 洗淨買手系統傳來的各種奇葩格式
         if (Array.isArray(p.receiptImages)) {
-            validImages = p.receiptImages;
+            validImages = p.receiptImages.map((img: any) => {
+                if (typeof img === 'string') return img;
+                if (img && typeof img === 'object') return img.url || img.link || '';
+                return '';
+            }).filter((s: string) => s && typeof s === 'string' && s.includes('http'));
         } else if (typeof p.receiptImages === 'string' && p.receiptImages.trim() !== '') {
-            // 如果買手系統存成單一字串，自動用逗號拆分成陣列
-            validImages = p.receiptImages.split(',').map((s:string) => s.trim()).filter((s:string) => s.startsWith('http'));
-        } else if (p.receiptImage && typeof p.receiptImage === 'string') {
-            // 預防買手系統屬性名稱寫錯 (少寫一個 s)
-            validImages = [p.receiptImage];
-        } else if (p.imageUrl && typeof p.imageUrl === 'string') {
-            validImages = [p.imageUrl];
+            try {
+                const parsed = JSON.parse(p.receiptImages);
+                if (Array.isArray(parsed)) {
+                    validImages = parsed.map((s:any) => typeof s === 'object' ? (s.url || '') : String(s)).filter((s:string) => s.includes('http'));
+                }
+            } catch (e) {
+                validImages = p.receiptImages.split(',').filter((s:string) => s.includes('http'));
+            }
+        } else if (p.receiptImage) {
+            validImages = [typeof p.receiptImage === 'string' ? p.receiptImage : (p.receiptImage.url || '')];
+        } else if (p.imageUrl) {
+            validImages = [typeof p.imageUrl === 'string' ? p.imageUrl : (p.imageUrl.url || '')];
         }
         
-        // 覆蓋原本壞掉的屬性，輸出乾淨的陣列
+        // 徹底清除陣列殘留的引號與括號
+        validImages = validImages.map(s => String(s).replace(/['"\[\]]/g, '').trim());
+
         return { ...p, receiptImages: validImages };
 
     }).sort((a: any, b: any) => {
@@ -3646,7 +3667,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
          return timeB - timeA;
     });
   });
-
+  
   openReceipts(images: string[]) {
     this.viewReceiptImages.set(images || []);
     this.showReceiptModal.set(true);
