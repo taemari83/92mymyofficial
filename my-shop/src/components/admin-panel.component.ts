@@ -639,8 +639,31 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                      </div>
                                   </div>
                                </td>
-                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div><div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
-                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span><div class="text-right md:text-left">@if(u.tier === 'v1') { <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">V1.95折</span> }@else if(u.tier === 'v2') { <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-xs font-bold border border-yellow-200">V2.9折</span> }@else if(u.tier === 'v3') { <span class="bg-red-100 text-red-600 px-2 py-1 rounded-md text-xs font-bold border border-red-200">V3.85折</span> }@else if(u.tier === 'wholesale') { <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> }@else if(u.tier === 'employee') { <span class="bg-gray-800 text-white px-2 py-1 rounded-md text-xs font-bold border border-gray-700">內部員工</span> }@else { <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> }</div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">會員資訊</span><div class="text-right md:text-left"><div class="font-bold text-brand-900">{{ u.name }}</div>
+                               <div class="text-xs text-gray-400 font-mono">{{ u.phone?.trim() }}</div></div></td>
+                               <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100">
+                                  <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">等級</span>
+                                  <div class="text-right md:text-left">
+                                     @if (u.tier === 'v1') { 
+                                        <span class="bg-purple-100 text-purple-600 px-2 py-1 rounded-md text-xs font-bold border border-purple-200">VIP 1</span> 
+                                     }
+                                     @else if (u.tier === 'v2') { 
+                                        <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-xs font-bold border border-yellow-200">VIP 2</span> 
+                                     }
+                                     @else if (u.tier === 'v3') { 
+                                        <span class="bg-red-100 text-red-600 px-2 py-1 rounded-md text-xs font-bold border border-red-200">VIP 3</span> 
+                                     }
+                                     @else if (u.tier === 'wholesale') { 
+                                        <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">批發</span> 
+                                     }
+                                     @else if (u.tier === 'employee') { 
+                                        <span class="bg-gray-800 text-white px-2 py-1 rounded-md text-xs font-bold border border-gray-700">內部員工</span> 
+                                     }
+                                     @else { 
+                                        <span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">一般</span> 
+                                     }
+                                  </div>
+                               </td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 font-bold text-brand-900 md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">累積消費</span><div class="text-right">NT$ {{ calculateUserTotalSpend(u.id) | number }}</div></td>
                                <td class="p-4 flex justify-between items-center md:table-cell border-b md:border-none border-gray-100 text-brand-600 font-bold md:text-right"><span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">購物金</span><div class="text-right">{{ u.credits }}</div></td>
                                <td class="p-4 flex justify-end md:table-cell md:text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none"><button (click)="openUserModal(u)" class="text-xs font-bold text-gray-600 md:text-gray-400 hover:text-brand-900 border border-gray-200 hover:bg-white px-4 py-2 md:px-3 md:py-1 rounded-lg transition-colors bg-white md:bg-transparent shadow-sm md:shadow-none">編輯</button></td>
@@ -1521,9 +1544,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <label class="block text-xs font-bold text-gray-500 mb-1">會員等級</label> 
                       <select formControlName="tier" class="w-full p-3 border border-gray-200 rounded-xl bg-white"> 
                         <option value="general">一般會員</option>
-                        <option value="v1">V1 95折貴賓</option>
-                        <option value="v2">V2 9折貴賓</option>
-                        <option value="v3">V3 85折貴賓</option>
+                        <option value="v1">VIP 1</option>
+                        <option value="v2">VIP 2</option>
+                        <option value="v3">VIP 3</option>
                         <option value="wholesale">批發會員</option>
                         <option value="employee">內部員工</option>
                       </select> 
@@ -3745,18 +3768,30 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   
   exportCustomersCSV() { 
      const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
+     
+     // 👇 幫你做了一個等級翻譯機
+     const tierMap: any = {
+        'v1': 'VIP 1',
+        'v2': 'VIP 2',
+        'v3': 'VIP 3',
+        'vip': 'VIP',
+        'wholesale': '批發',
+        'employee': '內部員工',
+        'general': '一般'
+     };
+
      const rows = this.filteredUsers().map((u: User) => [ 
         `\t${this.formatMemberNo(u)}`, 
         `\t${u.id}`, 
         u.name, 
         `\t${u.phone || ''}`, 
-        u.tier === 'vip' ? 'VIP' : (u.tier === 'wholesale' ? '批發' : '一般'), 
+        tierMap[u.tier] || '一般', // 👈 這裡換成翻譯機，匯出的 Excel 就會超級精準！
         this.calculateUserTotalSpend(u.id), 
         u.credits, 
         u.birthday || '' 
      ]); 
      this.downloadCSV(`會員名單_${new Date().toISOString().slice(0,10)}`, headers, rows); 
-  } 
+  }
 
 exportInventoryCSV() { 
       const headers = ['SKU貨號', '商品名稱', '分類', '次分類', '庫存數量', '狀態']; 
