@@ -4696,48 +4696,36 @@ submitProduct() {
   // 👇 新增：上傳到 Google Drive 的專屬函式 (升級 Promise 版)
   // 👇 究極防彈版：強效壓縮 + 拔除強制中斷器 + 防呆裝甲
   async uploadExpenseImage(event: any) {
-    const file = event.target.files[0];
+    const inputElement = event.target; // 🛡️ 提前保存元素！防止非同步操作後 event 遺失導致畫面卡死
+    const file = inputElement.files[0];
     if (!file) return;
     
     this.isUploadingExpImage.set(true);
-    this.cdr.markForCheck(); // 確保畫面立刻顯示轉圈圈
+    this.cdr.markForCheck();
 
     // ⚠️ 這是你上傳收據用的 GAS 網址
     const DRIVE_GAS_URL = 'https://script.google.com/macros/s/AKfycbzytxzY1L85rbpkFUgRsQz0g1Djt_Z3hxzvrK8a__aXZ3DBJgOz43tZ6EGEDa_OEd3K-A/exec';
 
     try {
-      // 1. 圖片壓縮引擎 (把大檔壓小，加快上傳速度)
+      // 1. 圖片壓縮引擎
       const base64Data: string = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e: any) => {
           const resultStr = e.target.result;
           if (typeof resultStr !== 'string') return reject('讀取失敗');
-
           const img = new Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_SIZE = 1000; // 解析度限制在 1000，對收據來說絕對夠清楚，而且傳超快
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height && width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
-            } else if (height > width && height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-
-            canvas.width = width;
-            canvas.height = height;
+            const MAX_SIZE = 1000;
+            let width = img.width; let height = img.height;
+            if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+            else if (height > width && height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+            canvas.width = width; canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx?.drawImage(img, 0, 0, width, height);
-
-            // 壓縮成 60% 畫質的 JPEG，檔案會變得非常小！
             const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
             const base64 = dataUrl.split(',')[1];
-            if (!base64) reject('壓縮失敗');
-            else resolve(base64);
+            if (!base64) reject('壓縮失敗'); else resolve(base64);
           };
           img.onerror = () => reject('圖片轉換失敗');
           img.src = resultStr;
@@ -4746,28 +4734,25 @@ submitProduct() {
         reader.readAsDataURL(file);
       });
 
-      // 2. 抓取檔名 (防呆機制：如果沒填，用未命名)
+      // 2. 抓取檔名
       let customFileName = this.expenseForm.get('item')?.value?.trim();
       if (!customFileName) customFileName = '未命名支出收據';
-      
       const ext = file.name ? file.name.split('.').pop() : 'jpg';
       const finalFileName = `${customFileName}_${Date.now()}.${ext}`;
 
-      // 改用 URLSearchParams 將資料轉為標準的網頁表單格式
-      const formData = new URLSearchParams();
-      formData.append('filename', finalFileName);
+      // ✅ 3. 改用原生 FormData 傳輸 (與買手系統完全一致，速度最快且不卡網域)
+      const formData = new FormData();
+      formData.append('fileName', finalFileName);
       formData.append('mimeType', 'image/jpeg');
-      formData.append('base64', base64Data);
+      formData.append('fileData', base64Data);
 
-      // 3. 發送至 GAS
+      // 4. 發送至 GAS (拔除手動 Headers，讓瀏覽器自動完美設定 Boundary)
       const response = await fetch(DRIVE_GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, // 改變 Content-Type
-        body: formData.toString(), // 傳送 URL 編碼後的字串
-        redirect: 'follow'
+        body: formData
       });
 
-      // 4. 🛡️ 防彈裝甲：接收與解析
+      // 5. 接收與解析
       const rawText = await response.text();
       try {
          const result = JSON.parse(rawText);
@@ -4778,18 +4763,17 @@ submitProduct() {
          }
       } catch (jsonErr) {
          console.warn("Google 回傳非預期格式:", rawText);
-         // 若發生跨網域阻擋導致解析失敗，強制放行並解除按鈕鎖定！
          alert('⚠️ 照片已成功發送至 Google Drive！\n\n系統已為您解除鎖定，請直接點擊「確認記帳」送出即可。');
       }
 
-    } catch(e: any) { 
+    } catch(e: any) {
       console.error("照片壓縮/上傳發生錯誤：", e);
-      alert('❌ 網路處理失敗：網路連線中斷，或圖片格式不符。'); 
+      alert('❌ 網路處理失敗：網路連線中斷，或圖片格式不符。');
     } finally {
-      // 💯 無論發生什麼事，絕對會執行這段，把按鈕解鎖！
+      // 💯 無論如何必定執行，絕對不再卡死 UI
       this.isUploadingExpImage.set(false);
-      event.target.value = ''; 
-      this.cdr.markForCheck(); // 🔥 強制喚醒 Angular 更新畫面
+      inputElement.value = ''; // 🛡️ 使用提前保存好的 inputElement 就不會報錯
+      this.cdr.markForCheck(); 
     }
   }
 
