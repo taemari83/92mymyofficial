@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, computed, effect, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { StoreService, Product, Order, User, StoreSettings, CartItem } from '../services/store.service';
@@ -1869,69 +1869,83 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 <button (click)="closeExpenseModal()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300">✕</button>
               </div>
               <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
-                <form [formGroup]="expenseForm" class="space-y-4">
+<form [formGroup]="expenseForm" class="space-y-5">
                   
                   <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 mb-2">
                      <label class="block text-xs font-bold text-gray-500 mb-2">收據/證明照片 (選填)</label>
-                     <div class="flex items-center gap-3">
+                     <div class="flex flex-col sm:flex-row items-center gap-3">
                         @if(expenseForm.get('imageUrl')?.value) {
-                           <div class="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 relative group shrink-0">
+                           <div class="w-full sm:w-20 h-32 sm:h-20 rounded-lg overflow-hidden border border-gray-200 relative group shrink-0">
                               <img [src]="expenseForm.get('imageUrl')?.value" class="w-full h-full object-cover">
                               <button type="button" (click)="expenseForm.patchValue({imageUrl: ''})" class="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">移除</button>
                            </div>
                         }
-                        <label class="flex-1 cursor-pointer px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-brand-300 transition-colors shadow-sm flex items-center justify-center gap-2">
-                           @if(isUploadingExpImage()) { <span class="animate-pulse">⏳ 傳送至 Google Drive 中...</span> }
+                        <label class="w-full cursor-pointer px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 hover:border-brand-300 transition-colors shadow-sm flex items-center justify-center gap-2">
+                           @if(isUploadingExpImage()) { <span class="animate-pulse">⏳ 壓縮上傳中...</span> }
                            @else { <span>📸 點擊上傳收據相片</span> }
                            <input type="file" accept="image/*" class="hidden" (change)="uploadExpenseImage($event)" [disabled]="isUploadingExpImage()">
                         </label>
                      </div>
                   </div>
 
-                  <div class="grid grid-cols-2 gap-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label class="block text-xs font-bold text-gray-500 mb-1">日期</label>
                       <input type="date" formControlName="date" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold">
                     </div>
                     <div>
                       <label class="block text-xs font-bold text-gray-500 mb-1">支出類別</label>
-                      <input type="text" list="expenseCatList" formControlName="category" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white" placeholder="手填新類別">
-                      <datalist id="expenseCatList">
-                        <option value="包材費">包材費</option>
-                        <option value="國際貨運費">國際貨運費</option>
-                        <option value="機票費">機票/行李</option>
-                        <option value="海關稅">海關稅金</option>
-                        <option value="行銷抽獎">行銷抽獎</option>
-                        <option value="其他雜支">其他雜支</option>
-                      </datalist>
+                      <div class="flex flex-col gap-2">
+                         <select [ngModel]="expenseForm.get('category')?.value" (ngModelChange)="onExpCategoryChange($event)" [ngModelOptions]="{standalone: true}" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20fill=%22none%22%20viewBox=%220%200%2020%2020%22%20stroke=%22%236b7280%22%3E%3Cpath%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20stroke-width=%222%22%20d=%22M5%207l5%205%205-5%22/%3E%3C/svg%3E')] bg-[length:1.25rem_1.25rem] bg-[position:right_0.5rem_center] bg-no-repeat appearance-none pr-8">
+                            <option value="" disabled selected>請選擇類別...</option>
+                            <option value="包材費">包材費</option>
+                            <option value="國際貨運費">國際貨運費</option>
+                            <option value="機票費">機票/行李</option>
+                            <option value="海關稅">海關稅金</option>
+                            <option value="行銷抽獎">行銷抽獎</option>
+                            <option value="其他雜支">其他雜支</option>
+                            @for(cat of uniqueExpenseCategories(); track cat) {
+                               @if(cat !== '商品採購' && cat !== '儲值' && !['包材費','國際貨運費','機票費','海關稅','行銷抽獎','其他雜支'].includes(cat)) {
+                                  <option [value]="cat">{{ cat }}</option>
+                               }
+                            }
+                            <option value="NEW">➕ 自訂新類別...</option>
+                         </select>
+                         @if(isAddingNewExpCategory()) {
+                            <input type="text" formControlName="category" placeholder="輸入自訂類別" class="w-full p-3 border border-brand-300 rounded-xl bg-white focus:outline-none focus:border-brand-500 animate-fade-in text-sm font-bold shadow-inner">
+                         }
+                      </div>
                     </div>
                   </div>
+                  
                   <div>
                     <label class="block text-xs font-bold text-gray-500 mb-1">支出項目 (品項/摘要)</label>
                     <input type="text" formControlName="item" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold" placeholder="例如：打包破壞袋500個">
                   </div>
-                  <div class="grid grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-100">
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50 p-4 rounded-xl border border-red-100">
                     <div>
                       <label class="block text-xs font-bold text-red-600 mb-1">扣款幣別 (錢包)</label>
-                      <select formControlName="currency" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 text-sm font-bold bg-white cursor-pointer">
-                      <option value="" disabled selected>請選擇幣別...</option>
-                      <option value="TWD">台幣 (TWD)</option>
-                      <option value="KRW">韓元 (KRW)</option>
-                      <option value="JPY">日幣 (JPY)</option>
-                      <option value="CNY">人民幣 (CNY)</option>
-                      <option value="THB">泰銖 (THB)</option>
-                      <option value="USD">美金 (USD)</option>
-                  </select>
+                      <select formControlName="currency" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 text-sm font-bold bg-white cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20fill=%22none%22%20viewBox=%220%200%2020%2020%22%20stroke=%22%23ef4444%22%3E%3Cpath%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20stroke-width=%222%22%20d=%22M5%207l5%205%205-5%22/%3E%3C/svg%3E')] bg-[length:1.25rem_1.25rem] bg-[position:right_0.5rem_center] bg-no-repeat appearance-none pr-8 text-red-800">
+                        <option value="" disabled selected>請選擇幣別...</option>
+                        <option value="TWD">台幣 (TWD)</option>
+                        <option value="KRW">韓元 (KRW)</option>
+                        <option value="JPY">日幣 (JPY)</option>
+                        <option value="CNY">人民幣 (CNY)</option>
+                        <option value="THB">泰銖 (THB)</option>
+                        <option value="USD">美金 (USD)</option>
+                      </select>
                     </div>
                     <div>
                       <label class="block text-xs font-bold text-red-600 mb-1">金額</label>
-                      <input type="number" formControlName="amount" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 text-lg font-black text-red-600" placeholder="0">
+                      <input type="number" formControlName="amount" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 text-xl font-black text-red-600" placeholder="0">
                     </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-4">
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label class="block text-xs font-bold text-gray-500 mb-1">付款人</label>
-                      <select formControlName="payer" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white cursor-pointer shadow-sm">
+                      <select formControlName="payer" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 text-sm font-bold bg-white cursor-pointer shadow-sm bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20fill=%22none%22%20viewBox=%220%200%2020%2020%22%20stroke=%22%236b7280%22%3E%3Cpath%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20stroke-width=%222%22%20d=%22M5%207l5%205%205-5%22/%3E%3C/svg%3E')] bg-[length:1.25rem_1.25rem] bg-[position:right_0.5rem_center] bg-no-repeat appearance-none pr-8">
                         <option value="" disabled selected>請選擇付款人...</option>
                         <option value="公司">🏢 公司公積金</option>
                         <option value="藝辰">👧🏻 藝辰</option>
@@ -1947,14 +1961,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   </div>
 
                   <label class="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-200 cursor-pointer mt-4">
-                    <input type="checkbox" formControlName="isHistorical" class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500">
+                    <input type="checkbox" formControlName="isHistorical" class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 shrink-0">
                     <div class="flex flex-col">
-                      <span class="font-bold text-blue-900">純紀錄 / 歷史補登</span>
+                      <span class="font-bold text-blue-900 text-sm">純紀錄 / 歷史補登</span>
                       <span class="text-[10px] text-blue-600">打勾後，這筆支出僅列入報表，不會扣除資金帳戶餘額</span>
                     </div>
                   </label>
-                </form>
-              </div>
+                </form>              </div>
               <div class="p-6 border-t border-gray-100 bg-white shrink-0">
                 <button (click)="submitExpense()" [disabled]="expenseForm.invalid || isUploadingExpImage()" class="w-full py-3 rounded-xl bg-brand-900 text-white font-bold text-lg hover:bg-black transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                   {{ editingExpense() ? '確認儲存修改' : '確認記帳並扣除餘額' }}
@@ -2178,6 +2191,7 @@ export class AdminPanelComponent {
   store = inject(StoreService);
   sanitizer = inject(DomSanitizer);
   fb: FormBuilder = inject(FormBuilder);
+  cdr = inject(ChangeDetectorRef); // 👈 新增這行：畫面強制更新引擎
   now = new Date();
 // 🧠 統一取得「真實底價匯率」的大腦 (供報表預估成本使用)
   getRealExchangeRate(p: any): number {
@@ -2205,6 +2219,18 @@ export class AdminPanelComponent {
 
   expenseSearch = signal('');
   expenseCategoryFilter = signal('all');
+  // 👇 新增：處理自訂類別的開關
+  isAddingNewExpCategory = signal(false);
+  onExpCategoryChange(val: string) {
+     if (val === 'NEW') {
+        this.isAddingNewExpCategory.set(true);
+        this.expenseForm.patchValue({ category: '' });
+     } else {
+        this.isAddingNewExpCategory.set(false);
+        this.expenseForm.patchValue({ category: val });
+     }
+  }
+
   expenseStart = signal(''); // 👈 新增：營業支出開始日
   expenseEnd = signal('');   // 👈 新增：營業支出結束日
 
@@ -4635,12 +4661,14 @@ submitProduct() {
 
   openExpenseModal() {
     this.editingExpense.set(null);
+    this.isAddingNewExpCategory.set(false); // 👈 加上這行防呆
     this.expenseForm.reset({ date: new Date().toISOString().slice(0, 10), category: '', currency: '', payer: '', imageUrl: '', isHistorical: false });
     this.showExpenseModal.set(true);
   }
 
   editExpense(e: any) {
     this.editingExpense.set(e);
+    this.isAddingNewExpCategory.set(false); // 👈 加上這行防呆
     this.expenseForm.patchValue(e);
     this.showExpenseModal.set(true);
   }
@@ -4670,40 +4698,54 @@ submitProduct() {
     const file = event.target.files[0];
     if (!file) return;
     this.isUploadingExpImage.set(true);
+    this.cdr.markForCheck(); // 確保畫面立刻顯示轉圈圈
 
-    // ⚠️ 檢查點 1：請確認這串網址，是你「最新發布」的 GAS 網址！
     const DRIVE_GAS_URL = 'https://script.google.com/macros/s/AKfycbzytxzY1L85rbpkFUgRsQz0g1Djt_Z3hxzvrK8a__aXZ3DBJgOz43tZ6EGEDa_OEd3K-A/exec';
 
     try {
-      // 1. 使用 Promise 等待檔案讀取完成
+      // 1. 圖片壓縮引擎 (把大檔壓小，加快上傳速度)
       const base64Data: string = await new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (e: any) => resolve(e.target.result.split(',')[1]);
-        reader.onerror = error => reject(error);
+        reader.onload = (e: any) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_SIZE = 1200;
+            let width = img.width, height = img.height;
+            if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+            else if (height > width && height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
+          };
+          img.onerror = () => reject('圖片轉換失敗');
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject('檔案讀取失敗');
         reader.readAsDataURL(file);
       });
 
-      // 💡 取得「支出項目」作為檔名，如果沒填就給個預設值
-      let customFileName = this.expenseForm.get('item')?.value?.trim();
-      if (!customFileName) customFileName = '未命名支出收據';
-      
-      // 抓取副檔名，並加上時間戳記防止雲端檔名重複衝突
-      const ext = file.name.split('.').pop();
+      let customFileName = this.expenseForm.get('item')?.value?.trim() || '未命名支出收據';
+      const ext = file.name ? file.name.split('.').pop() : 'jpg';
       const finalFileName = `${customFileName}_${Date.now()}.${ext}`;
 
-      // 2. 準備傳送資料 (把 filename 替換成我們自訂的 finalFileName)
-      const payload = { filename: finalFileName, mimeType: file.type, base64: base64Data };
+      const payload = { filename: finalFileName, mimeType: 'image/jpeg', base64: base64Data };
 
-      // 3. 發送至 GAS
+      // 🔥 終極防護：設定 15 秒強制超時，防止瀏覽器無限等待！
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch(DRIVE_GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal // 套用超時中斷器
       });
+      
+      clearTimeout(timeoutId); // 成功回傳就解除定時器
 
       const result = await response.json();
-      
-      // 4. 判斷結果
       if (result.success) {
         this.expenseForm.patchValue({ imageUrl: result.url });
       } else {
@@ -4712,11 +4754,15 @@ submitProduct() {
 
     } catch(e: any) { 
       console.error("照片上傳發生錯誤：", e);
-      alert('❌ 網路連線錯誤，或是 Google 權限遭拒絕，請按 F12 查看控制台錯誤訊息。'); 
+      if (e.name === 'AbortError') {
+         alert('⚠️ 上傳讀取超時！\n\n但您的照片可能已經成功存入 Google Drive。\n系統已為您解除按鈕鎖定，您可以直接按下「確認記帳」送出表單。');
+      } else {
+         alert('❌ 網路處理失敗：請檢查網路連線。'); 
+      }
     } finally {
-      // 無論成功或失敗，都一定會執行這裡，解除轉圈圈動畫！
       this.isUploadingExpImage.set(false);
       event.target.value = ''; 
+      this.cdr.markForCheck(); // 🔥 強制喚醒 Angular 更新畫面，解開按鈕鎖定！
     }
   }
 
