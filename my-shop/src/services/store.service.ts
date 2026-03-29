@@ -120,7 +120,7 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
     items.forEach(item => { original += item.price * item.quantity; });
     const bulkAmount = this.cartBulkDiscount();
     const user = this.currentUser();
-    const vipDiscounts = this.settings().vipDiscounts || { v1: 0.95, v2: 0.9, v3: 0.85 };
+    const vipDiscounts = this.settings().vipDiscounts || { v1: 0.98, v2: 0.95, v3: 0.92 };
     const userTier = user?.tier || 'general';
     
     // 💡 排除批發與員工，避免重複打折

@@ -157,7 +157,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                <div class="p-3 sm:p-5 flex-1 flex flex-col">
                  <div class="flex-1">
                     <h3 class="font-bold text-brand-900 text-sm sm:text-lg leading-tight mb-1 sm:mb-2 line-clamp-2">{{ product.name }}</h3>
-                    <p class="text-[10px] sm:text-sm text-gray-400 line-clamp-1 sm:line-clamp-2 mb-2 sm:mb-4">{{ product.note || 'Winter Special Selection' }}</p>
+                    <p class="text-[10px] sm:text-sm text-gray-400 line-clamp-1 sm:line-clamp-2 mb-2 sm:mb-4">{{ product.note }}</p>
                  </div>
 
                  <div class="flex items-end justify-between mt-auto">
@@ -705,10 +705,18 @@ export class ShopFrontComponent {
   
   getTierBadge(p: Product): string {
      const user = this.store.currentUser();
-     // 💡 把標籤改成「預告折扣」，讓客人/員工有期待感
-     if (user?.tier === 'employee') return '結帳享員工價';
-     if (user?.tier === 'wholesale' && p.priceWholesale > 0) return '結帳享批發價';
-     if (user?.tier === 'vip' && p.priceVip > 0) return '結帳享 VIP 價';
+     if (!user) return '';
+
+     // 💡 員工與批發
+     if (user.tier === 'employee') return '結帳享員工價';
+     if (user.tier === 'wholesale' && p.priceWholesale > 0) return '結帳享批發價';
+     
+     // 🔥 修復這裡：精準抓取 v1, v2, v3 給予專屬期待感標籤，且不需要另外設定單品 VIP 價也會顯示！
+     if (user.tier === 'v1') return '結帳享 VIP 1 專屬價';
+     if (user.tier === 'v2') return '結帳享 VIP 2 專屬價';
+     if (user.tier === 'v3') return '結帳享 VIP 3 專屬價';
+     if (user.tier === 'vip') return '結帳享 VIP 價';
+
      return '';
   }
 

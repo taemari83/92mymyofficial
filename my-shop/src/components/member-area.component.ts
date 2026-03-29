@@ -46,9 +46,9 @@ import { StoreService } from '../services/store.service';
                   'bg-gray-800 text-white': storeService.currentUser()?.tier === 'employee',
                   'bg-gray-100 text-gray-800': storeService.currentUser()?.tier === 'general'
                 }">
-                @if(storeService.currentUser()?.tier === 'v1') { V1.95折貴賓 }
-                @else if(storeService.currentUser()?.tier === 'v2') { V2.9折貴賓 }
-                @else if(storeService.currentUser()?.tier === 'v3') { V3.85折貴賓 }
+                @if(storeService.currentUser()?.tier === 'v1') { VIP 1 }
+                @else if(storeService.currentUser()?.tier === 'v2') { VIP 2 }
+                @else if(storeService.currentUser()?.tier === 'v3') { VIP 3 }
                 @else if(storeService.currentUser()?.tier === 'wholesale') { 批發會員 }
                 @else if(storeService.currentUser()?.tier === 'employee') { 內部員工 }
                 @else { 一般會員 }
