@@ -127,8 +127,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="absolute inset-0 bg-black/20 flex items-center justify-center"><span class="text-white text-3xl drop-shadow-md">▶</span></div>
                  } @else if(isEmbedVideo(product.image)) {
                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
-                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-full top-0 left-0 md:-top-[60px] md:h-[calc(100%+120px)] md:scale-[1.15] origin-center' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
-                    </div>
+                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700"></video>
                  } @else {
@@ -192,7 +191,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="absolute inset-0 bg-black/20 flex items-center justify-center"><span class="text-white text-2xl drop-shadow-md">▶</span></div>
                  } @else if(isEmbedVideo(product.image)) {
                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
-                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-full top-0 left-0 md:-top-[60px] md:h-[calc(100%+120px)] md:scale-[1.15] origin-center' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                       <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                     </div>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700"></video>
@@ -261,7 +260,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           
           <div class="bg-white w-full h-full md:max-w-5xl md:rounded-[2.5rem] md:shadow-2xl overflow-hidden animate-slide-up md:animate-fade-in md:h-auto md:max-h-[90vh] flex flex-col md:flex-row relative">
             
-            <div class="md:w-1/2 bg-white relative group flex flex-col h-[60%] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
+            <div class="md:w-1/2 bg-white relative group flex flex-col h-[45%] md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-gray-100">
                
                <div class="flex-1 relative overflow-hidden bg-gray-50 p-2 md:p-4">
                   @if(isYT(activeImage())) {
@@ -270,7 +269,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      </div>
                   } @else if(isEmbedVideo(activeImage())) {
                      <div class="absolute inset-0 w-full h-full overflow-hidden bg-black">
-                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-full inset-0 pointer-events-auto md:h-[calc(100%+120px)] md:-top-[60px] md:scale-[1.15] md:origin-center' : 'absolute inset-0 w-full h-full pointer-events-auto'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                        <iframe [src]="getSafeEmbedUrl(activeImage())" [class]="isIG(activeImage()) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0 pointer-events-auto' : 'absolute inset-0 w-full h-full pointer-events-auto'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
                      </div>
                   } @else if(isVideo(activeImage())) {
                      <video [src]="activeImage()" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-contain"></video>
