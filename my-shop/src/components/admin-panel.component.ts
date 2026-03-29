@@ -4732,9 +4732,9 @@ submitProduct() {
 
       const payload = { filename: finalFileName, mimeType: 'image/jpeg', base64: base64Data };
 
-      // 🔥 終極防護：設定 15 秒強制超時，防止瀏覽器無限等待！
+      // 🔥 終極防護：設定 60 秒強制超時，給 Google Drive 充足的時間處理！
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
 
       const response = await fetch(DRIVE_GAS_URL, {
         method: 'POST',
