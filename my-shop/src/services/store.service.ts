@@ -470,7 +470,7 @@ settings = toSignal(
         birthdayGiftGeneral: 100, 
         birthdayGiftVip: 500, 
         categoryCodes: {}, 
-        vipDiscounts: { v1: 0.95, v2: 0.9, v3: 0.85 }, // 👈 第一處：Firebase 沒資料時的預設值
+        vipDiscounts: { v1: 0.98, v2: 0.95, v3: 0.92 }, // 👈 第一處：Firebase 沒資料時的預設值
         promoCodes: [{ code: '92VIP', type: 'amount', value: 100, minSpend: 1000, active: true, note: '歡慶上線滿千折百' }], 
         paymentMethods: { cash: false, bankTransfer: true, cod: true }, 
         shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } 
@@ -481,7 +481,7 @@ settings = toSignal(
         birthdayGiftGeneral: 100, 
         birthdayGiftVip: 500, 
         categoryCodes: {}, 
-        vipDiscounts: { v1: 0.95, v2: 0.9, v3: 0.85 }, // 👈 第二處：畫面剛載入時的初始值
+        vipDiscounts: { v1: 0.98, v2: 0.95, v3: 0.92 }, // 👈 第二處：畫面剛載入時的初始值
         promoCodes: [{ code: '92VIP', type: 'amount', value: 100, minSpend: 1000, active: true, note: '歡慶上線滿千折百' }], 
         paymentMethods: { cash: false, bankTransfer: true, cod: true }, 
         shipping: { freeThreshold: 2000, methods: { meetup: {enabled: true, fee: 0}, myship: {enabled: true, fee: 35}, family: {enabled: true, fee: 39}, delivery: {enabled: false, fee: 100} } } 
