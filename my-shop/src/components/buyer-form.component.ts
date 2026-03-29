@@ -609,9 +609,8 @@ export class BuyerFormComponent {
     
     try {
       // 🚀 正式寫入資料庫，並觸發叫貨清單數量的自動扣減！
-      await this.store.addPurchaseBatch(finalData);
-      
-      alert(`✅ 整筆單據回報成功！\n資料已傳送至後台「採購總帳」。\n實際總扣款: NT$ ${finalData.totalLocalCost}`);
+      const currencySymbol = finalData.currency === 'KRW' ? '₩' : (finalData.currency === 'TWD' ? 'NT$' : finalData.currency);
+      alert(`✅ 整筆單據回報成功！\n資料已傳送至後台「採購總帳」。\n實際總扣款: ${currencySymbol} ${finalData.totalLocalCost}`);
       
       // 清空表單
       this.searchProductText = '';
