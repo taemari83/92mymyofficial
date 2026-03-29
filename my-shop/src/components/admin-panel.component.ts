@@ -18,11 +18,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         </div>
       }
 
-      @if (isSidebarOpen()) {
-        <div class="fixed inset-0 bg-black/40 z-[30] md:hidden backdrop-blur-sm transition-opacity" (click)="isSidebarOpen.set(false)"></div>
+     @if (isSidebarOpen()) {
+        <div class="fixed inset-0 bg-black/40 z-[80] md:hidden backdrop-blur-sm transition-opacity" (click)="isSidebarOpen.set(false)"></div>
       }
 
-      <aside class="fixed inset-y-0 left-0 z-[40] w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-2xl transform transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none" [class.-translate-x-full]="!isSidebarOpen()">
+      <aside class="fixed inset-y-0 left-0 z-[90] w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-2xl transform transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none" [class.-translate-x-full]="!isSidebarOpen()">
         <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start mt-6 md:mt-0">
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
         </div>
