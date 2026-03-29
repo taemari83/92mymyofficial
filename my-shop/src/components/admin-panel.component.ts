@@ -4183,10 +4183,18 @@ async handleFileSelect(event: any) {
     const files = event.target.files; 
     if (!files || files.length === 0) return; 
 
-    // 如果一次選了多張，跳出溫馨小提示讓使用者知道正在處理
+    // 👇 替換成這段：不阻塞的浮動提示 👇
     if (files.length > 2) {
-      alert(`⏳ 準備上傳 ${files.length} 張圖片到雲端，請稍候幾秒鐘...`);
+      if (typeof document !== 'undefined') {
+         const div = document.createElement('div');
+         div.className = 'fixed top-10 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl z-[120] text-sm font-bold animate-fade-in flex items-center gap-2';
+         div.innerHTML = `<span>⏳</span> 準備上傳 ${files.length} 張圖片，請稍候...`;
+         document.body.appendChild(div);
+         // 3 秒後自動消失
+         setTimeout(() => div.remove(), 3000);
+      }
     }
+    // 👆 替換到這裡 👆
 
     // 🛡️ 升級：你的專屬金鑰軍火庫！(已更新為最新的 5 把金鑰)
     const apiKeys = [
