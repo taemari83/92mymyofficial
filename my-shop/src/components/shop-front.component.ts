@@ -128,6 +128,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  } @else if(isEmbedVideo(product.image)) {
                     <div class="absolute inset-0 w-full h-full overflow-hidden bg-black pointer-events-none">
                        <iframe [src]="getSafeEmbedUrl(product.image)" [class]="isIG(product.image) ? 'absolute w-full h-[calc(100%+140px)] -top-[70px] left-0' : 'absolute inset-0 w-full h-full'" frameborder="0" allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                    </div>
                  } @else if(isVideo(product.image)) {
                     <video [src]="product.image" autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700"></video>
                  } @else {
