@@ -3608,11 +3608,11 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   showReceiptModal = signal(false);
   viewReceiptImages = signal<string[]>([]);
   
-  // 🚀 核心升級：直接抓取資料庫裡的真實採購單，並依時間排序
-  purchaseList = computed(() => {
+  // 🚀 核心升級：直接抓取資料庫裡的真實採購單，並依時間排序 (加上圖片格式防呆清洗)
+  purchaseList = computed(() => {
     const purchases = this.store.purchases();
-    // 終極防呆：確保資料庫回傳的絕對是陣列，並過濾掉可能的壞檔
-    if (!Array.isArray(purchases)) return [];
+    // 終極防呆：確保資料庫回傳的絕對是陣列，並過濾掉可能的壞檔
+    if (!Array.isArray(purchases)) return [];
     let list = [...purchases].filter(p => !!p);
     
     const start = this.purchaseStart();
@@ -3620,7 +3620,27 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     if (start) list = list.filter((p: any) => new Date(p.date) >= new Date(start));
     if (end) list = list.filter((p: any) => new Date(p.date) <= new Date(end));
 
-    return list.sort((a: any, b: any) => {
+    return list.map((p: any) => {
+        // 🛡️ 核心修復：強制將買手系統傳來的文字，洗成標準陣列！
+        // 避免 Angular 把字串當成陣列切成單一字母 (h, t, t, p) 導致破圖
+        let validImages: string[] = [];
+        
+        if (Array.isArray(p.receiptImages)) {
+            validImages = p.receiptImages;
+        } else if (typeof p.receiptImages === 'string' && p.receiptImages.trim() !== '') {
+            // 如果買手系統存成單一字串，自動用逗號拆分成陣列
+            validImages = p.receiptImages.split(',').map((s:string) => s.trim()).filter((s:string) => s.startsWith('http'));
+        } else if (p.receiptImage && typeof p.receiptImage === 'string') {
+            // 預防買手系統屬性名稱寫錯 (少寫一個 s)
+            validImages = [p.receiptImage];
+        } else if (p.imageUrl && typeof p.imageUrl === 'string') {
+            validImages = [p.imageUrl];
+        }
+        
+        // 覆蓋原本壞掉的屬性，輸出乾淨的陣列
+        return { ...p, receiptImages: validImages };
+
+    }).sort((a: any, b: any) => {
          const timeA = new Date(a?.createdAt || 0).getTime() || 0;
          const timeB = new Date(b?.createdAt || 0).getTime() || 0;
          return timeB - timeA;
