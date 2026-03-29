@@ -1876,7 +1876,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <div class="flex flex-col sm:flex-row items-center gap-3">
                         @if(expenseForm.get('imageUrl')?.value) {
                            <div class="w-full sm:w-20 h-32 sm:h-20 rounded-lg overflow-hidden border border-gray-200 relative group shrink-0">
-                              <img [src]="expenseForm.get('imageUrl')?.value" class="w-full h-full object-cover">
+                              <img [src]="getSafeDriveImage(expenseForm.get('imageUrl')?.value)" class="w-full h-full object-cover">
                               <button type="button" (click)="expenseForm.patchValue({imageUrl: ''})" class="absolute inset-0 bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">移除</button>
                            </div>
                         }
@@ -4753,13 +4753,17 @@ submitProduct() {
       const ext = file.name ? file.name.split('.').pop() : 'jpg';
       const finalFileName = `${customFileName}_${Date.now()}.${ext}`;
 
-      const payload = { filename: finalFileName, mimeType: 'image/jpeg', base64: base64Data };
+      // 改用 URLSearchParams 將資料轉為標準的網頁表單格式
+      const formData = new URLSearchParams();
+      formData.append('filename', finalFileName);
+      formData.append('mimeType', 'image/jpeg');
+      formData.append('base64', base64Data);
 
-      // 3. 發送至 GAS (🔥 注意：已經完全拔除 AbortController，強制跟隨轉址)
+      // 3. 發送至 GAS
       const response = await fetch(DRIVE_GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, // 改變 Content-Type
+        body: formData.toString(), // 傳送 URL 編碼後的字串
         redirect: 'follow'
       });
 
