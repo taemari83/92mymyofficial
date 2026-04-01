@@ -688,6 +688,29 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
         @if (activeTab() === 'accounting') {
           <div class="space-y-6 w-full">
+            
+            <div class="bg-white p-4 sm:p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 w-full animate-fade-in">
+              <div class="flex items-center gap-2 flex-wrap w-full xl:w-auto">
+                <span class="text-sm font-bold text-gray-500 shrink-0 hidden sm:block">報表區間:</span>
+                <div class="flex gap-1 bg-gray-50 p-1 rounded-xl overflow-x-auto w-full sm:w-auto custom-scrollbar">
+                  @for(range of [{id:'today', label:'今日'}, {id:'week', label:'本週'}, {id:'month', label:'本月'}, {id:'year', label:'今年'}, {id:'all', label:'全部'}]; track range.id) {
+                    <button (click)="accountingRange.set(range.id); accountingCustomStart.set(''); accountingCustomEnd.set('');"
+                            [class.text-brand-900]="accountingRange() === range.id"
+                            [class.bg-white]="accountingRange() === range.id"
+                            [class.shadow-sm]="accountingRange() === range.id"
+                            class="px-4 py-1.5 rounded-lg text-sm font-bold border border-transparent text-gray-500 transition-all whitespace-nowrap flex-1 sm:flex-none">
+                       {{ range.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+              <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 w-full xl:w-auto shadow-inner">
+                <span class="text-xs text-gray-400 font-bold whitespace-nowrap hidden sm:block">自訂:</span>
+                <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event); accountingRange.set('custom')" class="bg-transparent text-sm font-bold text-gray-700 outline-none flex-1 xl:w-36 cursor-pointer">
+                <span class="text-gray-300">-</span>
+                <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event); accountingRange.set('custom')" class="bg-transparent text-sm font-bold text-gray-700 outline-none flex-1 xl:w-36 cursor-pointer">
+              </div>
+            </div>
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">               
                <div class="col-span-2 lg:col-span-2 bg-blue-50 p-5 rounded-[2rem] border border-blue-200 shadow-sm relative z-10 hover:z-[60] transition-all">
                  <div class="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none"><div class="absolute -right-2 -bottom-2 text-6xl opacity-10">🇹🇼</div></div>
