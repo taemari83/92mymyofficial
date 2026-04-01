@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router'; // 👈 新增 Router
 import { StoreService, Product, Order, CartItem } from './services/store.service';
 import { environment } from './environments/environment';
 
@@ -33,7 +33,7 @@ import { environment } from './environments/environment';
       }
 
       <nav class="bg-cream-50/80 backdrop-blur-md sticky top-0 z-40 px-6 py-4 border-b border-brand-100/50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="flex justify-between items-center w-full transition-all duration-300" [ngClass]="isFullWidth ? '' : 'max-w-7xl mx-auto'">
             
             <a routerLink="/" class="flex items-center shrink-0">
               <img src="https://www.flickr.com/photo_download.gne?id=55130020426&secret=082f93679c&size=l&source=photoPageEngagement" alt="92mymy Logo" class="h-16 sm:h-20 w-auto object-contain mix-blend-multiply hover:scale-105 transition-transform duration-300">
@@ -72,7 +72,7 @@ import { environment } from './environments/environment';
         </div>
       </nav>
 
-      <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-4">
+      <main class="flex-1 w-full transition-all duration-300" [ngClass]="isFullWidth ? '' : 'max-w-5xl mx-auto px-4 py-4'">
         <router-outlet></router-outlet>
       </main>
 
@@ -81,7 +81,13 @@ import { environment } from './environments/environment';
 })
 export class AppComponent implements OnInit {
   store = inject(StoreService);
+  router = inject(Router); // 👈 新增：注入 Router 用來判斷當前網址
   showKeyWarning = false;
+
+  // 🧠 動態判斷大腦：如果網址包含 /admin 或 /buyer，就回傳 true 啟動滿版模式
+  get isFullWidth() {
+    return this.router.url.startsWith('/admin') || this.router.url.startsWith('/buyer');
+  }
 
   // 🧠 買手紅綠燈終極大腦：只有在「需買 > 已買」時才亮紅燈，買齊就亮綠燈！
   hasPendingBuyerTasks = computed(() => {
