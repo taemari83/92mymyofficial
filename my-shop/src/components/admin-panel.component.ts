@@ -1065,7 +1065,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          </td>
          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">單據運費</span>
-            <div class="font-mono text-gray-500">NT$ {{ p?.localShipping || 0 }}</div>
+            <div class="font-mono text-gray-500">{{ p?.currency === 'KRW' ? '₩' : (p?.currency === 'TWD' ? 'NT$' : (p?.currency || 'NT$')) }} {{ p?.localShipping || 0 }}</div>
          </td>
          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 md:text-right">
             <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">實際刷卡總額</span>
@@ -1109,6 +1109,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             } @else {
               <button class="px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-xs font-bold cursor-not-allowed border border-gray-200 whitespace-nowrap">已完成</button>
             }
+            <button (click)="openEditPurchaseModal(p)" class="px-3 py-2 bg-white text-gray-600 hover:text-brand-900 hover:bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold transition-colors shadow-sm whitespace-nowrap">✏️ 編輯</button>
+            
             <button (click)="deletePurchaseRecord(p)" class="px-3 py-2 bg-white text-red-400 hover:text-red-600 hover:bg-red-50 border border-red-100 rounded-lg text-xs font-bold transition-colors shadow-sm whitespace-nowrap">🗑️ 刪除</button>
          </td>
       </tr>
@@ -2191,6 +2193,66 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             </div>
           </div>
         }
+
+        @if (showEditPurchaseModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" (click)="closeEditPurchaseModal()">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()">
+              <div class="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center shrink-0">
+                <h3 class="text-xl font-bold text-gray-800">📝 編輯採購單資訊</h3>
+                <button (click)="closeEditPurchaseModal()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300">✕</button>
+              </div>
+              <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <form [formGroup]="editPurchaseForm" class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">購買日期</label>
+                    <input type="date" formControlName="date" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">地點 / 網址</label>
+                    <input type="text" formControlName="location" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400">
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                     <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">結帳幣別</label>
+                        <select formControlName="currency" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 bg-white">
+                          <option value="KRW">韓元 (KRW)</option>
+                          <option value="TWD">台幣 (TWD)</option>
+                          <option value="JPY">日幣 (JPY)</option>
+                          <option value="USD">美金 (USD)</option>
+                          <option value="CNY">人民幣 (CNY)</option>
+                        </select>
+                     </div>
+                     <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">單據運費</label>
+                        <input type="number" formControlName="localShipping" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400">
+                     </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-red-500 mb-1">實際刷卡總額</label>
+                    <input type="number" formControlName="totalLocalCost" class="w-full p-3 border border-red-200 rounded-xl focus:outline-none focus:border-red-400 font-bold text-red-600 bg-red-50">
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                     <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">付款人</label>
+                        <input type="text" formControlName="payer" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400">
+                     </div>
+                     <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">分潤模式</label>
+                        <select formControlName="shareMode" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 bg-white">
+                          <option value="親帶">親帶</option>
+                          <option value="批發">批發</option>
+                          <option value="-">-</option>
+                        </select>
+                     </div>
+                  </div>
+                </form>
+              </div>
+              <div class="p-6 border-t border-gray-100 bg-white shrink-0">
+                <button (click)="submitEditPurchase()" class="w-full py-3 rounded-xl bg-brand-900 text-white font-bold text-lg hover:bg-black transition-transform active:scale-95">確認儲存修改</button>
+              </div>
+            </div>
+          </div>
+        }
       </main>
     </div>
   `,
@@ -2210,7 +2272,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   `]
 })
 export class AdminPanelComponent {
-  store = inject(StoreService);
+  showEditPurchaseModal = signal(false);
+  editPurchaseForm!: FormGroup;
+  store = inject(StoreService);
   sanitizer = inject(DomSanitizer);
   fb: FormBuilder = inject(FormBuilder);
   cdr = inject(ChangeDetectorRef); // 👈 新增這行：畫面強制更新引擎
@@ -3614,6 +3678,17 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       expiryDate: [''],
       active: [true] // 👈 把 isActive 改成 active
     });
+
+    this.editPurchaseForm = this.fb.group({
+       id: [''],
+       date: [''],
+       location: [''],
+       currency: ['KRW'],
+       localShipping: [0],
+       totalLocalCost: [0],
+       payer: [''],
+       shareMode: ['親帶']
+    });
   } // 👈 constructor 的唯一結束大括號
 
   calculateUserTotalSpend(userId: string): number {
@@ -3714,6 +3789,55 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       alert('✅ 已成功核准入帳！資金帳戶與支出報表已同步更新。');
     }
   }
+
+  // 👇👇👇 把步驟 4 的代碼貼在這裡 👇👇👇
+  openEditPurchaseModal(p: any) {
+     this.editPurchaseForm.patchValue({
+        id: p.id,
+        date: p.date || new Date().toISOString().slice(0, 10),
+        location: p.location,
+        currency: p.currency || 'KRW',
+        localShipping: p.localShipping || 0,
+        totalLocalCost: p.totalLocalCost || 0,
+        payer: p.payer,
+        shareMode: p.shareMode || '親帶'
+     });
+     this.showEditPurchaseModal.set(true);
+  }
+
+  closeEditPurchaseModal() {
+     this.showEditPurchaseModal.set(false);
+  }
+
+  async submitEditPurchase() {
+     if(this.editPurchaseForm.invalid) return;
+     const val = this.editPurchaseForm.value;
+     
+     const original = this.store.purchases().find((x:any) => x.id === val.id);
+     
+     if(original) {
+        const updated = {
+           ...original,
+           date: val.date,
+           location: val.location,
+           currency: val.currency,
+           localShipping: Number(val.localShipping) || 0,
+           totalLocalCost: Number(val.totalLocalCost) || 0,
+           payer: val.payer,
+           shareMode: val.shareMode
+        };
+        
+        try {
+           await (this.store as any).addPurchase(updated);
+           alert('✅ 採購單資訊已成功更新！');
+           this.closeEditPurchaseModal();
+        } catch (e) {
+           alert('❌ 更新失敗：' + e);
+        }
+     }
+  }
+  // 👆👆👆 新增結束 👆👆👆
+  
   async deletePurchaseRecord(p: any) {
     if (confirm(`⚠️ 警告：確定要徹底刪除這筆採購單嗎？\n系統將會同步扣回商品對應的「已採購數量」，資料刪除後無法復原！`)) {
       await this.store.deletePurchase(p.id, p.items || []);
