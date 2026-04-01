@@ -303,12 +303,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <span class="hidden lg:block text-xs text-gray-400 font-bold mr-2">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                     <button (click)="openGiveawayModal()" class="flex-1 sm:flex-none px-4 py-2 bg-[#C0AEE1] text-white rounded-xl font-bold shadow-sm hover:bg-[#A992D3] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>🎁</span> 抽獎單</button>
                     <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
+                    <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
                     <label class="flex-1 sm:flex-none px-4 py-2 bg-[#F39C12] text-white rounded-xl font-bold shadow-sm hover:bg-[#E67E22] flex items-center justify-center gap-1 whitespace-nowrap transition-colors cursor-pointer active:scale-95">
-                       <span>🚚</span> 匯入賣貨便對帳
+                       <span>🚚</span> 匯入賣貨便對單
                        <input type="file" accept=".csv" class="hidden" (change)="handleMyshipImport($event)">
                     </label>
-                    <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
-                 </div>
+                    </div>
                </div>
                
              <div class="flex flex-col gap-4 mb-4 w-full">
