@@ -10,7 +10,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
-    <div class="flex h-full min-h-[calc(100vh-64px)] w-full bg-[#FDFBF9] font-sans overflow-hidden relative">
+    <div class="flex min-h-screen w-full bg-[#FDFBF9] font-sans relative">
       
       @if (!store.currentUser()?.isAdmin) {
         <div class="absolute top-0 left-0 right-0 bg-red-500 text-white p-2.5 text-center text-sm font-bold z-[100] shadow-md animate-pulse">
@@ -22,8 +22,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         <div class="fixed inset-0 bg-black/40 z-[80] md:hidden backdrop-blur-sm transition-opacity" (click)="isSidebarOpen.set(false)"></div>
       }
 
-      <aside class="fixed inset-y-0 left-0 z-[90] md:z-[30] w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-2xl transform transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none" [class.-translate-x-full]="!isSidebarOpen()">
-        <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start mt-6 md:mt-0">
+      <aside class="fixed inset-y-0 left-0 z-[90] md:z-[30] w-64 bg-white border-r border-gray-100 flex flex-col shrink-0 shadow-2xl transform transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0 md:shadow-none" [class.-translate-x-full]="!isSidebarOpen()">        <div class="p-4 md:p-6 flex items-center gap-3 justify-center md:justify-start mt-6 md:mt-0">
           <div class="w-8 h-8 bg-brand-400 rounded-lg flex items-center justify-center text-white font-bold shrink-0">92</div>
         </div>
 
@@ -60,7 +59,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         </div>
       </aside>
 
-      <main class="flex-1 h-full overflow-y-auto custom-scrollbar bg-[#FDFBF9] p-4 md:p-8 w-full relative">
+      <main class="flex-1 bg-[#FDFBF9] p-4 md:p-8 w-full relative min-w-0">
         <div class="flex justify-between items-center mb-6 pt-2 md:pt-0">
            <div class="flex items-center gap-3">
               <button (click)="isSidebarOpen.set(true)" class="md:hidden p-2 -ml-2 bg-white rounded-lg shadow-sm border border-gray-100 text-gray-600 hover:bg-gray-50 flex items-center justify-center h-10 w-10 shrink-0 transition-colors">

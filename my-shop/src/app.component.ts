@@ -32,7 +32,8 @@ import { environment } from './environments/environment';
         </div>
       }
 
-      <nav class="bg-cream-50/80 backdrop-blur-md sticky top-0 z-40 px-6 py-4 border-b border-brand-100/50">
+      <nav class="bg-cream-50/80 backdrop-blur-md z-40 px-6 py-4 border-b border-brand-100/50 transition-all duration-300"
+     [ngClass]="isFullWidth ? 'relative' : 'sticky top-0'">
         <div class="flex justify-between items-center w-full transition-all duration-300" [ngClass]="isFullWidth ? '' : 'max-w-7xl mx-auto'">
             
             <a routerLink="/" class="flex items-center shrink-0">
