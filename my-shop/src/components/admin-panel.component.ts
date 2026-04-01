@@ -303,6 +303,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <span class="hidden lg:block text-xs text-gray-400 font-bold mr-2">📅 {{ now | date:'yyyy/MM/dd' }}</span>
                     <button (click)="openGiveawayModal()" class="flex-1 sm:flex-none px-4 py-2 bg-[#C0AEE1] text-white rounded-xl font-bold shadow-sm hover:bg-[#A992D3] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>🎁</span> 抽獎單</button>
                     <button (click)="exportOrdersCSV()" class="flex-1 sm:flex-none px-4 py-2 bg-[#8FA996] text-white rounded-xl font-bold shadow-sm hover:bg-[#7a9180] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
+                    <label class="flex-1 sm:flex-none px-4 py-2 bg-[#F39C12] text-white rounded-xl font-bold shadow-sm hover:bg-[#E67E22] flex items-center justify-center gap-1 whitespace-nowrap transition-colors cursor-pointer active:scale-95">
+                       <span>🚚</span> 匯入賣貨便對帳
+                       <input type="file" accept=".csv" class="hidden" (change)="handleMyshipImport($event)">
+                    </label>
                     <button (click)="syncOrdersToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2 bg-[#E5B5B5] text-white rounded-xl font-bold shadow-sm hover:bg-[#D4A0A0] flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
                  </div>
                </div>
@@ -2249,6 +2253,74 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               </div>
               <div class="p-6 border-t border-gray-100 bg-white shrink-0">
                 <button (click)="submitEditPurchase()" class="w-full py-3 rounded-xl bg-brand-900 text-white font-bold text-lg hover:bg-black transition-transform active:scale-95">確認儲存修改</button>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (showMyshipMatcherModal()) {
+          <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" (click)="showMyshipMatcherModal.set(false)">
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()">
+              <div class="p-5 sm:p-6 border-b border-gray-100 bg-[#FDFBF9] flex justify-between items-center shrink-0">
+                <div>
+                   <h3 class="text-xl font-black text-[#E67E22] flex items-center gap-2"><span>🚚</span> 賣貨便出貨配對中心</h3>
+                   <div class="text-xs text-gray-500 font-bold mt-1">系統已抓取賣貨便單號，請在右側輸入對應的「官網訂單號」，系統將自動帶出商品明細！</div>
+                </div>
+                <button (click)="showMyshipMatcherModal.set(false)" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300 flex items-center justify-center">✕</button>
+              </div>
+
+              <div class="p-6 overflow-y-auto flex-1 custom-scrollbar bg-gray-50">
+                 <div class="space-y-3">
+                    @for(item of myshipImportList(); track item.trackingNumber; let i = $index) {
+                       <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center gap-4"
+                            [class.border-green-400]="item.matchedOrder" [class.bg-green-50]="item.matchedOrder">
+                          
+                          <div class="w-full md:w-1/3 shrink-0">
+                             <div class="text-xs text-gray-400 font-bold mb-1">賣貨便收件人 / 追蹤碼</div>
+                             <div class="font-bold text-gray-800 text-lg">{{ item.name }}</div>
+                             <div class="font-mono text-[#E67E22] font-bold bg-orange-50 px-2 py-1 rounded w-fit mt-1">{{ item.trackingNumber }}</div>
+                             @if(item.note) { <div class="text-[10px] text-gray-500 mt-1 bg-gray-100 p-1 rounded">備註: {{ item.note }}</div> }
+                          </div>
+
+                          <div class="w-full md:w-2/3 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                             <div class="flex-1 w-full">
+                                <label class="block text-[10px] font-bold text-gray-500 mb-1">輸入官網訂單號 (支援末 6 碼)</label>
+                                <input type="text" [ngModel]="item.searchKey" (ngModelChange)="matchMyshipOrder(i, $event)" 
+                                       placeholder="例如: 021107" 
+                                       class="w-full p-2.5 border rounded-lg focus:outline-none font-mono font-bold transition-colors"
+                                       [class.border-green-400]="item.matchedOrder" [class.border-gray-300]="!item.matchedOrder" [class.bg-white]="!item.matchedOrder">
+                             </div>
+
+                             <div class="flex-1 w-full min-w-[200px]">
+                                @if(item.matchedOrder) {
+                                   <div class="text-[10px] font-bold text-green-600 mb-1">✅ 已配對成功 (請依此明細包貨)</div>
+                                   <div class="bg-white border border-green-200 rounded-lg p-2 max-h-24 overflow-y-auto custom-scrollbar">
+                                      @for(prod of item.matchedOrder.items; track prod.productId) {
+                                         <div class="text-xs text-gray-700 font-bold leading-tight mb-1">
+                                            • {{ prod.productName }} <span class="text-gray-500">[{{ prod.option }}]</span> <span class="text-brand-600">x{{ prod.quantity }}</span>
+                                         </div>
+                                      }
+                                   </div>
+                                } @else {
+                                   <div class="h-16 flex items-center justify-center border border-dashed border-gray-300 rounded-lg text-xs text-gray-400 font-bold bg-gray-50">
+                                      尚未配對
+                                   </div>
+                                }
+                             </div>
+                          </div>
+                       </div>
+                    }
+                 </div>
+              </div>
+
+              <div class="p-6 border-t border-gray-100 bg-white shrink-0 flex justify-end gap-3">
+                 <div class="text-sm font-bold text-gray-500 flex items-center mr-auto">
+                    已成功配對: <span class="text-green-600 text-lg mx-1">{{ getMatchedCount() }}</span> / {{ myshipImportList().length }}
+                 </div>
+                 <button (click)="showMyshipMatcherModal.set(false)" class="px-6 py-3 rounded-xl border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-colors">取消</button>
+                 <button (click)="submitMyshipMatch()" [disabled]="getMatchedCount() === 0" class="px-6 py-3 rounded-xl bg-[#E67E22] text-white font-bold text-lg hover:bg-[#D35400] transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    確認配對並批次出貨
+                 </button>
               </div>
             </div>
           </div>
@@ -5565,5 +5637,104 @@ submitProduct() {
       
       // 🚀 5. 調用雲端發射器傳送到 Google Sheets
       this.pushToGoogleSheets('員工自購帳', [headers, ...dataRows]);
+  }
+
+  // ==========================================
+  // 🚚 賣貨便一鍵配對神器邏輯
+  // ==========================================
+  showMyshipMatcherModal = signal(false);
+  myshipImportList = signal<any[]>([]);
+
+  // 1. 讀取賣貨便下載的 CSV
+  handleMyshipImport(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const text = e.target.result;
+      const rows = this.parseCSV(text); // 沿用你原本寫好的 parseCSV
+
+      const importData = [];
+      // 掃描每一行尋找 "CM" 開頭的單號
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        const rowText = row.join(' '); // 把整行變成字串來找
+        
+        // 用正則表達式尋找交貨便代碼 (通常是 CM 加上 11 碼數字)
+        const trackingMatch = rowText.match(/CM\d{11}/);
+        
+        if (trackingMatch) {
+          const trackingNumber = trackingMatch[0];
+          // 賣貨便報表通常第 8 欄(索引7)或附近是收件人姓名，這裡用粗略抓取，也可以讓使用者自己看
+          // 我們把整行資料當作備註存起來，方便你看
+          importData.push({
+            trackingNumber: trackingNumber,
+            name: row[7] || row[2] || '未知收件人', 
+            note: row.join(' | ').substring(0, 50) + '...', // 顯示部分內容當提示
+            searchKey: '',
+            matchedOrder: null
+          });
+        }
+      }
+
+      if (importData.length === 0) {
+         alert('❌ 找不到任何交貨便代碼 (CM開頭)！請確認上傳的是賣貨便的訂單明細 CSV。');
+      } else {
+         this.myshipImportList.set(importData);
+         this.showMyshipMatcherModal.set(true);
+      }
+      event.target.value = ''; // 清空 input
+    };
+    reader.readAsText(file, 'UTF-8'); // 注意：有些賣貨便檔案可能是 Big5 編碼，如果亂碼可以改 'Big5'
+  }
+
+  // 2. 當你在輸入框打字時，即時尋找官網訂單
+  matchMyshipOrder(index: number, searchValue: string) {
+    const list = [...this.myshipImportList()];
+    list[index].searchKey = searchValue;
+
+    const cleanSearch = searchValue.trim().toLowerCase();
+    list[index].matchedOrder = null;
+
+    if (cleanSearch.length >= 4) { // 輸入超過 4 個字才開始找，避免誤判
+       const allOrders = this.store.orders();
+       // 尋找訂單號碼有包含輸入字串的訂單 (支援末幾碼搜尋)
+       const matched = allOrders.find((o: Order) => o.id.toLowerCase().includes(cleanSearch) && !['cancelled', 'refunded'].includes(o.status));
+       if (matched) {
+          list[index].matchedOrder = matched;
+       }
+    }
+    this.myshipImportList.set(list);
+  }
+
+  // 計算已配對數量
+  getMatchedCount() {
+    return this.myshipImportList().filter(item => item.matchedOrder).length;
+  }
+
+  // 3. 確認送出！批次更新所有訂單
+  async submitMyshipMatch() {
+    const list = this.myshipImportList();
+    const matchedItems = list.filter(item => item.matchedOrder);
+
+    if (!confirm(`💡 即將將這 ${matchedItems.length} 筆訂單轉為「已出貨」，並填入賣貨便單號。\n確定執行嗎？`)) return;
+
+    let successCount = 0;
+    for (const item of matchedItems) {
+       const order = item.matchedOrder;
+       try {
+          // 更新訂單狀態為出貨，並把 CM 單號寫進 shippingLink
+          await this.store.updateOrderStatus(order.id, 'shipped', { shippingLink: item.trackingNumber });
+          // (可選) 觸發出貨通知信
+          await this.store.sendOrderNotification(order, 'shipped', { shippingLink: item.trackingNumber });
+          successCount++;
+       } catch (e) {
+          console.error(`訂單 ${order.id} 更新失敗`, e);
+       }
+    }
+
+    alert(`✅ 批次出貨完成！\n成功更新 ${successCount} 筆訂單。`);
+    this.showMyshipMatcherModal.set(false);
   }
 }
