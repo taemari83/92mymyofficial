@@ -409,8 +409,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 </td>
                          
                          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 whitespace-nowrap">
-                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">物流狀態</span>
-                           <div class="text-right md:text-left"><span [class]="getShippingStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold">{{ getShippingStatusLabel(order.status) }}</span></div>
+                            <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">物流狀態</span>
+                            <div class="text-right md:text-left flex flex-col gap-1.5 items-end md:items-start">
+                               <span [class]="getShippingStatusClass(order.status)" class="px-2.5 py-1 rounded-md text-xs font-bold w-fit shadow-sm">{{ getShippingStatusLabel(order.status) }}</span>
+                               @if(order.shippingLink) {
+                                  <span class="text-[11px] text-[#E67E22] font-mono font-bold bg-orange-50 px-2 py-0.5 rounded border border-orange-100 shadow-sm">{{ order.shippingLink }}</span>
+                               }
+                            </div>
                          </td>
                          
                          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100 text-gray-400 text-xs">
@@ -421,7 +426,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          <td class="p-4 flex items-center justify-end md:table-cell text-right bg-gray-50/50 md:bg-transparent rounded-b-2xl md:rounded-none">
                            <div class="flex items-center justify-end gap-2">
                              @if (order.status === 'paid_verifying') { <button (click)="quickConfirm($event, order)" class="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-bold whitespace-nowrap">✅ 確認</button> } 
-                             @else if (order.status === 'payment_confirmed') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap">📦 出貨</button> }
+                             @else if (order.status === 'payment_confirmed' || order.status === 'pending_shipping') { <button (click)="quickShip($event, order)" class="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold whitespace-nowrap shadow-sm transition-colors hover:bg-blue-200">📦 出貨</button> }
                              @else if (order.status === 'shipped' && order.paymentMethod === 'cod') { <button (click)="quickComplete($event, order)" class="px-3 py-1.5 bg-green-800 text-white rounded-lg text-xs font-bold whitespace-nowrap">💰 確認收款</button> }
                              @else if (order.status === 'refund_needed') { <button (click)="quickRefundDone($event, order)" class="px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold whitespace-nowrap">💸 已退款</button> }
                              <button (click)="openAction($event, order)" class="p-2 hover:bg-white/50 rounded-lg text-gray-500 shadow-sm border border-gray-200 md:border-transparent md:bg-transparent bg-white transition-colors">•••</button>
@@ -3954,9 +3959,10 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
   getPaymentStatusLabel(s: string, method?: string) { const map: any = { pending_payment: '未付款', paid_verifying: '對帳中', unpaid_alert: '逾期未付', refund_needed: '需退款', refunded: '已退款', payment_confirmed: method === 'cod' ? '待出貨 (未入帳)' : '已付款', pending_shipping: '待出貨', arrived_notified: method === 'cod' ? '已貨到通知 (未入帳)' : '已付款', shipped: method === 'cod' ? '已出貨 (未入帳)' : '已出貨', picked_up: method === 'cod' ? '已取貨 (未撥款)' : '已取貨', completed: '已完成 (已入帳)', cancelled: '🚫 已取消' }; return map[s] || s; } 
   getPaymentStatusClass(s: string) { if(s==='payment_confirmed') return 'bg-green-100 text-green-700'; if(s==='paid_verifying') return 'bg-yellow-100 text-yellow-700'; if(s==='pending_payment' || s==='unpaid_alert') return 'bg-red-50 text-red-500'; if(s==='refunded') return 'bg-gray-200 text-gray-500 line-through'; if(s==='cancelled') return 'bg-gray-200 text-gray-400 border border-gray-300'; if(s==='refund_needed') return 'bg-red-100 text-red-700 font-bold border border-red-200'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-green-600 text-white font-bold'; return 'bg-gray-100 text-gray-500'; } 
-  getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', pending_shipping: '待出貨', shipped: '已出貨', arrived_notified: '已到貨', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
-  getShippingStatusClass(s: string) { if(s==='shipped') return 'bg-blue-100 text-blue-700'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-gray-800 text-white'; return 'text-gray-400'; } 
-  
+  // 把原本的替換成這樣 (將 pending_shipping 改為 配單中(待包貨))
+  getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', pending_shipping: '配單中(待包貨)', shipped: '已出貨', arrived_notified: '已到貨', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; }  
+  // 把原本的替換成這樣 (加上 pending_shipping 的橘色標籤)
+  getShippingStatusClass(s: string) { if(s==='pending_shipping') return 'bg-orange-100 text-orange-700 font-bold'; if(s==='shipped') return 'bg-blue-100 text-blue-700'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-gray-800 text-white'; return 'text-gray-400'; }  
   getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 行銷抽獎' }; return map[m] || m; }
   getShippingLabel(m: string) { const map: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; return map[m] || m; }
   
@@ -3972,8 +3978,15 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   doAlert(o: Order) { this.store.updateOrderStatus(o.id, 'unpaid_alert'); this.store.sendOrderNotification(o, 'payment_reminder'); this.closeActionModal(); } 
   doRefundNeeded(o: Order) { this.store.updateOrderStatus(o.id, 'refund_needed'); this.orderStatusTab.set('refund'); this.store.sendOrderNotification(o, 'refund_needed'); this.closeActionModal(); } 
   doRefundDone(o: Order) { this.store.updateOrderStatus(o.id, 'refunded'); this.store.sendOrderNotification(o, 'refunded'); this.closeActionModal(); } 
-  doShip(o: Order) { const code = prompt('請輸入物流單號 / 追蹤連結 (若無可直接按確認)'); if (code !== null) { this.store.updateOrderStatus(o.id, 'shipped', { shippingLink: code }); this.store.sendOrderNotification(o, 'shipped', { shippingLink: code }); this.closeActionModal(); } } 
-  
+  doShip(o: Order) { 
+    // 👇 點擊詳細操作裡的出貨時，會自動帶入已經配對好的 CM 代碼讓你確認
+    const code = prompt('請確認物流單號 / 交貨便代碼 (若無可直接按確認)', o.shippingLink || ''); 
+    if (code !== null) { 
+      this.store.updateOrderStatus(o.id, 'shipped', { shippingLink: code }); 
+      this.store.sendOrderNotification(o, 'shipped', { shippingLink: code }); 
+      this.closeActionModal(); 
+    } 
+  }  
   doMyshipPickup(o: Order) { this.store.updateOrderStatus(o.id, 'picked_up' as any); this.closeActionModal(); } 
   doCancel(o: Order) { 
     if(this.cancelConfirmState()) { 
@@ -3987,7 +4000,12 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   
   // --- 列表上的快捷操作按鈕 (也一併加入自動發信) ---
   quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); this.store.sendOrderNotification(o, 'payment_confirmed'); } 
-  quickShip(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'shipped'); this.store.sendOrderNotification(o, 'shipped'); } 
+  quickShip(e: Event, o: Order) { 
+    e.stopPropagation(); 
+    this.store.updateOrderStatus(o.id, 'shipped'); 
+    // 👇 出貨時，如果有綁定賣貨便代碼，就一併放在信件裡寄給客人
+    this.store.sendOrderNotification(o, 'shipped', { shippingLink: o.shippingLink || '' }); 
+  }
   quickRefundDone(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'refunded'); this.store.sendOrderNotification(o, 'refunded'); } 
   quickComplete(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'completed'); }
 
@@ -4010,7 +4028,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
   exportOrdersCSV() { 
      // 👇 1. 表頭加上內部備註
-     const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)', '內部備註']; 
+     const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '交貨便代碼/物流單號', '商品內容 (含價格明細)', '內部備註']; 
      const payMap: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 抽獎' }; 
      const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' };
 
@@ -4120,7 +4138,7 @@ exportInventoryCSV() {
     const shipMap: any = { meetup: '面交自取', myship: '7-11 賣貨便', family: '全家好賣家', delivery: '宅配寄送' }; 
     
     // 👇 1. 表頭加上內部備註
-    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '物流單號', '商品內容 (含價格明細)', '內部備註'];
+    const headers = ['訂單編號', '下單日期', '客戶姓名', '付款方式', '匯款後五碼', '物流方式', '總金額', '訂單狀態', '交貨便代碼/物流單號', '商品內容 (含價格明細)', '內部備註'];
     const dataRows = this.filteredOrders().map((o: Order) => {
       // 👇 在這裡組裝帶有叫貨狀態的明細
       const itemDetails = o.items.map((i: CartItem) => {
@@ -5713,28 +5731,28 @@ submitProduct() {
     return this.myshipImportList().filter(item => item.matchedOrder).length;
   }
 
-  // 3. 確認送出！批次更新所有訂單
+  // 3. 確認送出！批次更新所有訂單 (修改為待包貨狀態)
   async submitMyshipMatch() {
     const list = this.myshipImportList();
     const matchedItems = list.filter(item => item.matchedOrder);
 
-    if (!confirm(`💡 即將將這 ${matchedItems.length} 筆訂單轉為「已出貨」，並填入賣貨便單號。\n確定執行嗎？`)) return;
+    if (!confirm(`💡 即將將這 ${matchedItems.length} 筆訂單轉為「配單中(待包貨)」，並綁定賣貨便代碼。\n確定執行嗎？`)) return;
 
     let successCount = 0;
+
     for (const item of matchedItems) {
        const order = item.matchedOrder;
        try {
-          // 更新訂單狀態為出貨，並把 CM 單號寫進 shippingLink
-          await this.store.updateOrderStatus(order.id, 'shipped', { shippingLink: item.trackingNumber });
-          // (可選) 觸發出貨通知信
-          await this.store.sendOrderNotification(order, 'shipped', { shippingLink: item.trackingNumber });
+          // 👇 狀態改為 pending_shipping (待包貨)，寫入單號，且「不發送」出貨通知信
+          await this.store.updateOrderStatus(order.id, 'pending_shipping', { shippingLink: item.trackingNumber });
           successCount++;
        } catch (e) {
           console.error(`訂單 ${order.id} 更新失敗`, e);
        }
     }
 
-    alert(`✅ 批次出貨完成！\n成功更新 ${successCount} 筆訂單。`);
+    alert(`✅ 批次配對完成！\n成功更新 ${successCount} 筆訂單，請看著列表明細開始包貨囉！`);
     this.showMyshipMatcherModal.set(false);
+    this.myshipImportList.set([]); 
   }
 }
