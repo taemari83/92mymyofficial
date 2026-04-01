@@ -5663,7 +5663,7 @@ submitProduct() {
   showMyshipMatcherModal = signal(false);
   myshipImportList = signal<any[]>([]);
 
-  // 1. 讀取賣貨便下載的 CSV
+ // 1. 讀取賣貨便下載的 CSV (進階全自動配對版)
   handleMyshipImport(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -5671,9 +5671,12 @@ submitProduct() {
     const reader = new FileReader();
     reader.onload = (e: any) => {
       const text = e.target.result;
-      const rows = this.parseCSV(text); // 沿用你原本寫好的 parseCSV
+      const rows = this.parseCSV(text); 
 
       const importData = [];
+      // 預先抓出所有不是取消/退款的有效訂單
+      const allOrders = this.store.orders().filter((o: Order) => !['cancelled', 'refunded'].includes(o.status));
+
       // 掃描每一行尋找 "CM" 開頭的單號
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -5684,14 +5687,26 @@ submitProduct() {
         
         if (trackingMatch) {
           const trackingNumber = trackingMatch[0];
-          // 賣貨便報表通常第 8 欄(索引7)或附近是收件人姓名，這裡用粗略抓取，也可以讓使用者自己看
-          // 我們把整行資料當作備註存起來，方便你看
+          
+          // 🤖 終極自動配對大腦：直接在這一行的文字裡，尋找有沒有符合的官網訂單號！
+          let autoMatchedOrder = null;
+          let autoSearchKey = '';
+          
+          for (const order of allOrders) {
+             // 只要賣貨便的備註或回饋資訊裡，有完整的訂單號，或是末 6 碼，就直接抓出來配對！
+             if (rowText.includes(order.id) || rowText.includes(order.id.slice(-6))) {
+                autoMatchedOrder = order;
+                autoSearchKey = order.id; // 自動帶入完整單號
+                break; // 找到了就停止尋找，換下一筆賣貨便訂單
+             }
+          }
+
           importData.push({
             trackingNumber: trackingNumber,
             name: row[7] || row[2] || '未知收件人', 
-            note: row.join(' | ').substring(0, 50) + '...', // 顯示部分內容當提示
-            searchKey: '',
-            matchedOrder: null
+            note: rowText.substring(0, 100) + '...', // 顯示部分內容當提示
+            searchKey: autoSearchKey,       // 畫面上會自動填入找到的單號
+            matchedOrder: autoMatchedOrder  // 畫面上會自動展開商品明細！
           });
         }
       }
@@ -5704,7 +5719,9 @@ submitProduct() {
       }
       event.target.value = ''; // 清空 input
     };
-    reader.readAsText(file, 'UTF-8'); // 注意：有些賣貨便檔案可能是 Big5 編碼，如果亂碼可以改 'Big5'
+    
+    // 💡 提示：賣貨便下載的 CSV 通常是 Big5 編碼，如果匯入後中文變亂碼，可以把這裡的 'UTF-8' 改成 'Big5'
+    reader.readAsText(file, 'UTF-8'); 
   }
 
   // 2. 當你在輸入框打字時，即時尋找官網訂單
