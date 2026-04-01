@@ -689,26 +689,26 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         @if (activeTab() === 'accounting') {
           <div class="space-y-6 w-full">
             
-            <div class="bg-white p-4 sm:p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 w-full animate-fade-in">
-              <div class="flex items-center gap-2 flex-wrap w-full xl:w-auto">
+            <div class="bg-white p-4 sm:p-5 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 w-full animate-fade-in overflow-hidden">
+              <div class="flex items-center gap-2 flex-wrap w-full lg:w-auto">
                 <span class="text-sm font-bold text-gray-500 shrink-0 hidden sm:block">報表區間:</span>
-                <div class="flex gap-1 bg-gray-50 p-1 rounded-xl overflow-x-auto w-full sm:w-auto custom-scrollbar">
+                <div class="flex flex-wrap gap-1 bg-gray-50 p-1 rounded-xl w-full sm:w-auto">
                   @for(range of [{id:'today', label:'今日'}, {id:'week', label:'本週'}, {id:'month', label:'本月'}, {id:'year', label:'今年'}, {id:'all', label:'全部'}]; track range.id) {
                     <button (click)="accountingRange.set(range.id); accountingCustomStart.set(''); accountingCustomEnd.set('');"
                             [class.text-brand-900]="accountingRange() === range.id"
                             [class.bg-white]="accountingRange() === range.id"
                             [class.shadow-sm]="accountingRange() === range.id"
-                            class="px-4 py-1.5 rounded-lg text-sm font-bold border border-transparent text-gray-500 transition-all whitespace-nowrap flex-1 sm:flex-none">
+                            class="px-3 sm:px-4 py-1.5 rounded-lg text-sm font-bold border border-transparent text-gray-500 transition-all whitespace-nowrap flex-1 sm:flex-none">
                        {{ range.label }}
                     </button>
                   }
                 </div>
               </div>
-              <div class="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 w-full xl:w-auto shadow-inner">
+              <div class="flex flex-wrap items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl border border-gray-200 w-full lg:w-auto shadow-inner">
                 <span class="text-xs text-gray-400 font-bold whitespace-nowrap hidden sm:block">自訂:</span>
-                <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event); accountingRange.set('custom')" class="bg-transparent text-sm font-bold text-gray-700 outline-none flex-1 xl:w-36 cursor-pointer">
+                <input type="date" [ngModel]="accountingCustomStart()" (ngModelChange)="accountingCustomStart.set($event); accountingRange.set('custom')" class="bg-transparent text-sm font-bold text-gray-700 outline-none flex-1 min-w-[120px] cursor-pointer">
                 <span class="text-gray-300">-</span>
-                <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event); accountingRange.set('custom')" class="bg-transparent text-sm font-bold text-gray-700 outline-none flex-1 xl:w-36 cursor-pointer">
+                <input type="date" [ngModel]="accountingCustomEnd()" (ngModelChange)="accountingCustomEnd.set($event); accountingRange.set('custom')" class="bg-transparent text-sm font-bold text-gray-700 outline-none flex-1 min-w-[120px] cursor-pointer">
               </div>
             </div>
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 w-full">               
@@ -3374,6 +3374,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     { id: 'pending', label: '待付款' },   // 客人還沒匯款
     { id: 'verifying', label: '待對帳' }, // 客人給了後五碼，等老闆確認
     { id: 'shipping', label: '待出貨' },  // 老闆確認收到了，等待商品到貨寄出
+    { id: 'arrived', label: '已到貨' }, // 貨已到，通知客人下單賣貨便
     { id: 'completed', label: '已完成' }, 
     { id: 'refund', label: '退款/取消' } 
   ];
@@ -3406,6 +3407,8 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
         // 待出貨：你已確認收款 (也就是已對帳完畢)，或是貨到付款
         shipping: list.filter((o: Order) => o.status === 'payment_confirmed').length,
         // 已完成
+        arrived: list.filter((o: Order) => o.status === 'arrived_notified').length, // 👈 新增這行計算數量
+        // 已到貨
         completed: list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any)).length,
         // 退款/取消
         refund: list.filter((o: Order) => ['refund_needed', 'refunded', 'cancelled'].includes(o.status)).length
@@ -3423,6 +3426,8 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       list = list.filter((o: Order) => o.status === 'paid_verifying');
     } else if (tab === 'shipping') {
       list = list.filter((o: Order) => o.status === 'payment_confirmed');
+    } else if (tab === 'arrived') {  // 👈 新增這三行判斷
+      list = list.filter((o: Order) => o.status === 'arrived_notified');
     } else if (tab === 'completed') {
       list = list.filter((o: Order) => ['shipped', 'picked_up', 'completed'].includes(o.status as any));
     } else if (tab === 'refund') {
@@ -3754,7 +3759,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
 
   getPaymentStatusLabel(s: string, method?: string) { const map: any = { pending_payment: '未付款', paid_verifying: '對帳中', unpaid_alert: '逾期未付', refund_needed: '需退款', refunded: '已退款', payment_confirmed: method === 'cod' ? '待出貨 (未入帳)' : '已付款', pending_shipping: '待出貨', arrived_notified: method === 'cod' ? '已貨到通知 (未入帳)' : '已付款', shipped: method === 'cod' ? '已出貨 (未入帳)' : '已出貨', picked_up: method === 'cod' ? '已取貨 (未撥款)' : '已取貨', completed: '已完成 (已入帳)', cancelled: '🚫 已取消' }; return map[s] || s; } 
   getPaymentStatusClass(s: string) { if(s==='payment_confirmed') return 'bg-green-100 text-green-700'; if(s==='paid_verifying') return 'bg-yellow-100 text-yellow-700'; if(s==='pending_payment' || s==='unpaid_alert') return 'bg-red-50 text-red-500'; if(s==='refunded') return 'bg-gray-200 text-gray-500 line-through'; if(s==='cancelled') return 'bg-gray-200 text-gray-400 border border-gray-300'; if(s==='refund_needed') return 'bg-red-100 text-red-700 font-bold border border-red-200'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-green-600 text-white font-bold'; return 'bg-gray-100 text-gray-500'; } 
-  getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', pending_shipping: '待出貨', shipped: '已出貨', arrived_notified: '已貨到門市', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
+  getShippingStatusLabel(s: string) { const map: any = { payment_confirmed: '待出貨', pending_shipping: '待出貨', shipped: '已出貨', arrived_notified: '已到貨', picked_up: '門市已取貨', completed: '已完成' }; return map[s] || '-'; } 
   getShippingStatusClass(s: string) { if(s==='shipped') return 'bg-blue-100 text-blue-700'; if(s==='arrived_notified') return 'bg-purple-100 text-purple-700 font-bold'; if(s==='picked_up') return 'bg-teal-100 text-teal-700 font-bold'; if(s==='completed') return 'bg-gray-800 text-white'; return 'text-gray-400'; } 
   
   getPaymentLabel(m: string) { const map: any = { cash: '現金付款', bank_transfer: '銀行轉帳', cod: '貨到付款', giveaway: '🎁 行銷抽獎' }; return map[m] || m; }
