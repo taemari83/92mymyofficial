@@ -608,7 +608,10 @@ export class BuyerFormComponent {
     };
     
     try {
-      // 🚀 正式寫入資料庫，並觸發叫貨清單數量的自動扣減！
+      // 🚀 核心修復：正式呼叫 StoreService 寫入資料庫，並觸發叫貨數量的自動扣減！
+      // 這裡呼叫的是我們在 store.service.ts 寫好的 addPurchaseBatch 方法
+      await this.store.addPurchaseBatch(finalData);
+
       const currencySymbol = finalData.currency === 'KRW' ? '₩' : (finalData.currency === 'TWD' ? 'NT$' : finalData.currency);
       alert(`✅ 整筆單據回報成功！\n資料已傳送至後台「採購總帳」。\n實際總扣款: ${currencySymbol} ${finalData.totalLocalCost}`);
       
@@ -622,9 +625,10 @@ export class BuyerFormComponent {
       this.formData.actualTotalCost = null; 
       this.currentStep.set('cart');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (error) {
+      
+    } catch (error: any) {
       console.error(error);
-      alert('❌ 發生網路錯誤，資料庫寫入失敗，請重試！');
+      alert('❌ 發生網路錯誤，資料庫寫入失敗，請重試！\n錯誤訊息：' + (error.message || String(error)));
     } finally {
       this.isUploading.set(false);
     }
