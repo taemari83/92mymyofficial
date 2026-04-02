@@ -265,15 +265,24 @@ async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), 
   async deleteExpense(id: string) { await deleteDoc(doc(this.firestore, 'expenses', id)); } // 👈 補上這行
   
 
-  // 🧾 新增：寫入採購單，並自動同步商品的「已買到」數量
+ // 🧾 新增：寫入採購單，並自動同步商品的「已買到」數量
   async addPurchaseBatch(data: any) { 
     const docRef = await addDoc(collection(this.firestore, 'purchases'), data);
+    
+    // 🛡️ 升級防呆：直接去 Firebase 資料庫讀取最新狀態再寫入，完全避開多商品同時送出導致的覆蓋問題！
     for (const item of data.items) {
-      const p = this.products().find((x: Product) => x.id === item.productId);
-      if (p) {
-         const currentMap = (p as any).procured || {};
+      const pRef = doc(this.firestore, 'products', item.productId);
+      const pSnap = await getDoc(pRef); // ⚡️ 強制抓取伺服器最新鮮的資料
+      
+      if (pSnap.exists()) {
+         const pData = pSnap.data();
+         const currentMap = pData['procured'] || {};
          const currentQty = currentMap[item.option] || 0;
-         await this.updateProduct({ ...p, procured: { ...currentMap, [item.option]: currentQty + item.quantity } } as any);
+         
+         // ⚡️ 直接寫回伺服器，保證數字絕對精準
+         await updateDoc(pRef, { 
+            procured: { ...currentMap, [item.option]: currentQty + item.quantity } 
+         });
       }
     }
     return docRef;
@@ -294,15 +303,21 @@ async updateUser(u: User) { await updateDoc(doc(this.firestore, 'users', u.id), 
     // 1. 刪除該筆採購單據
     await deleteDoc(doc(this.firestore, 'purchases', purchaseId));
     
-    // 2. 把當初加上去的「已買到數量」扣回來
+    // 🛡️ 升級防呆：刪除時一樣強制讀取伺服器最新狀態來扣除
     for (const item of items) {
-      const p = this.products().find((x: Product) => x.id === item.productId);
-      if (p) {
-         const currentMap = (p as any).procured || {};
+      const pRef = doc(this.firestore, 'products', item.productId);
+      const pSnap = await getDoc(pRef);
+      
+      if (pSnap.exists()) {
+         const pData = pSnap.data();
+         const currentMap = pData['procured'] || {};
          const currentQty = currentMap[item.option] || 0;
          // 扣除數量，並確保最低不會變成負數
          const newQty = Math.max(0, currentQty - item.quantity); 
-         await this.updateProduct({ ...p, procured: { ...currentMap, [item.option]: newQty } } as any);
+         
+         await updateDoc(pRef, { 
+            procured: { ...currentMap, [item.option]: newQty } 
+         });
       }
     }
   }
