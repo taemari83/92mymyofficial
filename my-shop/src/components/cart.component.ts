@@ -314,6 +314,13 @@ import { StoreService, CartItem } from '../services/store.service';
     </div>
   `,
   styles: [`
+    /* 👇 解決購物車標題被導覽列遮擋的問題，加入呼吸感 👇 */
+    :host {
+      display: block;
+      /* 根據你的導覽列高度，把整個購物車元件往下推 */
+      padding-top: 100px; /* 如果還是太貼近，可以把數字調大，例如 120px */
+    }
+
     .animate-fade-in { animation: fadeIn 0.3s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   `]
