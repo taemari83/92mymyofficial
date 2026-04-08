@@ -1354,6 +1354,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="flex flex-wrap gap-2 mb-3"> 
                       @for(img of tempImages(); track $index) { 
                         <div draggable="true" (dragstart)="onImageDragStart($index)" (dragover)="onImageDragOver($event)" (drop)="onImageDrop($event, $index)" [class.opacity-40]="draggedImageIndex() === $index" [class.ring-2]="draggedImageIndex() === $index" [class.ring-brand-400]="draggedImageIndex() === $index" class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 group bg-gray-50 cursor-grab active:cursor-grabbing hover:shadow-md transition-all"> 
+                          
+                          <div class="absolute top-0 left-0 bg-brand-900/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-br-lg z-20 pointer-events-none shadow-sm">圖{{ $index + 1 }}</div>
+
                           @if(isYT(img)) {
                              <img [src]="getYTThumbnail(img)" class="w-full h-full object-cover pointer-events-none">
                              <div class="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none"><span class="text-white text-xl drop-shadow-md">▶</span></div>
@@ -1361,12 +1364,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                              <div class="w-full h-full bg-gray-800 flex flex-col items-center justify-center pointer-events-none"><span class="text-white text-xl mb-1">🌐</span><span class="text-[10px] text-gray-300 font-bold">社群影片</span></div>
                           } @else if(isVideo(img)) {
                              <video [src]="img" autoplay muted loop playsinline class="w-full h-full object-cover pointer-events-none"></video>
-                             <div class="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1 rounded z-10">短影音</div>
+                             <div class="absolute bottom-1 right-1 bg-black/60 text-white text-[8px] px-1 rounded z-10">影片</div>
                           } @else {
                              <img [src]="img" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-cover pointer-events-none"> 
                           }
-                          <button type="button" (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/50 hover:bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-10">✕</button> 
-                          @if($index === 0) { <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold pointer-events-none z-10">主圖</div> } 
+                          
+                          <button type="button" (click)="removeImage($index)" class="absolute top-0 right-0 bg-black/40 hover:bg-red-500 text-white w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-colors z-20 rounded-bl-lg">✕</button> 
+                          
+                          @if($index === 0) { <div class="absolute bottom-0 inset-x-0 bg-brand-900/80 text-white text-[9px] text-center font-bold pointer-events-none z-10 py-0.5">主圖</div> } 
                         </div> 
                       } 
                     </div>
