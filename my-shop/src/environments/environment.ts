@@ -10,7 +10,7 @@ export const environment = {
   },
 // 👇 新增：公司全站共用資訊庫 👇
   company: {
-    name: '92MYMY',                 // 品牌名稱 (顯示在大標題)
+    name: '92MYMY 就愛買買',                 // 品牌名稱 (顯示在大標題)
     fullName: '三日拾光工作室',   // 公司完整名稱 (法規要求)
     taxId: '60893893',              // 統一編號
     email: 'sunew.studio@gmail.com',  // 客服信箱
