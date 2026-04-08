@@ -640,8 +640,8 @@ export class ShopFrontComponent {
 
   filteredProducts = computed(() => {
     let list = [...this.store.visibleProducts()]; 
-    // 👇 新增這行：把被標記為 'inactive' (下架) 的商品從前台客人的畫面中剔除！
-    list = list.filter(p => p.status !== 'inactive');
+    // 👇 改用 isListed 來隱藏前台下架商品
+    list = list.filter(p => p.isListed !== false);
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
     const subCat = this.selectedSubCategory();

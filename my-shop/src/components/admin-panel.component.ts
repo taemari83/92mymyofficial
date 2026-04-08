@@ -545,7 +545,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         <div class="flex justify-between items-end mt-2"> 
                            <div class="text-xs text-gray-400 truncate"> {{ (p.options || []).join(', ') }} </div> 
                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 pl-2"> 
-                               @if(p.status === 'inactive') {
+                               @if(!p.isListed) {
                                   <button (click)="toggleProductStatus(p, $event)" class="px-4 py-1.5 rounded-full bg-green-50 text-xs font-bold text-green-600 hover:bg-green-100 whitespace-nowrap transition-colors shadow-sm border border-green-200">🟢 重新上架</button>
                                } @else {
                                   <button (click)="toggleProductStatus(p, $event)" class="px-4 py-1.5 rounded-full bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200 whitespace-nowrap transition-colors shadow-sm border border-gray-200">⚫️ 暫時下架</button>
@@ -580,7 +580,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                               <div class="text-[10px] text-gray-400">庫存 {{ p.stock >= 9999 ? '無限' : p.stock }}</div>
                            </div>
                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              @if(p.status === 'inactive') {
+                              @if(!p.isListed) {
                                  <button (click)="toggleProductStatus(p, $event)" class="px-3 h-8 rounded-full bg-green-50 text-green-600 text-xs font-bold flex items-center justify-center hover:bg-green-100 transition-colors shadow-sm border border-green-200" title="重新上架">上架</button>
                               } @else {
                                  <button (click)="toggleProductStatus(p, $event)" class="px-3 h-8 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center justify-center hover:bg-gray-200 transition-colors shadow-sm border border-gray-200" title="暫時下架">下架</button>
@@ -2828,12 +2828,12 @@ export class AdminPanelComponent {
 
   filteredAdminProducts = computed(() => {
     let list = [...this.activeProducts()];
-    
-    // 🔥 0. 依照「上架中 / 已下架」篩選
+
+    // 🔥 0. 依照「上架中 / 已下架」篩選 (改用系統原生的 isListed 判斷！)
     if (this.productStatusFilter() === 'active') {
-        list = list.filter(p => p.status !== 'inactive');
+        list = list.filter(p => p.isListed !== false); // 找出上架的 (包含預設值)
     } else {
-        list = list.filter(p => p.status === 'inactive');
+        list = list.filter(p => p.isListed === false); // 找出明確被下架的
     }
 
     const q = this.productSearch().toLowerCase();
@@ -4499,17 +4499,17 @@ openProductForm() {
     this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
   }
 
-  // 👇 新增：快速切換商品上下架狀態 👇
+  // 👇 快速切換商品上下架狀態 👇
   async toggleProductStatus(p: Product, event: Event) {
-    event.stopPropagation(); // 阻止點擊事件冒泡打開編輯視窗
+    event.stopPropagation(); 
     
-    const newStatus = p.status === 'inactive' ? 'active' : 'inactive';
-    const actionName = newStatus === 'active' ? '上架' : '下架';
+    // 改為切換 isListed 的布林值 (true 變 false，false 變 true)
+    const newIsListed = !p.isListed;
+    const actionName = newIsListed ? '上架' : '下架';
     
     if (confirm(`確定要將「${p.name}」${actionName}嗎？`)) {
        try {
-          await this.store.updateProduct({ ...p, status: newStatus } as any);
-          // 如果是剛好停留在對應的頁籤，會自動消失，不用特別 alert，體驗最順暢
+          await this.store.updateProduct({ ...p, isListed: newIsListed } as any);
        } catch(e) {
           alert(`❌ ${actionName}失敗，請檢查網路。`);
        }
