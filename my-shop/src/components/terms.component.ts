@@ -28,7 +28,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
           <h2 class="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2"><span class="text-brand-600">三、</span>商品瑕疵退換貨政策</h2>
           <p>出貨前我們皆會進行嚴格的品質檢查。若您收到的商品仍有「重大瑕疵」或「寄錯商品」，請依下列流程辦理：</p>
           <ul class="list-disc pl-5 space-y-2 mt-2">
-            <li>請務必於**收到包裹（取件日）起 3 日內**，提供「清晰開箱錄影」與「瑕疵照片」聯繫官方客服。</li>
+            <li>請務必於收到包裹（取件日）起 3 日內，提供「清晰開箱錄影」與「瑕疵照片」聯繫官方客服。</li>
             <li>開箱錄影標準：請從包裹未拆封的完整狀態開始錄影，並清楚拍攝到物流單號、拆箱過程及瑕疵確認，一鏡到底不可剪輯。若無完整開箱影片，恕無法受理退換貨。</li>
             <li>非瑕疵範圍定義：線頭未修剪、極小污點（直徑小於0.5公分）、尺寸誤差（±3公分內）、螢幕色差、材質想像不同、未開眼洞、染料味道等，在國際驗貨標準均屬可接受範圍，不列入瑕疵退換貨標準。</li>
           </ul>
@@ -53,7 +53,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
           </ul>
         </section>
       </div>
-    </div
+    </div>
   `
 })
 export class TermsComponent {}
