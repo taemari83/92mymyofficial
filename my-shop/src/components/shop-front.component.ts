@@ -13,21 +13,6 @@ import { environment } from '../environments/environment';
   imports: [CommonModule, FormsModule, RouterModule], 
   template: `
 <div class="space-y-4 sm:space-y-8 pb-20">
-      
-      <div class="flex items-center justify-end gap-2 px-3 pt-4 sm:pt-2 sm:px-4 animate-fade-in">
-        
-        <a href="https://instagram.com/92mymy_official" target="_blank" class="flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-gray-600 border border-gray-200 rounded-full font-bold text-[10px] sm:text-xs hover:text-white hover:border-transparent hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-pink-500 hover:to-purple-500 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 text-decoration-none">
-           <span class="hidden sm:inline">Instagram</span><span class="sm:hidden">IG</span>
-        </a>
-        
-        <a href="https://lin.ee/3rHhZWz" target="_blank" class="flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-gray-600 border border-gray-200 rounded-full font-bold text-[10px] sm:text-xs hover:text-white hover:border-[#00B900] hover:bg-[#00B900] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 text-decoration-none">
-           官方 LINE
-        </a>
-        
-        <a href="https://line.me/ti/g2/FbYCiTXfg4WRRxyDJDwZPg3M2G3eaW65phITdw?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 bg-white text-gray-600 border border-gray-200 rounded-full font-bold text-[10px] sm:text-xs hover:text-white hover:border-[#00B900] hover:bg-[#00B900] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 text-decoration-none">
-           LINE 社群
-        </a>
-      </div>
 
       <div class="sticky z-[60] bg-[#FDFBF9] pb-4 pt-2 space-y-3 border-b border-gray-100 shadow-sm transition-all duration-300 ease-in-out" 
            style="top: var(--sub-header-top, 96px)">        
