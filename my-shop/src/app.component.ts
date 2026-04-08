@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, computed } from '@angular/core';
+import { Component, inject, OnInit, computed, HostListener, signal } from '@angular/core'; // 👈 修復：補上 HostListener 和 signal
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router'; // 👈 新增 Router
+import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router'; 
 import { StoreService, Product, Order, CartItem } from './services/store.service';
 import { environment } from './environments/environment';
 
@@ -9,7 +9,7 @@ import { environment } from './environments/environment';
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   template: `
-    <div class="min-h-screen flex flex-col bg-cream-50 font-sans selection:bg-brand-200">
+    <div class="min-h-screen flex flex-col bg-cream-50 font-sans selection:bg-brand-200 overflow-x-hidden">
       @if (showKeyWarning) {
         <div class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
            <div class="bg-white rounded-2xl p-8 max-w-md text-center shadow-2xl border-4 border-red-500">
@@ -32,8 +32,9 @@ import { environment } from './environments/environment';
         </div>
       }
 
-      <nav class="bg-cream-50/80 backdrop-blur-md z-40 px-6 py-4 border-b border-brand-100/50 transition-all duration-300"
-     [ngClass]="isFullWidth ? 'relative' : 'sticky top-0'">
+      <nav class="bg-cream-50/80 backdrop-blur-md z-[100] px-6 py-4 border-b border-brand-100/50 transition-transform duration-300 ease-in-out"
+           [ngClass]="isFullWidth ? 'relative' : 'sticky top-0'"
+           [class.-translate-y-full]="isHeaderHidden()">
         <div class="flex justify-between items-center w-full transition-all duration-300" [ngClass]="isFullWidth ? '' : 'max-w-7xl mx-auto'">
             
             <a routerLink="/" class="flex items-center shrink-0">
@@ -73,36 +74,110 @@ import { environment } from './environments/environment';
         </div>
       </nav>
 
-      <main class="flex-1 w-full transition-all duration-300" [ngClass]="isFullWidth ? '' : 'max-w-5xl mx-auto px-4 py-4'">
-        <router-outlet></router-outlet>
+      <main class="flex-1 w-full transition-all duration-300 flex flex-col" [ngClass]="isFullWidth ? '' : 'max-w-5xl mx-auto px-4 py-4'">
+        
+        <div class="flex-1">
+          <router-outlet></router-outlet>
+        </div>
+
+        @if (!isFullWidth) {
+          <footer class="bg-[#192734] text-gray-300 py-12 mt-12 border-t-4 border-brand-900 rounded-[2rem] shadow-xl">
+            <div class="max-w-4xl mx-auto px-6 lg:px-8">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                
+                <div class="space-y-4">
+                  <h2 class="text-3xl font-black text-white tracking-widest mb-6 font-mono">{{ companyInfo.name }}</h2>
+                  
+                  <div class="space-y-2 text-sm font-bold tracking-wide">
+                    <p class="flex items-center gap-3">
+                      <span class="text-gray-400">信箱</span> 
+                      <a [href]="'mailto:' + companyInfo.email" class="text-white hover:text-brand-300 transition-colors">{{ companyInfo.email }}</a>
+                    </p>
+                    <p class="flex items-center gap-3">
+                      <span class="text-gray-400">TEL</span> 
+                      <a [href]="'tel:' + companyInfo.phone.split(' ')[0]" class="text-white font-mono hover:text-brand-300 transition-colors">{{ companyInfo.phone }}</a>
+                    </p>
+                  </div>
+
+                  <div class="pt-4 mt-4 border-t border-gray-700 w-fit">
+                    <p class="text-xs text-gray-400 font-bold tracking-widest">
+                      {{ companyInfo.fullName }} <span class="ml-2 font-mono">{{ companyInfo.taxId }}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div class="flex flex-col md:items-end justify-center gap-6">
+                  <div class="flex items-center gap-4">
+                    <span class="text-xs font-bold text-gray-400 tracking-widest">｜ 關注我們 ｜</span>
+                    
+                    <a [href]="companyInfo.lineUrl" target="_blank" class="w-12 h-12 bg-gray-800 hover:bg-[#00B900] text-white rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110">
+                      <span class="font-black text-xs">LINE</span>
+                    </a>
+                    
+                    <a [href]="companyInfo.igUrl" target="_blank" class="w-12 h-12 bg-gray-800 hover:bg-gradient-to-tr hover:from-[#FFDC80] hover:via-[#F56040] hover:to-[#C13584] text-white rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110">
+                      <span class="font-black text-xs">IG</span>
+                    </a>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="mt-12 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-gray-500 tracking-wider">
+                <p>Copyright © {{ now | date:'yyyy' }} {{ companyInfo.name }} | Powered by {{ companyInfo.name }}</p>
+                <div class="flex gap-4">
+                  <a routerLink="/privacy" class="hover:text-white transition-colors cursor-pointer">隱私權政策</a>
+                  <a routerLink="/terms" class="hover:text-white transition-colors cursor-pointer">服務條款</a>
+                </div>
+              </div>
+            </div>
+          </footer>
+        }
       </main>
 
-      </div>
+    </div>
   `
 })
 export class AppComponent implements OnInit {
   store = inject(StoreService);
-  router = inject(Router); // 👈 新增：注入 Router 用來判斷當前網址
+  router = inject(Router); 
   showKeyWarning = false;
 
-  // 🧠 動態判斷大腦：如果網址包含 /admin 或 /buyer，就回傳 true 啟動滿版模式
+  companyInfo = environment.company;
+  now = new Date(); // 👈 修復：這就是剛剛導致當機的元兇，現在補上了！
+
+  // 👇 新增：沉浸式表頭控制大腦 👇
+  isHeaderHidden = signal(false);
+  lastScrollTop = 0;
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    const currentScroll = window.scrollY || document.documentElement.scrollTop;
+    
+    // 如果往下捲動超過 80px，就隱藏表頭；如果往上捲動，就顯示表頭
+    if (currentScroll > this.lastScrollTop && currentScroll > 80) {
+      this.isHeaderHidden.set(true); // 往下捲動 ⬇️
+    } else {
+      this.isHeaderHidden.set(false); // 往上捲動 ⬆️
+    }
+    
+    this.lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+  }
+  // 👆 沉浸式表頭大腦結束 👆
+
   get isFullWidth() {
     return this.router.url.startsWith('/admin') || this.router.url.startsWith('/buyer');
   }
 
-  // 🧠 買手紅綠燈終極大腦：只有在「需買 > 已買」時才亮紅燈，買齊就亮綠燈！
   hasPendingBuyerTasks = computed(() => {
     const allOrders = this.store.orders() || [];
     const allProducts = this.store.products() || [];
 
-    // 抓出「客人已付款 / 待對帳」需要叫貨的訂單
     const activeOrders = allOrders.filter((o: Order) => 
       ['payment_confirmed', 'paid_verifying', 'pending_shipping'].includes(o.status)
     );
 
     const listMap = new Map();
 
-    // 重新精算現在總共缺什麼
     activeOrders.forEach((order: Order) => {
       (order.items || []).forEach((item: CartItem) => {
         const optionName = item.option || '單一規格';
@@ -121,7 +196,6 @@ export class AppComponent implements OnInit {
 
     const procurementList = Array.from(listMap.values());
     
-    // 只要有任何一個商品的「需買數量 > 已買數量」，就回傳 true (亮紅燈)
     if (!procurementList || procurementList.length === 0) return false;
     return procurementList.some((item: any) => item.needed > item.procured);
   });
