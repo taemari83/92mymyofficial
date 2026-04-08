@@ -82,52 +82,52 @@ import { environment } from './environments/environment';
         </div>
 
         @if (!isFullWidth) {
-          <footer class="mt-16 pt-12 pb-8 border-t border-gray-200 text-gray-600">
+          <footer class="mt-20 pt-16 pb-12 border-t border-gray-200/60 text-gray-500">
             <div class="max-w-5xl mx-auto px-6 lg:px-8">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div class="flex flex-col md:flex-row justify-between items-start gap-10">
                 
-                <div class="space-y-4">
-                  <h2 class="text-2xl font-black text-brand-900 tracking-widest mb-4 font-mono">{{ companyInfo.name }}</h2>
+                <div class="space-y-6">
+                  <h2 class="text-3xl font-black text-brand-900 tracking-widest font-mono">{{ companyInfo.name }}</h2>
                   
-                  <div class="space-y-2 text-sm font-bold tracking-wide">
+                  <div class="space-y-2 text-sm font-medium tracking-wide">
                     <p class="flex items-center gap-3">
-                      <span class="text-gray-400">信箱</span> 
+                      <span class="text-gray-400 text-xs tracking-widest font-bold">EMAIL</span> 
                       <a [href]="'mailto:' + companyInfo.email" class="text-gray-600 hover:text-brand-900 transition-colors">{{ companyInfo.email }}</a>
                     </p>
-                    </div>
+                  </div>
 
-                  <div class="pt-4 mt-4 border-t border-gray-200 w-fit">
-                    <p class="text-xs text-gray-400 font-bold tracking-widest">
+                  <div class="pt-2">
+                    <p class="text-[11px] text-gray-400 font-medium tracking-widest">
                       {{ companyInfo.fullName }} <span class="ml-2 font-mono">{{ companyInfo.taxId }}</span>
                     </p>
                   </div>
                 </div>
 
-                <div class="flex flex-col md:items-end justify-center gap-5">
-                  <div class="flex items-center gap-3 flex-wrap md:justify-end">
-                    <span class="text-xs font-bold text-gray-400 tracking-widest mr-2 hidden sm:block">｜ 關注我們 ｜</span>
-                    
-                    <a [href]="companyInfo.lineUrl" target="_blank" class="px-4 py-2 bg-white border border-gray-200 hover:border-[#00B900] hover:text-[#00B900] hover:bg-green-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5">
-                      <span class="font-black text-[10px] sm:text-xs">官方 LINE</span>
+                <div class="flex flex-col md:items-end gap-5">
+                  <span class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Follow Us</span>
+                  
+                  <div class="flex items-center gap-4">
+                    <a [href]="companyInfo.lineUrl" target="_blank" class="w-12 h-12 bg-white rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-[#00B900] hover:text-white hover:border-[#00B900] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1">
+                      <span class="font-black text-[10px]">LINE</span>
                     </a>
 
-                    <a href="https://line.me/ti/g2/FbYCiTXfg4WRRxyDJDwZPg3M2G3eaW65phITdw?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="px-4 py-2 bg-white border border-gray-200 hover:border-[#00B900] hover:text-[#00B900] hover:bg-green-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5">
-                      <span class="font-black text-[10px] sm:text-xs">LINE 社群</span>
+                    <a href="https://line.me/ti/g2/FbYCiTXfg4WRRxyDJDwZPg3M2G3eaW65phITdw?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="w-12 h-12 bg-white rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-[#00B900] hover:text-white hover:border-[#00B900] transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1">
+                      <span class="font-black text-[10px] leading-tight text-center">社群</span>
                     </a>
                     
-                    <a [href]="companyInfo.igUrl" target="_blank" class="px-4 py-2 bg-white border border-gray-200 hover:border-pink-500 hover:text-pink-600 hover:bg-pink-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5">
-                      <span class="font-black text-[10px] sm:text-xs">IG</span>
+                    <a [href]="companyInfo.igUrl" target="_blank" class="w-12 h-12 bg-white rounded-full border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-pink-500 hover:text-white hover:border-pink-500 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-1">
+                      <span class="font-black text-[10px]">IG</span>
                     </a>
                   </div>
                 </div>
 
               </div>
 
-              <div class="mt-12 pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-gray-400 tracking-wider">
-                <p>Copyright © {{ now | date:'yyyy' }} {{ companyInfo.name }} | Powered by {{ companyInfo.name }}</p>
-                <div class="flex gap-4">
-                  <a routerLink="/privacy" class="hover:text-gray-600 transition-colors cursor-pointer">隱私權政策</a>
-                  <a routerLink="/terms" class="hover:text-gray-600 transition-colors cursor-pointer">服務條款</a>
+              <div class="mt-16 pt-6 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-gray-400 tracking-wider">
+                <p>Copyright © {{ now | date:'yyyy' }} {{ companyInfo.name }}. All rights reserved.</p>
+                <div class="flex gap-6">
+                  <a routerLink="/privacy" class="hover:text-brand-900 transition-colors cursor-pointer">隱私權政策</a>
+                  <a routerLink="/terms" class="hover:text-brand-900 transition-colors cursor-pointer">服務條款</a>
                 </div>
               </div>
             </div>
