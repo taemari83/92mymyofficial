@@ -33,8 +33,8 @@ import { environment } from './environments/environment';
       }
 
       <nav class="bg-cream-50/80 backdrop-blur-md z-[100] px-6 py-4 border-b border-brand-100/50 transition-transform duration-300 ease-in-out"
-           [ngClass]="isFullWidth ? 'relative' : 'sticky top-0'"
-           [class.-translate-y-full]="isHeaderHidden()">
+           [ngClass]="isFullWidth ? 'relative' : 'fixed top-0 left-0 right-0 w-full'"
+           [style.transform]="isHeaderHidden() ? 'translateY(-100%)' : 'translateY(0)'">
         <div class="flex justify-between items-center w-full transition-all duration-300" [ngClass]="isFullWidth ? '' : 'max-w-7xl mx-auto'">
             
             <a routerLink="/" class="flex items-center shrink-0">
@@ -74,59 +74,60 @@ import { environment } from './environments/environment';
         </div>
       </nav>
 
-      <main class="flex-1 w-full transition-all duration-300 flex flex-col" [ngClass]="isFullWidth ? '' : 'max-w-5xl mx-auto px-4 py-4'">
+      <main class="flex-1 w-full transition-all duration-300 flex flex-col" 
+            [ngClass]="isFullWidth ? '' : 'max-w-5xl mx-auto px-4 py-4 pt-[96px]'">
         
         <div class="flex-1">
           <router-outlet></router-outlet>
         </div>
 
         @if (!isFullWidth) {
-          <footer class="bg-[#192734] text-gray-300 py-12 mt-12 border-t-4 border-brand-900 rounded-[2rem] shadow-xl">
-            <div class="max-w-4xl mx-auto px-6 lg:px-8">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <footer class="mt-16 pt-12 pb-8 border-t border-gray-200 text-gray-600">
+            <div class="max-w-5xl mx-auto px-6 lg:px-8">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
                 <div class="space-y-4">
-                  <h2 class="text-3xl font-black text-white tracking-widest mb-6 font-mono">{{ companyInfo.name }}</h2>
+                  <h2 class="text-2xl font-black text-brand-900 tracking-widest mb-4 font-mono">{{ companyInfo.name }}</h2>
                   
                   <div class="space-y-2 text-sm font-bold tracking-wide">
                     <p class="flex items-center gap-3">
                       <span class="text-gray-400">信箱</span> 
-                      <a [href]="'mailto:' + companyInfo.email" class="text-white hover:text-brand-300 transition-colors">{{ companyInfo.email }}</a>
+                      <a [href]="'mailto:' + companyInfo.email" class="text-gray-600 hover:text-brand-900 transition-colors">{{ companyInfo.email }}</a>
                     </p>
-                    <p class="flex items-center gap-3">
-                      <span class="text-gray-400">TEL</span> 
-                      <a [href]="'tel:' + companyInfo.phone.split(' ')[0]" class="text-white font-mono hover:text-brand-300 transition-colors">{{ companyInfo.phone }}</a>
-                    </p>
-                  </div>
+                    </div>
 
-                  <div class="pt-4 mt-4 border-t border-gray-700 w-fit">
+                  <div class="pt-4 mt-4 border-t border-gray-200 w-fit">
                     <p class="text-xs text-gray-400 font-bold tracking-widest">
                       {{ companyInfo.fullName }} <span class="ml-2 font-mono">{{ companyInfo.taxId }}</span>
                     </p>
                   </div>
                 </div>
 
-                <div class="flex flex-col md:items-end justify-center gap-6">
-                  <div class="flex items-center gap-4">
-                    <span class="text-xs font-bold text-gray-400 tracking-widest">｜ 關注我們 ｜</span>
+                <div class="flex flex-col md:items-end justify-center gap-5">
+                  <div class="flex items-center gap-3 flex-wrap md:justify-end">
+                    <span class="text-xs font-bold text-gray-400 tracking-widest mr-2 hidden sm:block">｜ 關注我們 ｜</span>
                     
-                    <a [href]="companyInfo.lineUrl" target="_blank" class="w-12 h-12 bg-gray-800 hover:bg-[#00B900] text-white rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110">
-                      <span class="font-black text-xs">LINE</span>
+                    <a [href]="companyInfo.lineUrl" target="_blank" class="px-4 py-2 bg-white border border-gray-200 hover:border-[#00B900] hover:text-[#00B900] hover:bg-green-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+                      <span class="font-black text-[10px] sm:text-xs">官方 LINE</span>
+                    </a>
+
+                    <a href="https://line.me/ti/g2/FbYCiTXfg4WRRxyDJDwZPg3M2G3eaW65phITdw?utm_source=invitation&utm_medium=link_copy&utm_campaign=default" target="_blank" class="px-4 py-2 bg-white border border-gray-200 hover:border-[#00B900] hover:text-[#00B900] hover:bg-green-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+                      <span class="font-black text-[10px] sm:text-xs">LINE 社群</span>
                     </a>
                     
-                    <a [href]="companyInfo.igUrl" target="_blank" class="w-12 h-12 bg-gray-800 hover:bg-gradient-to-tr hover:from-[#FFDC80] hover:via-[#F56040] hover:to-[#C13584] text-white rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110">
-                      <span class="font-black text-xs">IG</span>
+                    <a [href]="companyInfo.igUrl" target="_blank" class="px-4 py-2 bg-white border border-gray-200 hover:border-pink-500 hover:text-pink-600 hover:bg-pink-50 text-gray-600 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5">
+                      <span class="font-black text-[10px] sm:text-xs">IG</span>
                     </a>
                   </div>
                 </div>
 
               </div>
 
-              <div class="mt-12 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-gray-500 tracking-wider">
+              <div class="mt-12 pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-gray-400 tracking-wider">
                 <p>Copyright © {{ now | date:'yyyy' }} {{ companyInfo.name }} | Powered by {{ companyInfo.name }}</p>
                 <div class="flex gap-4">
-                  <a routerLink="/privacy" class="hover:text-white transition-colors cursor-pointer">隱私權政策</a>
-                  <a routerLink="/terms" class="hover:text-white transition-colors cursor-pointer">服務條款</a>
+                  <a routerLink="/privacy" class="hover:text-gray-600 transition-colors cursor-pointer">隱私權政策</a>
+                  <a routerLink="/terms" class="hover:text-gray-600 transition-colors cursor-pointer">服務條款</a>
                 </div>
               </div>
             </div>
@@ -149,15 +150,20 @@ export class AppComponent implements OnInit {
   isHeaderHidden = signal(false);
   lastScrollTop = 0;
 
-  @HostListener('window:scroll', [])
+  // 👇 3. 升級版滾動偵測大腦 (連動次表頭) 👇
+  @HostListener('window:scroll', ['$event'])
   onWindowScroll() {
-    const currentScroll = window.scrollY || document.documentElement.scrollTop;
+    const currentScroll = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
     
-    // 如果往下捲動超過 80px，就隱藏表頭；如果往上捲動，就顯示表頭
-    if (currentScroll > this.lastScrollTop && currentScroll > 80) {
-      this.isHeaderHidden.set(true); // 往下捲動 ⬇️
+    // 往下捲動超過 100px 時觸發隱藏
+    if (currentScroll > 100 && currentScroll > this.lastScrollTop) {
+      this.isHeaderHidden.set(true); 
+      // 往下捲：通知次表頭滑到最頂端 (0px)
+      if (typeof document !== 'undefined') document.documentElement.style.setProperty('--sub-header-top', '0px');
     } else {
-      this.isHeaderHidden.set(false); // 往上捲動 ⬆️
+      this.isHeaderHidden.set(false); 
+      // 往上捲：通知次表頭回到主表頭下方 (保留 96px 空間)
+      if (typeof document !== 'undefined') document.documentElement.style.setProperty('--sub-header-top', '96px');
     }
     
     this.lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;

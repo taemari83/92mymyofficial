@@ -29,7 +29,8 @@ import { environment } from '../environments/environment';
         </a>
       </div>
 
-      <div class="sticky top-0 md:top-20 z-[60] bg-[#FDFBF9] pb-4 pt-2 space-y-3 border-b border-gray-100 shadow-sm">        
+      <div class="sticky z-[60] bg-[#FDFBF9] pb-4 pt-2 space-y-3 border-b border-gray-100 shadow-sm transition-all duration-300 ease-in-out" 
+           style="top: var(--sub-header-top, 96px)">        
          <div class="flex flex-col sm:flex-row gap-3 px-2">
            <div class="bg-white p-2 rounded-full shadow-sm border border-gray-100 flex items-center flex-1">
               <span class="pl-4 text-gray-400">🔍</span>
@@ -247,41 +248,6 @@ import { environment } from '../environments/environment';
            }
          </div>
       }
-
-      <footer class="bg-[#192734] text-gray-300 py-12 mt-12 border-t-4 border-brand-900 rounded-t-[2rem] mx-[-1rem] sm:mx-0 px-6 lg:px-8">
-        <div class="max-w-5xl mx-auto">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-            
-            <div class="space-y-4">
-              <h2 class="text-3xl font-black text-white tracking-widest mb-6 font-mono">{{ companyInfo?.name }}</h2>
-              <div class="space-y-2 text-sm font-bold tracking-wide">
-                <p class="flex items-center gap-3"><span class="text-gray-400">信箱</span> <a [href]="'mailto:' + companyInfo?.email" class="text-white hover:text-brand-300 transition-colors">{{ companyInfo?.email }}</a></p>
-                <p class="flex items-center gap-3"><span class="text-gray-400">TEL</span> <a [href]="'tel:' + (companyInfo?.phone ? companyInfo!.phone!.split(' ')[0] : '')" class="text-white font-mono hover:text-brand-300 transition-colors">{{ companyInfo?.phone }}</a></p>
-              </div>
-              <div class="pt-4 mt-4 border-t border-gray-700 w-fit">
-                <p class="text-xs text-gray-400 font-bold tracking-widest">{{ companyInfo?.fullName }} <span class="ml-2 font-mono">{{ companyInfo?.taxId }}</span></p>
-              </div>
-            </div>
-
-            <div class="flex flex-col md:items-end justify-center gap-6">
-              <div class="flex items-center gap-4">
-                <span class="text-xs font-bold text-gray-400 tracking-widest">｜ 關注我們 ｜</span>
-                <a [href]="companyInfo?.lineUrl" target="_blank" class="w-12 h-12 bg-gray-800 hover:bg-[#00B900] text-white rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110"><span class="font-black text-xs">LINE</span></a>
-                <a [href]="companyInfo?.igUrl" target="_blank" class="w-12 h-12 bg-gray-800 hover:bg-gradient-to-tr hover:from-[#FFDC80] hover:via-[#F56040] hover:to-[#C13584] text-white rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:scale-110"><span class="font-black text-xs">IG</span></a>
-              </div>
-            </div>
-
-          </div>
-
-          <div class="mt-12 pt-6 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-bold text-gray-500 tracking-wider">
-            <p>Copyright © {{ now | date:'yyyy' }} {{ companyInfo?.name }} | Powered by {{ companyInfo?.name }}</p>
-            <div class="flex gap-4">
-              <a routerLink="/privacy" class="hover:text-white transition-colors cursor-pointer">隱私權政策</a>
-              <a routerLink="/terms" class="hover:text-white transition-colors cursor-pointer">服務條款</a>
-            </div>
-          </div>
-        </div>
-      </footer>
 
       @if (store.cartCount() > 0) {
         <a routerLink="/checkout" class="fixed bottom-6 right-6 z-40 bg-brand-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform cursor-pointer animate-bounce-in border-none outline-none text-decoration-none">
