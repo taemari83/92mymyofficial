@@ -21,6 +21,7 @@ export interface Product {
   allowPayment?: { cash: boolean; bankTransfer: boolean; cod: boolean; };
   allowShipping?: { meetup: boolean; myship: boolean; family: boolean; delivery: boolean; };
   brand?: string; 
+  status?: 'active' | 'inactive'; // 👈 新增這行：記錄商品是上架(active)還是下架(inactive)
 }
 
 export interface CartItem {

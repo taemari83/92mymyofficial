@@ -448,7 +448,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-gray-50 flex flex-col gap-4 w-full"> 
               
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-                 <div class="text-sm font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-lg w-fit mt-1">共 {{ store.products().length }} 件商品</div>
+                 <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-xl w-full sm:w-auto">
+                    <button (click)="productStatusFilter.set('active')" [class.bg-white]="productStatusFilter() === 'active'" [class.text-brand-900]="productStatusFilter() === 'active'" [class.shadow-sm]="productStatusFilter() === 'active'" class="flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold text-gray-500 transition-all">🟢 上架中</button>
+                    <button (click)="productStatusFilter.set('inactive')" [class.bg-white]="productStatusFilter() === 'inactive'" [class.text-gray-900]="productStatusFilter() === 'inactive'" [class.shadow-sm]="productStatusFilter() === 'inactive'" class="flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold text-gray-500 transition-all">⚫️ 已下架</button>
+                 </div>
+                 
                  <div class="hidden sm:flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 shadow-inner">
                     <button (click)="productViewMode.set('list')" title="條列" [class.bg-white]="productViewMode() === 'list'" [class.shadow-sm]="productViewMode() === 'list'" [class.text-brand-900]="productViewMode() === 'list'" [class.text-gray-400]="productViewMode() !== 'list'" class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center"><span class="text-lg">≣</span></button>
                     <button (click)="productViewMode.set('grid')" title="宮格" [class.bg-white]="productViewMode() === 'grid'" [class.shadow-sm]="productViewMode() === 'grid'" [class.text-brand-900]="productViewMode() === 'grid'" [class.text-gray-400]="productViewMode() !== 'grid'" class="px-4 py-1.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center"><span class="text-lg">⊞</span></button>
@@ -541,8 +545,13 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         <div class="flex justify-between items-end mt-2"> 
                            <div class="text-xs text-gray-400 truncate"> {{ (p.options || []).join(', ') }} </div> 
                            <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 pl-2"> 
-                              <button (click)="editProduct(p)" class="px-4 py-1.5 rounded-full bg-brand-50 text-xs font-bold text-brand-700 hover:bg-brand-100 whitespace-nowrap transition-colors shadow-sm">✏️ 編輯 / 下架</button> 
-                           </div>
+                               @if(p.status === 'inactive') {
+                                  <button (click)="toggleProductStatus(p, $event)" class="px-4 py-1.5 rounded-full bg-green-50 text-xs font-bold text-green-600 hover:bg-green-100 whitespace-nowrap transition-colors shadow-sm border border-green-200">🟢 重新上架</button>
+                               } @else {
+                                  <button (click)="toggleProductStatus(p, $event)" class="px-4 py-1.5 rounded-full bg-gray-100 text-xs font-bold text-gray-600 hover:bg-gray-200 whitespace-nowrap transition-colors shadow-sm border border-gray-200">⚫️ 暫時下架</button>
+                               }
+                               <button (click)="editProduct(p)" class="px-4 py-1.5 rounded-full bg-brand-50 text-xs font-bold text-brand-700 hover:bg-brand-100 whitespace-nowrap transition-colors shadow-sm border border-brand-200">✏️ 編輯</button> 
+                            </div>
                         </div> 
                      </div> 
                   </div> 
@@ -571,7 +580,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                               <div class="text-[10px] text-gray-400">庫存 {{ p.stock >= 9999 ? '無限' : p.stock }}</div>
                            </div>
                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button (click)="editProduct(p)" class="w-8 h-8 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center hover:bg-brand-100 transition-colors shadow-sm" title="編輯商品">✏️</button>
+                              @if(p.status === 'inactive') {
+                                 <button (click)="toggleProductStatus(p, $event)" class="px-3 h-8 rounded-full bg-green-50 text-green-600 text-xs font-bold flex items-center justify-center hover:bg-green-100 transition-colors shadow-sm border border-green-200" title="重新上架">上架</button>
+                              } @else {
+                                 <button (click)="toggleProductStatus(p, $event)" class="px-3 h-8 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center justify-center hover:bg-gray-200 transition-colors shadow-sm border border-gray-200" title="暫時下架">下架</button>
+                              }
+                              <button (click)="editProduct(p)" class="w-8 h-8 rounded-full bg-brand-50 text-brand-700 flex items-center justify-center hover:bg-brand-100 transition-colors shadow-sm border border-brand-200" title="編輯商品">✏️</button>
                            </div>
                         </div>
                      </div>
@@ -2579,6 +2593,7 @@ export class AdminPanelComponent {
   productSearch = signal('');
   productCategoryFilter = signal<string>('all'); // 記錄選中的主分類
   productSubCategoryFilter = signal<string>('all'); // 記錄選中的次分類
+  productStatusFilter = signal<'active' | 'inactive'>('active'); // 👈 新增：商品上下架狀態過濾
   
   // 👇👇👇 貼在這裡（處理新增次分類的邏輯） 👇👇👇
   isAddingNewSubCategory = signal(false);
@@ -2813,6 +2828,14 @@ export class AdminPanelComponent {
 
   filteredAdminProducts = computed(() => {
     let list = [...this.activeProducts()];
+    
+    // 🔥 0. 依照「上架中 / 已下架」篩選
+    if (this.productStatusFilter() === 'active') {
+        list = list.filter(p => p.status !== 'inactive');
+    } else {
+        list = list.filter(p => p.status === 'inactive');
+    }
+
     const q = this.productSearch().toLowerCase();
     const cat = this.productCategoryFilter();
     const subCat = this.productSubCategoryFilter();
@@ -4474,6 +4497,23 @@ openProductForm() {
       tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, priceWholesale: (p as any).priceWholesale || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 
     }); 
     this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
+  }
+
+  // 👇 新增：快速切換商品上下架狀態 👇
+  async toggleProductStatus(p: Product, event: Event) {
+    event.stopPropagation(); // 阻止點擊事件冒泡打開編輯視窗
+    
+    const newStatus = p.status === 'inactive' ? 'active' : 'inactive';
+    const actionName = newStatus === 'active' ? '上架' : '下架';
+    
+    if (confirm(`確定要將「${p.name}」${actionName}嗎？`)) {
+       try {
+          await this.store.updateProduct({ ...p, status: newStatus } as any);
+          // 如果是剛好停留在對應的頁籤，會自動消失，不用特別 alert，體驗最順暢
+       } catch(e) {
+          alert(`❌ ${actionName}失敗，請檢查網路。`);
+       }
+    }
   }
 
   closeProductModal() { this.showProductModal.set(false); } 
