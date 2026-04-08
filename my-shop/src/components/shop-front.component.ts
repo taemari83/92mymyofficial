@@ -12,10 +12,10 @@ import { environment } from '../environments/environment';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule], 
   template: `
-<div class="space-y-4 sm:space-y-8 pb-20">
+<div class="space-y-4 sm:space-y-8 pb-20 pt-6 md:pt-10">
 
-      <div class="sticky z-[60] bg-[#FDFBF9] pb-4 pt-2 space-y-3 border-b border-gray-100 shadow-sm transition-all duration-300 ease-in-out" 
-           style="top: var(--sub-header-top, 96px)">        
+      <div class="sticky z-[60] bg-[#FDFBF9] pb-4 pt-4 md:pt-5 space-y-3 border-b border-gray-100 shadow-sm transition-all duration-300 ease-in-out" 
+           style="top: var(--sub-header-top, 96px)">       
          <div class="flex flex-col sm:flex-row gap-3 px-2">
            <div class="bg-white p-2 rounded-full shadow-sm border border-gray-100 flex items-center flex-1">
               <span class="pl-4 text-gray-400">🔍</span>
