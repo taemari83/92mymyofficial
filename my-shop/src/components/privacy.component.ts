@@ -21,7 +21,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 
         <section>
           <h2 class="text-xl font-bold text-gray-800 mb-3 flex items-center gap-2"><span class="text-brand-600">二、</span>資料之保護與儲存</h2>
-          <p>本網站之資料庫存放於具備國際級安全標準的雲端伺服器（如 Google Firebase 等）。伺服器均設有資訊安全設備及必要的防護措施，僅有經過授權之內部人員才能接觸您的個人資料及訂單資訊，相關處理人員皆負有保密義務。</p>
+          <p>本網站之資料庫存放於具備國際級安全標準的雲端伺服器。伺服器均設有資訊安全設備及必要的防護措施，僅有經過授權之內部人員才能接觸您的個人資料及訂單資訊，相關處理人員皆負有保密義務。</p>
         </section>
 
         <section>

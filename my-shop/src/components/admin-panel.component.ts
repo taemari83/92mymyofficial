@@ -815,7 +815,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="text-sm font-bold text-gray-500">₩ {{ accountingExpenses().krw | number:'1.0-0' }}</div>
                </div>
 
-               <div class="col-span-1 bg-brand-900 text-white p-5 rounded-[2rem] shadow-lg relative flex flex-col justify-center z-10 hover:z-[60] transition-all">
+               <div class="col-span-1 bg-brand-900 text-white p-5 rounded-[2rem] shadow-lg relative z-10 hover:z-[60] transition-all">
                   <div class="text-brand-200 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-1 relative group cursor-help w-fit">
                     <div class="flex items-center gap-1">估算總盈餘 <span class="w-3.5 h-3.5 rounded-full bg-brand-200/20 text-brand-200 flex items-center justify-center text-[9px]">?</span></div>
                     <div class="text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
@@ -4137,37 +4137,21 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   }
   
   exportCustomersCSV() { 
-     const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
-     
-     // 👇 幫你做了一個等級翻譯機
-     const tierMap: any = {
-        'v1': 'VIP 1',
-        'v2': 'VIP 2',
-        'v3': 'VIP 3',
-        'vip': 'VIP',
-        'wholesale': '批發',
-        'employee': '內部員工',
-        'general': '一般'
-     };
-
+     const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
+     const headers = ['會員編碼', '結算匯出時間', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日']; 
+     const tierMap: any = { 'v1': 'VIP 1', 'v2': 'VIP 2', 'v3': 'VIP 3', 'vip': 'VIP', 'wholesale': '批發', 'employee': '內部員工', 'general': '一般' };
      const rows = this.filteredUsers().map((u: User) => [ 
-        `\t${this.formatMemberNo(u)}`, 
-        `\t${u.id}`, 
-        u.name, 
-        `\t${u.phone || ''}`, 
-        tierMap[u.tier] || '一般', // 👈 這裡換成翻譯機，匯出的 Excel 就會超級精準！
-        this.calculateUserTotalSpend(u.id), 
-        u.credits, 
-        u.birthday || '' 
+        `\t${this.formatMemberNo(u)}`, nowStr, `\t${u.id}`, u.name, `\t${u.phone || ''}`, tierMap[u.tier] || '一般', 
+        this.calculateUserTotalSpend(u.id), u.credits, u.birthday || '' 
      ]); 
      this.downloadCSV(`會員名單_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }
 
 exportInventoryCSV() { 
-      const headers = ['SKU貨號', '商品名稱', '分類', '次分類', '庫存數量', '狀態']; 
+      const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
+      const headers = ['SKU貨號', '結算匯出時間', '商品名稱', '分類', '次分類', '庫存數量', '狀態']; 
       const rows = this.activeProducts().map((p: Product) => [ 
-        `\t${p.code}`, p.name, p.category, p.subCategory || '', p.stock, 
-        p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') 
+        `\t${p.code}`, nowStr, p.name, p.category, p.subCategory || '', p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足') 
       ]); 
       this.downloadCSV(`庫存盤點表_${new Date().toISOString().slice(0,10)}`, headers, rows); 
   }  
@@ -4177,22 +4161,25 @@ exportInventoryCSV() {
   // ==========================================
   private readonly SHEETS_GAS_URL = 'https://script.google.com/macros/s/AKfycbwCBQjv_aHhgRQhyAnSkddhapYHiwgzkEBDxnxTgItJZsmku5uPRC0IYscHfo7mdCs2/exec';
 
-  private async pushToGoogleSheets(sheetName: string, rows: any[], clearSheet: boolean = true) {
-    if (rows.length === 0) return alert('目前沒有資料可以同步！');
+  // 🚀 萬用智慧同步器 (支援覆蓋、更新、增量)
+  private async pushToGoogleSheets(sheetName: string, rows: any[], mode: 'overwrite' | 'upsert' | 'append' = 'overwrite', silent: boolean = false) {
+    if (rows.length === 0) return;
     
-    // 根據是否覆蓋，顯示不同的提示文字
-    const confirmMsg = clearSheet 
-       ? `⏳ 準備將資料同步至 Google Sheets 的「${sheetName}」分頁\n(系統將會自動清空舊資料再寫入最新資料)\n\n按下「確定」開始傳送。`
-       : `⏳ 準備將結算資料【新增】至 Google Sheets 的「${sheetName}」分頁\n(新資料會往下增加，不會覆蓋舊紀錄，方便追蹤進退步！)\n\n按下「確定」開始傳送。`;
-       
-    if (!confirm(confirmMsg)) return;
+    if (!silent && !confirm(`⏳ 準備執行「${sheetName}」同步 (模式: ${mode})\n確定開始傳送？`)) return;
     
     try {
-      const res = await fetch(this.SHEETS_GAS_URL, { method: 'POST', body: JSON.stringify({ sheetName, rows, clearSheet }) });
+      const res = await fetch(this.SHEETS_GAS_URL, { 
+        method: 'POST', 
+        body: JSON.stringify({ sheetName, rows, mode }) 
+      });
       const result = await res.json();
-      if (result.success) alert(`✅ 同步成功！\n已更新至「${sheetName}」分頁。`);
-      else alert('❌ 同步失敗: ' + result.error);
-    } catch (e) { alert('❌ 發生網路錯誤，無法連線至 Google Sheets API。'); }
+      if (!silent) {
+         if (result.success) alert(`✅ 同步成功！`);
+         else alert('❌ 同步失敗: ' + result.error);
+      }
+    } catch (e) { 
+      if (!silent) alert('❌ 發生網路錯誤'); 
+    }
   }
 
   syncOrdersToGoogleSheets() {
@@ -4225,7 +4212,7 @@ exportInventoryCSV() {
     });
     
     // 把表頭放在第一行送出
-    this.pushToGoogleSheets('訂單管理', [headers, ...dataRows]);
+    this.pushToGoogleSheets('訂單管理', [headers, ...dataRows], 'overwrite');
   }
 
   syncProductsToGoogleSheets() {
@@ -4246,24 +4233,26 @@ exportInventoryCSV() {
         p.isListed ? 'TRUE' : 'FALSE', '', p.note || '', (p as any).purchaseUrl || '', cost.toFixed(0), normalProfit.toFixed(0), bulkProfit, realSoldCount
       ];
     });
-    this.pushToGoogleSheets('商品總表', [headers, ...dataRows]);
+    this.pushToGoogleSheets('商品總表', [headers, ...dataRows], 'overwrite');
   }
 
   syncCustomersToGoogleSheets() {
-    const headers = ['會員編碼', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日'];
+    const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
+    const headers = ['會員編碼', '結算匯出時間', '會員ID', '姓名', '電話', '等級', '累積消費', '購物金餘額', '生日'];
     const dataRows = this.filteredUsers().map((u: User) => [
-      `'${this.formatMemberNo(u)}`, `'${u.id}`, u.name, `'${u.phone || ''}`, u.tier === 'vip' ? 'VIP' : (u.tier === 'wholesale' ? '批發' : '一般'),
+      `'${this.formatMemberNo(u)}`, nowStr, `'${u.id}`, u.name, `'${u.phone || ''}`, u.tier === 'vip' ? 'VIP' : (u.tier === 'wholesale' ? '批發' : '一般'),
       this.calculateUserTotalSpend(u.id), u.credits, u.birthday || ''
     ]);
-    this.pushToGoogleSheets('會員名單', [headers, ...dataRows]);
+    this.pushToGoogleSheets('會員名單', [headers, ...dataRows], 'upsert');
   }
 
   syncInventoryToGoogleSheets() {
-    const headers = ['SKU貨號', '商品名稱', '分類', '次分類', '庫存數量', '狀態']; 
+    const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
+    const headers = ['SKU貨號', '結算匯出時間', '商品名稱', '分類', '次分類', '庫存數量', '狀態']; 
     const dataRows = this.activeProducts().map((p: Product) => [
-      `'${p.code}`, p.name, p.category, p.subCategory || '', p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足')
+      `'${p.code}`, nowStr, p.name, p.category, p.subCategory || '', p.stock, p.stock <= 0 ? '缺貨' : (p.stock < 5 ? '低庫存' : '充足')
     ]);
-    this.pushToGoogleSheets('庫存盤點表', [headers, ...dataRows]);
+    this.pushToGoogleSheets('庫存盤點表', [headers, ...dataRows], 'upsert');
   }
 
   syncProcurementToGoogleSheets() {
@@ -4273,7 +4262,7 @@ exportInventoryCSV() {
       item.procured >= item.needed ? '✅ 已買齊' : '⚠️ 還缺 ' + (item.needed - item.procured)
     ]);
     const rangeLabel = this.procureRange() === 'all' ? '全部' : (this.procureRange() === 'today' ? '今日' : (this.procureRange() === 'yesterday' ? '昨日' : '自訂區間'));
-    this.pushToGoogleSheets(`叫貨表_${rangeLabel}`, [headers, ...dataRows]);
+    this.pushToGoogleSheets(`叫貨表_${rangeLabel}`, [headers, ...dataRows], 'overwrite');
   }
   exportToCSV() { 
     const range = this.accountingRange(); 
@@ -4477,7 +4466,7 @@ exportInventoryCSV() {
       ];
     }); 
 
-    this.pushToGoogleSheets('營利報表', [headers, ...payloadRows]);
+    this.pushToGoogleSheets('營利報表', [headers, ...payloadRows], 'upsert');
   }
 
   async syncPurchasesToGoogleSheets() {
@@ -4498,7 +4487,7 @@ exportInventoryCSV() {
       ];
     });
 
-    this.pushToGoogleSheets('採購總帳', [headers, ...payloadRows]);
+    this.pushToGoogleSheets('採購總帳', [headers, ...payloadRows], 'overwrite');
   }
 
   exportProductsCSV() { 
@@ -4972,11 +4961,10 @@ submitProduct() {
   exportWalletDetailsCSV() {
      const w = this.detailsWallet();
      if (!w) return;
-     const headers = ['日期', '類別', '項目說明', '操作人', '收支類型', '金額', '備註'];
+     const headers = ['交易編號', '日期', '類別', '項目說明', '操作人', '收支類型', '金額', '備註'];
      const rows = this.walletTransactions().map(t => {
         const type = t.amount < 0 ? '收入 (+)' : '支出 (-)';
-        const absAmount = Math.abs(t.amount);
-        return [t.date, t.category, t.item, t.payer, type, absAmount, t.note || ''];
+        return [`\t${t.id}`, t.date, t.category, t.item, t.payer, type, Math.abs(t.amount), t.note || ''];
      });
      this.downloadCSV(`${w.name}_資金流水帳_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
@@ -4984,16 +4972,12 @@ submitProduct() {
   syncWalletDetailsToGoogleSheets() {
      const w = this.detailsWallet();
      if (!w) return;
-     const headers = ['日期', '類別', '項目說明', '操作人', '收支類型', '金額', '備註'];
+     const headers = ['交易編號', '日期', '類別', '項目說明', '操作人', '收支類型', '金額', '備註'];
      const dataRows = this.walletTransactions().map(t => {
         const type = t.amount < 0 ? '收入 (+)' : '支出 (-)';
-        const absAmount = Math.abs(t.amount);
-        return [t.date, t.category, t.item, t.payer, type, absAmount, t.note || '-'];
+        return [`'${t.id}`, t.date, t.category, t.item, t.payer, type, Math.abs(t.amount), t.note || '-'];
      });
-     
-     // 💡 動態建立分頁名稱，例如「日幣營運資金_流水帳」
-     const sheetName = `${w.name}_流水帳`;
-     this.pushToGoogleSheets(sheetName, [headers, ...dataRows]);
+     this.pushToGoogleSheets(`${w.name}_流水帳`, [headers, ...dataRows], 'upsert');
   }
 
   openWalletModal(wallet: any, action: 'add' | 'deduct') {
@@ -5539,23 +5523,19 @@ submitProduct() {
   }
 
   exportExpensesCSV() {
-     const headers = ['日期', '支出項目', '類別', '金額', '幣別', '結存餘額', '付款人', '備註'];
+     const headers = ['單據編號', '日期', '支出項目', '類別', '金額', '幣別', '結存餘額', '付款人', '備註'];
      const rows = this.filteredExpenses().map((e: any) => [ 
-        e.date, e.item, e.category, e.amount, e.currency, 
-        e.runningBalance !== undefined ? e.runningBalance : '', // 👈 改為 runningBalance
-        e.payer, e.note || '-' 
+        `\t${e.id}`, e.date, e.item, e.category, e.amount, e.currency, e.runningBalance !== undefined ? e.runningBalance : '', e.payer, e.note || '-' 
      ]);
      this.downloadCSV(`營業支出明細_${new Date().toISOString().slice(0,10)}`, headers, rows);
   }
 
   syncExpensesToGoogleSheets() {
-     const headers = ['日期', '支出項目', '類別', '金額', '幣別', '結存餘額', '付款人', '備註'];
+     const headers = ['單據編號', '日期', '支出項目', '類別', '金額', '幣別', '結存餘額', '付款人', '備註'];
      const dataRows = this.filteredExpenses().map((e: any) => [ 
-        e.date, e.item, e.category, e.amount, e.currency, 
-        e.runningBalance !== undefined ? e.runningBalance : '', // 👈 改為 runningBalance
-        e.payer, e.note || '-' 
+        `'${e.id}`, e.date, e.item, e.category, e.amount, e.currency, e.runningBalance !== undefined ? e.runningBalance : '', e.payer, e.note || '-' 
      ]);
-     this.pushToGoogleSheets('營業支出', [headers, ...dataRows]);
+     this.pushToGoogleSheets('營業支出', [headers, ...dataRows], 'upsert');
   }
 
   forceRefresh() {
@@ -5647,7 +5627,7 @@ submitProduct() {
      ];
      
      // 💡 修正：因為是「新增(Append)」模式，所以不要把 headers 一起傳進去，只傳 rowData 即可！
-     this.pushToGoogleSheets(`終極會計總表`, [rowData], false);
+     this.pushToGoogleSheets(`終極會計總表`, [rowData], 'append');
   }
 
   // 🤫 員工專屬隱形資料庫
