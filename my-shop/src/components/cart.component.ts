@@ -412,9 +412,14 @@ export class CartComponent {
      if (settings.paymentMethods.cod) pay.add('cod');
 
      let ship = new Set<string>();
-     const isEmployee = this.storeService.currentUser()?.tier === 'employee';
-     // 💡 員工無視開關強制享有面交，一般客則看後台設定
-     if (settings.shipping.methods.meetup.enabled || isEmployee) ship.add('meetup');
+     const userTier = this.storeService.currentUser()?.tier;
+     // 💡 判斷身分：內部員工 (employee) 或 批發客 (wholesale)
+     const hasMeetupPrivilege = userTier === 'employee' || userTier === 'wholesale';
+
+     // 只要後台有開啟面交，或是具備特權身分，就顯示面交選項
+     if (settings.shipping.methods.meetup.enabled || hasMeetupPrivilege) {
+        ship.add('meetup');
+     }
      if (settings.shipping.methods.myship.enabled) ship.add('myship');
      if (settings.shipping.methods.family.enabled) ship.add('family');
      if (settings.shipping.methods.delivery.enabled) ship.add('delivery');
