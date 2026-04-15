@@ -4285,10 +4285,13 @@ exportInventoryCSV() {
     else if (range === 'year') startDate = new Date(now.getFullYear(), 0, 1);
     
     let list = this.accountingFilteredOrders(); 
-    const headers = ['訂單編號', '日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%', '藝辰分潤', '子婷分潤', '小芸分潤', '公司保留'];
+    const headers = ['訂單編號', '日期', '客群類型', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%', '藝辰分潤', '子婷分潤', '小芸分潤', '公司保留'];
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
 
     const rows = list.map((o: Order) => { 
+      // 🌟 判斷這張單是批發客還是一般客
+      const orderUser = this.store.users().find((u: User) => u.id === o.userId);
+      const customerType = orderUser?.tier === 'wholesale' ? '📦 批發客' : '🛒 一般零售';
       let costGeneralTotal = 0; 
       let totalRawProfit = 0;
 
@@ -4368,7 +4371,9 @@ exportInventoryCSV() {
       });
 
       return [ 
-        `\t${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `\t${o.paymentLast5}` : '',
+        `\t${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), 
+        customerType, // 👈 塞入客群類型
+        payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `\t${o.paymentLast5}` : '', 
         itemsData.map(i => i.detailString).join('\n'), o.finalTotal, Math.round(costGeneralTotal), Math.round(profit), `${margin.toFixed(1)}%`,
         Math.round(oYichen), Math.round(oZiting), Math.round(oXiaoyun), Math.round(oCompany)
       ];
@@ -4391,9 +4396,12 @@ exportInventoryCSV() {
     
     let list = this.accountingFilteredOrders(); 
     const payMap: any = { cash: '現金', bank_transfer: '轉帳', cod: '貨到付款' };
-    const headers = ['訂單編號', '結算日期', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%', '收款狀態', '藝辰分潤', '子婷分潤', '小芸分潤', '公司保留'];
+    const headers = ['訂單編號', '結算日期', '客群類型', '付款方式', '匯款後五碼', '商品內容 (含價格明細)', '總營收', '商品總成本', '預估利潤', '毛利率%', '收款狀態', '藝辰分潤', '子婷分潤', '小芸分潤', '公司保留'];
 
     const payloadRows = list.map((o: Order) => { 
+      // 🌟 判斷這張單是批發客還是一般客
+      const orderUser = this.store.users().find((u: User) => u.id === o.userId);
+      const customerType = orderUser?.tier === 'wholesale' ? '📦 批發客' : '🛒 一般零售';
       let costGeneralTotal = 0; let totalRawProfit = 0;
       
       const itemsData = o.items.map((i: CartItem) => { 
@@ -4461,8 +4469,10 @@ exportInventoryCSV() {
       });
 
       return [ 
-        `'${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `'${o.paymentLast5}` : '', 
-        itemsData.map(i => i.detailString).join('\n'), o.finalTotal, Math.round(costGeneralTotal), Math.round(profit), `${margin.toFixed(1)}%`, this.getPaymentStatusLabel(o.status, o.paymentMethod),
+        `\t${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), 
+        customerType, // 👈 塞入客群類型
+        payMap[o.paymentMethod] || o.paymentMethod, o.paymentLast5 ? `\t${o.paymentLast5}` : '', 
+        itemsData.map(i => i.detailString).join('\n'), o.finalTotal, Math.round(costGeneralTotal), Math.round(profit), `${margin.toFixed(1)}%`,
         Math.round(oYichen), Math.round(oZiting), Math.round(oXiaoyun), Math.round(oCompany)
       ];
     }); 
@@ -5403,11 +5413,12 @@ submitProduct() {
      const netTWD = stats.revenueTWD - stats.costTWD - expTWD;
      const netKRW = stats.revenueKRW - stats.costKRW - expKRW;
 
-     // 🔥 完美對齊的 21 欄表頭
+     // 🔥 完美對齊的 25 欄表頭 (新增零售與批發拆解)
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
         '台幣淨結算(TWD)', '韓幣淨結算(KRW)',
-        '台幣總營收', '韓幣總營收', 
+        '台幣總營收', '其中：台幣零售', '其中：台幣批發',  // 👈 新增這兩欄
+        '韓幣總營收', '其中：韓幣零售', '其中：韓幣批發',  // 👈 新增這兩欄
         '商品成本(含外幣換算TWD)', '韓國商品成本(KRW)',
         '台幣營業支出', '韓幣營業支出', 
         '商品總毛利(估算TWD)', '外幣支出折合台幣估算', 
@@ -5419,7 +5430,8 @@ submitProduct() {
      const rowData = [
         exportTime, reportYear, reportMonth, rangeName,
         Math.round(netTWD), Math.round(netKRW),
-        Math.round(stats.revenueTWD), Math.round(stats.revenueKRW), 
+        Math.round(stats.revenueTWD), Math.round(stats.revenueRetailTWD), Math.round(stats.revenueWholesaleTWD), // 👈 塞入新數據
+        Math.round(stats.revenueKRW), Math.round(stats.revenueRetailKRW), Math.round(stats.revenueWholesaleKRW), // 👈 塞入新數據
         Math.round(stats.costTWD), Math.round(stats.costKRW),
         expTWD, expKRW, 
         Math.round(stats.profit), Math.round(foreignToTWD),
@@ -5607,11 +5619,12 @@ submitProduct() {
      const netTWD = stats.revenueTWD - stats.costTWD - expTWD;
      const netKRW = stats.revenueKRW - stats.costKRW - expKRW;
 
-     // 🔥 完美對齊的 21 欄表頭
+     // 🔥 完美對齊的 25 欄表頭 (新增零售與批發拆解)
      const headers = [
         '結算匯出時間', '年份', '月份', '報表區間', 
         '台幣淨結算(TWD)', '韓幣淨結算(KRW)',
-        '台幣總營收', '韓幣總營收', 
+        '台幣總營收', '其中：台幣零售', '其中：台幣批發',  // 👈 新增這兩欄
+        '韓幣總營收', '其中：韓幣零售', '其中：韓幣批發',  // 👈 新增這兩欄
         '商品成本(含外幣換算TWD)', '韓國商品成本(KRW)',
         '台幣營業支出', '韓幣營業支出', 
         '商品總毛利(估算TWD)', '外幣支出折合台幣估算', 
@@ -5623,7 +5636,8 @@ submitProduct() {
      const rowData = [
         exportTime, reportYear, reportMonth, rangeName,
         Math.round(netTWD), Math.round(netKRW),
-        Math.round(stats.revenueTWD), Math.round(stats.revenueKRW), 
+        Math.round(stats.revenueTWD), Math.round(stats.revenueRetailTWD), Math.round(stats.revenueWholesaleTWD), // 👈 塞入新數據
+        Math.round(stats.revenueKRW), Math.round(stats.revenueRetailKRW), Math.round(stats.revenueWholesaleKRW), // 👈 塞入新數據
         Math.round(stats.costTWD), Math.round(stats.costKRW),
         expTWD, expKRW, 
         Math.round(stats.profit), Math.round(foreignToTWD),
