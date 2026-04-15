@@ -701,9 +701,11 @@ export class ShopFrontComponent {
 
      // 💡 員工與批發
      if (user.tier === 'employee') return '結帳享員工價';
-     if (user.tier === 'wholesale' && p.priceWholesale > 0) return '結帳享批發價';
      
-     // 🔥 修復這裡：精準抓取 v1, v2, v3 給予專屬期待感標籤，且不需要另外設定單品 VIP 價也會顯示！
+     // 🔥 修改這裡：只要是批發會員，且商品有填寫「當地原價」或「自訂批發價」，就顯示黑色標籤！
+     if (user.tier === 'wholesale' && (p.localPrice > 0 || p.priceWholesale > 0)) return '結帳享批發價';
+     
+     // 精準抓取 v1, v2, v3 給予專屬期待感標籤
      if (user.tier === 'v1') return '結帳享 VIP 1 專屬價';
      if (user.tier === 'v2') return '結帳享 VIP 2 專屬價';
      if (user.tier === 'v3') return '結帳享 VIP 3 專屬價';

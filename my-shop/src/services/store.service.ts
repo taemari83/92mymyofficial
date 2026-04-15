@@ -164,14 +164,38 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
     const user = this.currentUser();
     if (user?.tier !== 'wholesale') return 0;
     let discount = 0;
+    
     this.cart().forEach(item => {
         const p = this.products().find(x => x.id === item.productId);
         if (!p) return;
-        const wsPrice = p.priceWholesale > 0 ? p.priceWholesale : item.price;
+
+        // 🔍 1. 精準抓取該商品(或該規格)的當地原價
+        let locP = p.localPrice || 0;
+        if (item.option && p.options) {
+            const fOpt = p.options.find((opt: string) => opt.split('=')[0].trim() === item.option) || '';
+            if (fOpt.includes('=')) {
+                const parts = fOpt.split('=');
+                if (parts.length >= 4 && !isNaN(Number(parts[3]))) locP = Number(parts[3]);
+            }
+        }
+
+        // 🧠 2. 核心大腦：批發價優先級判斷！
+        let wsPrice = item.price; 
+        
+        if (p.priceWholesale > 0) {
+            // 👑 第一優先：老闆聖旨！如果有手動輸入批發價，絕對以手動輸入的為主！
+            wsPrice = p.priceWholesale;
+        } else if (locP > 0) {
+            // 🤖 第二優先：老闆沒特別填批發價，就讓系統用「當地原價 / 40 (無條件進位)」自動算！
+            wsPrice = Math.ceil(locP / 40);
+        }
+
+        // 💰 3. 算出差價並加入總折扣
         if (item.price > wsPrice) {
             discount += (item.price - wsPrice) * item.quantity;
         }
     });
+    
     return discount;
   });
 
