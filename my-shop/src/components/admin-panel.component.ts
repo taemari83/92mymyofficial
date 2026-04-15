@@ -3189,7 +3189,7 @@ try {
           promoTotal += (o as any).promoDiscount || 0;
           
           // 💡 自動濾掉賣貨便/好賣家的 20 元物流開單預扣
-          let platformSubsidy = (o.shippingMethod === 'myship' || o.shippingMethod === 'family') ? 20 : 0;
+          let platformSubsidy = (!isWholesale && (o.shippingMethod === 'myship' || o.shippingMethod === 'family')) ? 20 : 0;
           let pureBundle = (o.discount || 0) - platformSubsidy;
           bundleTotal += (pureBundle > 0 ? pureBundle : 0);
           
@@ -5505,7 +5505,11 @@ submitProduct() {
      const list = this.accountingFilteredOrders().filter((o: Order) => o.discount > 0 || o.usedCredits > 0 || (o as any).promoDiscount > 0);
      const headers = ['訂單編號', '結算日期', '客戶姓名', '使用折扣碼', '折扣碼折抵', '多入組折抵', '購物金折抵', '本單行銷總折讓'];
      const rows = list.map((o: Order) => {
-        let platformSubsidy = (o.shippingMethod === 'myship' || o.shippingMethod === 'family') ? 20 : 0;
+        const orderUser = this.store.users().find((u: User) => u.id === o.userId);
+        const isWholesale = orderUser?.tier === 'wholesale';
+        
+        // 👇 加上 isWholesale 判斷
+        let platformSubsidy = (!isWholesale && (o.shippingMethod === 'myship' || o.shippingMethod === 'family')) ? 20 : 0;
         let pureBundle = (o.discount || 0) - platformSubsidy; pureBundle = pureBundle > 0 ? pureBundle : 0;
         const promoAmt = (o as any).promoDiscount || 0; const creditAmt = o.usedCredits || 0; const total = pureBundle + promoAmt + creditAmt;
         return [ `\t${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), this.getUserName(o.userId), (o as any).promoCode || '-', promoAmt, pureBundle, creditAmt, total ];
@@ -5517,12 +5521,16 @@ submitProduct() {
      const list = this.accountingFilteredOrders().filter((o: Order) => o.discount > 0 || o.usedCredits > 0 || (o as any).promoDiscount > 0);
      const headers = ['訂單編號', '結算日期', '客戶姓名', '使用折扣碼', '折扣碼折抵', '多入組折抵', '購物金折抵', '本單行銷總折讓'];
      const dataRows = list.map((o: Order) => {
-        let platformSubsidy = (o.shippingMethod === 'myship' || o.shippingMethod === 'family') ? 20 : 0;
+        const orderUser = this.store.users().find((u: User) => u.id === o.userId);
+        const isWholesale = orderUser?.tier === 'wholesale';
+        
+        // 👇 加上 isWholesale 判斷
+        let platformSubsidy = (!isWholesale && (o.shippingMethod === 'myship' || o.shippingMethod === 'family')) ? 20 : 0;
         let pureBundle = (o.discount || 0) - platformSubsidy; pureBundle = pureBundle > 0 ? pureBundle : 0;
         const promoAmt = (o as any).promoDiscount || 0; const creditAmt = o.usedCredits || 0; const total = pureBundle + promoAmt + creditAmt;
         return [ `'${o.id}`, new Date(o.createdAt).toLocaleDateString('zh-TW'), this.getUserName(o.userId), (o as any).promoCode || '-', promoAmt, pureBundle, creditAmt, total ];
      });
-     this.pushToGoogleSheets('行銷折讓', [headers, ...dataRows]);
+     this.pushToGoogleSheets('行銷折讓', [headers, ...dataRows], 'overwrite');
   }
 
   exportExpensesCSV() {

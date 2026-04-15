@@ -263,9 +263,9 @@ import { StoreService, CartItem } from '../services/store.service';
                  </div>
                }
 
-               @if(currentDiscount() > 0) {
+               @if(['myship', 'family'].includes(selectedShippingMethod())) {
                  <div class="flex justify-between text-sm text-green-600 font-bold">
-                    <span>開單預扣 ({{ selectedShippingMethod() === 'myship' ? '賣貨便' : '好賣家' }})</span>
+                    <span>平台開單預扣 ({{ selectedShippingMethod() === 'myship' ? '賣貨便' : '好賣家' }})</span>
                     <span>- NT$ {{ currentDiscount() }}</span>
                  </div>
                }
@@ -477,9 +477,13 @@ export class CartComponent {
      return 0;
   });
 
-  // 4. 平台物流補貼 (開單預扣)
+  // ✅ 4. 平台物流補貼 (開單預扣) - 升級版
   currentDiscount = computed(() => {
-     if (this.storeService.currentUser()?.tier === 'employee') return 0; // 內部員工結帳不扣物流補助
+     const userTier = this.storeService.currentUser()?.tier;
+     // 💡 內部員工跟批發客，結帳都不預扣這 20 元 (當作人力包材費)
+     if (userTier === 'employee' || userTier === 'wholesale') return 0; 
+     
+     // 只有一般客和VIP，選賣貨便或好賣家時才會扣 20
      return (this.selectedShippingMethod() === 'myship' || this.selectedShippingMethod() === 'family') ? 20 : 0;
   });
 
