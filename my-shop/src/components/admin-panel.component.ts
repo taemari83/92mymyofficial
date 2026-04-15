@@ -764,17 +764,30 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                  </div>
                </div>
                
-               <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all">
-                  <div class="text-gray-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
-                    <div class="flex items-center gap-1">總營收 <span class="w-3.5 h-3.5 rounded-full border border-gray-500 flex items-center justify-center text-[9px] opacity-70">?</span></div>
-                    <div class="text-gray-400 text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
-                    <div class="absolute bottom-full left-0 md:-left-4 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
-                      客人實際付給我們的錢。<br>因為賣台灣客人，韓幣營收通常為 0。
-                      <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：期間內所有有效訂單的 (最終結帳金額) 加總。</span>
-                    </div>
+               <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all flex flex-col justify-between">
+                  <div>
+                     <div class="text-gray-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mb-2 relative group cursor-help w-fit">
+                       <div class="flex items-center gap-1">總營收 <span class="w-3.5 h-3.5 rounded-full border border-gray-500 flex items-center justify-center text-[9px] opacity-70">?</span></div>
+                       <div class="text-gray-400 text-[9px] opacity-60 mt-1 leading-none normal-case">(不含員購)</div>
+                       <div class="absolute bottom-full left-0 md:-left-4 mb-2 w-56 bg-gray-800 text-white text-[10px] p-3 rounded-xl shadow-xl hidden group-hover:block font-normal normal-case tracking-normal leading-relaxed z-[100]">
+                         客人實際付給我們的錢。<br>因為賣台灣客人，韓幣營收通常為 0。
+                         <span class="opacity-50 font-mono text-[9px] mt-1.5 block pt-1.5 border-t border-gray-600">公式：期間內所有有效訂單的 (最終結帳金額) 加總。</span>
+                       </div>
+                     </div>
+                     <div class="text-lg font-black text-gray-800 mt-1">NT$ {{ accountingStats().revenueTWD | number:'1.0-0' }}</div>
+                     <div class="text-sm font-bold text-gray-500">₩ {{ accountingStats().revenueKRW | number:'1.0-0' }}</div>
                   </div>
-                  <div class="text-lg font-black text-gray-800 mt-1">NT$ {{ accountingStats().revenueTWD | number:'1.0-0' }}</div>
-                  <div class="text-sm font-bold text-gray-500">₩ {{ accountingStats().revenueKRW | number:'1.0-0' }}</div>
+                  
+                  <div class="flex flex-col gap-1 mt-3 pt-3 border-t border-gray-100">
+                     <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400">一般零售 NT$</span>
+                        <span class="font-bold text-gray-700">{{ accountingStats().revenueRetailTWD | number:'1.0-0' }}</span>
+                     </div>
+                     <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400">批發收入 NT$</span>
+                        <span class="font-bold text-blue-600">{{ accountingStats().revenueWholesaleTWD | number:'1.0-0' }}</span>
+                     </div>
+                  </div>
                </div>
 
                <div class="col-span-1 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 relative z-10 hover:z-[60] transition-all">
@@ -3122,6 +3135,11 @@ try {
     const filteredOrders = this.accountingFilteredOrders();
     // 🧠 營收雙幣別分流大腦
     let revenueTWD = 0; let revenueKRW = 0; 
+    
+    // 👇 新增：獨立記錄批發與零售營收 👇
+    let revenueWholesaleTWD = 0; let revenueRetailTWD = 0;
+    let revenueWholesaleKRW = 0; let revenueRetailKRW = 0;
+
     let cost = 0; let costTWD = 0; let costKRW = 0; let discounts = 0;
     let payReceived = 0; let payVerifying = 0; let payUnpaid = 0; let payRefund = 0; let payRefundedTotal = 0;
     
@@ -3146,12 +3164,22 @@ try {
       if (isValidOrder) {
           if ((o.paymentMethod as string) === 'giveaway') return; // 👈 神級防呆：抽獎單不計入銷售成本
 
+          // 👇 新增：找出下單的這個客人是不是批發客 👇
+          const orderUser = this.store.users().find((u: User) => u.id === o.userId);
+          const isWholesale = orderUser?.tier === 'wholesale';
+
           // 🌟 雙幣別營收分流
           const orderCurrency = (o as any).currency || 'TWD';
           if (orderCurrency === 'KRW') {
               revenueKRW += o.finalTotal;
+              // 👇 依據客群分流 👇
+              if (isWholesale) revenueWholesaleKRW += o.finalTotal;
+              else revenueRetailKRW += o.finalTotal;
           } else {
               revenueTWD += o.finalTotal;
+              // 👇 依據客群分流 👇
+              if (isWholesale) revenueWholesaleTWD += o.finalTotal;
+              else revenueRetailTWD += o.finalTotal;
           }
 
           let orderCost = 0;
@@ -3268,7 +3296,13 @@ if (p && p.options) {
     return { 
         revenue: totalRevenueEstTWD, 
         revenueTWD,                  
-        revenueKRW,                  
+        revenueKRW,  
+        // 👇 新增丟出變數給畫面顯示 👇
+        revenueWholesaleTWD,
+        revenueRetailTWD,
+        revenueWholesaleKRW,
+        revenueRetailKRW,
+        // 👆 新增結束 👆                
         cost, 
         costTWD,                     // 🟢 拋出：台幣商品成本
         costKRW,                     // 🟢 拋出：韓幣商品成本
