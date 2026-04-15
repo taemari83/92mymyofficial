@@ -3984,9 +3984,10 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     }
   }
 
-  // 📥 匯出：採購總帳
+  // 📥 匯出：採購總帳 (新增結算匯出時間)
   exportPurchasesCSV() {
-    const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '結帳幣別', '實際刷卡金額', '付款人', '分潤模式', '狀態'];
+    const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
+    const headers = ['結算匯出時間', '單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '結帳幣別', '實際刷卡金額', '付款人', '分潤模式', '狀態'];
     
     const rows = this.purchaseList().map(p => {
       const itemsStr = (p.items || []).map((i: any) => {
@@ -3995,10 +3996,10 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       }).join('\n');
       
       return [
-        `\t${p.id}`, p.date, new Date(p.createdAt).toLocaleString('zh-TW', { hour12: false }),
+        nowStr, `\t${p.id}`, p.date, new Date(p.createdAt).toLocaleString('zh-TW', { hour12: false }),
         p.country, p.location, itemsStr,
         p.estimatedLocalCost, p.localShipping,
-        p.currency || 'TWD', p.totalLocalCost, // 👈 這裡拆成了「幣別」與「金額」兩個獨立欄位
+        p.currency || 'TWD', p.totalLocalCost, 
         p.payer, p.shareMode, p.status === 'pending_sync' ? '待核銷' : '已核銷入帳'
       ];
     });
@@ -4469,9 +4470,11 @@ exportInventoryCSV() {
     this.pushToGoogleSheets('營利報表', [headers, ...payloadRows], 'upsert');
   }
 
+  // ☁️ 同步：採購總帳 (新增結算匯出時間)
   async syncPurchasesToGoogleSheets() {
+    const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
     const list = this.purchaseList();
-    const headers = ['單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '結帳幣別', '實際刷卡金額', '付款人', '分潤模式', '狀態'];
+    const headers = ['結算匯出時間', '單據編號', '購買日期', '回報時間', '國家', '地點/網址', '購買品項', '預估商品總額', '單據運費', '結帳幣別', '實際刷卡金額', '付款人', '分潤模式', '狀態'];
 
     const payloadRows = list.map(p => {
       const itemsStr = (p.items || []).map((i: any) => {
@@ -4480,9 +4483,9 @@ exportInventoryCSV() {
       }).join('\n');
 
       return [
-        `'${p.id}`, p.date, new Date(p.createdAt).toLocaleString('zh-TW', { hour12: false }), p.country, p.location, itemsStr,
+        nowStr, `'${p.id}`, p.date, new Date(p.createdAt).toLocaleString('zh-TW', { hour12: false }), p.country, p.location, itemsStr,
         p.estimatedLocalCost, p.localShipping, 
-        p.currency || 'TWD', p.totalLocalCost, // 👈 同步雲端也拆成兩格
+        p.currency || 'TWD', p.totalLocalCost, 
         p.payer, p.shareMode, p.status === 'pending_sync' ? '待核銷' : '已核銷入帳'
       ];
     });
