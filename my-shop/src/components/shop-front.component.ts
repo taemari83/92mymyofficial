@@ -125,6 +125,7 @@ import { environment } from '../environments/environment';
                  <div class="absolute top-2 left-2 right-2 flex gap-1.5 flex-wrap z-[1]">
                     @if(product.bulkDiscount?.count) { <div class="bg-gradient-to-r from-red-500 to-orange-400 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 animate-pulse">🔥 任 {{ product.bulkDiscount!.count }} 件優惠</div> }
                     @if(isNewProduct(product)) { <div class="bg-black/80 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-white/20 tracking-wider">NEW</div> }
+                    @if($any(product).isHidden) { <div class="bg-purple-600/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-black text-white shadow-sm border border-purple-400">隱形賣場</div> }
                     <div class="bg-white/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-gray-800 uppercase shadow-sm border border-gray-100">{{ product.category }}</div>
                     @if(product.isPreorder) { <div class="bg-blue-50/90 backdrop-blur px-2 py-1 rounded-md text-[10px] font-bold text-blue-600 shadow-sm border border-blue-100">預購</div> }
                     @if($any(product).tags) {
@@ -199,6 +200,7 @@ import { environment } from '../environments/environment';
                     <div class="flex gap-1.5 flex-wrap mb-1.5">
                        @if(isNewProduct(product)) { <span class="text-[10px] bg-black/80 text-white font-black px-2 py-0.5 rounded-md tracking-wider border border-white/20">NEW</span> }
                        @if(product.isPreorder) { <span class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-md border border-blue-100">預購</span> }
+                       @if($any(product).isHidden) { <span class="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded-md border border-purple-200">隱形賣場</span> }
                        <span class="text-[10px] bg-gray-50 text-gray-600 font-bold px-2 py-0.5 rounded-md uppercase border border-gray-100">{{ product.category }}</span>
                        @if($any(product).tags) {
                           @for(tag of $any(product).tags; track tag) {
@@ -640,8 +642,14 @@ export class ShopFrontComponent {
 
   filteredProducts = computed(() => {
     let list = [...this.store.visibleProducts()]; 
-    // 👇 改用 isListed 來隱藏前台下架商品，並將「隱形賣場」商品從大廳過濾掉
-    list = list.filter(p => p.isListed !== false && !(p as any).isHidden);
+    const isAdmin = this.store.currentUser()?.isAdmin; // 👑 抓取當前登入者是不是老闆(管理員)
+
+    // 👇 過濾邏輯：沒上架的一律不顯示。隱形商品則「只有客人」看不見，老闆看得到！
+    list = list.filter(p => {
+       if (p.isListed === false) return false; 
+       if ((p as any).isHidden && !isAdmin) return false; 
+       return true;
+    });
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
     const subCat = this.selectedSubCategory();
