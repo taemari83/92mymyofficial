@@ -77,7 +77,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
          </div>
 
          @if (showProcurementModal()) {
-          <div class="fixed inset-0 z-[90] bg-black/70 backdrop-blur-md flex flex-col justify-end animate-slide-up" (click)="showProcurementModal.set(false)">
+          <div class="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex flex-col justify-end animate-slide-up" (click)="showProcurementModal.set(false)">
             <div class="bg-gray-50 w-full h-[85vh] md:h-[90vh] rounded-t-[2rem] flex flex-col overflow-hidden shadow-2xl relative" (click)="$event.stopPropagation()">
               
               <div class="p-4 sm:p-6 border-b border-gray-200 bg-white sticky top-0 z-20 shadow-sm space-y-4 shrink-0">
@@ -632,8 +632,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                 </div>
               </div>
 
-              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full custom-scrollbar">
-                 <div class="overflow-x-auto w-full custom-scrollbar max-h-[65vh]">
+              <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full">
+                 <div class="overflow-auto w-full custom-scrollbar h-[calc(100vh-320px)] md:h-[calc(100vh-250px)]">
                    <table class="w-full text-sm text-left whitespace-nowrap block md:table">
                       <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 hidden md:table-header-group sticky top-0 z-[40]">
                         <tr>
@@ -1346,7 +1346,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         }
 
         @if (showProductModal()) { 
-          <div class="fixed inset-0 z-[80] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm"> 
+          <div class="fixed inset-0 z-[1000] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm pt-12">
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col overflow-hidden animate-slide-up" (click)="$event.stopPropagation()"> 
               
               <div class="p-4 sm:p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50"> 
@@ -1587,7 +1587,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         }
 
         @if (showUserModal()) { 
-          <div class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"> 
+          <div class="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()"> 
               <div class="p-6 border-b border-gray-100 flex justify-between items-center"> 
                 <h3 class="text-xl font-bold text-brand-900">編輯會員資料</h3> 
@@ -1655,7 +1655,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         }
 
         @if (actionModalOrder(); as o) { 
-          <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] flex items-center justify-center p-4"> 
+          <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000] flex items-center justify-center p-4"> 
             <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-fade-in flex flex-col max-h-[90vh]" (click)="$event.stopPropagation()"> 
               
               <div class="p-6 border-b border-gray-100 bg-gray-50 shrink-0"> 

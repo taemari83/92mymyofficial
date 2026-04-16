@@ -615,6 +615,20 @@ export class CartComponent {
               return;
            }
 
+           // 👇👇👇 新增這段：結帳成功後，立刻扣除商品真實庫存！ 👇👇👇
+           for (const item of itemsToCheck) {
+              const productInDb = allProducts.find(p => p.id === item.productId);
+              
+              // 💡 條件判斷：只有「非預購」且「庫存不是無限大(99999)」的商品，才需要扣除庫存
+              if (productInDb && !productInDb.isPreorder && productInDb.stock !== 99999) {
+                 // 計算新庫存 (確保不會扣到變負數)
+                 const newStock = Math.max(0, productInDb.stock - item.quantity);
+                 // 呼叫大腦更新這項商品的庫存
+                 await this.storeService.updateProduct({ ...productInDb, stock: newStock });
+              }
+           }
+           // 👆👆👆 新增結束 👆👆👆
+           
            this.selectedIndices.set(new Set());
            this.appliedPromo.set(null); // 清除折扣碼
            this.step.set(3);
