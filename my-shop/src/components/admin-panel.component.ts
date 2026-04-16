@@ -567,9 +567,10 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <div class="w-full aspect-square rounded-xl overflow-hidden bg-white relative mb-3 border border-gray-100">
                         <img [src]="p.image" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-contain mix-blend-multiply p-2">
                         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-1"> {{ p.code }} </div>
-                        <div class="absolute top-2 left-2 flex flex-col gap-1">
+                        <div class="absolute top-2 left-2 flex flex-col gap-1 z-10">
                            @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm w-fit">預購</span> }
                            @if(!p.isListed) { <span class="bg-gray-800 text-white text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm w-fit">未上架</span> }
+                           @if($any(p).isHidden) { <span class="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm border border-purple-200 w-fit">隱形賣場</span> }
                         </div>
                      </div>
                      <div class="flex flex-col flex-1 min-w-0">
