@@ -531,6 +531,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                                  }
                                  @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">預購</span> }
                                  @if(!p.isListed) { <span class="bg-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">未上架</span> }
+                                 @if($any(p).isHidden) { <span class="bg-purple-100 text-purple-600 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">隱形賣場</span> }
                                  @if(p.priceType === 'event') { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">活動價</span> } 
                                  @if(p.priceType === 'clearance') { <span class="bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">清倉價</span> } 
                                  @if(p.bulkDiscount?.count) { <span class="bg-red-50 text-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold whitespace-nowrap">任選 {{ p.bulkDiscount?.count }} 件 $ {{ p.bulkDiscount?.total }}</span> }
@@ -1540,14 +1541,18 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         <div> <label class="block text-xs font-bold text-red-500 mb-1">優惠總價 (NT$)</label> <input type="number" formControlName="bulkTotal" class="w-full p-2 border border-red-200 rounded-lg focus:outline-none focus:border-red-400"> </div>
                       </div>
                       
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                         <label class="flex items-center gap-3 cursor-pointer select-none">
                           <input type="checkbox" formControlName="isPreorder" class="w-5 h-5 rounded text-blue-600">
-                          <span class="font-bold text-gray-700">這是「預購」商品</span>
+                          <span class="font-bold text-gray-700">預購</span>
                         </label>
                         <label class="flex items-center gap-3 cursor-pointer select-none">
                           <input type="checkbox" formControlName="isListed" class="w-5 h-5 rounded text-green-600">
-                          <span class="font-bold text-gray-700">確認上架 (前台可見)</span>
+                          <span class="font-bold text-gray-700">上架前台</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer select-none">
+                          <input type="checkbox" formControlName="isHidden" class="w-5 h-5 rounded text-purple-600">
+                          <span class="font-bold text-purple-700 flex items-center gap-1">隱形賣場</span>
                         </label>
                       </div>
 
@@ -3758,6 +3763,7 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
       note: [''], 
       isPreorder: [false], 
       isListed: [true], 
+      isHidden: [false],
       bulkCount: [0], 
       bulkTotal: [0],
       shareMode: ['親帶'] // 👈 新增這行：預設為親帶
@@ -4522,8 +4528,7 @@ openProductForm() {
       purchaseUrl: '', 
       shareMode: '親帶', // 👈 新增預設值
       localCurrency: 'KRW', // 👈 新增這行
-      exchangeRate: 1, priceWholesale: 0, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: '' 
-    }); 
+      exchangeRate: 1, priceWholesale: 0, shippingCostPerKg: 0, weight: 0, costMaterial: 0, isPreorder: false, isListed: true, isHidden: false, bulkCount: 0, bulkTotal: 0, subCategory: '', tagsStr: ''    }); 
     this.tempImages.set([]); this.currentCategoryCode.set(''); this.generatedSkuPreview.set(''); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
   } 
 
@@ -4535,8 +4540,7 @@ openProductForm() {
       shareMode: (p as any).shareMode || '親帶', // 👈 讀取舊資料防呆
       localCurrency: (p as any).localCurrency || 'KRW', // 👈 新增這行
       optionsStr: (p.options || []).join('\n'), 
-      tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, priceWholesale: (p as any).priceWholesale || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0 
-    }); 
+      tagsStr: (p.tags || []).join(', '), subCategory: p.subCategory || '', exchangeRate: p.exchangeRate || 1, shippingCostPerKg: p.shippingCostPerKg || 0, weight: p.weight || 0, costMaterial: p.costMaterial || 0, priceWholesale: (p as any).priceWholesale || 0, isPreorder: p.isPreorder ?? false, isListed: p.isListed ?? true, isHidden: (p as any).isHidden ?? false, bulkCount: p.bulkDiscount?.count || 0, bulkTotal: p.bulkDiscount?.total || 0    }); 
     this.tempImages.set(p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : [])); this.generatedSkuPreview.set(p.code); this.formValues.set(this.productForm.getRawValue()); this.showProductModal.set(true); 
   }
 
@@ -4696,7 +4700,7 @@ submitProduct() {
          subCategory: val.subCategory || '',
          tags: val.tagsStr ? val.tagsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [],
          image: mainImage, images: finalImages, priceGeneral: val.priceGeneral, priceVip: val.priceVip, priceWholesale: val.priceWholesale || 0, localPrice: val.localPrice, stock: val.isPreorder ? 99999 : val.stock,         options: val.optionsStr ? val.optionsStr.split(/[,\n]+/).map((s: string) => s.trim()).filter((s: string) => s) : [], 
-         note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed 
+         note: val.note, exchangeRate: val.exchangeRate, costMaterial: val.costMaterial, weight: val.weight, shippingCostPerKg: val.shippingCostPerKg, priceType: 'normal', soldCount: this.editingProduct()?.soldCount || 0, country: 'Korea', allowPayment: { cash: true, bankTransfer: true, cod: true }, allowShipping: { meetup: true, myship: true, family: true, delivery: true }, isPreorder: val.isPreorder, isListed: val.isListed, isHidden: val.isHidden || false
      };        
      if (bulkCount > 1 && bulkTotal > 0) { p.bulkDiscount = { count: bulkCount, total: bulkTotal }; } else { p.bulkDiscount = null; } 
      

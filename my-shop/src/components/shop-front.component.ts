@@ -541,7 +541,7 @@ export class ShopFrontComponent {
   currentSubCategories = computed(() => {
     const cat = this.selectedCategory();
     if (cat === 'all' || cat === '新品') return [];
-    const productsInCurrentCat = this.store.visibleProducts().filter(p => p.category === cat);
+    const productsInCurrentCat = this.store.visibleProducts().filter(p => p.category === cat && !(p as any).isHidden);
     const existingSubs = productsInCurrentCat.map(p => p.subCategory).filter((sub): sub is string => !!sub); 
     const uniqueSubs = [...new Set(existingSubs)];
     if (uniqueSubs.length === 0) return [];
@@ -550,7 +550,7 @@ export class ShopFrontComponent {
 
   // 💡 取得特定主分類下的所有次分類 (專供電腦版 Hover 下拉選單使用)
   getSubCategoriesForHover(cat: string): string[] {
-    const productsInCat = this.store.visibleProducts().filter(p => p.category === cat);
+    const productsInCat = this.store.visibleProducts().filter(p => p.category === cat && !(p as any).isHidden);
     const existingSubs = productsInCat.map(p => p.subCategory).filter((sub): sub is string => !!sub); 
     return [...new Set(existingSubs)];
   }
@@ -640,8 +640,8 @@ export class ShopFrontComponent {
 
   filteredProducts = computed(() => {
     let list = [...this.store.visibleProducts()]; 
-    // 👇 改用 isListed 來隱藏前台下架商品
-    list = list.filter(p => p.isListed !== false);
+    // 👇 改用 isListed 來隱藏前台下架商品，並將「隱形賣場」商品從大廳過濾掉
+    list = list.filter(p => p.isListed !== false && !(p as any).isHidden);
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
     const subCat = this.selectedSubCategory();
