@@ -3661,17 +3661,26 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   bulkActionType = signal<'vip' | 'credits'>('credits');
   bulkCreditAmount = signal<number>(0);
   
-  filteredUsers = computed(() => { 
-    let list = [...this.store.users()]; 
-    const q = this.customerSearch().toLowerCase(); const minSpend = this.minSpendFilter(); const start = this.memberStart(); const end = this.memberEnd(); 
-    if (q) list = list.filter((u: User) => u.name.toLowerCase().includes(q) || (u.phone && u.phone.includes(q)) || u.id.toLowerCase().includes(q) || (u.memberNo && u.memberNo.includes(q))); 
-    if (start || end) { list = list.filter(u => { if (!u.memberNo || u.memberNo.length < 9) return false; const noDatePart = u.memberNo.substring(1, 9); const startDate = start ? start.replace(/-/g, '') : null; const endDate = end ? end.replace(/-/g, '') : null; if (startDate && noDatePart < startDate) return false; if (endDate && noDatePart > endDate) return false; return true; }); } 
-    // 🛡️ 新增：累積消費篩選
+  filteredUsers = computed(() => { 
+    let list = [...this.store.users()]; 
+    const q = this.customerSearch().toLowerCase(); const minSpend = this.minSpendFilter(); const start = this.memberStart(); const end = this.memberEnd(); 
+    
+    // 🛡️ 加上安全防呆：萬一有客人沒填名字，也不會導致搜尋當機
+    if (q) list = list.filter((u: User) => (u.name || '').toLowerCase().includes(q) || (u.phone && u.phone.includes(q)) || u.id.toLowerCase().includes(q) || (u.memberNo && u.memberNo.includes(q))); 
+    
+    if (start || end) { list = list.filter(u => { if (!u.memberNo || u.memberNo.length < 9) return false; const noDatePart = u.memberNo.substring(1, 9); const startDate = start ? start.replace(/-/g, '') : null; const endDate = end ? end.replace(/-/g, '') : null; if (startDate && noDatePart < startDate) return false; if (endDate && noDatePart > endDate) return false; return true; }); } 
+    
     if (minSpend !== null && minSpend > 0) {
        list = list.filter((u: User) => this.calculateUserTotalSpend(u.id) >= minSpend);
     }
-    return list; 
-  });
+    
+    // 🌟 核心升級：強制將名單依照「會員編號 (註冊時間)」從最新排到最舊
+    return list.sort((a, b) => {
+       const aNo = a.memberNo || a.id;
+       const bNo = b.memberNo || b.id;
+       return bNo.localeCompare(aNo);
+    }); 
+  });
   
   paginatedUsers = computed(() => { 
     const list = this.filteredUsers(); const size = this.customerPageSize(); 
