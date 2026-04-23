@@ -635,7 +635,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
               </div>
 
               <div class="bg-white rounded-[2rem] shadow-sm border border-gray-50 overflow-hidden w-full">
-                 <div class="overflow-auto w-full custom-scrollbar h-[calc(100vh-320px)] md:h-[calc(100vh-250px)]">
+                 <div class="overflow-auto w-full custom-scrollbar h-[calc(100vh-380px)] md:h-[calc(100vh-320px)]">
                    <table class="w-full text-sm text-left whitespace-nowrap block md:table">
                       <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 hidden md:table-header-group sticky top-0 z-[40]">
                         <tr>
