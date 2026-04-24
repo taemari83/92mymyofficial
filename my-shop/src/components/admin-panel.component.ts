@@ -4634,14 +4634,25 @@ async handleFileSelect(event: any) {
     }
     // 👆 替換到這裡 👆
 
-    // 🛡️ 升級：你的專屬金鑰軍火庫！(已更新為最新的 5 把金鑰)
-    const apiKeys = [
+    // 🛡️ 升級：你的專屬金鑰軍火庫！(支援無限擴充)
+    const rawApiKeys = [
       '6929e9be7309132abb8e9e074f2f954d', 
       '5c25d90eba9c6f4f1f0569a904e09fb2', 
       '620a85a5745a8a56115f1c2ac9e302c2', 
       '71511b2b29eff40266767564de64d3d1', 
-      'b66708e3427c58626bd31491b41e2c29'
+      'b66708e3427c58626bd31491b41e2c29',
+      '83fbaa4493faa7a0d34be79dbfd13bd2', // TAEMARI830424
+      '5b232b1d2f0974174a019f41a7b4b6ae', // TAEMARI83222
+      '9c02b1d6e2f628090363371e21e0f1dc', // TAEMARI83333
+      '191f96fefa2b99f12a1f4790ff6e520d', // TAEMARI83444
+      // 👇 以後有新的，直接用單引號包起來貼在下面，最後加逗號即可！
+      '',
+      '',
+      '',
     ];
+
+    // 🛡️ 終極防呆：自動洗掉陣列裡的「空白金鑰」，避免系統抽籤抽到空氣導致上傳失敗！
+    const apiKeys = rawApiKeys.filter(key => key.trim() !== '');
 
     for (let i = 0; i < files.length; i++) { 
       const file = files[i]; 
@@ -4649,7 +4660,7 @@ async handleFileSelect(event: any) {
       const formData = new FormData();
       formData.append('image', file);
 
-      // 🎲 系統自動抽籤：隨機選取一把金鑰來上傳這張圖片 (完美分散流量)
+      // 🎲 系統自動抽籤：從「過濾好的有效金鑰」中隨機選取一把 (完美分散流量)
       const randomKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
 
       try {
