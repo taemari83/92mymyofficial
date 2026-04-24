@@ -4641,10 +4641,10 @@ async handleFileSelect(event: any) {
       '620a85a5745a8a56115f1c2ac9e302c2', 
       '71511b2b29eff40266767564de64d3d1', 
       'b66708e3427c58626bd31491b41e2c29',
-      '83fbaa4493faa7a0d34be79dbfd13bd2', // TAEMARI830424
-      '5b232b1d2f0974174a019f41a7b4b6ae', // TAEMARI83222
-      '9c02b1d6e2f628090363371e21e0f1dc', // TAEMARI83333
-      '191f96fefa2b99f12a1f4790ff6e520d', // TAEMARI83444
+      '83fbaa4493faa7a0d34be79dbfd13bd2', // taemari830424@gmail.com
+      '5b232b1d2f0974174a019f41a7b4b6ae', // taemari83222@gmail.com
+      '9c02b1d6e2f628090363371e21e0f1dc', // taemari83333@gmail.com
+      '191f96fefa2b99f12a1f4790ff6e520d', // taemari83444@gmail.com
       // 👇 以後有新的，直接用單引號包起來貼在下面，最後加逗號即可！
       '',
       '',
