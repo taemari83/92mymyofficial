@@ -1802,13 +1802,17 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <div><div class="font-bold text-gray-800">確認已退款</div> <div class="text-[10px] text-gray-500">強制結案並標記為已退款</div> </div> 
                    </button> 
 
-                   <button (click)="quickComplete($event, o)" class="col-span-1 sm:col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> 
-                      <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> 
-                      <div><div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> 
-                   </button> 
+                   <button (click)="quickComplete($event, o)" class="col-span-1 sm:col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> 
+                      <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> 
+                      <div><div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> 
+                   </button> 
 
-                   <button (click)="doCancel(o)" class="col-span-1 sm:col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-lg" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
-                   
+                   <button (click)="doMergeOrder(o)" class="col-span-1 sm:col-span-2 p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'cancelled' || o.status === 'refunded'">
+                      <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-indigo-600">🔗</div>
+                      <div><div class="font-bold text-indigo-900">合併訂單 (併單省運費)</div><div class="text-[10px] text-indigo-500">將客人的舊訂單移入現在這張單</div></div>
+                   </button>
+
+                   <button (click)="doCancel(o)" class="col-span-1 sm:col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-lg" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button>                   
                    <button (click)="doDeleteOrder(o)" class="col-span-1 sm:col-span-2 text-xs font-bold py-3 transition-colors flex justify-center items-center rounded-lg bg-white border border-red-100 text-red-300 hover:bg-red-50 hover:text-red-500 hover:border-red-200">
                      🗑️ 徹底刪除訂單 (測試用)
                    </button>
@@ -4089,16 +4093,94 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
     } 
   }  
   doMyshipPickup(o: Order) { this.store.updateOrderStatus(o.id, 'picked_up' as any); this.closeActionModal(); } 
-  doCancel(o: Order) { 
-    if(this.cancelConfirmState()) { 
-      this.store.updateOrderStatus(o.id, 'cancelled'); 
-      this.store.sendOrderNotification(o, 'cancelled'); // 🔥 觸發 GAS 發送信件與推播
-      this.closeActionModal(); 
-    } else { 
-      this.cancelConfirmState.set(true); 
-    } 
-  }  doDeleteOrder(o: Order) { if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原，且系統會自動扣除該會員對應的累積消費金額！`)) { this.store.deleteOrder(o); this.closeActionModal(); } } 
+doCancel(o: Order) { 
+    if(this.cancelConfirmState()) { 
+      this.store.updateOrderStatus(o.id, 'cancelled'); 
+      this.store.sendOrderNotification(o, 'cancelled'); // 🔥 觸發 GAS 發送信件與推播
+      this.closeActionModal(); 
+    } else { 
+      this.cancelConfirmState.set(true); 
+    } 
+  }  
   
+  doDeleteOrder(o: Order) { if(confirm(`⚠️ 警告：確定要徹底刪除訂單 #${o.id} 嗎？\n資料刪除後將無法復原，且系統會自動扣除該會員對應的累積消費金額！`)) { this.store.deleteOrder(o); this.closeActionModal(); } } 
+
+  // 👇 新增：實質合併訂單的大腦 (1+1絕對相加版，並寫入 myshipQty) 👇
+  async doMergeOrder(mainOrder: Order) {
+    const sourceOrderId = prompt('【🔗 合併訂單】\n請輸入要被併入的「舊訂單編號」：\n\n(注意：被併入的舊單會標記為取消，其商品與金額將加到現在這張單中)');
+    if (!sourceOrderId) return;
+    
+    const sourceOrder = this.store.orders().find((o: Order) => o.id === sourceOrderId.trim());
+    if (!sourceOrder) {
+        alert('❌ 找不到該舊訂單編號，請確認後再試！');
+        return;
+    }
+
+    if (sourceOrder.id === mainOrder.id) {
+        alert('❌ 不能跟自己合併！');
+        return;
+    }
+
+    if (['cancelled', 'refunded'].includes(sourceOrder.status)) {
+        alert('❌ 該舊訂單已取消或退款，無法合併！');
+        return;
+    }
+
+    if (sourceOrder.userId !== mainOrder.userId) {
+        if (!confirm('⚠️ 警告：這兩筆訂單的「客戶帳號」好像不同，確定要強制合併嗎？')) return;
+    }
+
+    if (!confirm(`確定要將舊訂單 #${sourceOrder.id} 併入 #${mainOrder.id} 嗎？\n\n系統將會：\n1. 雙方商品、金額、運費、折抵「完全相加」\n2. 將舊單自動標記為「已取消」\n3. 紀錄正確的賣貨便出貨總件數`)) return;
+
+    try {
+        // 1. 搬移商品與金額 (雙方的折抵、運費補貼，全部 1+1 照算不吃掉)
+        const combinedItems = [...mainOrder.items, ...sourceOrder.items];
+        const newSubtotal = mainOrder.subtotal + sourceOrder.subtotal;
+        const newDiscount = mainOrder.discount + sourceOrder.discount;
+        const newUsedCredits = mainOrder.usedCredits + sourceOrder.usedCredits;
+        const newShippingFee = mainOrder.shippingFee + sourceOrder.shippingFee; 
+
+        // 結帳金額 1+1 (跟客人實際匯款的總數 100% 吻合)
+        const newFinalTotal = mainOrder.finalTotal + sourceOrder.finalTotal; 
+        const newDepositPaid = (mainOrder.depositPaid || 0) + (sourceOrder.depositPaid || 0);
+        const newBalanceDue = Math.max(0, newFinalTotal - newDepositPaid);
+
+        // 👇 精準計算「賣貨便下單數量」(預設每張單為 1，合併就相加)
+        const currentMainQty = (mainOrder as any).myshipQty || 1;
+        const currentSourceQty = (sourceOrder as any).myshipQty || 1;
+        const newMyshipQty = currentMainQty + currentSourceQty;
+
+        // 👇 內部備註改為顯示「總數量」
+        const mainNote = (mainOrder as any).note ? `${(mainOrder as any).note}\n(系統: 已併入舊單 #${sourceOrder.id}，賣貨便下單總數需為 ${newMyshipQty})` : `(系統: 已併入舊單 #${sourceOrder.id}，賣貨便下單總數需為 ${newMyshipQty})`;
+        const sourceNote = (sourceOrder as any).note ? `${(sourceOrder as any).note}\n(系統: 已併入新單 #${mainOrder.id})` : `(系統: 已併入新單 #${mainOrder.id})`;
+
+        // 2. 更新主訂單 (加上 myshipQty 欄位)
+        await this.store.updateOrderStatus(mainOrder.id, mainOrder.status, {
+            items: combinedItems,
+            subtotal: newSubtotal,
+            discount: newDiscount,
+            usedCredits: newUsedCredits,
+            finalTotal: newFinalTotal,
+            balanceDue: newBalanceDue,
+            depositPaid: newDepositPaid,
+            shippingFee: newShippingFee, // 記得把相加後的運費寫回去
+            note: mainNote,
+            myshipQty: newMyshipQty // 👈 存入資料庫，讓 GAS 可以讀取！
+        } as any);
+
+        // 3. 取消舊訂單
+        await this.store.updateOrderStatus(sourceOrder.id, 'cancelled', {
+            note: sourceNote
+        });
+
+        alert(`✅ 併單成功！\n舊訂單 #${sourceOrder.id} 已取消，所有商品與金額已移至 #${mainOrder.id}。\n💡 系統已記錄賣貨便需下單數量為：${newMyshipQty}`);
+        this.closeActionModal();
+
+    } catch (e: any) {
+        alert('❌ 併單發生錯誤：' + e.message);
+    }
+  }
+    
   // --- 列表上的快捷操作按鈕 (也一併加入自動發信) ---
   quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); this.store.sendOrderNotification(o, 'payment_confirmed'); } 
   quickShip(e: Event, o: Order) { 
@@ -4663,13 +4745,13 @@ async handleFileSelect(event: any) {
       '620a85a5745a8a56115f1c2ac9e302c2', 
       '71511b2b29eff40266767564de64d3d1', 
       'b66708e3427c58626bd31491b41e2c29',
-      '83fbaa4493faa7a0d34be79dbfd13bd2', // taemari830424@gmail.com
-      '5b232b1d2f0974174a019f41a7b4b6ae', // taemari83222@gmail.com
-      '9c02b1d6e2f628090363371e21e0f1dc', // taemari83333@gmail.com
-      '191f96fefa2b99f12a1f4790ff6e520d', // taemari83444@gmail.com
+      '83fbaa4493faa7a0d34be79dbfd13bd2', // taemari830424
+      '5b232b1d2f0974174a019f41a7b4b6ae', // taemari83222
+      '9c02b1d6e2f628090363371e21e0f1dc', // taemari83333
+      '191f96fefa2b99f12a1f4790ff6e520d', // taemari83444
       // 👇 以後有新的，直接用單引號包起來貼在下面，最後加逗號即可！
-      '',
-      '',
+      '1a701cbfb3849157ef71bbcb4149a344', // Taemari83555
+      '73dc02928e99fb6ee8543dd61dc5ae30', // Taemari83666
       '',
     ];
 
