@@ -1519,6 +1519,29 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                      <textarea formControlName="tagsStr" rows="2" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:outline-none focus:border-brand-400 custom-scrollbar resize-none" placeholder="例如：品牌, 團體"></textarea>
                   </div>
 
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                      <input type="checkbox" formControlName="isPreorder" class="w-5 h-5 rounded text-blue-600">
+                      <span class="font-bold text-gray-700">預購</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                      <input type="checkbox" formControlName="isListed" class="w-5 h-5 rounded text-green-600">
+                      <span class="font-bold text-gray-700">上架前台</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                      <input type="checkbox" formControlName="isHidden" class="w-5 h-5 rounded text-purple-600">
+                      <span class="font-bold text-purple-700 flex items-center gap-1">隱形賣場</span>
+                    </label>
+                  </div>
+
+                  <div> 
+                    <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> 
+                    @if(formValues().isPreorder) {
+                      <input type="text" value="無限 (99999)" disabled class="w-full p-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed">
+                    } @else {
+                      <input type="number" formControlName="stock" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
+                    }
+                  </div> 
                   @if(!isQuickMode()) {
                     <div class="pt-6 mt-6 border-t border-gray-100 space-y-5 animate-slide-up">
                       
@@ -1550,31 +1573,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                         <div> <label class="block text-xs font-bold text-red-500 mb-1">任選數量 (件)</label> <input type="number" formControlName="bulkCount" class="w-full p-2 border border-red-200 rounded-lg focus:outline-none focus:border-red-400"> </div>
                         <div> <label class="block text-xs font-bold text-red-500 mb-1">優惠總價 (NT$)</label> <input type="number" formControlName="bulkTotal" class="w-full p-2 border border-red-200 rounded-lg focus:outline-none focus:border-red-400"> </div>
                       </div>
-                      
-                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                        <label class="flex items-center gap-3 cursor-pointer select-none">
-                          <input type="checkbox" formControlName="isPreorder" class="w-5 h-5 rounded text-blue-600">
-                          <span class="font-bold text-gray-700">預購</span>
-                        </label>
-                        <label class="flex items-center gap-3 cursor-pointer select-none">
-                          <input type="checkbox" formControlName="isListed" class="w-5 h-5 rounded text-green-600">
-                          <span class="font-bold text-gray-700">上架前台</span>
-                        </label>
-                        <label class="flex items-center gap-3 cursor-pointer select-none">
-                          <input type="checkbox" formControlName="isHidden" class="w-5 h-5 rounded text-purple-600">
-                          <span class="font-bold text-purple-700 flex items-center gap-1">隱形賣場</span>
-                        </label>
-                      </div>
 
-                      <div> 
-                        <label class="block text-xs font-bold text-gray-500 mb-1">庫存</label> 
-                        @if(formValues().isPreorder) {
-                          <input type="text" value="無限 (99999)" disabled class="w-full p-3 border border-gray-200 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed">
-                        } @else {
-                          <input type="number" formControlName="stock" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300"> 
-                        }
-                      </div> 
-                      
                       <div> <label class="block text-xs font-bold text-gray-500 mb-1">備註/商品文案</label> <textarea formControlName="note" class="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-300 custom-scrollbar" rows="4"></textarea> </div> 
                     </div>
                   }
@@ -1694,17 +1693,22 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                     <div class="col-span-2"><span class="text-gray-400">收件地址:</span> {{ $any(o).shippingAddress || '無' }}</div>
 
                     <div class="col-span-2 mt-2 pt-2 border-t border-gray-200"></div>
-                    <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
-                    <div><span class="text-gray-400">物流:</span> {{ getShippingLabel(o.shippingMethod) }}</div>
+                    <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
+                    <div><span class="text-gray-400">物流:</span> {{ getShippingLabel(o.shippingMethod) }}</div>
 
-                    @if(o.paymentMethod === 'bank_transfer' || o.paymentLast5) {
-                       <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 mt-2 p-3 bg-blue-100/50 rounded-lg border border-blue-200">
-                          <span class="text-blue-700 font-bold shrink-0">匯款後五碼:</span>
-                          <input type="text" [value]="o.paymentLast5 || ''" (change)="updatePaymentLast5(o, $event)" placeholder="可手動幫客人填寫" class="w-full sm:w-32 px-2 py-1.5 rounded border border-blue-300 text-sm focus:outline-none focus:border-blue-500 bg-white text-brand-900 font-mono font-bold">
-                          @if(o.paymentName) { <span class="text-[10px] text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">戶名: {{ o.paymentName }}</span> }
-                       </div>
-                    }
-                 </div>
+                    @if(o.paymentMethod === 'bank_transfer' || o.paymentLast5) {
+                       <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 mt-2 p-3 bg-blue-100/50 rounded-lg border border-blue-200">
+                          <span class="text-blue-700 font-bold shrink-0">匯款後五碼:</span>
+                          <input type="text" [value]="o.paymentLast5 || ''" (change)="updatePaymentLast5(o, $event)" placeholder="可手動幫客人填寫" class="w-full sm:w-32 px-2 py-1.5 rounded border border-blue-300 text-sm focus:outline-none focus:border-blue-500 bg-white text-brand-900 font-mono font-bold">
+                          @if(o.paymentName) { <span class="text-[10px] text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">戶名: {{ o.paymentName }}</span> }
+                       </div>
+                    }
+
+                    <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 mt-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                       <span class="text-orange-700 font-bold shrink-0">物流單號:</span>
+                       <input type="text" [value]="o.shippingLink || ''" (change)="updateShippingLink(o, $event)" placeholder="手動輸入交貨便、好賣家或宅配單號..." class="w-full flex-1 px-2 py-1.5 rounded border border-orange-300 text-sm focus:outline-none focus:border-orange-500 bg-white text-orange-900 font-mono font-bold">
+                    </div>
+                 </div>
 
                  <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-6">
                     <div class="flex justify-between items-center mb-2">
@@ -4207,6 +4211,17 @@ doCancel(o: Order) { 
 
     this.store.updateOrderStatus(o.id, newStatus, { paymentLast5: val }); 
     this.actionModalOrder.set({ ...o, status: newStatus, paymentLast5: val }); 
+  }
+
+  // 👇 新增：手動更新物流單號的大腦 👇
+  updateShippingLink(o: Order, event: any) {
+    const val = event.target.value.trim();
+    
+    // 儲存進 Firebase
+    this.store.updateOrderStatus(o.id, o.status, { shippingLink: val });
+    
+    // 即時更新畫面
+    this.actionModalOrder.set({ ...o, shippingLink: val } as any);
   }
   
   private downloadCSV(filename: string, headers: string[], rows: any[]) { const BOM = '\uFEFF'; const csvContent = [ headers.join(','), ...rows.map(row => row.map((cell: any) => `"${String(cell === null || cell === undefined ? '' : cell).replace(/"/g, '""')}"`).join(',')) ].join('\r\n'); const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.setAttribute('download', `${filename}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link); } 
