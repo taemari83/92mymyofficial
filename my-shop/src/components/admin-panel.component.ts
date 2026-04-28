@@ -1802,21 +1802,22 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <div><div class="font-bold text-gray-800">確認已退款</div> <div class="text-[10px] text-gray-500">強制結案並標記為已退款</div> </div> 
                    </button> 
 
-                   <button (click)="quickComplete($event, o)" class="col-span-1 sm:col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> 
-                      <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> 
-                      <div><div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> 
-                   </button> 
+                   <button (click)="quickComplete($event, o)" class="col-span-1 sm:col-span-2 p-4 rounded-2xl bg-green-800 hover:bg-green-900 border border-green-700 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="(o.status !== 'shipped' && o.status !== 'picked_up') || o.paymentMethod !== 'cod'"> 
+                      <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-white">💰</div> 
+                      <div><div class="font-bold text-white">確認已收款 (COD)</div> <div class="text-[10px] text-green-200">貨到付款專用：確認物流已撥款</div> </div> 
+                   </button> 
 
                    <button (click)="doMergeOrder(o)" class="col-span-1 sm:col-span-2 p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 text-left transition-colors flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="o.status === 'cancelled' || o.status === 'refunded'">
                       <div class="text-2xl group-hover:scale-110 transition-transform w-fit text-indigo-600">🔗</div>
                       <div><div class="font-bold text-indigo-900">合併訂單 (併單省運費)</div><div class="text-[10px] text-indigo-500">將客人的舊訂單移入現在這張單</div></div>
                    </button>
 
-                   <button (click)="doCancel(o)" class="col-span-1 sm:col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-lg" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button>                   
+                   <button (click)="doCancel(o)" class="col-span-1 sm:col-span-2 text-xs font-bold py-3 border-t border-gray-100 transition-colors flex justify-center items-center rounded-lg" [class.bg-red-500]="cancelConfirmState()" [class.text-white]="cancelConfirmState()" [class.hover:bg-red-600]="cancelConfirmState()" [class.text-gray-400]="!cancelConfirmState()" [class.hover:text-red-500]="!cancelConfirmState()" [class.hover:bg-red-50]="!cancelConfirmState()" [disabled]="o.status === 'cancelled' || o.status === 'shipped' || o.status === 'picked_up' || o.status === 'completed'"> {{ cancelConfirmState() ? '⚠️ 確定要取消嗎？(點擊確認)' : '🚫 取消訂單 (保留紀錄但標記為取消)' }} </button> 
+                   
                    <button (click)="doDeleteOrder(o)" class="col-span-1 sm:col-span-2 text-xs font-bold py-3 transition-colors flex justify-center items-center rounded-lg bg-white border border-red-100 text-red-300 hover:bg-red-50 hover:text-red-500 hover:border-red-200">
-                     🗑️ 徹底刪除訂單 (測試用)
+                      🗑️ 徹底刪除訂單 (測試用)
                    </button>
-                 </div> 
+                 </div>
               </div>
               
               <div class="p-4 bg-gray-50 border-t border-gray-100 shrink-0"> <button (click)="closeActionModal()" class="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-600 font-bold hover:bg-gray-100 transition-colors"> 關閉 </button> </div> 
@@ -4180,7 +4181,7 @@ doCancel(o: Order) { 
         alert('❌ 併單發生錯誤：' + e.message);
     }
   }
-    
+
   // --- 列表上的快捷操作按鈕 (也一併加入自動發信) ---
   quickConfirm(e: Event, o: Order) { e.stopPropagation(); this.store.updateOrderStatus(o.id, 'payment_confirmed'); this.store.sendOrderNotification(o, 'payment_confirmed'); } 
   quickShip(e: Event, o: Order) { 
