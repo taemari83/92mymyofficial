@@ -5791,8 +5791,8 @@ submitProduct() {
         const row = rows[i];
         const rowText = row.join(' '); // 把整行變成字串來找
         
-        // 用正則表達式尋找交貨便代碼 (通常是 CM 加上 11 碼數字)
-        const trackingMatch = rowText.match(/CM\d{11}/);
+        // 用正則表達式尋找交貨便代碼 (改為 CM 加上不限長度的數字，避免漏掉尾數)
+          const trackingMatch = rowText.match(/CM\d+/);
         
         if (trackingMatch) {
           const trackingNumber = trackingMatch[0];
