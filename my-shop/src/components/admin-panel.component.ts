@@ -355,8 +355,17 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          
                          <td class="p-4 bg-gray-50/50 md:bg-white group-even:md:bg-[#F8FAFC] group-hover:md:bg-[#F0F7FF] md:sticky md:left-0 z-10 md:shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] transition-colors block md:table-cell border-b md:border-none border-gray-200">
                            <div class="flex gap-3 items-start min-w-[200px]">
-                             <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100 mt-1">
-                               @if((order.items || []).length > 0) { <img [src]="getThumb(order)" (error)="handleImageError($event)" class="w-full h-full object-cover"> }
+                             <div class="flex items-center -space-x-3 shrink-0 mt-1">
+                               @for(item of (order.items || []).slice(0, 3); track item.productId + $index; let i = $index) {
+                                 <div class="w-12 h-12 rounded-lg bg-white overflow-hidden border-2 border-white shadow-sm relative" [style.zIndex]="10 - i">
+                                   <img [src]="getExactItemImage(item)" (error)="handleImageError($event)" class="w-full h-full object-cover">
+                                 </div>
+                               }
+                               @if((order.items || []).length > 3) {
+                                 <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold text-[10px] flex items-center justify-center border-2 border-white shadow-sm relative z-0 -ml-2">
+                                   +{{ order.items.length - 3 }}
+                                 </div>
+                               }
                              </div>
                              <div class="flex-1 min-w-0">
                                <div class="flex items-center gap-2 mb-1">
@@ -1725,7 +1734,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                           @if(isSplittingOrder()) {
                              <input type="checkbox" [checked]="splitItemIndices().has(i)" class="mt-4 w-4 h-4 text-brand-600 pointer-events-none shrink-0">
                           }
-                          <img [src]="item.productImage" class="w-12 h-12 rounded-lg object-cover bg-gray-100 shrink-0 border border-gray-100">
+                          <img [src]="getExactItemImage(item)" (error)="handleImageError($event)" class="w-12 h-12 rounded-lg object-cover bg-gray-100 shrink-0 border border-gray-100">
                           <div class="flex-1 min-w-0 flex flex-col gap-1">
                              <div class="text-sm font-bold text-gray-800 leading-snug whitespace-normal break-all">{{ item.productName }}</div>
                              <div class="text-xs text-gray-500">{{ item.option }}</div>
@@ -4027,6 +4036,19 @@ pendingCount = computed(() => this.dashboardMetrics().toConfirm);
   toNumber(val: any) { return Number(val); } 
   getUserName(id: string) { return this.store.users().find((u: User) => u.id === id)?.name || id; } 
   getThumb(o: Order) { return o.items[0]?.productImage; } 
+  // 👇 新增這段大腦：精準抓取客人選的 [圖X]
+  getExactItemImage(item: any): string {
+    const p = this.store.products().find((x: Product) => x.id === item.productId);
+    if (!p || !p.images || p.images.length === 0) return item.productImage;
+    
+    // 尋找規格字串裡面有沒有 [圖X]
+    const match = item.option?.match(/\[圖(\d+)\]/);
+    if (match) {
+      const imgIndex = parseInt(match[1], 10) - 1; // 陣列從 0 開始，所以圖4要減 1 變 3
+      if (p.images[imgIndex]) return p.images[imgIndex];
+    }
+    return item.productImage; // 如果沒找到 [圖X]，退回顯示首圖
+  }
   timeAgo(ts: number) { const mins = Math.floor((Date.now() - ts) / 60000); if(mins < 60) return `${mins} 分鐘前`; const hours = Math.floor(mins / 60); if(hours < 24) return `${hours} 小時前`; return `${Math.floor(hours/24)} 天前`; }
   
   formatMemberNo(u: User): string { 
