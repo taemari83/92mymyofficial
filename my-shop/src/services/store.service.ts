@@ -470,7 +470,18 @@ addToCart(product: Product, option: string, quantity: number) {
   }
 
   async notifyArrival(order: Order) {
-    fetch(this.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'arrival_notice', orderId: order.id, name: order.userName, email: order.userEmail, shippingLink: this.myShipLink }) }).then(() => this.updateOrderStatus(order.id, 'arrived_notified'));
+    fetch(this.gasUrl, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+      body: JSON.stringify({ 
+         action: 'arrival_notice', 
+         orderId: order.id, 
+         name: order.userName, 
+         email: order.userEmail, 
+         shippingLink: this.myShipLink,
+         myshipQty: (order as any).myshipQty || 1 // 👈 關鍵：把數量打包傳給 GAS！
+      }) 
+    }).then(() => this.updateOrderStatus(order.id, 'arrived_notified'));
   }
 
   // 🔥 新增：通用發信函數，用來觸發 Google Apps Script 的各種信件
@@ -481,7 +492,8 @@ addToCart(product: Product, option: string, quantity: number) {
       name: order.userName,
       email: order.userEmail,
       total: order.finalTotal,
-      ...extraData // 包含 shippingLink 等額外資訊
+      myshipQty: (order as any).myshipQty || 1, // 👈 關鍵：讓所有信件都能讀取到數量！
+      ...extraData 
     };
 
     fetch(this.gasUrl, { 
