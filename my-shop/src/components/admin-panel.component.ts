@@ -1682,40 +1682,41 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
               <div class="overflow-y-auto flex-1 custom-scrollbar p-6 bg-white">
                  
-                 <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">客戶與收件資訊</div>
-                 <div class="text-xs text-gray-600 mb-6 grid grid-cols-2 gap-2 items-start bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <div><span class="text-gray-400">訂購人:</span> {{ o.userName }}</div>
-                    <div><span class="text-gray-400">電話:</span> {{ $any(o).userPhone || '無' }}</div>
-                    <div class="col-span-2"><span class="text-gray-400">Email:</span> {{ o.userEmail || '無' }}</div>
+                <div class="text-sm font-bold text-gray-700 mb-3 border-l-4 border-brand-400 pl-2">客戶與收件資訊</div>
+                 <div class="text-xs text-gray-600 mb-6 grid grid-cols-2 gap-3 items-start bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                    <div><span class="text-gray-400 block mb-1">訂購人:</span> <span class="font-bold text-gray-800 text-sm">{{ o.userName }}</span></div>
+                    <div><span class="text-gray-400 block mb-1">電話:</span> <span class="font-bold text-gray-800 text-sm">{{ $any(o).userPhone || '無' }}</span></div>
+                    <div class="col-span-2"><span class="text-gray-400 block mb-1">Email:</span> <span class="text-gray-800">{{ o.userEmail || '無' }}</span></div>
 
-                    <div class="col-span-2 mt-2 pt-2 border-t border-gray-200"><span class="text-gray-400">收件人:</span> {{ $any(o).shippingName || o.userName }}</div>
-                    <div><span class="text-gray-400">收件電話:</span> {{ $any(o).shippingPhone || $any(o).userPhone || '無' }}</div>
-                    <div class="col-span-2"><span class="text-gray-400">收件地址:</span> {{ $any(o).shippingAddress || '無' }}</div>
+                    <div class="col-span-2 mt-2 pt-3 border-t border-gray-200"></div>
+                    <div><span class="text-gray-400 block mb-1">收件人:</span> <span class="font-bold text-gray-800 text-sm">{{ $any(o).shippingName || o.userName }}</span></div>
+                    <div><span class="text-gray-400 block mb-1">收件電話:</span> <span class="font-bold text-gray-800 text-sm">{{ $any(o).shippingPhone || $any(o).userPhone || '無' }}</span></div>
+                    <div class="col-span-2"><span class="text-gray-400 block mb-1">收件地址/門市:</span> <span class="text-gray-800">{{ $any(o).shippingAddress || '無' }}</span></div>
 
-                    <div class="col-span-2 mt-2 pt-2 border-t border-gray-200"></div>
-                    <div><span class="text-gray-400">付款:</span> {{ getPaymentLabel(o.paymentMethod) }}</div>
-                    <div><span class="text-gray-400">物流:</span> {{ getShippingLabel(o.shippingMethod) }}</div>
+                    <div class="col-span-2 mt-2 pt-3 border-t border-gray-200"></div>
+                    <div><span class="text-gray-400 block mb-1">付款方式:</span> <span class="bg-gray-200 px-2 py-1 rounded-md text-gray-700 font-bold">{{ getPaymentLabel(o.paymentMethod) }}</span></div>
+                    <div><span class="text-gray-400 block mb-1">物流方式:</span> <span class="bg-gray-200 px-2 py-1 rounded-md text-gray-700 font-bold">{{ getShippingLabel(o.shippingMethod) }}</span></div>
 
-                    @if(o.paymentMethod === 'bank_transfer' || o.paymentLast5) {
-                       <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 mt-2 p-3 bg-blue-100/50 rounded-lg border border-blue-200">
-                          <span class="text-blue-700 font-bold shrink-0">匯款後五碼:</span>
-                          <input type="text" [value]="o.paymentLast5 || ''" (change)="updatePaymentLast5(o, $event)" placeholder="可手動幫客人填寫" class="w-full sm:w-32 px-2 py-1.5 rounded border border-blue-300 text-sm focus:outline-none focus:border-blue-500 bg-white text-brand-900 font-mono font-bold">
-                          @if(o.paymentName) { <span class="text-[10px] text-gray-500 bg-white px-2 py-1 rounded border border-gray-200">戶名: {{ o.paymentName }}</span> }
-                       </div>
-                    }
+                    @if(o.paymentMethod === 'bank_transfer' || o.paymentLast5) {
+                       <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-3 mt-3 p-4 bg-blue-50/80 rounded-xl border border-blue-200 shadow-sm">
+                          <span class="text-blue-700 font-bold shrink-0 text-sm">匯款後五碼:</span>
+                          <input type="text" [value]="o.paymentLast5 || ''" (change)="updatePaymentLast5(o, $event)" placeholder="可手填..." class="w-full sm:flex-1 min-w-[120px] px-3 py-2 rounded-lg border border-blue-300 text-sm focus:outline-none focus:border-blue-500 bg-white text-blue-900 font-mono font-bold shadow-inner">
+                          @if(o.paymentName) { <span class="w-full sm:w-auto text-xs text-gray-600 bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm shrink-0 font-bold flex items-center">戶名: {{ o.paymentName }}</span> }
+                       </div>
+                    }
 
-                    <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 mt-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                       <span class="text-orange-700 font-bold shrink-0">物流單號:</span>
-                       <input type="text" [value]="o.shippingLink || ''" (change)="updateShippingLink(o, $event)" placeholder="手動輸入交貨便、好賣家或宅配單號..." class="w-full flex-1 px-2 py-1.5 rounded border border-orange-300 text-sm focus:outline-none focus:border-orange-500 bg-white text-orange-900 font-mono font-bold">
+                    <div class="col-span-2 flex flex-col sm:flex-row sm:items-center gap-3 mt-1 p-4 bg-orange-50/80 rounded-xl border border-orange-200 shadow-sm">
+                       <span class="text-orange-700 font-bold shrink-0 text-sm">物流單號:</span>
+                       <input type="text" [value]="o.shippingLink || ''" (change)="updateShippingLink(o, $event)" placeholder="手動輸入交貨便、好賣家或宅配單號..." class="w-full flex-1 min-w-[200px] px-3 py-2 rounded-lg border border-orange-300 text-sm focus:outline-none focus:border-orange-500 bg-white text-orange-900 font-mono font-bold shadow-inner">
                     </div>
-                 </div>
+                 </div>
 
-                 <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200 mb-6">
-                    <div class="flex justify-between items-center mb-2">
-                       <span class="text-sm font-bold text-yellow-800 flex items-center gap-1"><span>📝</span> 內部備註 (僅管理員可見)</span>
-                       <button (click)="saveOrderNote(o, orderNoteInput.value)" class="text-xs bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm transition-colors active:scale-95">儲存備註</button>
+                 <div class="bg-yellow-50/80 p-5 rounded-2xl border border-yellow-200 mb-6 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-3">
+                       <span class="text-base font-bold text-yellow-800 flex items-center gap-2"><span>📝</span> 內部備註 (僅管理員可見)</span>
+                       <button (click)="saveOrderNote(o, orderNoteInput.value)" class="w-full sm:w-auto text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-xl font-bold shadow-sm transition-transform active:scale-95">💾 儲存備註</button>
                     </div>
-                    <textarea #orderNoteInput [value]="$any(o).note || ''" rows="2" placeholder="例如：出貨需退款 20 元賣貨便運費給客人..." class="w-full p-2 border border-yellow-300 rounded-lg focus:outline-none focus:border-yellow-500 text-sm custom-scrollbar bg-white"></textarea>
+                    <textarea #orderNoteInput [value]="$any(o).note || ''" rows="5" placeholder="例如：出貨需退款 20 元賣貨便運費給客人..." class="w-full p-4 border border-yellow-300 rounded-xl focus:outline-none focus:border-yellow-500 text-base custom-scrollbar bg-white shadow-inner resize-y"></textarea>
                  </div>
                  
                  <div class="flex justify-between items-center mb-3">
