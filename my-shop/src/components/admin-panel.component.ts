@@ -391,7 +391,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                              <!-- 👇 如果有真實收件人，且跟 Google 名字不一樣，就顯示橘色標籤 👇 -->
                              @if($any(order).shippingName && $any(order).shippingName !== getUserName(order.userId)) {
                                 <span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold whitespace-nowrap shadow-sm">
-                                   📦 收件: {{ $any(order).shippingName }}
+                                   收件: {{ $any(order).shippingName }}
                                 </span>
                              }
                            </div>
