@@ -385,9 +385,17 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                          </td>
                          
                          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100">
-                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">客戶</span>
-                           <div class="text-right md:text-left"><span class="font-medium text-gray-800">{{ getUserName(order.userId) }}</span></div>
-                         </td>
+                           <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">客戶</span>
+                           <div class="text-right md:text-left flex flex-col items-end md:items-start gap-1">
+                             <span class="font-medium text-gray-800">{{ getUserName(order.userId) }}</span>
+                             <!-- 👇 如果有真實收件人，且跟 Google 名字不一樣，就顯示橘色標籤 👇 -->
+                             @if($any(order).shippingName && $any(order).shippingName !== getUserName(order.userId)) {
+                                <span class="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-bold whitespace-nowrap shadow-sm">
+                                   📦 收件: {{ $any(order).shippingName }}
+                                </span>
+                             }
+                           </div>
+                         </td>
                          
                          <td class="p-4 flex items-center justify-between md:table-cell border-b md:border-none border-gray-100">
                            <span class="md:hidden text-[10px] text-gray-400 font-bold uppercase tracking-wider">付款方式</span>
@@ -4772,7 +4780,7 @@ async handleFileSelect(event: any) {
       'b0da0a669fb3be1a8d6df93e2ceffd37', // Taemari83777
       'e80ca4fbbfb01d2a24e6334c8d8030bd', // Taemari83888
       '3be8ea04af1ac3b461c96a5b9f18a297', // Taemari83999
-      '',
+      '42e32c6d0118bb263ceceb71f021270a', // Taemari831010
       '',
       '',
       '',
@@ -5992,24 +6000,27 @@ submitProduct() {
   }
 
   // 3. 確認送出！批次更新所有訂單 (修改為待包貨狀態)
-  async submitMyshipMatch() {
-    const list = this.myshipImportList();
-    const matchedItems = list.filter(item => item.matchedOrder);
+  async submitMyshipMatch() {
+    const list = this.myshipImportList();
+    const matchedItems = list.filter(item => item.matchedOrder);
 
-    if (!confirm(`💡 即將將這 ${matchedItems.length} 筆訂單轉為「配單中(待包貨)」，並綁定賣貨便代碼。\n確定執行嗎？`)) return;
+    if (!confirm(`💡 即將將這 ${matchedItems.length} 筆訂單轉為「配單中(待包貨)」，並綁定賣貨便代碼。\n確定執行嗎？`)) return;
 
-    let successCount = 0;
+    let successCount = 0;
 
-    for (const item of matchedItems) {
-       const order = item.matchedOrder;
-       try {
-          // 👇 狀態改為 pending_shipping (待包貨)，寫入單號，且「不發送」出貨通知信
-          await this.store.updateOrderStatus(order.id, 'pending_shipping', { shippingLink: item.trackingNumber });
-          successCount++;
-       } catch (e) {
-          console.error(`訂單 ${order.id} 更新失敗`, e);
-       }
-    }
+    for (const item of matchedItems) {
+       const order = item.matchedOrder;
+       try {
+          // 👇 狀態改為待包貨，同時寫入「物流單號」與「賣貨便填寫的真實收件人」！
+          await this.store.updateOrderStatus(order.id, 'pending_shipping', { 
+              shippingLink: item.trackingNumber,
+              shippingName: item.name // 👈 將賣貨便 CSV 裡的收件人存入
+          });
+          successCount++;
+       } catch (e) {
+          console.error(`訂單 ${order.id} 更新失敗`, e);
+       }
+    }
 
     alert(`✅ 批次配對完成！\n成功更新 ${successCount} 筆訂單，請看著列表明細開始包貨囉！`);
     this.showMyshipMatcherModal.set(false);
