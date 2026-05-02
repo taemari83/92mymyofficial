@@ -664,25 +664,17 @@ export class ShopFrontComponent {
        );
     }
     
-    // 🔥 全自動「本月新品」邏輯：不管本來分類是什麼，只要是 30 天內上架的都抓出來！
+    // 🔥 全自動「本月新品」邏輯
     if (cat === '新品') {
-       // 取得 30 天前的時間戳記 (毫秒)
        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
        
        list = list.filter(p => {
-          // 因為你的商品 ID 格式是 "時間戳-隨機碼"，所以我們直接切出前面的時間戳來判斷
           const productIdTime = parseInt(p.id.split('-')[0], 10);
-          
-          // 如果解析成功且大於 30 天前，就是新品！
           if (!isNaN(productIdTime) && productIdTime > 1000000000000) {
              return productIdTime > thirtyDaysAgo;
           }
-          // 如果商品 ID 格式不對，就退回原本的「檢查貨號月份」的備用邏輯
           return this.isNewProduct(p);
        });
-       
-       // 確保新品頁面最新上架的排在最前面 (降冪排序)
-       list.sort((a, b) => parseInt(b.id.split('-')[0], 10) - parseInt(a.id.split('-')[0], 10));
        
     } else if (cat !== 'all') {
        list = list.filter(p => p.category === cat);
@@ -691,9 +683,16 @@ export class ShopFrontComponent {
        }
     }
     
+    // 🔥 終極精準排序魔法 (替換掉原本笨笨的 reverse)
     switch (sort) {
-      case 'newest': list = list.reverse(); break;
-      case 'oldest': break;
+      case 'newest': 
+        // 新到舊：用建立時間的大到小排
+        list.sort((a, b) => parseInt(b.id.split('-')[0], 10) - parseInt(a.id.split('-')[0], 10)); 
+        break;
+      case 'oldest': 
+        // 舊到新：用建立時間的小到大排
+        list.sort((a, b) => parseInt(a.id.split('-')[0], 10) - parseInt(b.id.split('-')[0], 10)); 
+        break;
       case 'hot': list.sort((a, b) => b.soldCount - a.soldCount); break;
       case 'price_asc': list.sort((a, b) => this.getPrice(a) - this.getPrice(b)); break;
       case 'price_desc': list.sort((a, b) => this.getPrice(b) - this.getPrice(a)); break;
