@@ -1343,14 +1343,23 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                       <span class="bg-purple-100 text-purple-600 p-1.5 rounded-lg text-lg">🏷️</span> 商品分類管理 (類別增刪改與代碼)
                    </h4>
                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 space-y-3">
-                      @for(cat of store.categories(); track cat) { 
-                         <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
-                            <input type="text" [value]="cat" (change)="renameCategory(cat, $any($event.target).value)" class="flex-1 min-w-[120px] border border-transparent hover:border-gray-200 outline-none font-bold text-sm text-gray-700 bg-transparent focus:ring-1 focus:ring-brand-200 rounded px-2 py-1" title="點擊修改名稱">
-                            <span class="text-xs text-gray-400 font-bold ml-auto sm:ml-2">SKU代碼:</span>
-                            <input type="text" [value]="categoryCodes()[cat] || ''" (change)="updateCategoryCode(cat, $any($event.target).value)" class="w-16 border border-gray-200 rounded px-1 py-1 uppercase text-center font-mono font-bold text-brand-900 focus:outline-none focus:border-brand-300 shadow-inner" maxlength="3" placeholder="ABC">
-                            <button type="button" (click)="deleteCategory(cat)" class="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此分類">✕</button>
-                         </div> 
-                      }
+                       <!-- 👇 加上 let i = $index，讓我們知道分類的排序位置 👇 -->
+                       @for(cat of store.categories(); track cat; let i = $index) { 
+                          <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
+                             
+                             <!-- 👇 新增：上下移動的按鈕區塊 👇 -->
+                             <div class="flex flex-col gap-0.5 shrink-0 px-1 border-r border-gray-100 mr-1">
+                                <button type="button" (click)="moveCategoryUp(i)" [disabled]="i === 0" class="text-[10px] text-gray-400 hover:text-brand-600 disabled:opacity-20 leading-none py-0.5 cursor-pointer active:scale-95 transition-transform" title="往上移">▲</button>
+                                <button type="button" (click)="moveCategoryDown(i)" [disabled]="i === store.categories().length - 1" class="text-[10px] text-gray-400 hover:text-brand-600 disabled:opacity-20 leading-none py-0.5 cursor-pointer active:scale-95 transition-transform" title="往下移">▼</button>
+                             </div>
+                             <!-- 👆 新增結束 👆 -->
+
+                             <input type="text" [value]="cat" (change)="renameCategory(cat, $any($event.target).value)" class="flex-1 min-w-[120px] border border-transparent hover:border-gray-200 outline-none font-bold text-sm text-gray-700 bg-transparent focus:ring-1 focus:ring-brand-200 rounded px-2 py-1" title="點擊修改名稱">
+                             <span class="text-xs text-gray-400 font-bold ml-auto sm:ml-2">SKU代碼:</span>
+                             <input type="text" [value]="categoryCodes()[cat] || ''" (change)="updateCategoryCode(cat, $any($event.target).value)" class="w-16 border border-gray-200 rounded px-1 py-1 uppercase text-center font-mono font-bold text-brand-900 focus:outline-none focus:border-brand-300 shadow-inner" maxlength="3" placeholder="ABC">
+                             <button type="button" (click)="deleteCategory(cat)" class="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="刪除此分類">✕</button>
+                          </div> 
+                       }
                       <div class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200">
                          <input #newCatInput type="text" placeholder="輸入新分類名稱..." class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-300 shadow-inner">
                          <button type="button" (click)="addNewCategory(newCatInput.value); newCatInput.value=''" class="px-4 py-2 bg-brand-900 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-black whitespace-nowrap">＋ 新增分類</button>
@@ -4955,11 +4964,30 @@ submitProduct() {
     this.selectedCustomerIds.set([]); // 清空勾選
   }
 
+  // 👇 新增：分類上移
+  moveCategoryUp(index: number) {
+    if (index === 0) return; // 已經在最上面了
+    const currentList = [...this.store.categories()];
+    const temp = currentList[index - 1];
+    currentList[index - 1] = currentList[index];
+    currentList[index] = temp;
+    (this.store as any).reorderCategories(currentList);
+  }
+
+  // 👇 新增：分類下移
+  moveCategoryDown(index: number) {
+    const currentList = [...this.store.categories()];
+    if (index === currentList.length - 1) return; // 已經在最下面了
+    const temp = currentList[index + 1];
+    currentList[index + 1] = currentList[index];
+    currentList[index] = temp;
+    (this.store as any).reorderCategories(currentList);
+  }
+
   renameCategory(oldName: string, newName: string) { this.store.renameCategory(oldName, newName); }
   deleteCategory(cat: string) { if(confirm(`確定要徹底刪除分類「${cat}」嗎？\n注意：這不會刪除該分類下的商品，但建議您將現有商品轉移至其他分類。`)) { this.store.removeCategory(cat); } }
   addNewCategory(name: string) { if(name.trim()) this.store.addCategory(name); }
-  updateCategoryCode(cat: string, code: string) { const newCodes = { ...this.categoryCodes() }; newCodes[cat] = code.toUpperCase(); const s = { ...this.store.settings() }; s.categoryCodes = newCodes; this.store.updateSettings(s); }
-  
+  updateCategoryCode(cat: string, code: string) { const newCodes = { ...this.categoryCodes() }; newCodes[cat] = code.toUpperCase(); const s = { ...this.store.settings() }; s.categoryCodes = newCodes; this.store.updateSettings(s); }  
   saveSettings() { 
     const val = this.settingsForm.value; 
     const currentSettings = this.store.settings(); 

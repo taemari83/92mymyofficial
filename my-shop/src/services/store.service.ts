@@ -278,6 +278,8 @@ users = toSignal(this.user$.pipe(switchMap(u => u?.isAdmin ? collectionData(coll
   async addCategory(name: string) { const current = this.categories(); if (name && !current.includes(name)) await setDoc(doc(this.firestore, 'config/categories'), { list: [...current, name] }, { merge: true }); }
   async renameCategory(oldName: string, newName: string) { const list = this.categories().map(c => c === oldName ? newName : c); await setDoc(doc(this.firestore, 'config/categories'), { list }, { merge: true }); }
   async removeCategory(cat: string) { const list = this.categories().filter(c => c !== cat); await setDoc(doc(this.firestore, 'config/categories'), { list }, { merge: true }); }
+  // 👇 新增這行：用來儲存手動調整順序後的新分類列表
+  async reorderCategories(newList: string[]) { await setDoc(doc(this.firestore, 'config/categories'), { list: newList }, { merge: true }); }
   private categories$ = docData(doc(this.firestore, 'config/categories')).pipe(map((data: any) => data ? (data.list as string[]) : ['熱銷精選', '服飾', '包包', '生活小物']));
   categories = toSignal(this.categories$, { initialValue: ['熱銷精選', '服飾', '包包', '生活小物'] });
 
