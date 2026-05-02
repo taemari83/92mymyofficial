@@ -642,7 +642,7 @@ export class ShopFrontComponent {
 
   filteredProducts = computed(() => {
     let list = [...this.store.visibleProducts()]; 
-    const isAdmin = this.store.currentUser()?.isAdmin; // 👑 抓取當前登入者是不是老闆(管理員)
+    const isAdmin = this.store.currentUser()?.isAdmin;
 
     // 👇 過濾邏輯：沒上架的一律不顯示。隱形商品則「只有客人」看不見，老闆看得到！
     list = list.filter(p => {
@@ -650,6 +650,7 @@ export class ShopFrontComponent {
        if ((p as any).isHidden && !isAdmin) return false; 
        return true;
     });
+    
     const query = this.searchQuery().toLowerCase();
     const cat = this.selectedCategory();
     const subCat = this.selectedSubCategory();
@@ -663,11 +664,28 @@ export class ShopFrontComponent {
        );
     }
     
+    // 🔥 全自動「本月新品」邏輯：不管本來分類是什麼，只要是 30 天內上架的都抓出來！
     if (cat === '新品') {
-       list = list.filter(p => this.isNewProduct(p));
+       // 取得 30 天前的時間戳記 (毫秒)
+       const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+       
+       list = list.filter(p => {
+          // 因為你的商品 ID 格式是 "時間戳-隨機碼"，所以我們直接切出前面的時間戳來判斷
+          const productIdTime = parseInt(p.id.split('-')[0], 10);
+          
+          // 如果解析成功且大於 30 天前，就是新品！
+          if (!isNaN(productIdTime) && productIdTime > 1000000000000) {
+             return productIdTime > thirtyDaysAgo;
+          }
+          // 如果商品 ID 格式不對，就退回原本的「檢查貨號月份」的備用邏輯
+          return this.isNewProduct(p);
+       });
+       
+       // 確保新品頁面最新上架的排在最前面 (降冪排序)
+       list.sort((a, b) => parseInt(b.id.split('-')[0], 10) - parseInt(a.id.split('-')[0], 10));
+       
     } else if (cat !== 'all') {
        list = list.filter(p => p.category === cat);
-       
        if (subCat && subCat !== '全部') {
          list = list.filter(p => (p as any).subCategory === subCat); 
        }
