@@ -6,7 +6,63 @@
     <title>92mymy 就愛買買</title>
     <base href="/">
     <link rel="icon" type="image/png" href="favicon.png">
-    </head>
+    
+    <!-- 👇 新增這段：強制跳出 IG/LINE/FB 內建瀏覽器的魔法 👇 -->
+    <script>
+      (function() {
+        var ua = navigator.userAgent || navigator.vendor || window.opera;
+        
+        // 偵測是否為 IG, FB, LINE, Threads 等內建瀏覽器
+        var isLine = ua.indexOf('Line') > -1;
+        var isFb = ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1;
+        var isIg = ua.indexOf('Instagram') > -1;
+        var isThreads = ua.indexOf('Threads') > -1;
+
+        var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+        var isAndroid = /android/i.test(ua);
+
+        // 如果確實在這些 APP 裡面
+        if (isLine || isFb || isIg || isThreads) {
+          var currentUrl = window.location.href;
+          var targetUrl = currentUrl;
+
+          // 如果是 LINE，加上 ?openExternalBrowser=1 就能強制跳出
+          if (isLine) {
+            if (currentUrl.indexOf('?') > -1) {
+              targetUrl += '&openExternalBrowser=1';
+            } else {
+              targetUrl += '?openExternalBrowser=1';
+            }
+            window.location.href = targetUrl;
+          } 
+          // 針對 iOS 的 IG/FB/Threads (無痛跳轉法)
+          else if (isIOS) {
+            // 在網址前面加上 googlechrome:// 試圖喚醒 Chrome，若失敗則回退給系統處理
+            window.location.href = currentUrl.replace('https://', 'googlechrome://').replace('http://', 'googlechrome://');
+            
+            // 如果客人沒裝 Chrome，給他一個超明顯的友善提示畫面，教他點擊右上角
+            setTimeout(function() {
+              document.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">');
+              document.write('<div style="padding: 30px; text-align: center; font-family: sans-serif; margin-top: 50px;">');
+              document.write('<h2 style="color: #E67E22; margin-bottom: 10px;">⚠️ 系統安全限制</h2>');
+              document.write('<p style="font-size: 16px; color: #555; line-height: 1.6;">為了保護您的帳號安全，Google 禁止在此畫面登入。</p>');
+              document.write('<p style="font-size: 18px; font-weight: bold; margin-top: 30px;">👇 請點擊畫面<span style="color: red;">右上角 (或右下角)</span> 的「•••」<br><br>選擇 <span style="background: #eee; padding: 6px 12px; border-radius: 6px; display: inline-block; margin-top: 8px;">「在系統瀏覽器中開啟」</span><br>或 <span style="background: #eee; padding: 6px 12px; border-radius: 6px; display: inline-block; margin-top: 8px;">「在 Safari 開啟」</span></p>');
+              document.write('<p style="font-size: 14px; color: #888; margin-top: 40px;">即可正常登入並完成購物，謝謝您！</p>');
+              document.write('</div>');
+              document.close();
+            }, 300);
+          }
+          // 針對 Android 的 IG/FB/Threads (Intent 跳轉法)
+          else if (isAndroid) {
+            var cleanUrl = currentUrl.replace('https://', '').replace('http://', '');
+            window.location.href = 'intent://' + cleanUrl + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+          }
+        }
+      })();
+    </script>
+    <!-- 👆 新增結束 👆 -->
+
+  </head>
   <body class="bg-cream-50 text-brand-900 font-sans antialiased selection:bg-brand-300 selection:text-white">
     <app-root></app-root>
   </body>
