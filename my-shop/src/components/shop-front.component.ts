@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, Params, RouterModule } from '@angular/router'; 
 import { toSignal } from '@angular/core/rxjs-interop';
 import { StoreService, Product } from '../services/store.service';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeResourceUrl, Title, Meta } from '@angular/platform-browser'; // 👈 加上 Title, Meta
 import { environment } from '../environments/environment';
+import { DOCUMENT } from '@angular/common'; // 👈 加上 DOCUMENT
 
 @Component({
   selector: 'app-shop-front',
@@ -452,6 +453,10 @@ export class ShopFrontComponent {
   route: ActivatedRoute = inject(ActivatedRoute);
   // 👇 加上這兩行來抓取公司資料和現在年份
   companyInfo = environment.company;
+  // 👇 新增這三行 SEO 工具 👇
+  titleService = inject(Title);
+  metaService = inject(Meta);
+  document = inject(DOCUMENT);
   now = new Date();
   
   searchQuery = signal('');
@@ -482,10 +487,31 @@ export class ShopFrontComponent {
              if (found) {
                 this.selectedProduct.set(found);
                 this.activeImage.set(found.image);
+
+                // 👇👇 SEO 動態標題與名片魔法 開始 👇👇
+                const pageTitle = `92mymy | ${found.name}`;
+                const pageDesc = found.note ? found.note.substring(0, 150) : '92mymy 嚴選韓國連線商品';
+                
+                this.titleService.setTitle(pageTitle);
+                this.metaService.updateTag({ name: 'description', content: pageDesc });
+                this.metaService.updateTag({ property: 'og:title', content: pageTitle });
+                this.metaService.updateTag({ property: 'og:description', content: pageDesc });
+                this.metaService.updateTag({ property: 'og:image', content: found.image });
+                
+                this.injectProductStructuredData(found); // 塞入結構化 JSON-LD
+                // 👆👆 SEO 動態標題與名片魔法 結束 👆👆
              }
           }
        } else if (!pId && this.selectedProduct()) {
           this.selectedProduct.set(null);
+
+          // 👇👇 關閉商品時，恢復首頁預設標題 👇👇
+          this.titleService.setTitle(`92mymy | 就愛買買 韓國連線女裝`);
+          this.metaService.updateTag({ name: 'description', content: '92mymy 嚴選韓國連線商品，為您帶來最新流行服飾與小物。' });
+          
+          const existingScript = this.document.getElementById('product-json-ld');
+          if (existingScript) existingScript.remove(); // 清除商品名片
+          // 👆👆 恢復預設標題 結束 👆👆
        }
 
        // 2. 🔥 新增：處理分類網址同步 (讓直接貼網址進來的人可以跳到對應分類)
@@ -873,5 +899,36 @@ export class ShopFrontComponent {
       }
     } catch(e) {}
     return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+  }
+
+  // 🪄 Google SEO 專用：產生商品結構化資料 (JSON-LD)
+  injectProductStructuredData(product: Product) {
+    const existingScript = this.document.getElementById('product-json-ld');
+    if (existingScript) existingScript.remove();
+
+    if (!product) return;
+
+    const script = this.document.createElement('script');
+    script.id = 'product-json-ld';
+    script.type = 'application/ld+json';
+    
+    const jsonLd = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": product.name,
+      "image": [product.image],
+      "description": product.note || "92mymy 嚴選韓國連線商品",
+      "sku": product.code,
+      "offers": {
+        "@type": "Offer",
+        "url": window.location.href,
+        "priceCurrency": "TWD",
+        "price": product.priceGeneral,
+        "availability": product.stock > 0 || product.isPreorder ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+      }
+    };
+    
+    script.text = JSON.stringify(jsonLd);
+    this.document.head.appendChild(script);
   }
 }
