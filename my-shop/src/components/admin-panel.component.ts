@@ -2456,22 +2456,37 @@ export class AdminPanelComponent {
   async setBatchSoldOut() {
     const ids = this.selectedProductIds();
     if (ids.length === 0) return alert('請先勾選要設為售完的商品！');
-    if (!confirm(`確定要將選取的 ${ids.length} 件商品「庫存歸零」嗎？\n(商品不會下架，前台會顯示 Sold Out)`)) return;
+    if (!confirm(`確定要將選取的 ${ids.length} 件商品「庫存歸零（設為售完）」嗎？\n(商品不會下架，只會顯示 Sold Out 狀態)`)) return;
 
     let updatedCount = 0;
     const allProducts = this.store.products();
 
-    for (const id of ids) {
-      const product = allProducts.find((p: any) => p.id === id);
-      if (product) {
-         // 強制將庫存設為 0
-         await this.store.updateProduct({ ...product, stock: 0 } as any);
-         updatedCount++;
-      }
+    // 🛡️ 加上 try...catch 來捕捉任何可能的資料庫報錯
+    try {
+        for (const id of ids) {
+          const product = allProducts.find((p: any) => p.id === id);
+          if (product) {
+             // 💡 關鍵：強制把 stock 設為 0。
+             // 為了避免「預購模式」強制鎖定無限庫存，我們一併把 isPreorder 關掉，確保 100% 斷貨！
+             await this.store.updateProduct({ 
+                 ...product, 
+                 stock: 0,
+                 isPreorder: false 
+             } as any);
+             updatedCount++;
+          }
+        }
+        
+        alert(`✅ 成功將 ${updatedCount} 件商品設為售完！`);
+        this.selectedProductIds.set([]); // 執行完清空勾選
+        
+        // 🚀 最重要的一行：強制引擎重新繪製畫面，讓你立刻看到庫存變 0！
+        this.cdr.markForCheck(); 
+        
+    } catch (error) {
+        console.error(error);
+        alert(`❌ 批次更新失敗，請截圖此畫面給工程師：\n${error}`);
     }
-    
-    alert(`✅ 成功將 ${updatedCount} 件商品設為售完！`);
-    this.selectedProductIds.set([]); // 清空勾選
   }
 
   showEditPurchaseModal = signal(false);
