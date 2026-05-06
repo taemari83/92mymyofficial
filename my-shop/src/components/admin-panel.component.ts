@@ -509,6 +509,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="flex w-full sm:w-auto gap-2">
                     <button (click)="exportProductsCSV()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#8FA996] text-white border border-transparent rounded-xl font-bold hover:bg-[#7a9180] shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>📥</span> 匯出</button>
                     <button (click)="syncProductsToGoogleSheets()" class="flex-1 sm:flex-none px-4 py-2.5 bg-[#E5B5B5] text-white border border-transparent rounded-xl font-bold hover:bg-[#D4A0A0] shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors"><span>☁️</span> 同步</button>
+                    <button (click)="setBatchSoldOut()" [disabled]="selectedProductIds().length === 0" class="flex-1 sm:flex-none px-4 py-2.5 bg-gray-800 text-white border border-transparent rounded-xl font-bold hover:bg-black shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors disabled:opacity-50"><span>⛔️</span> 批次售完 ({{ selectedProductIds().length }})</button>
                     <button (click)="openTrashModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-gray-100 text-gray-600 border border-transparent rounded-xl font-bold hover:bg-gray-200 shadow-sm flex items-center justify-center gap-1 whitespace-nowrap transition-colors relative">
                       <span>🗑️</span> 回收站 
                       @if(deletedProducts().length > 0) { <span class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow-sm animate-pulse">{{ deletedProducts().length }}</span> }
@@ -531,11 +532,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             </div> 
             
             @if(productViewMode() === 'list') {
+              <div class="flex items-center gap-2 mb-2 px-2">
+                 <input type="checkbox" (change)="toggleAllProducts($event)" class="w-5 h-5 rounded text-brand-600 cursor-pointer shadow-sm border-gray-300">
+                 <span class="text-sm font-bold text-gray-500">全選目前篩選的商品</span>
+              </div>
               <div class="grid grid-cols-1 gap-4 w-full"> 
                 @for (p of filteredAdminProducts(); track p.id) { 
                   <div class="bg-white rounded-[1.5rem] p-4 flex items-center gap-5 hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full"> 
-                     <div class="w-20 h-20 rounded-xl overflow-hidden bg-white flex-shrink-0 relative border border-gray-100"> 
-                        <img [src]="p.image" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-contain mix-blend-multiply p-1"> 
+                     <input type="checkbox" [checked]="selectedProductIds().includes(p.id)" (change)="toggleProductSelection(p.id)" class="w-5 h-5 rounded text-brand-600 cursor-pointer shrink-0 border-gray-300">
+                     <div class="w-20 h-20 rounded-xl overflow-hidden bg-white flex-shrink-0 relative border border-gray-100">                        <img [src]="p.image" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-contain mix-blend-multiply p-1"> 
                         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-0.5"> {{ p.code }} </div> 
                      </div>
                      <div class="flex-1 min-w-0"> 
@@ -578,12 +583,18 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
                   <div class="text-center py-10 text-gray-400 font-bold">目前無符合條件的商品。</div>
                 }
               </div> 
-            } @else {
+             } @else {
+              <div class="flex items-center gap-2 mb-2 px-2 w-full col-span-full">
+                 <input type="checkbox" (change)="toggleAllProducts($event)" class="w-5 h-5 rounded text-brand-600 cursor-pointer shadow-sm border-gray-300">
+                 <span class="text-sm font-bold text-gray-500">全選目前篩選的商品</span>
+              </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
                 @for (p of filteredAdminProducts(); track p.id) {
-                  <div class="bg-white rounded-[1.5rem] p-3 flex flex-col hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full">
-                     <div class="w-full aspect-square rounded-xl overflow-hidden bg-white relative mb-3 border border-gray-100">
-                        <img [src]="p.image" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-contain mix-blend-multiply p-2">
+                  <div class="bg-white rounded-[1.5rem] p-3 flex flex-col hover:shadow-md transition-all border border-transparent hover:border-brand-100 group w-full relative">
+                     <div class="absolute top-4 right-4 z-30">
+                        <input type="checkbox" [checked]="selectedProductIds().includes(p.id)" (change)="toggleProductSelection(p.id)" class="w-5 h-5 rounded text-brand-600 cursor-pointer shadow-md border-gray-300 bg-white">
+                     </div>
+                     <div class="w-full aspect-square rounded-xl overflow-hidden bg-white relative mb-3 border border-gray-100">                        <img [src]="p.image" (error)="handleImageError($event)" referrerpolicy="no-referrer" class="w-full h-full object-contain mix-blend-multiply p-2">
                         <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] text-center font-mono py-1"> {{ p.code }} </div>
                         <div class="absolute top-2 left-2 flex flex-col gap-1 z-10">
                            @if(p.isPreorder) { <span class="bg-blue-100 text-blue-600 text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm w-fit">預購</span> }
@@ -2424,6 +2435,45 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   `]
 })
 export class AdminPanelComponent {
+
+  // ⚡️ 商品批次操作狀態 (設為售完)
+  selectedProductIds = signal<string[]>([]);
+
+  toggleProductSelection(id: string) {
+    const curr = this.selectedProductIds();
+    if (curr.includes(id)) this.selectedProductIds.set(curr.filter(x => x !== id));
+    else this.selectedProductIds.set([...curr, id]);
+  }
+
+  toggleAllProducts(event: any) {
+    if ((event.target as HTMLInputElement).checked) {
+      this.selectedProductIds.set(this.filteredAdminProducts().map((p: any) => p.id));
+    } else {
+      this.selectedProductIds.set([]);
+    }
+  }
+
+  async setBatchSoldOut() {
+    const ids = this.selectedProductIds();
+    if (ids.length === 0) return alert('請先勾選要設為售完的商品！');
+    if (!confirm(`確定要將選取的 ${ids.length} 件商品「庫存歸零」嗎？\n(商品不會下架，前台會顯示 Sold Out)`)) return;
+
+    let updatedCount = 0;
+    const allProducts = this.store.products();
+
+    for (const id of ids) {
+      const product = allProducts.find((p: any) => p.id === id);
+      if (product) {
+         // 強制將庫存設為 0
+         await this.store.updateProduct({ ...product, stock: 0 } as any);
+         updatedCount++;
+      }
+    }
+    
+    alert(`✅ 成功將 ${updatedCount} 件商品設為售完！`);
+    this.selectedProductIds.set([]); // 清空勾選
+  }
+
   showEditPurchaseModal = signal(false);
   editPurchaseForm!: FormGroup;
   store = inject(StoreService);
@@ -4797,8 +4847,8 @@ async handleFileSelect(event: any) {
       '5af4a0f876cc4c0e680deb682decb395', // Taemari831414
       '1dc6f01daf94193680b08dfee80b4934', // Taemari831515
       'ca228b7587360621f5ae58be0cc1b11e', // Taemari831616
-      '',
-      '',
+      '8e3c02aad860497c87f82507a9467ef4', // Taemari831717
+      '8201a0639ccf1295dd775cec62e4ed92', // Taemari831818
       '',
       '',
     ];
